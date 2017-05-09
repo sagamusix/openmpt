@@ -35,6 +35,7 @@
 #include "../sounddev/SoundDeviceManager.h"
 #include "../soundlib/plugins/PluginManager.h"
 #include "MPTrackWine.h"
+#include "Networking.h"
 
 // rewbs.memLeak
 #define _CRTDBG_MAP_ALLOC
@@ -51,6 +52,7 @@ static char THIS_FILE[] = __FILE__;
 
 OPENMPT_NAMESPACE_BEGIN
 
+std::unique_ptr<Networking::CollabServer> collabServer;
 
 /////////////////////////////////////////////////////////////////////////////
 // The one and only CTrackApp object
@@ -1288,6 +1290,9 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	if(!cmdInfo.m_bNoTests)
 		Test::DoTests();
 #endif
+
+	collabServer = mpt::make_unique<Networking::CollabServer>();
+	collabServer->Run();
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
 	{

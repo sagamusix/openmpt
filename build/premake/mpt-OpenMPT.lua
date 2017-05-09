@@ -19,6 +19,15 @@ if layout == "custom" then
 else
   vpaths { ["*"] = "../../" }
 end
+
+--[[  filter { "configurations:*Debug*" }
+    libdirs { "../../include/grpc/vsprojects/Debug/" }
+  filter {}
+  filter { "configurations:*Release*" }
+    libdirs { "../../include/grpc/vsprojects/Release/" }
+  filter {}
+--]]
+
   dofile "../../build/premake/premake-defaults-EXEGUI.lua"
   dofile "../../build/premake/premake-defaults.lua"
   filter { "configurations:*Shared" }
@@ -34,6 +43,7 @@ end
    "../../include",
    "../../include/vstsdk2.4",
    "../../include/ASIOSDK2/common",
+   "../../include/asio/include",
    "../../include/flac/include",
    "../../include/lame/include",
    "../../include/lhasa/lib/public",
@@ -45,6 +55,8 @@ end
    "../../include/portaudio/include",
    "../../include/vorbis/include",
    "../../include/zlib",
+
+--   "../../include/grpc/include",
   }
 	filter { "action:vs*" }
 		includedirs ( extincludedirs )
@@ -94,10 +106,13 @@ end
 	pchheader "stdafx.h"
 	pchsource "../../common/stdafx.cpp"
   defines { "MODPLUG_TRACKER" }
+  defines { "ASIO_SEPARATE_COMPILATION", "ASIO_STANDALONE" }
+
   largeaddressaware ( true )
   characterset "MBCS"
   flags { "MFC", "ExtraWarnings", "WinMain" }
   links {
+   "asio",
    "UnRAR",
    "zlib",
    "minizip",
@@ -113,6 +128,10 @@ end
    "rtmidi",
    "soundtouch",
    "vorbis",
+
+   --"gpr",
+   --"grpc",
+   --"grpc++_unsecure",
   }
   filter { "configurations:*Shared" }
   filter { "not configurations:*Shared" }
