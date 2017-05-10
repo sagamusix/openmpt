@@ -52,8 +52,6 @@ static char THIS_FILE[] = __FILE__;
 
 OPENMPT_NAMESPACE_BEGIN
 
-std::unique_ptr<Networking::CollabServer> collabServer;
-
 /////////////////////////////////////////////////////////////////////////////
 // The one and only CTrackApp object
 
@@ -108,11 +106,15 @@ CDocument *CModDocTemplate::OpenDocumentFile(const mpt::PathString &filename, BO
 		theApp.RemoveMruItem(filename);
 	}
 
-	CDocument *pDoc = CMultiDocTemplate::OpenDocumentFile(filename.empty() ? NULL : mpt::PathString::TunnelIntoCString(filename).GetString(), addToMru, makeVisible);
+	CModDoc *pDoc = static_cast<CModDoc *>(CMultiDocTemplate::OpenDocumentFile(filename.empty() ? nullptr : mpt::PathString::TunnelIntoCString(filename).GetString(), addToMru, makeVisible));
 	if(pDoc)
 	{
 		CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
-		if (pMainFrm) pMainFrm->OnDocumentCreated(static_cast<CModDoc *>(pDoc));
+		if (pMainFrm) pMainFrm->OnDocumentCreated(pDoc);
+		if(collabServer != nullptr)
+		{
+			collabServer->AddDocument(pDoc);
+		}
 	} else //Case: pDoc == 0, opening document failed.
 	{
 		if(!filename.empty())
@@ -1292,7 +1294,7 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 #endif
 
 	collabServer = mpt::make_unique<Networking::CollabServer>();
-	collabServer->Run();
+	//collabServer->Run();
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
 	{

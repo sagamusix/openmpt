@@ -38,6 +38,7 @@
 #include "FileDialog.h"
 #include "ExternalSamples.h"
 #include "Globals.h"
+#include "Networking.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -166,6 +167,10 @@ CModDoc::~CModDoc()
 //-----------------
 {
 	ClearLog();
+	if(collabServer != nullptr)
+	{
+		collabServer->CloseDocument(this);
+	}
 }
 
 
