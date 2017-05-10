@@ -3,7 +3,7 @@
  * ---------------
  * Purpose: Collaborative Composing implementation
  * Notes  : (currently none)
- * Authors: Johannes Schultz OpenMPT Devs
+ * Authors: Johannes Schultz
  * The OpenMPT source code is released under the BSD license. Read LICENSE for more details.
  */
 
@@ -115,7 +115,7 @@ void CollabServer::StartAccept()
 		if(!ec)
 		{
 			picojson::object welcome;
-			welcome["id"] = picojson::value(MptVersion::str);
+			welcome["version"] = picojson::value(MptVersion::str);
 			picojson::array docs;
 			MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 			docs.reserve(m_documents.size());

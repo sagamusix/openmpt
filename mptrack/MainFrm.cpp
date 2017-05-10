@@ -36,6 +36,7 @@
 #include "UpdateCheck.h"
 #include "CloseMainDialog.h"
 #include "SelectPluginDialog.h"
+#include "NetworkingDlg.h"
 #include "ExceptionHandler.h"
 #include "PatternClipboard.h"
 #include "PatternFont.h"
@@ -86,6 +87,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_COMMAND(ID_ADD_SOUNDBANK,			OnAddDlsBank)
 	ON_COMMAND(ID_IMPORT_MIDILIB,			OnImportMidiLib)
 	ON_COMMAND(ID_MIDI_RECORD,				OnMidiRecord)
+	ON_COMMAND(ID_NETWORKING,				OnNetworking)
 	ON_COMMAND(ID_PANIC,					OnPanic)
 	ON_COMMAND(ID_PLAYER_PAUSE,				OnPlayerPause)
 	ON_COMMAND_RANGE(ID_EXAMPLE_MODULES, ID_EXAMPLE_MODULES_LASTINRANGE, OnExampleSong)
@@ -2359,6 +2361,14 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 		m_wndToolBar.m_VuMeter.SetVuMeter(pnotify->masterVUchannels, pnotify->masterVU,  pnotify->type[Notification::Stop]);
 	}
 	return 0;
+}
+
+
+void CMainFrame::OnNetworking()
+//-----------------------------
+{
+	Networking::NetworkingDlg dlg(this);
+	dlg.DoModal();
 }
 
 

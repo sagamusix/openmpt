@@ -758,6 +758,7 @@
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
+    <ClInclude Include="..\..\mptrack\NetworkingDlg.h" />
     <ClInclude Include="..\..\mptrack\Notification.h" />
     <ClInclude Include="..\..\mptrack\PNG.h" />
     <ClInclude Include="..\..\mptrack\PSRatioCalc.h" />
@@ -988,6 +989,7 @@
     <ClCompile Include="..\..\mptrack\Mpt_midi.cpp" />
     <ClCompile Include="..\..\mptrack\Mptrack.cpp" />
     <ClCompile Include="..\..\mptrack\Networking.cpp" />
+    <ClCompile Include="..\..\mptrack\NetworkingDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PNG.cpp" />
     <ClCompile Include="..\..\mptrack\PSRatioCalc.cpp" />
     <ClCompile Include="..\..\mptrack\PathConfigDlg.cpp" />

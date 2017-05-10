@@ -116,6 +116,7 @@
 #define IDD_MSGBOX_HIDABLE              516
 #define IDD_ADDSILENCE                  517
 #define IDR_DEFAULT_KEYBINDINGS         519
+#define IDD_NETWORKING                  520
 #define IDD_CLEANUP_SONG                521
 #define IDD_CHANNELSETTINGS             522
 #define IDD_KEYBOARD_SPLIT              523
@@ -1221,6 +1222,7 @@
 #define ID_EDIT_SPLITKEYBOARDSETTINGS   43235
 #define ID_EDIT_PASTESPECIAL            43236
 #define ID_ORDERLIST_EDIT_COPY_ORDERS   43237
+#define ID_NETWORKING                   43238
 #define ID_CHANGE_PCNOTE_PARAM          43242
 // From here: Command range [ID_CHANGE_PCNOTE_PARAM, ID_CHANGE_PCNOTE_PARAM + ModCommand::maxColumnValue]
 #define ID_MODTREE_CLOSE                44243

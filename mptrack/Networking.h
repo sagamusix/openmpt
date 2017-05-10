@@ -3,7 +3,7 @@
  * ---------------
  * Purpose: Collaborative Composing implementation
  * Notes  : (currently none)
- * Authors: Johannes Schultz OpenMPT Devs
+ * Authors: Johannes Schultz
  * The OpenMPT source code is released under the BSD license. Read LICENSE for more details.
  */
 
