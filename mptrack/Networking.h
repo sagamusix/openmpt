@@ -24,6 +24,18 @@ namespace Networking
 
 const int DEFAULT_PORT = 39999;
 
+class IOService
+{
+public:
+	mpt::thread m_thread;
+
+	IOService();
+	~IOService();
+
+	static void Run();
+};
+
+
 class CollabConnection
 {
 	asio::ip::tcp::socket m_socket;
@@ -32,8 +44,13 @@ class CollabConnection
 
 public:
 	CollabConnection();
+	~CollabConnection();
+
 	asio::ip::tcp::socket& GetSocket() { return m_socket; }
+	std::string Read();
+
 	void Write(const std::string &message);
+	void Close();
 
 protected:
 	void WriteImpl();
@@ -78,8 +95,8 @@ protected:
 
 class CollabClient
 {
-	asio::ip::tcp::socket m_socket;
 	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
+	CollabConnection m_connection;
 
 public:
 	CollabClient(const std::string &server, const std::string &port);
@@ -88,8 +105,9 @@ public:
 	void Write(const std::string &msg);
 };
 
-}
-
 extern std::unique_ptr<Networking::CollabServer> collabServer;
+extern std::unique_ptr<Networking::IOService> ioService;
+
+}
 
 OPENMPT_NAMESPACE_END

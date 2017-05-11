@@ -167,9 +167,9 @@ CModDoc::~CModDoc()
 //-----------------
 {
 	ClearLog();
-	if(collabServer != nullptr)
+	if(Networking::collabServer != nullptr)
 	{
-		collabServer->CloseDocument(this);
+		Networking::collabServer->CloseDocument(this);
 	}
 }
 

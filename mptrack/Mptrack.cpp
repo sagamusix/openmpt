@@ -111,9 +111,9 @@ CDocument *CModDocTemplate::OpenDocumentFile(const mpt::PathString &filename, BO
 	{
 		CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 		if (pMainFrm) pMainFrm->OnDocumentCreated(pDoc);
-		if(collabServer != nullptr)
+		if(Networking::collabServer != nullptr)
 		{
-			collabServer->AddDocument(pDoc);
+			Networking::collabServer->AddDocument(pDoc);
 		}
 	} else //Case: pDoc == 0, opening document failed.
 	{
@@ -1293,8 +1293,8 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 		Test::DoTests();
 #endif
 
-	collabServer = mpt::make_unique<Networking::CollabServer>();
-	//collabServer->Run();
+	Networking::collabServer = mpt::make_unique<Networking::CollabServer>();
+	//Networking::collabServer->Run();
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
 	{
@@ -1417,6 +1417,9 @@ int CTrackApp::ExitInstance()
 int CTrackApp::ExitInstanceImpl()
 //-------------------------------
 {
+	Networking::collabServer = nullptr;
+	Networking::ioService = nullptr;
+
 	delete m_pSoundDevicesManager;
 	m_pSoundDevicesManager = nullptr;
 	ExportMidiConfig(theApp.GetSettings());
