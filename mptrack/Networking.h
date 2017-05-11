@@ -22,6 +22,8 @@ class CModDoc;
 namespace Networking
 {
 
+const int DEFAULT_PORT = 39999;
+
 class CollabConnection
 {
 	asio::ip::tcp::socket m_socket;
@@ -79,7 +81,8 @@ class CollabClient
 	asio::ip::tcp::socket m_socket;
 	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
 
-	CollabClient();
+public:
+	CollabClient(const std::string &server, const std::string &port);
 
 	void Close();
 	void Write(const std::string &msg);

@@ -69,7 +69,7 @@ void CollabConnection::WriteImpl()
 
 
 CollabServer::CollabServer()
-	: m_acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v6(), 39999))
+	: m_acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v6(), DEFAULT_PORT))
 {
 	m_thread = std::move(mpt::thread([this]()
 	{
@@ -142,14 +142,23 @@ void CollabServer::StartAccept()
 }
 
 
-CollabClient::CollabClient()
+CollabClient::CollabClient(const std::string &server, const std::string &port)
 	: m_socket(io_service)
 {
-	asio::ip::v6_only option(false);
-	m_socket.set_option(option);
+	//asio::ip::v6_only option(false);
+	//m_socket.set_option(option);
 
 	asio::ip::tcp::resolver resolver(io_service);
-	m_endpoint_iterator = resolver.resolve({ "localhost", "39999" });
+	m_endpoint_iterator = resolver.resolve({ server, port });
+
+	asio::async_connect(m_socket, m_endpoint_iterator,
+		[this](std::error_code ec, asio::ip::tcp::resolver::iterator)
+	{
+		if(!ec)
+		{
+			//do_read_header();
+		}
+	});
 	/*chat_client c(io_service, endpoint_iterator);
 
 	std::thread t([&io_service]() { io_service.run(); });

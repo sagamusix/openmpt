@@ -32,14 +32,27 @@ END_MESSAGE_MAP()
 BOOL NetworkingDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	SetDlgItemText(IDC_EDIT1, _T("localhost:39999"));
+	SetDlgItemText(IDC_EDIT1, mpt::ToCString(mpt::String::Print(MPT_ULITERAL("%1:%2"), MPT_ULITERAL("localhost"), DEFAULT_PORT)));
 	return TRUE;
 }
 
 
 void NetworkingDlg::OnConnect()
 {
-
+	CString s;
+	mpt::ustring server, port;
+	GetDlgItemText(IDC_EDIT1, s);
+	if(s.Find(_T(':')) == -1)
+	{
+		server = mpt::ToUnicode(s);
+		port = mpt::ToUString(DEFAULT_PORT);
+	} else
+	{
+		auto split = mpt::String::Split<mpt::ustring>(mpt::ToUnicode(s), MPT_USTRING(":"));
+		server = split[0];
+		port = split[1];
+	}
+	new CollabClient(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToCharset(mpt::CharsetUTF8, port));
 }
 
 
