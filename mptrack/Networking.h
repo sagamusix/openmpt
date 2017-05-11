@@ -40,9 +40,11 @@ class CollabConnection
 {
 	asio::ip::tcp::socket m_socket;
 	asio::io_service::strand m_strand;
-	std::deque<std::string> m_messages;
+	std::deque<std::string> m_outMessages;
+	std::string m_inMessage;
 
 public:
+	CollabConnection(asio::ip::tcp::socket socket);
 	CollabConnection();
 	~CollabConnection();
 
@@ -78,6 +80,7 @@ class CollabServer
 	std::set<NetworkedDocument> m_documents;
 	std::set<std::shared_ptr<CollabConnection>> m_connections;
 	asio::ip::tcp::acceptor m_acceptor;
+	asio::ip::tcp::socket m_socket;
 	mpt::mutex m_mutex;
 	mpt::thread m_thread;
 

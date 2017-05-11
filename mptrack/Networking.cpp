@@ -26,6 +26,12 @@ std::unique_ptr<Networking::CollabServer> collabServer;
 std::unique_ptr<Networking::IOService> ioService;
 
 
+struct MsgHeader
+{
+	uint16le compressedSize, origSize;
+};
+
+
 IOService::IOService()
 {
 	m_thread = std::move(mpt::thread([this]()
@@ -50,6 +56,15 @@ void IOService::Run()
 }
 
 
+CollabConnection::CollabConnection(asio::ip::tcp::socket socket)
+	: m_socket(std::move(socket))
+	, m_strand(io_service)
+{
+	//asio::ip::v6_only option(false);
+	//m_socket.set_option(option);
+}
+
+
 CollabConnection::CollabConnection()
 	: m_socket(io_service)
 	, m_strand(io_service)
@@ -67,6 +82,62 @@ CollabConnection::~CollabConnection()
 
 std::string CollabConnection::Read()
 {
+	m_inMessage.resize(sizeof(MsgHeader));
+	asio::async_read(m_socket,
+		asio::buffer(&m_inMessage[0], sizeof(MsgHeader)),
+		[this](std::error_code ec, std::size_t /*length*/)
+	{
+		if(!ec)
+		{
+			MsgHeader header;
+			std::memcpy(&header, m_inMessage.data(), sizeof(MsgHeader));
+			m_inMessage.resize(header.compressedSize);
+			asio::async_read(m_socket,
+				asio::buffer(&m_inMessage[0], m_inMessage.size()),
+				[this, header](std::error_code ec, std::size_t /*length*/)
+			{
+				if(!ec)
+				{
+					if(header.origSize)
+					{
+						std::string decompressedMessage;
+						decompressedMessage.reserve(header.origSize);
+						z_stream strm;
+						strm.zalloc = Z_NULL;
+						strm.zfree = Z_NULL;
+						strm.opaque = Z_NULL;
+						auto ret = inflateInit2(&strm, 15);
+						strm.avail_in = m_inMessage.size();
+						strm.next_in = (Bytef *)m_inMessage.data();
+						char outBuf[4096];
+						do
+						{
+							strm.avail_out = 4096;
+							strm.next_out = reinterpret_cast<Bytef *>(outBuf);
+							ret = inflate(&strm, Z_FINISH);
+							decompressedMessage.insert(decompressedMessage.size(), outBuf, 4096 - strm.avail_out);
+						} while(strm.avail_out == 0);
+						inflateEnd(&strm);
+						m_inMessage = std::move(decompressedMessage);
+					}
+
+					Read();
+				}
+			});
+		}
+	});
+
+
+	/*m_strand.dispatch([this]()
+	{
+		m_messages.push_back(compressedMessage);
+		if(m_messages.size() > 1)
+		{
+			// Outstanding async_write
+			return;
+		}
+		WriteImpl();
+	});*/
 	/*asio::async_read(m_socket,
 		asio::buffer(read_msg_.body(), read_msg_.body_length()),
 		[this](boost::system::error_code ec, std::size_t length)
@@ -86,8 +157,14 @@ std::string CollabConnection::Read()
 
 void CollabConnection::Write(const std::string &message)
 {
+	if(message.empty())
+		return;
+
 	// First, try to compress the message
-	std::string compressedMessage(4, 0);
+	MsgHeader header;
+	MPT_ASSERT(message.size() < size_t(Util::MaxValueOfType(header.origSize.get())));
+
+	std::string compressedMessage(sizeof(header), 0);
 	z_stream strm;
 	strm.zalloc = Z_NULL;
 	strm.zfree = Z_NULL;
@@ -104,23 +181,24 @@ void CollabConnection::Write(const std::string &message)
 		compressedMessage.insert(compressedMessage.size(), outBuf, 4096 - strm.avail_out);
 	} while(strm.avail_out == 0);
 	deflateEnd(&strm);
-	int32le size;
-	if(compressedMessage.size() - 4 > message.size())
+	if(compressedMessage.size() - sizeof(header) > message.size())
 	{
-		// Too short to compress - denoted by negative length
-		std::copy(message.begin(), message.end(), compressedMessage.begin() + 4);
-		compressedMessage.resize(message.size() + 4);
-		size = -mpt::saturate_cast<int32>(message.size());
+		// Too short to compress - denoted by empty original length
+		std::copy(message.begin(), message.end(), compressedMessage.begin() + sizeof(header));
+		compressedMessage.resize(message.size() + sizeof(header));
+		header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
+		header.origSize = 0;
 	} else
 	{
-		size = mpt::saturate_cast<int32>(compressedMessage.size() - 4);
+		header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(compressedMessage.size() - sizeof(header));
+		header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
 	}
-	std::memcpy(&compressedMessage[0], &size, 4);
+	std::memcpy(&compressedMessage[0], &header, sizeof(header));
 
 	m_strand.dispatch([this, compressedMessage]()
 	{
-		m_messages.push_back(compressedMessage);
-		if(m_messages.size() > 1)
+		m_outMessages.push_back(compressedMessage);
+		if(m_outMessages.size() > 1)
 		{
 			// Outstanding async_write
 			return;
@@ -132,24 +210,24 @@ void CollabConnection::Write(const std::string &message)
 
 void CollabConnection::Close()
 {
-	io_service.post([this]() { m_socket.close(); });
+	m_socket.close();
 }
 
 
 void CollabConnection::WriteImpl()
 {
-	const std::string &message = m_messages.front();
+	const std::string &message = m_outMessages.front();
 	asio::async_write(m_socket, asio::buffer(message.c_str(), message.size()),
 		m_strand.wrap([this](std::error_code error, const size_t /*bytesTransferred*/)
 	{
-		m_messages.pop_front();
+		m_outMessages.pop_front();
 		if(error)
 		{
 			std::cerr << "Write Error: " << std::system_error(error).what() << std::endl;
 			return;
 		}
 
-		if(!m_messages.empty())
+		if(!m_outMessages.empty())
 		{
 			WriteImpl();
 		}
@@ -159,6 +237,7 @@ void CollabConnection::WriteImpl()
 
 CollabServer::CollabServer()
 	: m_acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v6(), DEFAULT_PORT))
+	, m_socket(io_service)
 {
 	StartAccept();
 	IOService::Run();
@@ -187,13 +266,8 @@ void CollabServer::CloseDocument(CModDoc *modDoc)
 
 void CollabServer::StartAccept()
 {
-	auto conn = std::make_shared<CollabConnection>();
-	{
-		MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-		m_connections.insert(conn);
-	}
-	m_acceptor.async_accept(conn->GetSocket(),
-		[this, conn](std::error_code ec)
+	m_acceptor.async_accept(m_socket,
+		[this](std::error_code ec)
 	{
 		if(!ec)
 		{
@@ -211,13 +285,11 @@ void CollabServer::StartAccept()
 				docs.push_back(picojson::value(docObj));
 			}
 			welcome["docs"] = picojson::value(docs);
+			auto conn = std::make_shared<CollabConnection>(std::move(m_socket));
+			m_connections.insert(conn);
 			conn->Write(picojson::value(welcome).serialize());
-		} else
-		{
-			MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-			m_connections.erase(conn);
+			StartAccept();
 		}
-		StartAccept();
 	});
 }
 
@@ -232,7 +304,7 @@ CollabClient::CollabClient(const std::string &server, const std::string &port)
 	{
 		if(!ec)
 		{
-			//do_read_header();
+			m_connection.Read();
 		}
 	});
 	
@@ -258,15 +330,7 @@ CollabClient::CollabClient(const std::string &server, const std::string &port)
 
 void CollabClient::Write(const std::string &msg)
 {
-	io_service.post([this, msg]()
-	{
-		/*bool write_in_progress = !write_msgs_.empty();
-		write_msgs_.push_back(msg);
-		if(!write_in_progress)
-		{
-			do_write();
-		}*/
-	});
+	m_connection.Write(msg);
 }
 
 }
