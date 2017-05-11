@@ -414,28 +414,7 @@ solution "OpenMPT"
  dofile "../../build/premake/ext-UnRAR.lua"
  dofile "../../build/premake/ext-vorbis.lua"
  dofile "../../build/premake/ext-zlib.lua"
---[[
- externalproject "gpr"
-   location "../../include/grpc/vsprojects/vcxproj/gpr/"
-   uuid "B23D3D1A-9438-4EDA-BEB6-9A0A03D17792"
-   kind "StaticLib"
-   language "C++"
- externalproject "grpc"
-   location "../../include/grpc/vsprojects/vcxproj/grpc/"
-   uuid "29D16885-7228-4C31-81ED-5F9187C7F2A9"
-   kind "StaticLib"
-   language "C++"
- externalproject "grpc++"
-   location "../../include/grpc/vsprojects/vcxproj/grpc++/"
-   uuid "C187A093-A0FE-489D-A40A-6E33DE0F9FEB"
-   kind "StaticLib"
-   language "C++"
- externalproject "grpc++_unsecure"
-   location "../../include/grpc/vsprojects/vcxproj/grpc++_unsecure/"
-   uuid "6EE56155-DF7C-4F6E-BFC4-F6F776BEB211"
-   kind "StaticLib"
-   language "C++"
---]]
+
 end
 
 -- overwrite all external projects once again with the full matrix of possible build config combinations

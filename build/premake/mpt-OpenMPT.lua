@@ -19,15 +19,6 @@ if layout == "custom" then
 else
   vpaths { ["*"] = "../../" }
 end
-
---[[  filter { "configurations:*Debug*" }
-    libdirs { "../../include/grpc/vsprojects/Debug/" }
-  filter {}
-  filter { "configurations:*Release*" }
-    libdirs { "../../include/grpc/vsprojects/Release/" }
-  filter {}
---]]
-
   dofile "../../build/premake/premake-defaults-EXEGUI.lua"
   dofile "../../build/premake/premake-defaults.lua"
   filter { "configurations:*Shared" }
@@ -51,8 +42,6 @@ end
    "../../include/portaudio/include",
    "../../include/vorbis/include",
    "../../include/zlib",
-
---   "../../include/grpc/include",
   }
 	filter { "action:vs*" }
 		includedirs ( extincludedirs )
@@ -124,10 +113,6 @@ end
    "rtmidi",
    "soundtouch",
    "vorbis",
-
-   --"gpr",
-   --"grpc",
-   --"grpc++_unsecure",
   }
   filter { "configurations:*Shared" }
   filter { "not configurations:*Shared" }
