@@ -31,27 +31,22 @@ END_MESSAGE_MAP()
 BOOL NetworkingDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	SetDlgItemText(IDC_EDIT1, mpt::ToCString(mpt::String::Print(MPT_ULITERAL("%1:%2"), MPT_ULITERAL("localhost"), DEFAULT_PORT)));
+	SetDlgItemText(IDC_EDIT1, _T("localhost"));
+	SetDlgItemInt(IDC_EDIT2, DEFAULT_PORT);
 	return TRUE;
 }
 
 
 void NetworkingDlg::OnConnect()
 {
-	CString s;
-	mpt::ustring server, port;
-	GetDlgItemText(IDC_EDIT1, s);
-	if(s.Find(_T(':')) == -1)
-	{
-		server = mpt::ToUnicode(s);
-		port = mpt::ToUString(DEFAULT_PORT);
-	} else
-	{
-		auto split = mpt::String::Split<mpt::ustring>(mpt::ToUnicode(s), MPT_USTRING(":"));
-		server = split[0];
-		port = split[1];
-	}
-	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToCharset(mpt::CharsetUTF8, port)));
+	CString server;
+	GetDlgItemText(IDC_EDIT1, server);
+	auto port = GetDlgItemInt(IDC_EDIT2);
+	if(port == 0)
+		port = DEFAULT_PORT;
+
+	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port)));
+	collabClients.back()->Connect();
 }
 
 
