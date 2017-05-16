@@ -12,6 +12,7 @@
 #include <asio.hpp>
 #include <set>
 #include <deque>
+#include <zlib/zlib.h>
 #include "../common/mptMutex.h"
 #include "../common/mptThread.h"
 
@@ -36,19 +37,21 @@ public:
 };
 
 
-class CollabConnection
+class CollabConnection : public std::enable_shared_from_this<CollabConnection>
 {
 	asio::ip::tcp::socket m_socket;
 	asio::io_service::strand m_strand;
 	std::deque<std::string> m_outMessages;
+	z_stream m_strmIn, m_strmOut;
 	std::string m_inMessage;
 
 public:
 	CollabConnection(asio::ip::tcp::socket socket);
-	CollabConnection();
+	CollabConnection(const CollabConnection &) = default;
+	CollabConnection(CollabConnection &&) = default;
 	~CollabConnection();
 
-	asio::ip::tcp::socket& GetSocket() { return m_socket; }
+	//asio::ip::tcp::socket& GetSocket() { return m_socket; }
 	std::string Read();
 
 	void Write(const std::string &message);
@@ -99,7 +102,8 @@ protected:
 class CollabClient
 {
 	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
-	CollabConnection m_connection;
+	asio::ip::tcp::socket m_socket;
+	std::shared_ptr<CollabConnection> m_connection;
 
 public:
 	CollabClient(const std::string &server, const std::string &port);
@@ -108,8 +112,9 @@ public:
 	void Write(const std::string &msg);
 };
 
-extern std::unique_ptr<Networking::CollabServer> collabServer;
-extern std::unique_ptr<Networking::IOService> ioService;
+extern std::vector<std::shared_ptr<CollabClient>> collabClients;
+extern std::shared_ptr<CollabServer> collabServer;
+extern std::unique_ptr<IOService> ioService;
 
 }
 

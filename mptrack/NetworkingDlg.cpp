@@ -18,7 +18,6 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Networking
 {
 
-	
 BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//{{AFX_MSG_MAP(NetworkingDlg)
 	//ON_COMMAND(IDC_BUTTON1,	OnStartServer)
@@ -52,7 +51,7 @@ void NetworkingDlg::OnConnect()
 		server = split[0];
 		port = split[1];
 	}
-	new CollabClient(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToCharset(mpt::CharsetUTF8, port));
+	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToCharset(mpt::CharsetUTF8, port)));
 }
 
 

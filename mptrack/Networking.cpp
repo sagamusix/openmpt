@@ -13,7 +13,6 @@
 #include "Moddoc.h"
 #include "../common/version.h"
 #include <picojson/picojson.h>
-#include <zlib/zlib.h>
 #include <iostream>
 
 OPENMPT_NAMESPACE_BEGIN
@@ -22,8 +21,9 @@ namespace Networking
 {
 
 asio::io_service io_service;
-std::unique_ptr<Networking::CollabServer> collabServer;
-std::unique_ptr<Networking::IOService> ioService;
+std::vector<std::shared_ptr<CollabClient>> collabClients;
+std::shared_ptr<CollabServer> collabServer;
+std::unique_ptr<IOService> ioService;
 
 
 struct MsgHeader
@@ -51,7 +51,7 @@ IOService::~IOService()
 
 void IOService::Run()
 {
-	if(ioService == nullptr)
+	if(ioService == nullptr || !ioService->m_thread.joinable())
 		ioService = mpt::make_unique<IOService>();
 }
 
@@ -62,66 +62,62 @@ CollabConnection::CollabConnection(asio::ip::tcp::socket socket)
 {
 	//asio::ip::v6_only option(false);
 	//m_socket.set_option(option);
-}
 
+	m_strmIn.zalloc = Z_NULL;
+	m_strmIn.zfree = Z_NULL;
+	m_strmIn.opaque = Z_NULL;
+	inflateInit2(&m_strmIn, MAX_WBITS);
 
-CollabConnection::CollabConnection()
-	: m_socket(io_service)
-	, m_strand(io_service)
-{
-	//asio::ip::v6_only option(false);
-	//m_socket.set_option(option);
+	m_strmOut.zalloc = Z_NULL;
+	m_strmOut.zfree = Z_NULL;
+	m_strmOut.opaque = Z_NULL;
+	deflateInit2(&m_strmOut, Z_DEFAULT_COMPRESSION /*Z_BEST_COMPRESSION*/, Z_DEFLATED, MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 }
 
 
 CollabConnection::~CollabConnection()
 {
 	Close();
+	inflateEnd(&m_strmIn);
+	deflateEnd(&m_strmOut);
 }
 
 
 std::string CollabConnection::Read()
 {
+	auto that = shared_from_this();
 	m_inMessage.resize(sizeof(MsgHeader));
 	asio::async_read(m_socket,
 		asio::buffer(&m_inMessage[0], sizeof(MsgHeader)),
-		[this](std::error_code ec, std::size_t /*length*/)
+		[that](std::error_code ec, std::size_t /*length*/)
 	{
 		if(!ec)
 		{
 			MsgHeader header;
-			std::memcpy(&header, m_inMessage.data(), sizeof(MsgHeader));
-			m_inMessage.resize(header.compressedSize);
-			asio::async_read(m_socket,
-				asio::buffer(&m_inMessage[0], m_inMessage.size()),
-				[this, header](std::error_code ec, std::size_t /*length*/)
+			std::memcpy(&header, that->m_inMessage.data(), sizeof(MsgHeader));
+			that->m_inMessage.resize(header.compressedSize);
+			asio::async_read(that->m_socket,
+				asio::buffer(&that->m_inMessage[0], that->m_inMessage.size()),
+				[that, header](std::error_code ec, std::size_t /*length*/)
 			{
 				if(!ec)
 				{
-					if(header.origSize)
+					std::string decompressedMessage;
+					decompressedMessage.reserve(header.origSize);
+					auto &strm = that->m_strmIn;
+					strm.avail_in = that->m_inMessage.size();
+					strm.next_in = (Bytef *)that->m_inMessage.data();
+					char outBuf[4096];
+					do
 					{
-						std::string decompressedMessage;
-						decompressedMessage.reserve(header.origSize);
-						z_stream strm;
-						strm.zalloc = Z_NULL;
-						strm.zfree = Z_NULL;
-						strm.opaque = Z_NULL;
-						auto ret = inflateInit2(&strm, 15);
-						strm.avail_in = m_inMessage.size();
-						strm.next_in = (Bytef *)m_inMessage.data();
-						char outBuf[4096];
-						do
-						{
-							strm.avail_out = 4096;
-							strm.next_out = reinterpret_cast<Bytef *>(outBuf);
-							ret = inflate(&strm, Z_FINISH);
-							decompressedMessage.insert(decompressedMessage.size(), outBuf, 4096 - strm.avail_out);
-						} while(strm.avail_out == 0);
-						inflateEnd(&strm);
-						m_inMessage = std::move(decompressedMessage);
-					}
+						strm.avail_out = sizeof(outBuf);
+						strm.next_out = reinterpret_cast<Bytef *>(outBuf);
+						inflate(&strm, Z_FINISH);
+						decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
+					} while(strm.avail_out == 0);
+					//m_inMessage = std::move(decompressedMessage);
 
-					Read();
+					that->Read();
 				}
 			});
 		}
@@ -160,50 +156,35 @@ void CollabConnection::Write(const std::string &message)
 	if(message.empty())
 		return;
 
-	// First, try to compress the message
+	// First, we compress the message. We flush the results but keep the state for exploiting similarities between messages.
 	MsgHeader header;
 	MPT_ASSERT(message.size() < size_t(Util::MaxValueOfType(header.origSize.get())));
 
 	std::string compressedMessage(sizeof(header), 0);
-	z_stream strm;
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-	auto ret = deflateInit2(&strm, /*Z_DEFAULT_COMPRESSION*/ Z_BEST_COMPRESSION, Z_DEFLATED, 15, 8, Z_DEFAULT_STRATEGY);
-	strm.avail_in = message.size();
-	strm.next_in = (Bytef *)message.data();
+	m_strmOut.avail_in = message.size();
+	m_strmOut.next_in = (Bytef *)message.data();
 	char outBuf[4096];
 	do
 	{
-		strm.avail_out = 4096;
-		strm.next_out = reinterpret_cast<Bytef *>(outBuf);
-		ret = deflate(&strm, Z_FINISH);
-		compressedMessage.insert(compressedMessage.size(), outBuf, 4096 - strm.avail_out);
-	} while(strm.avail_out == 0);
-	deflateEnd(&strm);
-	if(compressedMessage.size() - sizeof(header) > message.size())
-	{
-		// Too short to compress - denoted by empty original length
-		std::copy(message.begin(), message.end(), compressedMessage.begin() + sizeof(header));
-		compressedMessage.resize(message.size() + sizeof(header));
-		header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
-		header.origSize = 0;
-	} else
-	{
-		header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(compressedMessage.size() - sizeof(header));
-		header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
-	}
+		m_strmOut.avail_out = sizeof(outBuf);
+		m_strmOut.next_out = reinterpret_cast<Bytef *>(outBuf);
+		deflate(&m_strmOut, Z_PARTIAL_FLUSH);
+		compressedMessage.insert(compressedMessage.size(), outBuf, sizeof(outBuf) - m_strmOut.avail_out);
+	} while(m_strmOut.avail_out == 0);
+	header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(compressedMessage.size() - sizeof(header));
+	header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
 	std::memcpy(&compressedMessage[0], &header, sizeof(header));
 
-	m_strand.dispatch([this, compressedMessage]()
+	auto that = shared_from_this();
+	m_strand.dispatch([that, compressedMessage]()
 	{
-		m_outMessages.push_back(compressedMessage);
-		if(m_outMessages.size() > 1)
+		that->m_outMessages.push_back(compressedMessage);
+		if(that->m_outMessages.size() > 1)
 		{
 			// Outstanding async_write
 			return;
 		}
-		WriteImpl();
+		that->WriteImpl();
 	});
 }
 
@@ -217,19 +198,20 @@ void CollabConnection::Close()
 void CollabConnection::WriteImpl()
 {
 	const std::string &message = m_outMessages.front();
+	auto that = shared_from_this();
 	asio::async_write(m_socket, asio::buffer(message.c_str(), message.size()),
-		m_strand.wrap([this](std::error_code error, const size_t /*bytesTransferred*/)
+		m_strand.wrap([that](std::error_code error, const size_t /*bytesTransferred*/)
 	{
-		m_outMessages.pop_front();
+		that->m_outMessages.pop_front();
 		if(error)
 		{
 			std::cerr << "Write Error: " << std::system_error(error).what() << std::endl;
 			return;
 		}
 
-		if(!m_outMessages.empty())
+		if(!that->m_outMessages.empty())
 		{
-			WriteImpl();
+			that->WriteImpl();
 		}
 	}));
 }
@@ -295,16 +277,18 @@ void CollabServer::StartAccept()
 
 
 CollabClient::CollabClient(const std::string &server, const std::string &port)
+	: m_socket(io_service)
 {
 	asio::ip::tcp::resolver resolver(io_service);
 	m_endpoint_iterator = resolver.resolve({ server, port });
 
-	asio::async_connect(m_connection.GetSocket(), m_endpoint_iterator,
+	asio::async_connect(m_socket, m_endpoint_iterator,
 		[this](std::error_code ec, asio::ip::tcp::resolver::iterator)
 	{
 		if(!ec)
 		{
-			m_connection.Read();
+			m_connection = std::make_shared<CollabConnection>(std::move(m_socket));
+			m_connection->Read();
 		}
 	});
 	
@@ -330,7 +314,7 @@ CollabClient::CollabClient(const std::string &server, const std::string &port)
 
 void CollabClient::Write(const std::string &msg)
 {
-	m_connection.Write(msg);
+	m_connection->Write(msg);
 }
 
 }

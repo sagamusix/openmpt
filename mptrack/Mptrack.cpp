@@ -1293,7 +1293,7 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 		Test::DoTests();
 #endif
 
-	Networking::collabServer = mpt::make_unique<Networking::CollabServer>();
+	Networking::collabServer = std::make_shared<Networking::CollabServer>();
 	//Networking::collabServer->Run();
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
