@@ -28,11 +28,30 @@ BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 END_MESSAGE_MAP()
 
 
+
+void NetworkingDlg::DoDataExchange(CDataExchange* pDX)
+//----------------------------------------------------
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(CModTypeDlg)
+	DDX_Control(pDX, IDC_LIST1, m_List);
+	//}}AFX_DATA_MAP
+}
+
+
 BOOL NetworkingDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	SetDlgItemText(IDC_EDIT1, _T("localhost"));
 	SetDlgItemInt(IDC_EDIT2, DEFAULT_PORT);
+
+	const CListCtrlEx::Header headers[] =
+	{
+		{ _T("Module"),			310, LVCFMT_LEFT },
+		{ _T("Collaborators"),	90, LVCFMT_LEFT },
+	};
+	m_List.SetHeaders(headers);
+
 	return TRUE;
 }
 

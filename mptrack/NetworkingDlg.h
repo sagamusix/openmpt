@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "CListCtrl.h"
+
 OPENMPT_NAMESPACE_BEGIN
 
 namespace Networking
@@ -17,6 +19,8 @@ namespace Networking
 
 class NetworkingDlg : public CDialog
 {
+	CListCtrlEx m_List;
+
 public:
 	NetworkingDlg(CWnd *parent)
 		: CDialog(IDD_NETWORKING, parent)
@@ -24,7 +28,7 @@ public:
 
 protected:
 	//{{AFX_VIRTUAL(CModTypeDlg)
-	//virtual void DoDataExchange(CDataExchange* pDX);
+	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	//virtual void OnOK();
 
