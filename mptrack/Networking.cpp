@@ -263,7 +263,7 @@ void CollabServer::Receive(const std::string &msg)
 
 CollabClient::CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener)
 	: m_socket(io_service)
-	, m_listener(Listener)
+	, m_listener(listener)
 {
 	asio::ip::tcp::resolver resolver(io_service);
 	m_endpoint_iterator = resolver.resolve({ server, port });
