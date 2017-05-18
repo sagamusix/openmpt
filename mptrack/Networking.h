@@ -113,9 +113,10 @@ class CollabClient : public Listener, public std::enable_shared_from_this<Collab
 	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
 	asio::ip::tcp::socket m_socket;
 	std::shared_ptr<CollabConnection> m_connection;
+	std::weak_ptr<Listener> m_listener;
 
 public:
-	CollabClient(const std::string &server, const std::string &port);
+	CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener);
 	void Connect();
 
 	void Close();

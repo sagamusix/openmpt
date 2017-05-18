@@ -2367,8 +2367,7 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 void CMainFrame::OnNetworking()
 //-----------------------------
 {
-	Networking::NetworkingDlg dlg(this);
-	dlg.DoModal();
+	Networking::NetworkingDlg::Show(this);
 }
 
 

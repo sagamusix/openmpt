@@ -12,10 +12,19 @@
 #include "Networking.h"
 #include "Moddoc.h"
 #include "../common/version.h"
+#include <cereal/cereal.hpp>
 #include <picojson/picojson.h>
 #include <iostream>
 
 OPENMPT_NAMESPACE_BEGIN
+
+
+template<class Archive>
+void serialize(Archive& archive, ModCommand &m)
+{
+	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
+}
+
 
 namespace Networking
 {
@@ -252,8 +261,9 @@ void CollabServer::Receive(const std::string &msg)
 }
 
 
-CollabClient::CollabClient(const std::string &server, const std::string &port)
+CollabClient::CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener)
 	: m_socket(io_service)
+	, m_listener(Listener)
 {
 	asio::ip::tcp::resolver resolver(io_service);
 	m_endpoint_iterator = resolver.resolve({ server, port });
@@ -285,6 +295,10 @@ void CollabClient::Write(const std::string &msg)
 
 void CollabClient::Receive(const std::string &msg)
 {
+	if(auto listener = m_listener.lock())
+	{
+		listener->Receive(msg);
+	}
 	picojson::value root;
 	if(picojson::parse(root, msg).empty() && root.is<picojson::object>())
 	{

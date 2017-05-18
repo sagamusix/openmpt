@@ -11,12 +11,27 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "NetworkingDlg.h"
-#include "Networking.h"
+#include <picojson/picojson.h>
 
 OPENMPT_NAMESPACE_BEGIN
 
 namespace Networking
 {
+
+std::shared_ptr<NetworkingDlg> dialogInstance;
+
+void NetworkingDlg::Show(CWnd *parent)
+{
+	if(dialogInstance == nullptr)
+	{
+		dialogInstance = std::make_shared<NetworkingDlg>();
+		dialogInstance->Create(IDD_NETWORKING, parent);
+	}
+	dialogInstance->ShowWindow(SW_SHOW);
+	dialogInstance->BringWindowToTop();
+}
+
+
 
 BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//{{AFX_MSG_MAP(NetworkingDlg)
@@ -30,12 +45,18 @@ END_MESSAGE_MAP()
 
 
 void NetworkingDlg::DoDataExchange(CDataExchange* pDX)
-//----------------------------------------------------
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CModTypeDlg)
 	DDX_Control(pDX, IDC_LIST1, m_List);
 	//}}AFX_DATA_MAP
+}
+
+
+void NetworkingDlg::PostNcDestroy()
+{
+	CDialog::PostNcDestroy();
+	dialogInstance = nullptr;
 }
 
 
@@ -64,8 +85,26 @@ void NetworkingDlg::OnConnect()
 	if(port == 0)
 		port = DEFAULT_PORT;
 
-	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port)));
+	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance));
 	collabClients.back()->Connect();
+}
+
+
+void NetworkingDlg::Receive(const std::string &msg)
+{
+	picojson::value root;
+	if(picojson::parse(root, msg).empty() && root.is<picojson::object>())
+	{
+		auto rootObj = root.get<picojson::object>();
+		if(rootObj["modules"].is<picojson::array>())
+		{
+			auto modules = rootObj["modules"].get<picojson::array>();
+			for(auto &m : modules)
+			{
+				auto module = m.get<picojson::object>();
+			}
+		}
+	}
 }
 
 

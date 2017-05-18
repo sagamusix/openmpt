@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "Networking.h"
 #include "CListCtrl.h"
 
 OPENMPT_NAMESPACE_BEGIN
@@ -17,24 +18,25 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Networking
 {
 
-class NetworkingDlg : public CDialog
+class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
 
 public:
-	NetworkingDlg(CWnd *parent)
-		: CDialog(IDD_NETWORKING, parent)
-	{ }
+	static void Show(CWnd *parent);
 
 protected:
 	//{{AFX_VIRTUAL(CModTypeDlg)
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
+	virtual void PostNcDestroy();
 	//virtual void OnOK();
 
 	//}}AFX_VIRTUAL
 
 	afx_msg void OnConnect();
+
+	void Receive(const std::string &msg) override;
 
 	DECLARE_MESSAGE_MAP()
 };
