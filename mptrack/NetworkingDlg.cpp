@@ -11,6 +11,8 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "NetworkingDlg.h"
+#include "../common/version.h"
+#include "Reporting.h"
 #include <picojson/picojson.h>
 
 OPENMPT_NAMESPACE_BEGIN
@@ -37,6 +39,7 @@ BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//{{AFX_MSG_MAP(NetworkingDlg)
 	//ON_COMMAND(IDC_BUTTON1,	OnStartServer)
 	ON_COMMAND(IDC_BUTTON2,	OnConnect)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, OnSelectDocument)
 
 	//}}AFX_MSG_MAP
 
@@ -72,6 +75,7 @@ BOOL NetworkingDlg::OnInitDialog()
 		{ _T("Collaborators"),	90, LVCFMT_LEFT },
 	};
 	m_List.SetHeaders(headers);
+	m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
 	return TRUE;
 }
@@ -90,20 +94,46 @@ void NetworkingDlg::OnConnect()
 }
 
 
+void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int index = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
+	if(index >= 0)
+	{
+
+	}
+	*pResult = 0;
+}
+
+
 void NetworkingDlg::Receive(const std::string &msg)
 {
-	picojson::value root;
-	if(picojson::parse(root, msg).empty() && root.is<picojson::object>())
+	try
 	{
-		auto rootObj = root.get<picojson::object>();
-		if(rootObj["modules"].is<picojson::array>())
+		picojson::value root;
+		if(picojson::parse(root, msg).empty())
 		{
-			auto modules = rootObj["modules"].get<picojson::array>();
-			for(auto &m : modules)
+			auto rootObj = root.get<picojson::object>();
+			auto serverVersion = rootObj["version"].get<std::string>();
+			if(serverVersion != MptVersion::str)
+			{
+				Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", serverVersion), "Collaboration Server");
+				return;
+			}
+
+			m_List.SetRedraw(FALSE);
+			m_List.DeleteAllItems();
+			for(auto &m : rootObj["docs"].get<picojson::array>())
 			{
 				auto module = m.get<picojson::object>();
+				int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, module["name"].get<std::string>()));
+				if(insertAt == -1)
+					continue;
+				m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), module["collaborators"].get<double>(), module["collaborators_max"].get<double>()).c_str());
 			}
+			m_List.SetRedraw(TRUE);
 		}
+	} catch(...)
+	{
 	}
 }
 

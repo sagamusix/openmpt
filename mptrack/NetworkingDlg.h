@@ -35,6 +35,7 @@ protected:
 	//}}AFX_VIRTUAL
 
 	afx_msg void OnConnect();
+	afx_msg void OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult);
 
 	void Receive(const std::string &msg) override;
 
