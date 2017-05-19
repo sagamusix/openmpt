@@ -19,13 +19,6 @@
 OPENMPT_NAMESPACE_BEGIN
 
 
-template<class Archive>
-void serialize(Archive& archive, ModCommand &m)
-{
-	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
-}
-
-
 namespace Networking
 {
 
