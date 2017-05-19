@@ -306,6 +306,9 @@
     <ClInclude Include="..\..\mptrack\Mptrack.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\NetworkTypes.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\Networking.h">
       <Filter>mptrack</Filter>
     </ClInclude>

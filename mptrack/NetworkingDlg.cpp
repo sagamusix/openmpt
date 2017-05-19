@@ -11,9 +11,9 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "NetworkingDlg.h"
+#include "NetworkTypes.h"
 #include "../common/version.h"
 #include "Reporting.h"
-#include <picojson/picojson.h>
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -107,34 +107,28 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 
 void NetworkingDlg::Receive(const std::string &msg)
 {
-	try
-	{
-		picojson::value root;
-		if(picojson::parse(root, msg).empty())
-		{
-			auto rootObj = root.get<picojson::object>();
-			auto serverVersion = rootObj["version"].get<std::string>();
-			if(serverVersion != MptVersion::str)
-			{
-				Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", serverVersion), "Collaboration Server");
-				return;
-			}
+	std::istringstream ss(msg);
+	WelcomeMsg welcome;
+	cereal::BinaryInputArchive inArchive(ss);
+	inArchive >> welcome;
 
-			m_List.SetRedraw(FALSE);
-			m_List.DeleteAllItems();
-			for(auto &m : rootObj["docs"].get<picojson::array>())
-			{
-				auto module = m.get<picojson::object>();
-				int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, module["name"].get<std::string>()));
-				if(insertAt == -1)
-					continue;
-				m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), module["collaborators"].get<double>(), module["collaborators_max"].get<double>()).c_str());
-			}
-			m_List.SetRedraw(TRUE);
-		}
-	} catch(...)
+	if(welcome.version != MptVersion::str)
 	{
+		Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", welcome.version), "Collaboration Server");
+		return;
 	}
+
+	m_List.SetRedraw(FALSE);
+	m_List.DeleteAllItems();
+	for(auto &doc : welcome.documents)
+	{
+		int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, doc.name));
+		if(insertAt == -1)
+			continue;
+		m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
+		m_List.SetItemData(insertAt, doc.id);	// TODO
+	}
+	m_List.SetRedraw(TRUE);
 }
 
 

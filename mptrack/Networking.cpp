@@ -10,10 +10,10 @@
 
 #include "stdafx.h"
 #include "Networking.h"
+#include "NetworkTypes.h"
 #include "Moddoc.h"
 #include "../common/version.h"
 #include <cereal/cereal.hpp>
-#include <picojson/picojson.h>
 #include <iostream>
 
 OPENMPT_NAMESPACE_BEGIN
@@ -230,24 +230,24 @@ void CollabServer::StartAccept()
 	{
 		if(!ec)
 		{
-			picojson::object welcome;
-			welcome["type"] = picojson::value("welcome");
-			welcome["version"] = picojson::value(MptVersion::str);
-			picojson::array docs;
-			MPT_LOCK_GUARD<mpt::mutex> lock(that->m_mutex);
-			docs.reserve(that->m_documents.size());
+			WelcomeMsg msg;
+			msg.version = MptVersion::str;
+			msg.documents.reserve(that->m_documents.size());
 			for(auto &doc : that->m_documents)
 			{
-				picojson::object docObj;
-				docObj["name"] = picojson::value(mpt::ToCharset(mpt::CharsetUTF8, doc.GetDocument()->GetTitle()));
-				docObj["collaborators"] = picojson::value(1.0);
-				docObj["collaborators_max"] = picojson::value(4.0);
-				docs.push_back(picojson::value(docObj));
+				DocumentInfo info;
+				info.id = reinterpret_cast<int64>(doc.GetDocument());
+				info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.GetDocument()->GetTitle());
+				info.collaborators = 1;
+				info.maxCollaboratos = 4;
+				msg.documents.push_back(info);
 			}
-			welcome["docs"] = picojson::value(docs);
+
+			std::ostringstream ss;
+			cereal::BinaryOutputArchive ar(ss);
+			ar(msg);
 			auto conn = std::make_shared<CollabConnection>(std::move(that->m_socket), that);
-			that->m_connections.insert(conn);
-			conn->Write(picojson::value(welcome).serialize());
+			conn->Write(ss.str());
 			that->StartAccept();
 		}
 	});
@@ -299,12 +299,6 @@ void CollabClient::Receive(const std::string &msg)
 	{
 		listener->Receive(msg);
 	}
-	picojson::value root;
-	if(picojson::parse(root, msg).empty() && root.is<picojson::object>())
-	{
-		auto rootObj = root.get<picojson::object>();
-	}
-	OutputDebugStringA(msg.c_str());
 }
 
 

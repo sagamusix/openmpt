@@ -757,6 +757,7 @@
     <ClInclude Include="..\..\mptrack\MoveFXSlotDialog.h" />
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
+    <ClInclude Include="..\..\mptrack\NetworkTypes.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
     <ClInclude Include="..\..\mptrack\NetworkingDlg.h" />
     <ClInclude Include="..\..\mptrack\Notification.h" />
