@@ -233,6 +233,9 @@ void CollabServer::StartAccept()
 				info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.GetDocument()->GetTitle());
 				info.collaborators = 1;
 				info.maxCollaboratos = 4;
+				info.spectators = 0;
+				info.maxSpectators = 10;
+				info.password = true;
 				msg.documents.push_back(info);
 			}
 

@@ -71,8 +71,10 @@ BOOL NetworkingDlg::OnInitDialog()
 
 	const CListCtrlEx::Header headers[] =
 	{
-		{ _T("Module"),			310, LVCFMT_LEFT },
+		{ _T("Module"),			140, LVCFMT_LEFT },
 		{ _T("Collaborators"),	90, LVCFMT_LEFT },
+		{ _T("Spectators"),		90, LVCFMT_LEFT },
+		{ _T("Password"),		80, LVCFMT_LEFT },
 	};
 	m_List.SetHeaders(headers);
 	m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
@@ -126,6 +128,8 @@ void NetworkingDlg::Receive(const std::string &msg)
 		if(insertAt == -1)
 			continue;
 		m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
+		m_List.SetItemText(insertAt, 2, mpt::String::Print(_T("%1/%2"), doc.spectators, doc.maxSpectators).c_str());
+		m_List.SetItemText(insertAt, 3, doc.password ? _T("Yes") : _T("No"));
 		m_List.SetItemData(insertAt, doc.id);	// TODO
 	}
 	m_List.SetRedraw(TRUE);

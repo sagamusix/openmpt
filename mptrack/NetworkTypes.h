@@ -26,11 +26,14 @@ struct DocumentInfo
 	int64 id;
 	int32 collaborators;
 	int32 maxCollaboratos;
+	int32 spectators;
+	int32 maxSpectators;
+	bool password;
 
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(name, id, collaborators, maxCollaboratos);
+		archive(name, id, collaborators, maxCollaboratos, spectators, maxSpectators, password);
 	}
 };
 
@@ -48,11 +51,11 @@ struct WelcomeMsg
 };
 
 
-template<class Archive>
+/*template<class Archive>
 void serialize(Archive &archive, ModCommand &m)
 {
 	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
-}
+}*/
 
 }
 
