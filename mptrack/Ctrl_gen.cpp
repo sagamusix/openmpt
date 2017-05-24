@@ -20,6 +20,7 @@
 #include "View_gen.h"
 #include "../common/misc_util.h"
 #include "../soundlib/mod_specifications.h"
+#include "NetworkingDlg.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -29,6 +30,7 @@ BEGIN_MESSAGE_MAP(CCtrlGeneral, CModControlDlg)
 	//{{AFX_MSG_MAP(CCtrlGeneral)
 	ON_WM_VSCROLL()
 	ON_COMMAND(IDC_BUTTON1,					OnTapTempo)
+	ON_COMMAND(IDC_BUTTON2,					OnCollaborate)
 	ON_COMMAND(IDC_BUTTON_MODTYPE,			OnSongProperties)
 	ON_COMMAND(IDC_CHECK_LOOPSONG,			OnLoopSongChanged)
 	ON_EN_CHANGE(IDC_EDIT_SONGTITLE,		OnTitleChanged)
@@ -704,6 +706,14 @@ void CCtrlGeneral::OnResamplingChanged()
 }
 
 
+void CCtrlGeneral::OnCollaborate()
+//--------------------------------
+{
+	Networking::SharingDlg dlg(this, m_modDoc);
+	dlg.DoModal();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // CVuMeter
@@ -726,7 +736,7 @@ void CVuMeter::OnPaint()
 }
 
 
-VOID CVuMeter::SetVuMeter(LONG lVuMeter, bool force)
+void CVuMeter::SetVuMeter(LONG lVuMeter, bool force)
 //--------------------------------------------------
 {
 	lVuMeter >>= 8;
@@ -744,7 +754,7 @@ VOID CVuMeter::SetVuMeter(LONG lVuMeter, bool force)
 }
 
 
-VOID CVuMeter::DrawVuMeter(CDC &dc, bool /*redraw*/)
+void CVuMeter::DrawVuMeter(CDC &dc, bool /*redraw*/)
 //--------------------------------------------------
 {
 	LONG vu;

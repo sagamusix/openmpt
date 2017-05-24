@@ -40,9 +40,7 @@ BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//ON_COMMAND(IDC_BUTTON1,	OnStartServer)
 	ON_COMMAND(IDC_BUTTON2,	OnConnect)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, OnSelectDocument)
-
 	//}}AFX_MSG_MAP
-
 END_MESSAGE_MAP()
 
 
@@ -101,7 +99,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 	int index = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
 	if(index >= 0)
 	{
-
+		uint64 itemID = m_itemID[index];
 	}
 	*pResult = 0;
 }
@@ -130,10 +128,48 @@ void NetworkingDlg::Receive(const std::string &msg)
 		m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
 		m_List.SetItemText(insertAt, 2, mpt::String::Print(_T("%1/%2"), doc.spectators, doc.maxSpectators).c_str());
 		m_List.SetItemText(insertAt, 3, doc.password ? _T("Yes") : _T("No"));
-		m_List.SetItemData(insertAt, doc.id);	// TODO
+		m_itemID[insertAt] = doc.id;
 	}
 	m_List.SetRedraw(TRUE);
 }
+
+
+void SharingDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(CModTypeDlg)
+	DDX_Control(pDX, IDC_SPIN1, m_CollaboratorsSpin);
+	DDX_Control(pDX, IDC_SPIN2, m_SpectatorsSpin);
+	//}}AFX_DATA_MAP
+}
+
+
+BOOL SharingDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	m_CollaboratorsSpin.SetRange(0, 99);
+	m_SpectatorsSpin.SetRange(0, 99);
+	SetDlgItemInt(IDC_EDIT1, 1);
+	SetDlgItemInt(IDC_EDIT2, 0);
+	return TRUE;
+}
+
+
+void SharingDlg::OnOK()
+{
+	CDialog::OnOK();
+	int collaborators = GetDlgItemInt(IDC_EDIT1), spectators = GetDlgItemInt(IDC_EDIT2);
+	CString password;
+	GetDlgItemText(IDC_EDIT3, password);
+	if(collabServer == nullptr)
+	{
+		collabServer = std::make_shared<Networking::CollabServer>();
+		collabServer->StartAccept();
+	}
+
+	collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));
+}
+
 
 
 }

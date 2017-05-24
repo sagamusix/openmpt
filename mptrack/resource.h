@@ -106,6 +106,8 @@
 #define IDD_LEGACY_PLAYBACK             502
 #define IDD_FIND_RANGE                  503
 #define IDD_MIDI_IO_PLUGIN              504
+#define IDD_SHAREMODULE                 505
+#define IDD_NETWORKING                  506
 #define IDD_CONTROL_GRAPH               507
 #define IDD_SCALE_ENV_POINTS            510
 #define IDD_TUNING                      511
@@ -116,7 +118,6 @@
 #define IDD_MSGBOX_HIDABLE              516
 #define IDD_ADDSILENCE                  517
 #define IDR_DEFAULT_KEYBINDINGS         519
-#define IDD_NETWORKING                  520
 #define IDD_CLEANUP_SONG                521
 #define IDD_CHANNELSETTINGS             522
 #define IDD_KEYBOARD_SPLIT              523

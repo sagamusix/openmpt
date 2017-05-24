@@ -23,7 +23,7 @@ class CModDoc;
 namespace Networking
 {
 
-const int DEFAULT_PORT = 39999;
+const int DEFAULT_PORT = 44100;
 
 class IOService
 {
@@ -72,17 +72,24 @@ protected:
 
 class NetworkedDocument
 {
-	CModDoc *m_modDoc;
-
 public:
-	NetworkedDocument(CModDoc *modDoc)
+	CModDoc &m_modDoc;
+	mpt::ustring m_password;
+	int m_collaborators, m_maxCollaborators;
+	int m_spectators, m_maxSpectators;
+
+	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring())
 		: m_modDoc(modDoc)
+		, m_password(password)
+		, m_collaborators(0)
+		, m_maxCollaborators(collaborators)
+		, m_spectators(0)
+		, m_maxSpectators(spectators)
 	{ }
 
-	operator CModDoc* () { return m_modDoc; }
-	operator const CModDoc* () const { return m_modDoc; }
-	CModDoc* GetDocument() { return m_modDoc; }
-	const CModDoc* GetDocument() const { return m_modDoc; }
+	operator CModDoc& () { return m_modDoc; }
+	operator const CModDoc& () const { return m_modDoc; }
+	bool operator< (const NetworkedDocument &other) const { return &m_modDoc < &other.m_modDoc; }
 };
 
 
@@ -99,8 +106,8 @@ public:
 	CollabServer();
 	~CollabServer();
 
-	void AddDocument(CModDoc *modDoc);
-	void CloseDocument(CModDoc *modDoc);
+	void AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
+	void CloseDocument(CModDoc &modDoc);
 
 	void Receive(const std::string &msg) override;
 

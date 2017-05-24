@@ -12,8 +12,11 @@
 
 #include "Networking.h"
 #include "CListCtrl.h"
+#include <unordered_map>
 
 OPENMPT_NAMESPACE_BEGIN
+
+class CModDoc;
 
 namespace Networking
 {
@@ -21,16 +24,15 @@ namespace Networking
 class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
+	std::unordered_map<int, uint64> m_itemID;
 
 public:
 	static void Show(CWnd *parent);
 
 protected:
-	//{{AFX_VIRTUAL(CModTypeDlg)
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	virtual void PostNcDestroy();
-	//virtual void OnOK();
 
 	//}}AFX_VIRTUAL
 
@@ -40,6 +42,24 @@ protected:
 	void Receive(const std::string &msg) override;
 
 	DECLARE_MESSAGE_MAP()
+};
+
+
+class SharingDlg : public CDialog
+{
+	CSpinButtonCtrl m_CollaboratorsSpin, m_SpectatorsSpin;
+	CModDoc &m_ModDoc;
+
+public:
+	SharingDlg(CWnd *parent, CModDoc &modDoc)
+		: CDialog(IDD_SHAREMODULE, parent)
+		, m_ModDoc(modDoc)
+	{ }
+
+protected:
+	void DoDataExchange(CDataExchange* pDX) override;
+	BOOL OnInitDialog() override;
+	void OnOK() override;
 };
 
 }

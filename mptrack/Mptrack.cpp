@@ -113,7 +113,7 @@ CDocument *CModDocTemplate::OpenDocumentFile(const mpt::PathString &filename, BO
 		if (pMainFrm) pMainFrm->OnDocumentCreated(pDoc);
 		if(Networking::collabServer != nullptr)
 		{
-			Networking::collabServer->AddDocument(pDoc);
+			//Networking::collabServer->AddDocument(pDoc);
 		}
 	} else //Case: pDoc == 0, opening document failed.
 	{
@@ -1292,9 +1292,6 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	if(!cmdInfo.m_bNoTests)
 		Test::DoTests();
 #endif
-
-	Networking::collabServer = std::make_shared<Networking::CollabServer>();
-	Networking::collabServer->StartAccept();
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
 	{

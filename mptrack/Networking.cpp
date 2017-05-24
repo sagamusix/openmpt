@@ -200,18 +200,18 @@ CollabServer::~CollabServer()
 }
 
 
-void CollabServer::AddDocument(CModDoc *modDoc)
+void CollabServer::AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password)
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	m_documents.insert(modDoc);
+	m_documents.insert(NetworkedDocument(modDoc, collaborators, spectators, password));
 }
 
 
-void CollabServer::CloseDocument(CModDoc *modDoc)
+void CollabServer::CloseDocument(CModDoc &modDoc)
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	// TODO: Close connections for all clients that belong to this document
-	m_documents.erase(modDoc);
+	m_documents.erase(NetworkedDocument(modDoc));
 }
 
 
@@ -229,13 +229,13 @@ void CollabServer::StartAccept()
 			for(auto &doc : that->m_documents)
 			{
 				DocumentInfo info;
-				info.id = reinterpret_cast<int64>(doc.GetDocument());
-				info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.GetDocument()->GetTitle());
-				info.collaborators = 1;
-				info.maxCollaboratos = 4;
-				info.spectators = 0;
-				info.maxSpectators = 10;
-				info.password = true;
+				info.id = reinterpret_cast<int64>(&doc.m_modDoc);
+				info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.m_modDoc.GetTitle());
+				info.collaborators = doc.m_collaborators;
+				info.maxCollaboratos = doc.m_maxCollaborators;
+				info.spectators = doc.m_spectators;
+				info.maxSpectators = doc.m_maxSpectators;
+				info.password = !doc.m_password.empty();
 				msg.documents.push_back(info);
 			}
 

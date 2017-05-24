@@ -105,6 +105,7 @@ protected:
 	afx_msg void OnLoopSongChanged();
 	afx_msg void OnEnSetfocusEditSongtitle();
 	afx_msg void OnResamplingChanged();
+	afx_msg void OnCollaborate();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
