@@ -122,6 +122,7 @@ end
    }
    targetname "mptrack"
   filter {}
+	if not _OPTIONS["xp"] then
   linkoptions {
    "/DELAYLOAD:mf.dll",
    "/DELAYLOAD:mfplat.dll",
@@ -129,6 +130,7 @@ end
 --   "/DELAYLOAD:mfuuid.dll", -- static library
    "/DELAYLOAD:propsys.dll",
   }
+	end
   filter { "action:vs*" }
     files {
       "../../build/vs/debug/openmpt.natvis",

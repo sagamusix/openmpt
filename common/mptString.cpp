@@ -113,6 +113,15 @@ List of string types
     runtime conversion. Only use for string literals containing non-ascii
     characters (use MPT_USTRING otherwise).
 
+ *  MPT_ULITERAL / MPT_UCHAR / MPT_UCHAR_TYPE (OpenMPT, libopenmpt)
+    Macros which generate string literals, char literals and the char literal
+    type respectively. These are especially useful in constexpr contexts or
+    global data where MPT_USTRING is either unusable or requires a global
+    contructor to run. Do NOT use as a performance optimization in place of
+    MPT_USTRING however, because MPT_USTRING can be converted to C++11/14 user
+    defined literals eventually, while MPT_ULITERAL cannot because of constexpr
+    requirements.
+
  *  mpt::RawPathString (OpenMPT, libopenmpt)
     Internal representation of mpt::PathString. Only use for parsing path
     fragments.
@@ -192,7 +201,7 @@ if in libopenmpt
 else
  if performance critical inner loop
   if needs unicode support
-   T = wchar_t*
+   T = MPT_UCHAR_TYPE* / MPT_ULITERAL
   else
    T = char*, document the encoding if not clear from context 
   fi
@@ -218,7 +227,11 @@ else
   if directly interfacing with wide winapi
    T = std::wstring
   else
-   T = mpt::ustring
+   if constexpr context or global data
+    T = MPT_UCHAR_TYPE* / MPT_ULITERAL
+   else
+    T = mpt::ustring
+	 fi
   fi
  fi
 fi
@@ -1647,9 +1660,15 @@ int CompareNoCaseAscii(const std::string &a, const std::string &b)
 mpt::ustring ToLowerCase(const mpt::ustring &s)
 {
 	#if defined(_MFC_VER)
-		CStringW tmp = mpt::ToCStringW(s);
-		tmp.MakeLower();
-		return mpt::ToUnicode(tmp);
+		#if defined(UNICODE)
+			CString tmp = mpt::ToCString(s);
+			tmp.MakeLower();
+			return mpt::ToUnicode(tmp);
+		#else // !UNICODE
+			CStringW tmp = mpt::ToCStringW(s);
+			tmp.MakeLower();
+			return mpt::ToUnicode(tmp);
+		#endif // UNICODE
 	#else // !_MFC_VER
 		std::wstring ws = mpt::ToWide(s);
 		std::transform(ws.begin(), ws.end(), ws.begin(), &std::towlower);
@@ -1660,9 +1679,15 @@ mpt::ustring ToLowerCase(const mpt::ustring &s)
 mpt::ustring ToUpperCase(const mpt::ustring &s)
 {
 	#if defined(_MFC_VER)
-		CStringW tmp = mpt::ToCStringW(s);
-		tmp.MakeUpper();
-		return mpt::ToUnicode(tmp);
+		#if defined(UNICODE)
+			CString tmp = mpt::ToCString(s);
+			tmp.MakeUpper();
+			return mpt::ToUnicode(tmp);
+		#else // !UNICODE
+			CStringW tmp = mpt::ToCStringW(s);
+			tmp.MakeUpper();
+			return mpt::ToUnicode(tmp);
+		#endif // UNICODE
 	#else // !_MFC_VER
 		std::wstring ws = mpt::ToWide(s);
 		std::transform(ws.begin(), ws.end(), ws.begin(), &std::towlower);
