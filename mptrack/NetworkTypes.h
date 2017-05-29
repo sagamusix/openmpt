@@ -23,7 +23,7 @@ namespace Networking
 struct DocumentInfo
 {
 	std::string name;
-	int64 id;
+	uint64 id;
 	int32 collaborators;
 	int32 maxCollaboratos;
 	int32 spectators;
@@ -47,6 +47,20 @@ struct WelcomeMsg
 	void serialize(Archive &archive)
 	{
 		archive(version, documents);
+	}
+};
+
+
+struct JoinMsg
+{
+	uint64 id;
+	std::string password;
+	int32 accessType;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(id, password, accessType);
 	}
 };
 

@@ -89,9 +89,9 @@ void NetworkingDlg::OnConnect()
 	if(port == 0)
 		port = DEFAULT_PORT;
 
-	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance));
-	collabClients.back()->Connect();
-	collabClients.back()->Write("LIST");
+	m_client = std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
+	m_client->Connect();
+	m_client->Write("LIST");
 }
 
 
@@ -100,7 +100,15 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 	int index = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
 	if(index >= 0)
 	{
-		uint64 itemID = m_itemID[index];
+		JoinMsg join;
+		join.id = m_itemID[index];
+		join.accessType = 0;	// Collaborator
+		join.password = "";
+
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(join);
+		m_client->Write("CONN" + ss.str());
 	}
 	*pResult = 0;
 }

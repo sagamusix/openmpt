@@ -234,7 +234,8 @@ void CollabServer::StartAccept()
 
 void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 {
-	if(msg == "LIST")
+	std::string type = msg.substr(0, 4);
+	if(type == "LIST")
 	{
 		WelcomeMsg welcome;
 		welcome.version = MptVersion::str;
@@ -242,7 +243,7 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		for(auto &doc : m_documents)
 		{
 			DocumentInfo info;
-			info.id = reinterpret_cast<int64>(&doc.m_modDoc);
+			info.id = reinterpret_cast<uint64>(&doc.m_modDoc);
 			info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.m_modDoc.GetTitle());
 			info.collaborators = doc.m_collaborators;
 			info.maxCollaboratos = doc.m_maxCollaborators;
@@ -256,6 +257,20 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		cereal::BinaryOutputArchive ar(ss);
 		ar(welcome);
 		source->Write(ss.str());
+	} else if(type == "CONN")
+	{
+		std::istringstream ss(msg.substr(4));
+		JoinMsg join;
+		cereal::BinaryInputArchive inArchive(ss);
+		inArchive >> join;
+		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
+		auto doc = m_documents.find(NetworkedDocument(*modDoc));
+		if(doc != m_documents.end())
+		{
+			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
+			{
+			}
+		}
 	}
 	OutputDebugStringA(msg.c_str());
 }

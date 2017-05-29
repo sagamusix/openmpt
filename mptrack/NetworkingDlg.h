@@ -25,6 +25,7 @@ class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
 	std::unordered_map<int, uint64> m_itemID;
+	std::shared_ptr<CollabClient> m_client;
 
 public:
 	static void Show(CWnd *parent);
