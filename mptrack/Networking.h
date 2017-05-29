@@ -36,12 +36,13 @@ public:
 	static void Run();
 };
 
+class CollabConnection;
 
 class Listener
 {
 public:
 	virtual ~Listener() { }
-	virtual void Receive(const std::string &msg) = 0;
+	virtual void Receive(CollabConnection *source, const std::string &msg) = 0;
 };
 
 
@@ -96,7 +97,7 @@ public:
 class CollabServer : public Listener, public std::enable_shared_from_this<CollabServer>
 {
 	std::set<NetworkedDocument> m_documents;
-	std::set<std::shared_ptr<CollabConnection>> m_connections;
+	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 	asio::ip::tcp::acceptor m_acceptor;
 	asio::ip::tcp::socket m_socket;
 	mpt::mutex m_mutex;
@@ -109,7 +110,7 @@ public:
 	void AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
 	void CloseDocument(CModDoc &modDoc);
 
-	void Receive(const std::string &msg) override;
+	void Receive(CollabConnection *source, const std::string &msg) override;
 
 	void StartAccept();
 };
@@ -129,7 +130,7 @@ public:
 	void Close();
 	void Write(const std::string &msg);
 
-	void Receive(const std::string &msg) override;
+	void Receive(CollabConnection *source, const std::string &msg) override;
 };
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;

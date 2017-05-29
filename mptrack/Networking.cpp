@@ -114,7 +114,7 @@ void CollabConnection::Read()
 				} while(strm.avail_out == 0);
 				if(auto listener = that->m_listener.lock())
 				{
-					listener->Receive(decompressedMessage);
+					listener->Receive(that.get(), decompressedMessage);
 					that->Read();
 				}
 			}
@@ -223,27 +223,8 @@ void CollabServer::StartAccept()
 	{
 		if(!ec)
 		{
-			WelcomeMsg msg;
-			msg.version = MptVersion::str;
-			msg.documents.reserve(that->m_documents.size());
-			for(auto &doc : that->m_documents)
-			{
-				DocumentInfo info;
-				info.id = reinterpret_cast<int64>(&doc.m_modDoc);
-				info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.m_modDoc.GetTitle());
-				info.collaborators = doc.m_collaborators;
-				info.maxCollaboratos = doc.m_maxCollaborators;
-				info.spectators = doc.m_spectators;
-				info.maxSpectators = doc.m_maxSpectators;
-				info.password = !doc.m_password.empty();
-				msg.documents.push_back(info);
-			}
-
-			std::ostringstream ss;
-			cereal::BinaryOutputArchive ar(ss);
-			ar(msg);
-			auto conn = std::make_shared<CollabConnection>(std::move(that->m_socket), that);
-			conn->Write(ss.str());
+			that->m_connections.push_back(std::make_shared<CollabConnection>(std::move(that->m_socket), that));
+			that->m_connections.back()->Read();
 			that->StartAccept();
 		}
 	});
@@ -251,8 +232,31 @@ void CollabServer::StartAccept()
 }
 
 
-void CollabServer::Receive(const std::string &msg)
+void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 {
+	if(msg == "LIST")
+	{
+		WelcomeMsg welcome;
+		welcome.version = MptVersion::str;
+		welcome.documents.reserve(m_documents.size());
+		for(auto &doc : m_documents)
+		{
+			DocumentInfo info;
+			info.id = reinterpret_cast<int64>(&doc.m_modDoc);
+			info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.m_modDoc.GetTitle());
+			info.collaborators = doc.m_collaborators;
+			info.maxCollaboratos = doc.m_maxCollaborators;
+			info.spectators = doc.m_spectators;
+			info.maxSpectators = doc.m_maxSpectators;
+			info.password = !doc.m_password.empty();
+			welcome.documents.push_back(info);
+		}
+
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(welcome);
+		source->Write(ss.str());
+	}
 	OutputDebugStringA(msg.c_str());
 }
 
@@ -268,7 +272,7 @@ CollabClient::CollabClient(const std::string &server, const std::string &port, s
 
 void CollabClient::Connect()
 {
-	auto that = shared_from_this();
+	/*auto that = shared_from_this();
 	asio::async_connect(m_socket, m_endpoint_iterator,
 		[that](std::error_code ec, asio::ip::tcp::resolver::iterator)
 	{
@@ -277,7 +281,14 @@ void CollabClient::Connect()
 			that->m_connection = std::make_shared<CollabConnection>(std::move(that->m_socket), that);
 			that->m_connection->Read();
 		}
-	});
+	});*/
+	std::error_code ec;
+	asio::connect(m_socket, m_endpoint_iterator, ec);
+	if(!ec)
+	{
+		m_connection = std::make_shared<CollabConnection>(std::move(m_socket), shared_from_this());
+		m_connection->Read();
+	}
 
 	IOService::Run();
 }
@@ -289,11 +300,11 @@ void CollabClient::Write(const std::string &msg)
 }
 
 
-void CollabClient::Receive(const std::string &msg)
+void CollabClient::Receive(CollabConnection *source, const std::string &msg)
 {
 	if(auto listener = m_listener.lock())
 	{
-		listener->Receive(msg);
+		listener->Receive(source, msg);
 	}
 }
 

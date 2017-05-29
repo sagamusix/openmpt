@@ -91,6 +91,7 @@ void NetworkingDlg::OnConnect()
 
 	collabClients.push_back(std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance));
 	collabClients.back()->Connect();
+	collabClients.back()->Write("LIST");
 }
 
 
@@ -105,7 +106,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 }
 
 
-void NetworkingDlg::Receive(const std::string &msg)
+void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 {
 	std::istringstream ss(msg);
 	WelcomeMsg welcome;

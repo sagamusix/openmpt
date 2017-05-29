@@ -39,7 +39,7 @@ protected:
 	afx_msg void OnConnect();
 	afx_msg void OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult);
 
-	void Receive(const std::string &msg) override;
+	void Receive(CollabConnection *, const std::string &msg) override;
 
 	DECLARE_MESSAGE_MAP()
 };
