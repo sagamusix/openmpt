@@ -687,6 +687,7 @@
     <ClInclude Include="..\..\soundlib\AudioCriticalSection.h" />
     <ClInclude Include="..\..\soundlib\AudioReadTarget.h" />
     <ClInclude Include="..\..\soundlib\ChunkReader.h" />
+    <ClInclude Include="..\..\soundlib\Container.h" />
     <ClInclude Include="..\..\soundlib\Dither.h" />
     <ClInclude Include="..\..\soundlib\Dlsbank.h" />
     <ClInclude Include="..\..\soundlib\FloatMixer.h" />
@@ -726,6 +727,7 @@
     <ClInclude Include="..\..\soundlib\tuning.h" />
     <ClInclude Include="..\..\soundlib\tuningbase.h" />
     <ClInclude Include="..\..\soundlib\tuningcollection.h" />
+    <ClInclude Include="..\..\soundlib\UMXTools.h" />
     <ClInclude Include="..\..\soundlib\WAVTools.h" />
     <ClInclude Include="..\..\soundlib\WindowedFIR.h" />
     <ClInclude Include="..\..\soundlib\XMTools.h" />
@@ -753,7 +755,9 @@
     <ClInclude Include="..\..\libopenmpt\libopenmpt.h" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt.hpp" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt_config.h" />
+    <ClInclude Include="..\..\libopenmpt\libopenmpt_ext.h" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt_ext.hpp" />
+    <ClInclude Include="..\..\libopenmpt\libopenmpt_ext_impl.hpp" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt_impl.hpp" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt_internal.h" />
     <ClInclude Include="..\..\libopenmpt\libopenmpt_stream_callbacks_buffer.h" />
@@ -829,6 +833,18 @@
       <ObjectFileName>$(IntDir)common\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\AudioCriticalSection.cpp">
+      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerMMCMP.cpp">
+      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerPP20.cpp">
+      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerUMX.cpp">
+      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerXPK.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Dither.cpp">
@@ -933,10 +949,10 @@
     <ClCompile Include="..\..\soundlib\Load_stp.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
+    <ClCompile Include="..\..\soundlib\Load_uax.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_umx.cpp">
+    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Load_wav.cpp">
@@ -961,9 +977,6 @@
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\MixFuncTable.cpp">
-      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="..\..\soundlib\Mmcmp.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\ModChannel.cpp">
@@ -1056,6 +1069,9 @@
     <ClCompile Include="..\..\soundlib\tuningCollection.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\soundlib\UMXTools.cpp">
+      <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\soundlib\UpgradeModule.cpp">
       <ObjectFileName>$(IntDir)soundlib\</ObjectFileName>
     </ClCompile>
@@ -1125,7 +1141,7 @@
     <ClCompile Include="..\..\libopenmpt\libopenmpt_cxx.cpp">
       <ObjectFileName>$(IntDir)libopenmpt\</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\libopenmpt\libopenmpt_ext.cpp">
+    <ClCompile Include="..\..\libopenmpt\libopenmpt_ext_impl.cpp">
       <ObjectFileName>$(IntDir)libopenmpt\</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\libopenmpt\libopenmpt_impl.cpp">

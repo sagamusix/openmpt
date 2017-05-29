@@ -528,6 +528,9 @@
     <ClInclude Include="..\..\soundlib\ChunkReader.h">
       <Filter>soundlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\soundlib\Container.h">
+      <Filter>soundlib</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\soundlib\Dither.h">
       <Filter>soundlib</Filter>
     </ClInclude>
@@ -619,6 +622,9 @@
       <Filter>soundlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\soundlib\Tagging.h">
+      <Filter>soundlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\soundlib\UMXTools.h">
       <Filter>soundlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\soundlib\WAVTools.h">
@@ -1145,6 +1151,18 @@
     <ClCompile Include="..\..\soundlib\AudioCriticalSection.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerMMCMP.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerPP20.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerUMX.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerXPK.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\soundlib\Dither.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
@@ -1244,10 +1262,10 @@
     <ClCompile Include="..\..\soundlib\Load_stp.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
+    <ClCompile Include="..\..\soundlib\Load_uax.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_umx.cpp">
+    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Load_wav.cpp">
@@ -1275,9 +1293,6 @@
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\MixerSettings.cpp">
-      <Filter>soundlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\soundlib\Mmcmp.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\ModChannel.cpp">
@@ -1341,6 +1356,9 @@
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Tagging.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\UMXTools.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\UpgradeModule.cpp">

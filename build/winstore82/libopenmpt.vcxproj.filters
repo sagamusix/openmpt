@@ -147,6 +147,9 @@
     <ClInclude Include="..\..\soundlib\ChunkReader.h">
       <Filter>soundlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\soundlib\Container.h">
+      <Filter>soundlib</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\soundlib\Dither.h">
       <Filter>soundlib</Filter>
     </ClInclude>
@@ -264,6 +267,9 @@
     <ClInclude Include="..\..\soundlib\tuningcollection.h">
       <Filter>soundlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\soundlib\UMXTools.h">
+      <Filter>soundlib</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\soundlib\WAVTools.h">
       <Filter>soundlib</Filter>
     </ClInclude>
@@ -345,7 +351,13 @@
     <ClInclude Include="..\..\libopenmpt\libopenmpt_config.h">
       <Filter>libopenmpt</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libopenmpt\libopenmpt_ext.h">
+      <Filter>libopenmpt</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\libopenmpt\libopenmpt_ext.hpp">
+      <Filter>libopenmpt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libopenmpt\libopenmpt_ext_impl.hpp">
       <Filter>libopenmpt</Filter>
     </ClInclude>
     <ClInclude Include="..\..\libopenmpt\libopenmpt_impl.hpp">
@@ -435,6 +447,18 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\AudioCriticalSection.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerMMCMP.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerPP20.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerUMX.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\soundlib\ContainerXPK.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Dither.cpp">
@@ -539,10 +563,10 @@
     <ClCompile Include="..\..\soundlib\Load_stp.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
+    <ClCompile Include="..\..\soundlib\Load_uax.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\soundlib\Load_umx.cpp">
+    <ClCompile Include="..\..\soundlib\Load_ult.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\Load_wav.cpp">
@@ -567,9 +591,6 @@
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\MixFuncTable.cpp">
-      <Filter>soundlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\soundlib\Mmcmp.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\soundlib\ModChannel.cpp">
@@ -662,6 +683,9 @@
     <ClCompile Include="..\..\soundlib\tuningCollection.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\soundlib\UMXTools.cpp">
+      <Filter>soundlib</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\soundlib\UpgradeModule.cpp">
       <Filter>soundlib</Filter>
     </ClCompile>
@@ -731,7 +755,7 @@
     <ClCompile Include="..\..\libopenmpt\libopenmpt_cxx.cpp">
       <Filter>libopenmpt</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libopenmpt\libopenmpt_ext.cpp">
+    <ClCompile Include="..\..\libopenmpt\libopenmpt_ext_impl.cpp">
       <Filter>libopenmpt</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libopenmpt\libopenmpt_impl.cpp">

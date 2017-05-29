@@ -31,6 +31,7 @@
 #include "plugins/PlugInterface.h"
 #include "../common/StringFixer.h"
 #include "../common/FileReader.h"
+#include "Container.h"
 #include <sstream>
 #include <time.h>
 
@@ -40,12 +41,6 @@
 
 
 OPENMPT_NAMESPACE_BEGIN
-
-
-// Module decompression
-bool UnpackXPK(std::vector<char> &unpackedData, FileReader &file, CSoundFile::ModLoadingFlags loadFlags);
-bool UnpackPP20(std::vector<char> &unpackedData, FileReader &file, CSoundFile::ModLoadingFlags loadFlags);
-bool UnpackMMCMP(std::vector<char> &unpackedData, FileReader &file, CSoundFile::ModLoadingFlags loadFlags);
 
 
 mpt::ustring FileHistory::AsISO8601() const
@@ -250,26 +245,35 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 	{
 		try
 		{
+
 #ifndef NO_ARCHIVE_SUPPORT
 			CUnarchiver unarchiver(file);
-			if(unarchiver.ExtractBestFile(GetSupportedExtensions(true)))
+			if(!(loadFlags & skipContainer))
 			{
-				file = unarchiver.GetOutputFile();
+				if (unarchiver.ExtractBestFile(GetSupportedExtensions(true)))
+				{
+					file = unarchiver.GetOutputFile();
+				}
 			}
 #endif
 
+			std::vector<ContainerItem> containerItems;
 			MODCONTAINERTYPE packedContainerType = MOD_CONTAINERTYPE_NONE;
-			std::vector<char> unpackedData;
-			if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackXPK(unpackedData, file, loadFlags)) packedContainerType = MOD_CONTAINERTYPE_XPK;
-			if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackPP20(unpackedData, file, loadFlags)) packedContainerType = MOD_CONTAINERTYPE_PP20;
-			if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackMMCMP(unpackedData, file, loadFlags)) packedContainerType = MOD_CONTAINERTYPE_MMCMP;
-			if(packedContainerType != MOD_CONTAINERTYPE_NONE)
+			if(!(loadFlags & skipContainer))
 			{
-				if(loadFlags == onlyVerifyHeader)
+				ContainerLoadingFlags containerLoadFlags = (loadFlags == onlyVerifyHeader) ? ContainerOnlyVerifyHeader : ContainerUnwrapData;
+				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackXPK(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_XPK;
+				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackPP20(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_PP20;
+				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackMMCMP(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_MMCMP;
+				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackUMX(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_UMX;
+				if(packedContainerType != MOD_CONTAINERTYPE_NONE && !containerItems.empty())
 				{
-					return true;
+					if(loadFlags == onlyVerifyHeader)
+					{
+						return true;
+					}
+					file = containerItems[0].file;
 				}
-				file = FileReader(mpt::byte_cast<mpt::const_byte_span>(mpt::as_span(unpackedData)));
 			}
 
 			if(!ReadXM(file, loadFlags)
@@ -288,7 +292,9 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 			 && !ReadUlt(file, loadFlags)
 			 && !ReadDMF(file, loadFlags)
 			 && !ReadDSM(file, loadFlags)
-			 && !ReadUMX(file, loadFlags)
+#if defined(MODPLUG_TRACKER) || defined(MPT_FUZZ_TRACKER)
+			 && !ReadUAX(file, loadFlags)
+#endif // MODPLUG_TRACKER || MPT_FUZZ_TRACKER
 			 && !ReadAMF_Asylum(file, loadFlags)
 			 && !ReadAMF_DSMI(file, loadFlags)
 			 && !ReadPSM(file, loadFlags)
