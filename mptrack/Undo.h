@@ -31,25 +31,8 @@ protected:
 
 	struct UndoInfo
 	{
-		// Additional undo information, as required
-		struct ChannelInfo
-		{
-			ModChannelSettings *settings;
-			CHANNELINDEX oldNumChannels;
-
-			ChannelInfo(CHANNELINDEX numChannels) : oldNumChannels(numChannels)
-			{
-				settings = new ModChannelSettings[numChannels];
-			}
-
-			~ChannelInfo()
-			{
-				delete[] settings;
-			}
-		};
-
+		std::vector<ModChannelSettings> channelInfo;	// Optional old channel information (pan / volume / etc.)
 		ModCommand *pbuffer;			// Rescued pattern content
-		ChannelInfo *channelInfo;		// Optional old channel information (pan / volume / etc.)
 		const char *description;		// Name of this undo action
 		ROWINDEX numPatternRows;		// Original number of pattern rows (in case of resize)
 		ROWINDEX firstRow, numRows;
@@ -68,6 +51,8 @@ protected:
 	void ClearBuffer(undobuf_t &buffer);
 	void DeleteStep(undobuf_t &buffer, size_t step);
 	PATTERNINDEX Undo(undobuf_t &fromBuf, undobuf_t &toBuf, bool linkedFromPrevious);
+
+	CString GetName(const undobuf_t &buffer) const;
 
 	bool PrepareBuffer(undobuf_t &buffer, PATTERNINDEX pattern, CHANNELINDEX firstChn, ROWINDEX firstRow, CHANNELINDEX numChns, ROWINDEX numRows, const char *description, bool linkToPrevious, bool storeChannelInfo);
 
@@ -88,9 +73,9 @@ public:
 	// Remove the latest added undo step from the undo buffer
 	void RemoveLastUndoStep();
 	// Get name of next undo item
-	const char *GetUndoName() const;
+	CString GetUndoName() const { return GetName(UndoBuffer); }
 	// Get name of next redo item
-	const char *GetRedoName() const;
+	CString GetRedoName() const { return GetName(RedoBuffer); }
 
 	CPatternUndo(CModDoc &parent) : modDoc(parent) { }
 
@@ -135,7 +120,7 @@ protected:
 		sampleUndoTypes changeType;
 	};
 
-	typedef std::vector<std::vector<UndoInfo> > undobuf_t;
+	typedef std::vector<std::vector<UndoInfo>> undobuf_t;
 	undobuf_t UndoBuffer;
 	undobuf_t RedoBuffer;
 
@@ -195,7 +180,7 @@ protected:
 		EnvelopeType editedEnvelope;
 	};
 
-	typedef std::vector<std::vector<UndoInfo> > undobuf_t;
+	typedef std::vector<std::vector<UndoInfo>> undobuf_t;
 	undobuf_t UndoBuffer;
 	undobuf_t RedoBuffer;
 
