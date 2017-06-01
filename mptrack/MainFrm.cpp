@@ -2584,13 +2584,12 @@ BOOL CMainFrame::StopRenderer(CSoundFile* pSndFile)
 
 
 // We have swicthed focus to a new module - might need to update effect keys to reflect module type
-bool CMainFrame::UpdateEffectKeys()
-//---------------------------------
+bool CMainFrame::UpdateEffectKeys(const CModDoc *modDoc)
+//------------------------------------------------------
 {
-	CModDoc* pModDoc = GetActiveDoc();
-	if (pModDoc)
+	if(modDoc != nullptr)
 	{
-		return m_InputHandler->SetEffectLetters(pModDoc->GetrSoundFile().GetModSpecifications());
+		return m_InputHandler->SetEffectLetters(modDoc->GetrSoundFile().GetModSpecifications());
 	}
 
 	return false;
@@ -2953,7 +2952,7 @@ HRESULT TfLanguageProfileNotifySink::OnLanguageChanged()
 	CMainFrame *mainFrm = CMainFrame::GetMainFrame();
 	if(mainFrm != nullptr)
 	{
-		mainFrm->UpdateEffectKeys();
+		mainFrm->UpdateEffectKeys(mainFrm->GetActiveDoc());
 		mainFrm->m_InputHandler->SetModifierMask(ModNone);
 	}
 	return ResultFromScode(S_OK);
