@@ -136,6 +136,12 @@ public:
 	CPattern(const CPattern &) = default;
 	CPattern(CPattern &&) = default;
 
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(m_ModCommands, m_Rows, m_RowsPerBeat, m_RowsPerMeasure, m_tempoSwing, m_PatternName);
+	}
+
 protected:
 	ModCommand& GetModCommand(size_t i) { return m_ModCommands[i]; }
 	//Returns modcommand from (floor[i/channelCount], i%channelCount) 

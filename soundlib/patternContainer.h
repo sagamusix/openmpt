@@ -88,6 +88,11 @@ public:
 	// Returns index of highest pattern with pattern named + 1.
 	PATTERNINDEX GetNumNamedPatterns() const;
 
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(m_Patterns);
+	}
 
 private:
 	std::vector<CPattern> m_Patterns;

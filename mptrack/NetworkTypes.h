@@ -15,6 +15,8 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
+#include "Sndfile.h"
+
 OPENMPT_NAMESPACE_BEGIN
 
 namespace Networking
@@ -64,12 +66,68 @@ struct JoinMsg
 	}
 };
 
+}
 
-/*template<class Archive>
-void serialize(Archive &archive, ModCommand &m)
+namespace cereal
 {
-	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
-}*/
+
+template <class Archive>
+TEMPO::store_t save_minimal(Archive const &, TEMPO const &f)
+{
+	return f.GetRaw();
+}
+
+template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
+void load_minimal(Archive const &, TEMPO &f, TEMPO::store_t const &value)
+{
+	f.SetRaw(value);
+}
+
+
+template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
+Tstore save_minimal(Archive const &, FlagSet<T, Tstore> const &f)
+{
+	return f.GetRaw();
+}
+
+template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
+void load_minimal(Archive const &, FlagSet<T, Tstore> &f, Tstore const &value)
+{
+	f.SetRaw(value);
+}
+
+
+//template<class Archive>
+//struct specialize<Archive, TempoSwing, cereal::specialization::non_member_serialize> {};
+
+
+template<class Archive>
+void serialize(Archive &archive, ModInstrument &i)
+{
+	archive(i.dwFlags, i.nFadeOut, i.nGlobalVol, i.nPan, i.nVolRampUp,
+		i.wMidiBank, i.nMidiProgram, i.nMidiChannel, i.nMidiDrumKey, i.midiPWD,
+		i.nDNA, i.nDCT, i.nDNA, i.nPanSwing, i.nVolSwing, i.nIFC, i.nIFR, i.nPPS, i.nPPC, i.nMixPlug,
+		i.nCutSwing, i.nResSwing, i.nFilterMode, i.nPluginVelocityHandling, i.nPluginVolumeHandling,
+		i.pitchToTempoLock, i.nResampling, i.VolEnv, i.PanEnv, i.PitchEnv, i.NoteMap, i.Keyboard, i.name, i.filename);
+	// TODO: Tuning
+}
+
+
+template<class Archive>
+struct specialize<Archive, InstrumentEnvelope, cereal::specialization::non_member_serialize> {};
+
+template<class Archive>
+void serialize(Archive &archive, InstrumentEnvelope &i)
+{
+	archive(static_cast<std::vector<EnvelopeNode> &>(i), i.dwFlags, i.nLoopStart, i.nLoopEnd, i.nSustainStart, i.nSustainEnd, i.nReleaseNode);
+}
+
+
+template<class Archive>
+void serialize(Archive &archive, EnvelopeNode &e)
+{
+	archive(e.tick, e.value);
+}
 
 }
 
