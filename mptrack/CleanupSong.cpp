@@ -147,7 +147,7 @@ void CModCleanupDlg::OnOK()
 	if(m_CheckBoxes[kRearrangePatterns]) modified |= RearrangePatterns();
 
 	// Instruments
-	if(modDoc.GetSoundFile()->m_nInstruments > 0)
+	if(modDoc.GetNumInstruments() > 0)
 	{
 		if(m_CheckBoxes[kRemoveAllInstruments]) modified |= RemoveAllInstruments();
 		if(m_CheckBoxes[kCleanupInstruments]) modified |= RemoveUnusedInstruments();
@@ -157,7 +157,7 @@ void CModCleanupDlg::OnOK()
 	if(m_CheckBoxes[kRemoveSamples]) modified |= RemoveAllSamples();
 	if(m_CheckBoxes[kCleanupSamples]) modified |= RemoveUnusedSamples();
 	if(m_CheckBoxes[kOptimizeSamples]) modified |= OptimizeSamples();
-	if(modDoc.GetSoundFile()->m_nSamples > 1)
+	if(modDoc.GetNumSamples() > 1)
 	{
 		if(m_CheckBoxes[kRearrangeSamples]) modified |= RearrangeSamples();
 	}
@@ -440,22 +440,6 @@ bool CModCleanupDlg::RemoveUnusedPatterns()
 }
 
 
-struct OrigPatSettings
-{
-	// This stuff is needed for copying the old pattern properties to the new pattern number
-	std::string name;			// original pattern name
-	TempoSwing swing;			// original pattern tempo swing
-	ModCommand *data;			// original pattern data
-	ROWINDEX numRows;			// original pattern sizes
-	ROWINDEX rowsPerBeat;		// original pattern highlight
-	ROWINDEX rowsPerMeasure;	// original pattern highlight
-
-	PATTERNINDEX newIndex;		// map old pattern index <-> new pattern index
-};
-
-const OrigPatSettings defaultSettings = { "", TempoSwing(), nullptr, 0, 0, 0, PATTERNINDEX_INVALID };
-
-
 // Rearrange patterns (first pattern in order list = 0, etc...)
 bool CModCleanupDlg::RearrangePatterns()
 //--------------------------------------
@@ -463,7 +447,7 @@ bool CModCleanupDlg::RearrangePatterns()
 	CSoundFile &sndFile = modDoc.GetrSoundFile();
 
 	const PATTERNINDEX numPatterns = sndFile.Patterns.Size();
-	std::vector<OrigPatSettings> patternSettings(numPatterns, defaultSettings);
+	std::vector<PATTERNINDEX> newIndex(numPatterns, PATTERNINDEX_INVALID);
 
 	bool modified = false;
 
@@ -474,62 +458,56 @@ bool CModCleanupDlg::RearrangePatterns()
 	PATTERNINDEX patOrder = 0;
 	for(auto &order : sndFile.Order)
 	{
-		for(auto &pat :order)
+		for(auto &pat : order)
 		{
 			if(pat < numPatterns)
 			{
-				if(patternSettings[pat].newIndex == PATTERNINDEX_INVALID)
+				if(newIndex[pat] == PATTERNINDEX_INVALID)
 				{
-					patternSettings[pat].newIndex = patOrder++;
+					newIndex[pat] = patOrder++;
 				}
-				pat = patternSettings[pat].newIndex;
+				pat = newIndex[pat];
 			}
 		}
 	}
+	// All unused patterns are moved to the end of the pattern list.
 	for(PATTERNINDEX pat = 0; pat < numPatterns; pat++)
 	{
-		PATTERNINDEX newIndex = patternSettings[pat].newIndex;
-
-		// All unused patterns are moved to the end of the pattern list.
-		if(newIndex == PATTERNINDEX_INVALID && sndFile.Patterns.IsValidPat(pat))
+		PATTERNINDEX &index = newIndex[pat];
+		if(index == PATTERNINDEX_INVALID && sndFile.Patterns.IsValidPat(pat))
 		{
-			newIndex = patOrder++;
+			index = patOrder++;
 		}
-
-		// Create old <-> new pattern ID data mapping.
-		if(newIndex != PATTERNINDEX_INVALID)
+	}
+	// Also need new indices for any non-existent patterns
+	for(auto &index : newIndex)
+	{
+		if(index == PATTERNINDEX_INVALID)
 		{
-			if(pat != newIndex) modified = true;
-
-			patternSettings[newIndex].numRows = sndFile.Patterns[pat].GetNumRows();
-			patternSettings[newIndex].data = sndFile.Patterns[pat];
-			if(sndFile.Patterns[pat].GetOverrideSignature())
-			{
-				patternSettings[newIndex].rowsPerBeat = sndFile.Patterns[pat].GetRowsPerBeat();
-				patternSettings[newIndex].rowsPerMeasure = sndFile.Patterns[pat].GetRowsPerMeasure();
-			}
-			patternSettings[newIndex].swing = sndFile.Patterns[pat].GetTempoSwing();
-			patternSettings[newIndex].name = sndFile.Patterns[pat].GetName();
+			index = patOrder++;
 		}
 	}
 
-	// Copy old data to new pattern location.
-	for(PATTERNINDEX pat = 0; pat < numPatterns; pat++)
+	modDoc.GetPatternUndo().RearrangePatterns(newIndex);
+
+	// Now rearrange the pattern indices
+	for(size_t i = 0; i < newIndex.size(); i++)
 	{
-		sndFile.Patterns[pat].SetData(patternSettings[pat].data, patternSettings[pat].numRows);
-		sndFile.Patterns[pat].SetSignature(patternSettings[pat].rowsPerBeat, patternSettings[pat].rowsPerMeasure);
-		sndFile.Patterns[pat].SetTempoSwing(patternSettings[pat].swing);
-		sndFile.Patterns[pat].SetName(patternSettings[pat].name);
+		auto current = static_cast<PATTERNINDEX>(i);
+		while(i != newIndex[current])
+		{
+			PATTERNINDEX next = newIndex[current];
+			modified = true;
+			std::swap(sndFile.Patterns[current], sndFile.Patterns[next]);
+			newIndex[current] = current;
+			current = next;
+		}
+		newIndex[current] = current;
 	}
 
 	EndWaitCursor();
 
-	if(modified)
-	{
-		modDoc.GetPatternUndo().ClearUndo();
-		return true;
-	}
-	return false;
+	return modified;
 }
 
 
@@ -872,7 +850,7 @@ bool CModCleanupDlg::ResetVariables()
 {
 	CSoundFile &sndFile = modDoc.GetrSoundFile();
 
-	if(Reporting::Confirm(_T("OpenMPT will convert the module to IT format and reset all song, sample and instrument attributes to default values. Continue?"), TEXT("Resetting variables"), false, false, this) == cnfNo)
+	if(Reporting::Confirm(_T("OpenMPT will convert the module to IT format and reset all song, sample and instrument attributes to default values. Continue?"), _T("Resetting variables"), false, false, this) == cnfNo)
 		return false;
 
 	// Stop play.
@@ -1018,7 +996,7 @@ bool CModCleanupDlg::RemoveAllPlugins()
 bool CModCleanupDlg::MergeSequences()
 //-----------------------------------
 {
-	return modDoc.GetSoundFile()->Order.MergeSequences();
+	return modDoc.GetrSoundFile().Order.MergeSequences();
 }
 
 
