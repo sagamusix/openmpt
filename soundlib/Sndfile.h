@@ -997,6 +997,25 @@ public:
 	PLUGINDEX GetBestPlugin(CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const;
 	uint8 GetBestMidiChannel(CHANNELINDEX nChn) const;
 
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(m_nType, m_ContainerType, m_nChannels, m_nSamples, m_nInstruments, m_nDefaultSpeed, m_nDefaultGlobalVolume, m_nDefaultTempo,
+			m_SongFlags, /*m_nMixChannels, m_nMixStat,*/ m_nDefaultRowsPerBeat, m_nDefaultRowsPerMeasure, m_nTempoMode,
+#ifdef MODPLUG_TRACKER
+			//m_lockRowStart, m_lockRowEnd,
+			//m_lockOrderStart, m_lockOrderEnd,
+#endif // MODPLUG_TRACKER
+			m_nSamplePreAmp, m_nVSTiVolume, m_tempoSwing, m_nMinPeriod, m_nMaxPeriod, m_nResampling,
+			//m_nRepeatCount,
+			m_nMaxOrderPosition, ChnSettings, Patterns, Order, Samples, //Instruments,
+			m_MidiCfg, m_MixPlugins,
+			m_szNames, m_dwCreatedWithVersion, m_dwLastSavedWithVersion, m_playBehaviour,
+			m_nMixLevels,
+			m_songName, m_songArtist, m_songMessage, m_madeWithTracker, m_FileHistory, m_samplePaths
+		);
+		// TODO: Set m_PlayConfig after loading
+	}
 };
 
 
