@@ -12,6 +12,9 @@
 #include "resource.h"
 #include "NetworkingDlg.h"
 #include "NetworkTypes.h"
+#include "dlg_misc.h"
+#include "Mptrack.h"
+#include "Moddoc.h"
 #include "../common/version.h"
 #include "Reporting.h"
 
@@ -97,13 +100,20 @@ void NetworkingDlg::OnConnect()
 
 void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int index = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
-	if(index >= 0)
+	DocumentInfo *doc = reinterpret_cast<DocumentInfo *>(m_List.GetItemData(reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem));
+	if(doc != nullptr)
 	{
 		JoinMsg join;
-		join.id = m_itemID[index];
+		join.id = doc->id;
 		join.accessType = 0;	// Collaborator
 		join.password = "";
+		if(doc->password)
+		{
+			CInputDlg dlg(this, _T("Password required for joining this collaboration session:"), _T(""));
+			if(dlg.DoModal() != IDOK)
+				return;
+			join.password = mpt::ToCharset(mpt::CharsetUTF8, dlg.resultAsString);
+		}
 
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
@@ -117,29 +127,67 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 {
 	std::istringstream ss(msg);
-	WelcomeMsg welcome;
 	cereal::BinaryInputArchive inArchive(ss);
-	inArchive >> welcome;
 
-	if(welcome.version != MptVersion::str)
+	std::string type = msg.substr(0, 4);
+	if(type == "LIST")
 	{
-		Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", welcome.version), "Collaboration Server");
-		return;
+		WelcomeMsg welcome;
+		inArchive >> welcome;
+
+		if(welcome.version != MptVersion::str)
+		{
+			Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", welcome.version), "Collaboration Server");
+			return;
+		}
+
+		m_List.SetRedraw(FALSE);
+		m_List.DeleteAllItems();
+		m_docs = std::move(welcome.documents);
+		for(const auto &doc : m_docs)
+		{
+			int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, doc.name));
+			if(insertAt == -1)
+				continue;
+			m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
+			m_List.SetItemText(insertAt, 2, mpt::String::Print(_T("%1/%2"), doc.spectators, doc.maxSpectators).c_str());
+			m_List.SetItemText(insertAt, 3, doc.password ? _T("Yes") : _T("No"));
+			m_List.SetItemData(insertAt, reinterpret_cast<DWORD_PTR>(&doc));
+		}
+		m_List.SetRedraw(TRUE);
+	} else if(type == "404!")
+	{
+		Reporting::Error("The document you wanted to join was not found.");
+	} else if(type == "403!")
+	{
+		Reporting::Error("The password was incorrect.");
+	} else if(type == "!OK!")
+	{
+		auto modDoc = static_cast<CModDoc *>(theApp.GetModDocTemplate()->CreateNewDocument());
+		modDoc->OnNewDocument();
+		CSoundFile &sndFile = modDoc->GetrSoundFile();
+		inArchive >> sndFile;
+		// Apply mix levels
+		sndFile.SetMixLevels(sndFile.GetMixLevels());
+		for(INSTRUMENTINDEX i = 1; i < sndFile.GetNumInstruments(); i++)
+		{
+			ModInstrument *ins = sndFile.AllocateInstrument(i);
+			if(ins)
+			{
+				inArchive >> *ins;
+			} else
+			{
+				ModInstrument temp;
+				inArchive >> temp;
+			}
+		}
+		for(auto &plug : sndFile.m_MixPlugins)
+		{
+			CreateMixPluginProc(plug, sndFile);
+		}
+		// TODO Tunings, Plugin data
 	}
 
-	m_List.SetRedraw(FALSE);
-	m_List.DeleteAllItems();
-	for(auto &doc : welcome.documents)
-	{
-		int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, doc.name));
-		if(insertAt == -1)
-			continue;
-		m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
-		m_List.SetItemText(insertAt, 2, mpt::String::Print(_T("%1/%2"), doc.spectators, doc.maxSpectators).c_str());
-		m_List.SetItemText(insertAt, 3, doc.password ? _T("Yes") : _T("No"));
-		m_itemID[insertAt] = doc.id;
-	}
-	m_List.SetRedraw(TRUE);
 }
 
 

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "Networking.h"
+#include "NetworkTypes.h"
 #include "CListCtrl.h"
 #include <unordered_map>
 
@@ -24,7 +25,7 @@ namespace Networking
 class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
-	std::unordered_map<int, uint64> m_itemID;
+	std::vector<DocumentInfo> m_docs;
 	std::shared_ptr<CollabClient> m_client;
 
 public:

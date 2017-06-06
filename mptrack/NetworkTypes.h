@@ -69,6 +69,8 @@ struct JoinMsg
 
 }
 
+OPENMPT_NAMESPACE_END
+
 namespace cereal
 {
 
@@ -77,7 +79,7 @@ TEMPO::store_t save_minimal(Archive const &, TEMPO const &f)
 {
 	return f.GetRaw();
 }
-template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
+template <class Archive>
 void load_minimal(Archive const &, TEMPO &f, TEMPO::store_t const &value)
 {
 	f.SetRaw(value);
@@ -97,14 +99,14 @@ void load_minimal(Archive const &, FlagSet<T, Tstore> &f, Tstore const &value)
 
 
 template <class Archive, typename T>
-typename enum_value_type<T>::store_type save_minimal(Archive const &, Enum<T> const &f)
+typename Enum<T>::store_type save_minimal(Archive const &, Enum<T> const &f)
 {
-	return f;
+	return static_cast<typename enum_value_type<T>::store_type>(f);
 }
 template <class Archive, typename T>
-void load_minimal(Archive const &, Enum<T> &f, typename enum_value_type<T>::store_type const &value)
+void load_minimal(Archive const &, Enum<T> &f, typename Enum<T>::store_type const &value)
 {
-	f = value;
+	f = static_cast<T>(value);
 }
 
 
@@ -206,16 +208,21 @@ void serialize(Archive &archive, MIDIMacroConfig &m)
 template<class Archive>
 void serialize(Archive &archive, SNDMIXPLUGININFO &i)
 {
-	archive(i.dwPluginId1, i.dwPluginId2, i.routingFlags, i.mixMode, i.gain, i.reserved, i.dwOutputRouting, i.dwReserved[4], i.szName[32], i.szLibraryName[64]);
+	archive(i.dwPluginId1, i.dwPluginId2, i.routingFlags, i.mixMode, i.gain, i.reserved, i.dwOutputRouting, i.dwReserved, i.szName, i.szLibraryName);
 }
 
 
 template<class Archive>
 void serialize(Archive &archive, SNDMIXPLUGIN &p)
 {
-	archive(p.pluginData, p.Info, p.fDryRatio, p.defaultProgram, /*p.editorX, p.editorY*/);
+	archive(p.pluginData, p.Info, p.fDryRatio, p.defaultProgram /*, p.editorX, p.editorY*/);
+}
+
+
+template<class Archive>
+void serialize(Archive &archive, ModCommand &m)
+{
+	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
 }
 
 }
-
-OPENMPT_NAMESPACE_END

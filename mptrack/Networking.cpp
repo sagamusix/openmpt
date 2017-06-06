@@ -30,7 +30,7 @@ std::unique_ptr<IOService> ioService;
 
 struct MsgHeader
 {
-	uint16le compressedSize, origSize;
+	uint32le compressedSize, origSize;
 };
 
 
@@ -256,21 +256,44 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
 		ar(welcome);
+		source->Write("LIST");
 		source->Write(ss.str());
 	} else if(type == "CONN")
 	{
-		std::istringstream ss(msg.substr(4));
+		std::istringstream ssi(msg.substr(4));
 		JoinMsg join;
-		cereal::BinaryInputArchive inArchive(ss);
+		cereal::BinaryInputArchive inArchive(ssi);
 		inArchive >> join;
 		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
 		auto doc = m_documents.find(NetworkedDocument(*modDoc));
+
+		std::ostringstream sso;
+		cereal::BinaryOutputArchive ar(sso);
+
 		if(doc != m_documents.end())
 		{
 			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
 			{
+				const CSoundFile &sf = doc->m_modDoc.GetrSoundFile();
+				ar(sf);
+				for(INSTRUMENTINDEX i = 0; i <= sf.GetNumInstruments(); i++)
+				{
+					if(sf.Instruments[i])
+						ar(*sf.Instruments[i]);
+					else
+						ar(ModInstrument());
+				}
+				source->Write("!OK!");
+				source->Write(sso.str());
+			} else
+			{
+				source->Write("403!");
 			}
+		} else
+		{
+			source->Write("404!");
 		}
+		source->Write(sso.str());
 	}
 	OutputDebugStringA(msg.c_str());
 }
