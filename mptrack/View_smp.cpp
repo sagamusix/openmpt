@@ -1742,8 +1742,7 @@ void CViewSample::OnLButtonDblClk(UINT, CPoint)
 
 	if (pModDoc)
 	{
-		CSoundFile *pSndFile = pModDoc->GetSoundFile();
-		SmpLength len = pSndFile->GetSample(m_nSample).nLength;
+		SmpLength len = pModDoc->GetrSoundFile().GetSample(m_nSample).nLength;
 		if (len && !m_dwStatus[SMPSTATUS_DRAWING]) SetCurSel(0, len);
 	}
 }
@@ -2664,18 +2663,17 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 //------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
-	CSoundFile *pSndFile;
 	BOOL bCanDrop = FALSE, bUpdate;
 
 	if ((!lpDropInfo) || (!pModDoc)) return FALSE;
-	pSndFile = pModDoc->GetSoundFile();
+	CSoundFile &sndFile = pModDoc->GetrSoundFile();
 	switch(lpDropInfo->dwDropType)
 	{
 	case DRAGONDROP_SAMPLE:
 		if (lpDropInfo->pModDoc == pModDoc)
 		{
 			bCanDrop = ((lpDropInfo->dwDropItem)
-					 && (lpDropInfo->dwDropItem <= pSndFile->m_nSamples));
+					 && (lpDropInfo->dwDropItem <= sndFile.GetNumSamples()));
 		} else
 		{
 			bCanDrop = ((lpDropInfo->dwDropItem)
@@ -2735,7 +2733,7 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 					CriticalSection cs;
 
 					pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Replace");
-					bCanDrop = dlsbank.ExtractSample(*pSndFile, m_nSample, nIns, nRgn);
+					bCanDrop = dlsbank.ExtractSample(sndFile, m_nSample, nIns, nRgn);
 				}
 				bUpdate = TRUE;
 				break;
@@ -2763,7 +2761,7 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 			CriticalSection cs;
 
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Replace");
-			bCanDrop = pDLSBank->ExtractSample(*pSndFile, m_nSample, nIns, nRgn);
+			bCanDrop = pDLSBank->ExtractSample(sndFile, m_nSample, nIns, nRgn);
 
 			bUpdate = TRUE;
 		}
@@ -2962,12 +2960,12 @@ void CViewSample::OnAddSilence()
 
 	ModSample &sample = sndFile.GetSample(m_nSample);
 
-	CAddSilenceDlg dlg(this, 32, sample.nLength);
+	CAddSilenceDlg dlg(this, sample.nLength);
 	if (dlg.DoModal() != IDOK) return;
 
 	const SmpLength nOldLength = sample.nLength;
 
-	if(MAX_SAMPLE_LENGTH - nOldLength < dlg.m_nSamples && dlg.m_nEditOption != addsilence_resize)
+	if(MAX_SAMPLE_LENGTH - nOldLength < dlg.m_nSamples && dlg.m_nEditOption != CAddSilenceDlg::kResize)
 	{
 		CString str; str.Format(_T("Cannot add silence because the new sample length would exceed maximum sample length %u."), MAX_SAMPLE_LENGTH);
 		Reporting::Information(str);
@@ -2981,7 +2979,7 @@ void CViewSample::OnAddSilence()
 		sample.nVolume = 256;
 	}
 
-	if(dlg.m_nEditOption == addsilence_resize)
+	if(dlg.m_nEditOption == CAddSilenceDlg::kResize)
 	{
 		// resize - dlg.m_nSamples = new size
 		if(dlg.m_nSamples == 0)
@@ -3005,7 +3003,7 @@ void CViewSample::OnAddSilence()
 		{
 			CriticalSection cs;
 
-			SmpLength nStart = (dlg.m_nEditOption == addsilence_at_end) ? sample.nLength : 0;
+			SmpLength nStart = (dlg.m_nEditOption == CAddSilenceDlg::kSilenceAtEnd) ? sample.nLength : 0;
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_insert, "Add Silence", nStart, nStart + dlg.m_nSamples);
 			ctrlSmp::InsertSilence(sample, dlg.m_nSamples, nStart, sndFile);
 		}
@@ -3098,6 +3096,13 @@ BOOL CViewSample::PreTranslateMessage(MSG *pMsg)
 
 			if (ih->KeyEvent(ctx, nChar, nRepCnt, nFlags, kT) != kcNull)
 				return true; // Mapped to a command, no need to pass message on.
+
+			// Handle Application (menu) key
+			if(pMsg->message == WM_KEYDOWN && nChar == VK_APPS)
+			{
+				int x = Util::ScalePixels(32, m_hWnd);
+				OnRButtonDown(0, CPoint(x, x));
+			}
 		}
 
 	}
@@ -3416,7 +3421,7 @@ void CViewSample::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
 void CViewSample::OnChangeGridSize()
 //----------------------------------
 {
-	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetSoundFile()->GetSample(m_nSample).nLength);
+	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetrSoundFile().GetSample(m_nSample).nLength);
 	if(dlg.DoModal() == IDOK)
 	{
 		m_nGridSegments = dlg.m_nSegments;
