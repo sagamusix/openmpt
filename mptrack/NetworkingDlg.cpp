@@ -15,6 +15,8 @@
 #include "dlg_misc.h"
 #include "Mptrack.h"
 #include "Moddoc.h"
+#include "Mainfrm.h"
+#include "Childfrm.h"
 #include "../common/version.h"
 #include "Reporting.h"
 
@@ -43,6 +45,7 @@ BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//ON_COMMAND(IDC_BUTTON1,	OnStartServer)
 	ON_COMMAND(IDC_BUTTON2,	OnConnect)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, OnSelectDocument)
+	ON_MESSAGE(WM_USER + 100, OnOpenDocument)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -126,12 +129,12 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 
 void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 {
-	std::istringstream ss(msg.substr(4));
-	cereal::BinaryInputArchive inArchive(ss);
-
 	std::string type = msg.substr(0, 4);
 	if(type == "LIST")
 	{
+		std::istringstream ss(msg.substr(4));
+		cereal::BinaryInputArchive inArchive(ss);
+
 		WelcomeMsg welcome;
 		inArchive >> welcome;
 
@@ -163,31 +166,51 @@ void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 		Reporting::Error("The password was incorrect.");
 	} else if(type == "!OK!")
 	{
-		auto modDoc = static_cast<CModDoc *>(theApp.GetModDocTemplate()->CreateNewDocument());
-		modDoc->OnNewDocument();
-		CSoundFile &sndFile = modDoc->GetrSoundFile();
-		inArchive >> sndFile;
-		// Apply mix levels
-		sndFile.SetMixLevels(sndFile.GetMixLevels());
-		for(INSTRUMENTINDEX i = 1; i < sndFile.GetNumInstruments(); i++)
-		{
-			ModInstrument *ins = sndFile.AllocateInstrument(i);
-			if(ins)
-			{
-				inArchive >> *ins;
-			} else
-			{
-				ModInstrument temp;
-				inArchive >> temp;
-			}
-		}
-		for(auto &plug : sndFile.m_MixPlugins)
-		{
-			CreateMixPluginProc(plug, sndFile);
-		}
-		// TODO Tunings, Plugin data
+		// Need to do this in GUI thread
+		SendMessage(WM_USER + 100, reinterpret_cast<WPARAM>(&msg));
 	}
+}
 
+
+LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
+{
+	std::istringstream ss(reinterpret_cast<std::string *>(wParam)->substr(4));
+	cereal::BinaryInputArchive inArchive(ss);
+
+	auto pTemplate = theApp.GetModDocTemplate();
+	auto modDoc = static_cast<CModDoc *>(pTemplate->CreateNewDocument());
+	modDoc->OnNewDocument();
+	CSoundFile &sndFile = modDoc->GetrSoundFile();
+	inArchive >> sndFile;
+	// Apply mix levels
+	sndFile.SetMixLevels(sndFile.GetMixLevels());
+	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
+	{
+		ModInstrument *ins = sndFile.AllocateInstrument(i);
+		if(ins)
+		{
+			inArchive >> *ins;
+		}
+		else
+		{
+			ModInstrument temp;
+			inArchive >> temp;
+		}
+	}
+	for(auto &plug : sndFile.m_MixPlugins)
+	{
+		CreateMixPluginProc(plug, sndFile);
+	}
+	// TODO Tunings, Plugin data
+	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
+	if(pChildFrm != nullptr)
+	{
+		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
+	}
+	pTemplate->SetDefaultTitle(modDoc);
+	CMainFrame::GetMainFrame()->UpdateTree(modDoc, GeneralHint().General());
+
+	return 0;
 }
 
 

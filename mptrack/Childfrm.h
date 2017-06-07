@@ -99,7 +99,7 @@ public:
 	void SavePosition(BOOL bExit=FALSE);
 	const char *GetCurrentViewClassName() const;
 	LRESULT SendViewMessage(UINT uMsg, LPARAM lParam=0) const;
-	LRESULT ActivateView(UINT nId, LPARAM lParam) { return ::SendMessage(m_hWndCtrl, WM_MOD_ACTIVATEVIEW, nId, lParam); }
+	LRESULT ActivateView(UINT nId, LPARAM lParam);
 	HWND GetHwndCtrl() const { return m_hWndCtrl; }
 	HWND GetHwndView() const { return m_hWndView; }
 	GENERALVIEWSTATE &GetGeneralViewState() { return m_ViewGeneral; }

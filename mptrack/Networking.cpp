@@ -256,8 +256,7 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
 		ar(welcome);
-		source->Write("LIST");
-		source->Write(ss.str());
+		source->Write("LIST" + ss.str());
 	} else if(type == "CONN")
 	{
 		std::istringstream ssi(msg.substr(4));
@@ -283,8 +282,7 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 					else
 						ar(ModInstrument());
 				}
-				source->Write("!OK!");
-				source->Write(sso.str());
+				source->Write("!OK!" + sso.str());
 			} else
 			{
 				source->Write("403!");

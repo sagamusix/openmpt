@@ -23,6 +23,22 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Networking
 {
 
+struct NetworkMessage
+{
+	char type[4];
+
+	NetworkMessage(const char(&id)[5] = "\0\0\0\0")
+	{
+		memcpy(type, id, 4);
+	}
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(type);
+	}
+};
+
 struct DocumentInfo
 {
 	std::string name;
@@ -41,10 +57,12 @@ struct DocumentInfo
 };
 
 
-struct WelcomeMsg
+struct WelcomeMsg// : public NetworkMessage
 {
 	std::string version;
 	std::vector<DocumentInfo> documents;
+
+	//WelcomeMsg() : NetworkMessage("LIST") { }
 
 	template<class Archive>
 	void serialize(Archive &archive)
@@ -54,11 +72,13 @@ struct WelcomeMsg
 };
 
 
-struct JoinMsg
+struct JoinMsg// : public NetworkMessage
 {
 	uint64 id;
 	std::string password;
 	int32 accessType;
+
+	//JoinMsg() : NetworkMessage("JOIN") { }
 
 	template<class Archive>
 	void serialize(Archive &archive)

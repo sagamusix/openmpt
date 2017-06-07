@@ -40,6 +40,7 @@ protected:
 
 	afx_msg void OnConnect();
 	afx_msg void OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg LRESULT OnOpenDocument(WPARAM wParam, LPARAM lParam);
 
 	void Receive(CollabConnection *, const std::string &msg) override;
 

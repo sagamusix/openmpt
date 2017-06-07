@@ -111,10 +111,6 @@ CDocument *CModDocTemplate::OpenDocumentFile(const mpt::PathString &filename, BO
 	{
 		CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 		if (pMainFrm) pMainFrm->OnDocumentCreated(pDoc);
-		if(Networking::collabServer != nullptr)
-		{
-			//Networking::collabServer->AddDocument(pDoc);
-		}
 	} else //Case: pDoc == 0, opening document failed.
 	{
 		if(!filename.empty())
