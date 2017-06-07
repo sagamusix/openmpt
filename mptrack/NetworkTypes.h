@@ -87,26 +87,31 @@ void load_minimal(Archive const &, TEMPO &f, TEMPO::store_t const &value)
 
 
 template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
-Tstore save_minimal(Archive const &, FlagSet<T, Tstore> const &f)
+void save(Archive &archive, FlagSet<T, Tstore> const &f)
 {
-	return f.GetRaw();
+	archive(f.GetRaw());
 }
 template <class Archive, typename T, typename Tstore = typename enum_value_type<T>::store_type>
-void load_minimal(Archive const &, FlagSet<T, Tstore> &f, Tstore const &value)
+void load(Archive &archive, FlagSet<T, Tstore> &f)
 {
+	Tstore value;
+	archive(value);
 	f.SetRaw(value);
 }
 
 
 template <class Archive, typename T>
-typename Enum<T>::store_type save_minimal(Archive const &, Enum<T> const &f)
+void save(Archive &archive, Enum<T> const &e)
 {
-	return static_cast<typename enum_value_type<T>::store_type>(f);
+	typename Enum<T>::store_type value = e;
+	archive(value);
 }
 template <class Archive, typename T>
-void load_minimal(Archive const &, Enum<T> &f, typename Enum<T>::store_type const &value)
+void load(Archive &archive, Enum<T> &e)
 {
-	f = static_cast<T>(value);
+	typename Enum<T>::store_type value = e;
+	archive(value);
+	e = static_cast<T>(value);
 }
 
 
@@ -224,5 +229,58 @@ void serialize(Archive &archive, ModCommand &m)
 {
 	archive(m.note, m.instr, m.volcmd, m.vol, m.command, m.param);
 }
+
+
+template<class Archive>
+void save(Archive &archive, CPatternContainer const &patterns)
+{
+	archive(make_size_tag(static_cast<size_type>(patterns.Size())));
+	for(const auto &pat : patterns)
+	{
+		archive(pat);
+	}
+}
+template<class Archive>
+void load(Archive &archive, CPatternContainer &patterns)
+{
+	size_type numPatterns;
+	archive(make_size_tag(numPatterns));
+
+	patterns.ResizeArray(static_cast<PATTERNINDEX>(numPatterns));
+	for(auto &pat : patterns)
+	{
+		archive(pat);
+	}
+}
+
+
+template<class Archive>
+void save(Archive &archive, ModSequenceSet const &sequences)
+{
+	archive(make_size_tag(static_cast<size_type>(sequences.GetNumSequences())));
+	for(const auto &seq : sequences)
+	{
+		archive(seq);
+	}
+	archive(sequences.GetCurrentSequenceIndex());
+}
+template<class Archive>
+void load(Archive &archive, ModSequenceSet &sequences)
+{
+	size_type numSequences;
+	archive(make_size_tag(numSequences));
+
+	sequences.Initialize();
+	for(SEQUENCEINDEX i = 0; i < numSequences; i++)
+	{
+		if(i > 0)
+			sequences.AddSequence(false);
+		archive(sequences(i));
+	}
+	SEQUENCEINDEX currentSeq = 0;
+	archive(currentSeq);
+	sequences.SetSequence(currentSeq);
+}
+
 
 }

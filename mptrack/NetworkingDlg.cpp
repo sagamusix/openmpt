@@ -126,7 +126,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 
 void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 {
-	std::istringstream ss(msg);
+	std::istringstream ss(msg.substr(4));
 	cereal::BinaryInputArchive inArchive(ss);
 
 	std::string type = msg.substr(0, 4);

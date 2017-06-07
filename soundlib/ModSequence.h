@@ -185,12 +185,6 @@ public:
 	std::vector<ModSequence>::iterator end() { return m_Sequences.end(); }
 	std::vector<ModSequence>::const_iterator end() const { return m_Sequences.end(); }
 	std::vector<ModSequence>::const_iterator cend() const { return m_Sequences.cend(); }
-
-	template<class Archive>
-	void serialize(Archive &archive)
-	{
-		archive(m_Sequences, m_currentSeq);
-	}
 };
 
 
