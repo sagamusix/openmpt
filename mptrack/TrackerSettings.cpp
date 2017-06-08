@@ -256,6 +256,7 @@ TrackerSettings::TrackerSettings(SettingsContainer &conf)
 	, ResamplerMode(conf, "Sound Settings", "SrcMode", GetDefaultResamplerMode())
 	, ResamplerSubMode(conf, "Sound Settings", "XMMSModplugResamplerWFIRType", CResamplerSettings().gbWFIRType)
 	, ResamplerCutoffPercent(conf, "Sound Settings", "ResamplerWFIRCutoff", Util::Round<int32>(CResamplerSettings().gdWFIRCutoff * 100.0))
+	, ResamplerEmulateAmiga(conf, "Sound Settings", "ResamplerEmulateAmiga", false)
 	, SoundBoostedThreadPriority(conf, "Sound Settings", "BoostedThreadPriority", SoundDevice::AppInfo().BoostedThreadPriorityXP)
 	, SoundBoostedThreadMMCSSClass(conf, "Sound Settings", "BoostedThreadMMCSSClass", SoundDevice::AppInfo().BoostedThreadMMCSSClassVista)
 	, SoundBoostedThreadRealtimePosix(conf, "Sound Settings", "BoostedThreadRealtimeLinux", SoundDevice::AppInfo().BoostedThreadRealtimePosix)
@@ -307,6 +308,7 @@ TrackerSettings::TrackerSettings(SettingsContainer &conf)
 	, ComponentsLoadOnStartup(conf, "Components", "LoadOnStartup", ComponentManagerSettingsDefault().LoadOnStartup())
 	, ComponentsKeepLoaded(conf, "Components", "KeepLoaded", ComponentManagerSettingsDefault().KeepLoaded())
 	// AutoSave
+	, CreateBackupFiles(conf, "AutoSave", "CreateBackupFiles", true)
 	, AutosaveEnabled(conf, "AutoSave", "Enabled", true)
 	, AutosaveIntervalMinutes(conf, "AutoSave", "IntervalMinutes", 10)
 	, AutosaveHistoryDepth(conf, "AutoSave", "BackupHistory", 3)
@@ -642,6 +644,11 @@ TrackerSettings::TrackerSettings(SettingsContainer &conf)
 		m_dwPatternSetup &= ~0x100000;
 		m_dwMidiSetup |= MIDISETUP_ENABLE_RECORD_DEFAULT;
 	}
+	if(storedVersion < MAKE_VERSION_NUMERIC(1, 27, 00, 51) && (m_dwPatternSetup & 0x200))
+	{
+		m_dwPatternSetup &= ~0x200;
+		CreateBackupFiles = true;
+	}
 
 	// Effects
 #ifndef NO_EQ
@@ -927,6 +934,7 @@ CResamplerSettings TrackerSettings::GetResamplerSettings() const
 	settings.SrcMode = ResamplerMode;
 	settings.gbWFIRType = ResamplerSubMode;
 	settings.gdWFIRCutoff = ResamplerCutoffPercent * 0.01;
+	settings.emulateAmiga = ResamplerEmulateAmiga;
 	return settings;
 }
 
@@ -936,6 +944,7 @@ void TrackerSettings::SetResamplerSettings(const CResamplerSettings &settings)
 	ResamplerMode = settings.SrcMode;
 	ResamplerSubMode = settings.gbWFIRType;
 	ResamplerCutoffPercent = Util::Round<int32>(settings.gdWFIRCutoff * 100.0);
+	ResamplerEmulateAmiga = settings.emulateAmiga;
 }
 
 

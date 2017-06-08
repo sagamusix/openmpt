@@ -192,7 +192,7 @@ BOOL CModDoc::OnNewDocument()
 	m_SndFile.ChangeModTypeTo(CTrackApp::GetDefaultDocType());
 
 	theApp.GetDefaultMidiMacro(m_SndFile.m_MidiCfg);
-	m_SndFile.m_SongFlags.set(SONG_LINEARSLIDES & m_SndFile.GetModSpecifications().GetSongFlags());
+	m_SndFile.m_SongFlags.set((SONG_LINEARSLIDES | SONG_ISAMIGA) & m_SndFile.GetModSpecifications().GetSongFlags());
 
 	ReinitRecordState();
 	InitializeMod();
@@ -251,7 +251,8 @@ BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
 
 	ReinitRecordState();
 
-	if(TrackerSettings::Instance().rememberSongWindows) DeserializeViews();
+	if(TrackerSettings::Instance().rememberSongWindows)
+		DeserializeViews();
 
 	// This is only needed when opening a module with stored window positions.
 	// The MDI child is activated before it has an active view and thus there is no CModDoc associated with it.
@@ -510,7 +511,7 @@ BOOL CModDoc::DoSave(const mpt::PathString &filename, BOOL)
 	}
 
 	// Do we need to create a backup file ?
-	if((TrackerSettings::Instance().m_dwPatternSetup & PATTERN_CREATEBACKUP)
+	if((TrackerSettings::Instance().CreateBackupFiles)
 		&& (IsModified()) && (!mpt::PathString::CompareNoCase(saveFileName, docFileName)))
 	{
 		if(saveFileName.IsFile())
@@ -2961,13 +2962,13 @@ void CModDoc::PrepareUndoForAllPatterns(bool storeChannelInfo, const char *descr
 {
 	bool linkUndo = false;
 
-	PATTERNINDEX lastPat = PATTERNINDEX_INVALID;
+	PATTERNINDEX lastPat = 0;
 	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
 	{
 		if(m_SndFile.Patterns.IsValidPat(pat)) lastPat = pat;
 	}
 
-	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
+	for(PATTERNINDEX pat = 0; pat <= lastPat; pat++)
 	{
 		if(m_SndFile.Patterns.IsValidPat(pat))
 		{

@@ -13,6 +13,7 @@
 
 #include "Resampler.h"
 #include "MixerInterface.h"
+#include "Paula.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -42,6 +43,62 @@ typedef IntToIntTraits<2, 2, mixsample_t, int16, 16> Int16SToIntS;
 //////////////////////////////////////////////////////////////////////////
 // Interpolation templates
 
+
+template<class Traits>
+struct AmigaBlepInterpolation
+{
+	SamplePosition subIncrement;
+	Paula::State *paula;
+	int numSteps;
+	bool filter;
+
+	MPT_FORCEINLINE void Start(ModChannel &chn, const CResampler &)
+	{
+		paula = &chn.paulaState;
+		numSteps = paula->numSteps;
+		filter = chn.dwFlags[CHN_AMIGAFILTER];
+		if(numSteps)
+			subIncrement = chn.increment / paula->numSteps;
+	}
+
+	MPT_FORCEINLINE void End(const ModChannel &) { }
+
+	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
+	{
+		SamplePosition pos(0, posLo);
+		// First, process steps of full length (one Amiga clock interval)
+		for(int step = numSteps; step > 0; step--)
+		{
+			typename Traits::output_t inSample = 0;
+			uint32 posInt = pos.GetInt() * Traits::numChannelsIn;
+			for(unsigned int i = 0; i < Traits::numChannelsIn; i++)
+				inSample += Traits::Convert(inBuffer[posInt + i]);
+			paula->InputSample(static_cast<int16>(inSample / (4 * Traits::numChannelsIn)));
+			paula->Clock(Paula::MINIMUM_INTERVAL);
+			pos += subIncrement;
+		}
+		paula->remainder += paula->stepRemainder;
+
+		// Now, process any remaining integer clock amount < MINIMUM_INTERVAL
+		uint32 remainClocks = paula->remainder.GetInt();
+		if(remainClocks)
+		{
+			typename Traits::output_t inSample = 0;
+			uint32 posInt = pos.GetInt() * Traits::numChannelsIn;
+			for(unsigned int i = 0; i < Traits::numChannelsIn; i++)
+				inSample += Traits::Convert(inBuffer[posInt + i]);
+			paula->InputSample(static_cast<int16>(inSample / (4 * Traits::numChannelsIn)));
+			paula->Clock(remainClocks);
+			paula->remainder.RemoveInt();
+		}
+
+		auto out = paula->OutputSample(filter);
+		for(unsigned int i = 0; i < Traits::numChannelsOut; i++)
+			outSample[i] = out;
+	}
+};
+
+
 template<class Traits>
 struct LinearInterpolation
 {
@@ -49,17 +106,17 @@ struct LinearInterpolation
 
 	MPT_FORCEINLINE void End(const ModChannel &) { }
 
-	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const int32 posLo)
+	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
 		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
-		const typename Traits::output_t fract = posLo >> 8;
+		const typename Traits::output_t fract = posLo >> 18u;
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
 		{
 			typename Traits::output_t srcVol = Traits::Convert(inBuffer[i]);
 			typename Traits::output_t destVol = Traits::Convert(inBuffer[i + Traits::numChannelsIn]);
 
-			outSample[i] = srcVol + ((fract * (destVol - srcVol)) >> 8);
+			outSample[i] = srcVol + ((fract * (destVol - srcVol)) / 16384);
 		}
 	}
 };
@@ -71,10 +128,10 @@ struct FastSincInterpolation
 	MPT_FORCEINLINE void Start(const ModChannel &, const CResampler &) { }
 	MPT_FORCEINLINE void End(const ModChannel &) { }
 
-	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const int32 posLo)
+	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
 		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
-		const int16 *lut = CResampler::FastSincTable + ((posLo >> 6) & 0x3FC);
+		const int16 *lut = CResampler::FastSincTable + ((posLo >> 22) & 0x3FC);
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
 		{
@@ -82,7 +139,7 @@ struct FastSincInterpolation
 				 (lut[0] * Traits::Convert(inBuffer[i - Traits::numChannelsIn])
 				+ lut[1] * Traits::Convert(inBuffer[i])
 				+ lut[2] * Traits::Convert(inBuffer[i + Traits::numChannelsIn])
-				+ lut[3] * Traits::Convert(inBuffer[i + 2 * Traits::numChannelsIn])) >> 14;
+				+ lut[3] * Traits::Convert(inBuffer[i + 2 * Traits::numChannelsIn])) / 16384;
 		}
 	}
 };
@@ -107,10 +164,10 @@ struct PolyphaseInterpolation
 
 	MPT_FORCEINLINE void End(const ModChannel &) { }
 
-	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const int32 posLo)
+	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
 		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
-		const SINC_TYPE *lut = sinc + ((posLo >> (16 - SINC_PHASES_BITS)) & SINC_MASK) * SINC_WIDTH;
+		const SINC_TYPE *lut = sinc + ((posLo >> (32 - SINC_PHASES_BITS)) & SINC_MASK) * SINC_WIDTH;
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
 		{
@@ -122,7 +179,7 @@ struct PolyphaseInterpolation
 				+ lut[4] * Traits::Convert(inBuffer[i + Traits::numChannelsIn])
 				+ lut[5] * Traits::Convert(inBuffer[i + 2 * Traits::numChannelsIn])
 				+ lut[6] * Traits::Convert(inBuffer[i + 3 * Traits::numChannelsIn])
-				+ lut[7] * Traits::Convert(inBuffer[i + 4 * Traits::numChannelsIn])) >> SINC_QUANTSHIFT;
+				+ lut[7] * Traits::Convert(inBuffer[i + 4 * Traits::numChannelsIn])) / (1 << SINC_QUANTSHIFT);
 		}
 	}
 };
@@ -140,10 +197,10 @@ struct FIRFilterInterpolation
 
 	MPT_FORCEINLINE void End(const ModChannel &) { }
 
-	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const int32 posLo)
+	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
 		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
-		const int16 * const lut = WFIRlut + (((posLo + WFIR_FRACHALVE) >> WFIR_FRACSHIFT) & WFIR_FRACMASK);
+		const int16 * const lut = WFIRlut + ((((posLo >> 16) + WFIR_FRACHALVE) >> WFIR_FRACSHIFT) & WFIR_FRACMASK);
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
 		{
@@ -157,7 +214,7 @@ struct FIRFilterInterpolation
 				+ (lut[5] * Traits::Convert(inBuffer[i + 2 * Traits::numChannelsIn]))
 				+ (lut[6] * Traits::Convert(inBuffer[i + 3 * Traits::numChannelsIn]))
 				+ (lut[7] * Traits::Convert(inBuffer[i + 4 * Traits::numChannelsIn]));
-			outSample[i] = ((vol1 >> 1) + (vol2 >> 1)) >> (WFIR_16BITSHIFT - 1);
+			outSample[i] = ((vol1 / 2) + (vol2 / 2)) / (1 << (WFIR_16BITSHIFT - 1));
 		}
 	}
 };
@@ -317,7 +374,7 @@ struct ResonantFilter
 				Util::mul32to64(outSample[i], chn.nFilter_A0) +
 				Util::mul32to64(ClipFilter(fy[i][0]), chn.nFilter_B0) +
 				Util::mul32to64(ClipFilter(fy[i][1]), chn.nFilter_B1) +
-				(1 << (MIXING_FILTER_PRECISION - 1))) >> MIXING_FILTER_PRECISION);
+				(1 << (MIXING_FILTER_PRECISION - 1))) / (1 << MIXING_FILTER_PRECISION));
 			fy[i][1] = fy[i][0];
 			fy[i][0] = val - (outSample[i] & chn.nFilter_HP);
 			outSample[i] = val;
