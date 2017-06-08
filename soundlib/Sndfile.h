@@ -1003,10 +1003,10 @@ public:
 	uint8 GetBestMidiChannel(CHANNELINDEX nChn) const;
 
 	template<class Archive>
-	void serialize(Archive &archive)
+	void serializeCommon(Archive &archive)
 	{
 		archive(m_nType, m_ContainerType, m_nChannels, m_nSamples, m_nInstruments, m_nDefaultSpeed, m_nDefaultGlobalVolume, m_nDefaultTempo,
-			m_SongFlags, /*m_nMixChannels, m_nMixStat,*/ m_nDefaultRowsPerBeat, m_nDefaultRowsPerMeasure, m_nTempoMode,
+			m_SongFlags, m_nDefaultRowsPerBeat, m_nDefaultRowsPerMeasure, m_nTempoMode,
 #ifdef MODPLUG_TRACKER
 			//m_lockRowStart, m_lockRowEnd,
 			//m_lockOrderStart, m_lockOrderEnd,
@@ -1019,7 +1019,46 @@ public:
 			m_nMixLevels,
 			m_songName, m_songArtist, m_songMessage, m_madeWithTracker, m_FileHistory, m_samplePaths
 		);
-		// TODO: Set m_PlayConfig after loading
+	}
+
+	template<class Archive>
+	void save(Archive &archive) const
+	{
+		const_cast<CSoundFile *>(this)->serializeCommon(archive);
+		for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
+		{
+			if(Instruments[i])
+				archive(*Instruments[i]);
+			else
+				archive(ModInstrument());
+		}
+	}
+	template<class Archive>
+	void load(Archive &archive)
+	{
+		serializeCommon(archive);
+		SetModSpecsPointer(m_pModSpecs, GetType());
+		SetMixLevels(m_nMixLevels);
+		for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
+		{
+			ModInstrument *ins = AllocateInstrument(i);
+			if(ins)
+			{
+				archive(*ins);
+			} else
+			{
+				ModInstrument temp;
+				archive(temp);
+			}
+		}
+		for(auto &plug : m_MixPlugins)
+		{
+			CreateMixPluginProc(plug, *this);
+			if(plug.pMixPlugin)
+			{
+				plug.pMixPlugin->RestoreAllParameters(plug.defaultProgram);
+			}
+		}
 	}
 };
 

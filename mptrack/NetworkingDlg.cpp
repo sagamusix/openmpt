@@ -18,6 +18,7 @@
 #include "Mainfrm.h"
 #include "Childfrm.h"
 #include "../common/version.h"
+#include "../soundlib/plugins/PlugInterface.h"
 #include "Reporting.h"
 
 OPENMPT_NAMESPACE_BEGIN
@@ -42,7 +43,6 @@ void NetworkingDlg::Show(CWnd *parent)
 
 BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//{{AFX_MSG_MAP(NetworkingDlg)
-	//ON_COMMAND(IDC_BUTTON1,	OnStartServer)
 	ON_COMMAND(IDC_BUTTON2,	OnConnect)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, OnSelectDocument)
 	ON_MESSAGE(WM_USER + 100, OnOpenDocument)
@@ -182,34 +182,17 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	modDoc->OnNewDocument();
 	CSoundFile &sndFile = modDoc->GetrSoundFile();
 	inArchive >> sndFile;
-	// Apply mix levels
-	sndFile.SetMixLevels(sndFile.GetMixLevels());
-	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
-	{
-		ModInstrument *ins = sndFile.AllocateInstrument(i);
-		if(ins)
-		{
-			inArchive >> *ins;
-		}
-		else
-		{
-			ModInstrument temp;
-			inArchive >> temp;
-		}
-	}
-	for(auto &plug : sndFile.m_MixPlugins)
-	{
-		CreateMixPluginProc(plug, sndFile);
-	}
-	// TODO Tunings, Plugin data
+	std::string title;
+	inArchive >> title;
+	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
+	// TODO Tunings
 	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
 	if(pChildFrm != nullptr)
 	{
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
-	pTemplate->SetDefaultTitle(modDoc);
 	CMainFrame::GetMainFrame()->UpdateTree(modDoc, GeneralHint().General());
-
+	OnOK();
 	return 0;
 }
 

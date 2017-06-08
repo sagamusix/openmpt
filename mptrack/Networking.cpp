@@ -273,15 +273,10 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		{
 			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
 			{
-				const CSoundFile &sf = doc->m_modDoc.GetrSoundFile();
+				CSoundFile &sf = doc->m_modDoc.GetrSoundFile();
+				sf.SaveMixPlugins();
 				ar(sf);
-				for(INSTRUMENTINDEX i = 0; i <= sf.GetNumInstruments(); i++)
-				{
-					if(sf.Instruments[i])
-						ar(*sf.Instruments[i]);
-					else
-						ar(ModInstrument());
-				}
+				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
 				source->Write("!OK!" + sso.str());
 			} else
 			{
