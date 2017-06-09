@@ -89,11 +89,12 @@ void CollabConnection::Read()
 	m_inMessage.resize(sizeof(MsgHeader));
 	asio::async_read(m_socket,
 		asio::buffer(&m_inMessage[0], sizeof(MsgHeader)),
-		[that](std::error_code ec, std::size_t /*length*/)
+		[that](std::error_code ec, std::size_t length)
 	{
 		if(!ec)
 		{
 			MsgHeader header;
+			MPT_ASSERT(length == sizeof(MsgHeader));
 			std::memcpy(&header, that->m_inMessage.data(), sizeof(MsgHeader));
 			that->m_inMessage.resize(header.compressedSize);
 
@@ -273,9 +274,9 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 		{
 			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
 			{
-				CSoundFile &sf = doc->m_modDoc.GetrSoundFile();
-				sf.SaveMixPlugins();
-				ar(sf);
+				CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
+				sndFile.SaveMixPlugins();
+				ar(sndFile);
 				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
 				source->Write("!OK!" + sso.str());
 			} else

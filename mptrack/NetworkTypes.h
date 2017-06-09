@@ -87,6 +87,79 @@ struct JoinMsg// : public NetworkMessage
 	}
 };
 
+
+struct SetCursorPosMsg
+{
+	uint32 sequence, order, pattern, row, channel, column;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(sequence, order, pattern, row, channel, column);
+	}
+};
+
+}
+
+
+template<class Archive>
+void CSoundFile::serializeCommon(Archive &archive)
+{
+	archive(m_nType, m_ContainerType, m_nChannels, m_nSamples, m_nInstruments, m_nDefaultSpeed, m_nDefaultGlobalVolume, m_nDefaultTempo,
+		m_SongFlags, m_nDefaultRowsPerBeat, m_nDefaultRowsPerMeasure, m_nTempoMode,
+#ifdef MODPLUG_TRACKER
+		//m_lockRowStart, m_lockRowEnd,
+		//m_lockOrderStart, m_lockOrderEnd,
+#endif // MODPLUG_TRACKER
+		m_nSamplePreAmp, m_nVSTiVolume, m_tempoSwing, m_nMinPeriod, m_nMaxPeriod, m_nResampling,
+		//m_nRepeatCount,
+		m_nMaxOrderPosition, ChnSettings, Patterns, Order, Samples, //Instruments,
+		m_MidiCfg, m_MixPlugins,
+		m_szNames, m_dwCreatedWithVersion, m_dwLastSavedWithVersion, m_playBehaviour,
+		m_nMixLevels,
+		m_songName, m_songArtist, m_songMessage, m_madeWithTracker, m_FileHistory, m_samplePaths
+	);
+}
+
+template<class Archive>
+void CSoundFile::save(Archive &archive) const
+{
+	const_cast<CSoundFile *>(this)->serializeCommon(archive);
+	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
+	{
+		if(Instruments[i])
+			archive(*Instruments[i]);
+		else
+			archive(ModInstrument());
+	}
+}
+template<class Archive>
+void CSoundFile::load(Archive &archive)
+{
+	serializeCommon(archive);
+	SetModSpecsPointer(m_pModSpecs, GetType());
+	SetMixLevels(m_nMixLevels);
+	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
+	{
+		ModInstrument *ins = AllocateInstrument(i);
+		if(ins)
+		{
+			archive(*ins);
+		}
+		else
+		{
+			ModInstrument temp;
+			archive(temp);
+		}
+	}
+	for(auto &plug : m_MixPlugins)
+	{
+		CreateMixPluginProc(plug, *this);
+		if(plug.pMixPlugin)
+		{
+			plug.pMixPlugin->RestoreAllParameters(plug.defaultProgram);
+		}
+	}
 }
 
 OPENMPT_NAMESPACE_END
