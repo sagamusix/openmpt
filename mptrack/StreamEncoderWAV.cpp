@@ -164,10 +164,7 @@ WAVEncoder::WAVEncoder()
 	Encoder::Traits traits;
 	traits.fileExtension = MPT_PATHSTRING("wav");
 	traits.fileShortDescription = MPT_USTRING("Wave");
-	traits.fileDescription = MPT_USTRING("Wave");
 	traits.encoderSettingsName = MPT_USTRING("Wave");
-	traits.encoderName = MPT_USTRING("OpenMPT");
-	traits.description = MPT_USTRING("Microsoft RIFF WAVE");
 	traits.canTags = true;
 	traits.canCues = true;
 	traits.maxChannels = 4;
@@ -219,15 +216,14 @@ WAVEncoder::~WAVEncoder()
 }
 
 
-IAudioStreamEncoder *WAVEncoder::ConstructStreamEncoder(std::ostream &file) const
+std::unique_ptr<IAudioStreamEncoder> WAVEncoder::ConstructStreamEncoder(std::ostream &file) const
 //-------------------------------------------------------------------------------
 {
 	if(!IsAvailable())
 	{
 		return nullptr;
 	}
-	WavStreamWriter *result = new WavStreamWriter(*this, file);
-	return result;
+	return mpt::make_unique<WavStreamWriter>(*this, file);
 }
 
 

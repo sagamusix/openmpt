@@ -25,6 +25,7 @@
 #include "StreamEncoderFLAC.h"
 #include "StreamEncoderMP3.h"
 #include "StreamEncoderOpus.h"
+#include "StreamEncoderRAW.h"
 #include "StreamEncoderVorbis.h"
 #include "StreamEncoderWAV.h"
 #include "mod2midi.h"
@@ -549,6 +550,19 @@ void CModDoc::OnAppendModule()
 	try
 	{
 		source = mpt::make_unique<CSoundFile>();
+		for(const auto &file : files)
+		{
+			InputFile f;
+			if(f.Open(file) && source->Create(GetFileReader(f), CSoundFile::loadCompleteModule))
+			{
+				AppendModule(*source);
+				source->Destroy();
+				SetModified();
+			} else
+			{
+				AddToLog("Unable to open source file!");
+			}
+		}
 	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
 	{
 		MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
@@ -556,19 +570,6 @@ void CModDoc::OnAppendModule()
 		return;
 	}
 	
-	for(size_t counter = 0; counter < files.size(); counter++)
-	{
-		InputFile f;
-		if(f.Open(files[counter]) && source->Create(GetFileReader(f), CSoundFile::loadCompleteModule))
-		{
-			AppendModule(*source);
-			source->Destroy();
-			SetModified();
-		} else
-		{
-			AddToLog("Unable to open source file!");
-		}
-	}
 	UpdateAllViews(nullptr, SequenceHint().Data().ModType());
 }
 
@@ -1578,9 +1579,11 @@ void CModDoc::OnFileWaveConvert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
 {
 	WAVEncoder wavencoder;
 	FLACEncoder flacencoder;
+	RAWEncoder rawencoder;
 	std::vector<EncoderFactoryBase*> encFactories;
 	encFactories.push_back(&wavencoder);
 	encFactories.push_back(&flacencoder);
+	encFactories.push_back(&rawencoder);
 	OnFileWaveConvert(nMinOrder, nMaxOrder, encFactories);
 }
 
@@ -1872,6 +1875,7 @@ void CModDoc::OnFileMP3Convert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
 	MP3Encoder mp3lame(MP3EncoderLame);
 	MP3Encoder mp3lamecompatible(MP3EncoderLameCompatible);
 	MP3Encoder mp3acm(MP3EncoderACM);
+	RAWEncoder rawencoder;
 	std::vector<EncoderFactoryBase*> encoders;
 	if(wavencoder.IsAvailable()) encoders.push_back(&wavencoder);
 	if(flacencoder.IsAvailable()) encoders.push_back(&flacencoder);
@@ -1885,6 +1889,7 @@ void CModDoc::OnFileMP3Convert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
 		encoders.push_back(&mp3acm);
 	}
 	if(mp3lamecompatible.IsAvailable()) encoders.push_back(&mp3lamecompatible);
+	if(rawencoder.IsAvailable()) encoders.push_back(&rawencoder);
 	OnFileWaveConvert(nMinOrder, nMaxOrder, encoders);
 }
 

@@ -155,6 +155,8 @@ BOOL CWaveConvert::OnInitDialog()
 	SetDlgItemInt(IDC_EDIT5, m_Settings.repeatCount, FALSE);
 	m_SpinLoopCount.SetRange(1, int16_max);
 
+	GetDlgItem(IDC_BUTTON1)->EnableWindow(encTraits->showEncoderInfo ? TRUE : FALSE);
+
 	FillFileTypes();
 	FillSamplerates();
 	FillChannels();
@@ -257,6 +259,8 @@ void CWaveConvert::FillTags()
 	::EnableWindow(::GetDlgItem(m_hWnd, IDC_EDIT7), canTags?TRUE:FALSE);
 	::EnableWindow(::GetDlgItem(m_hWnd, IDC_EDIT8), canTags?TRUE:FALSE);
 	::EnableWindow(::GetDlgItem(m_hWnd, IDC_EDIT9), canTags?TRUE:FALSE);
+	m_CbnGenre.EnableWindow(canTags?TRUE:FALSE);
+	m_EditGenre.EnableWindow(canTags?TRUE:FALSE);
 
 	if((encTraits->modesWithFixedGenres & mode) && !encTraits->genres.empty())
 	{
@@ -541,6 +545,7 @@ void CWaveConvert::OnFileTypeChanged()
 	DWORD_PTR dwFileType = m_CbnFileType.GetItemData(m_CbnFileType.GetCurSel());
 	m_Settings.SelectEncoder(dwFileType);
 	encTraits = m_Settings.GetTraits();
+	GetDlgItem(IDC_BUTTON1)->EnableWindow(encTraits->showEncoderInfo ? TRUE : FALSE);
 	FillSamplerates();
 	FillChannels();
 	FillFormats();
@@ -987,7 +992,7 @@ void CDoWaveConvert::Run()
 	const uint16 channels = encSettings.Channels;
 
 	ASSERT(m_Settings.GetEncoderFactory() && m_Settings.GetEncoderFactory()->IsAvailable());
-	IAudioStreamEncoder *fileEnc = m_Settings.GetEncoderFactory()->ConstructStreamEncoder(fileStream);
+	std::unique_ptr<IAudioStreamEncoder> fileEnc = m_Settings.GetEncoderFactory()->ConstructStreamEncoder(fileStream);
 
 	// Silence mix buffer of plugins, for plugins that don't clear their reverb buffers and similar stuff when they are reset
 #ifndef NO_PLUGINS
@@ -1340,7 +1345,6 @@ void CDoWaveConvert::Run()
 	}
 
 	fileEnc->Finalize();
-	delete fileEnc;
 	fileEnc = nullptr;
 
 	fileStream.flush();

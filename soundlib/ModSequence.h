@@ -32,7 +32,7 @@ protected:
 
 public:
 	ModSequence(CSoundFile &sndFile);
-	ModSequence(ModSequence &&) = default;
+	ModSequence(ModSequence &&) noexcept = default;
 	ModSequence(const ModSequence &) = default;
 	ModSequence& operator=(const ModSequence &other);
 
@@ -135,6 +135,7 @@ protected:
 
 public:
 	ModSequenceSet(CSoundFile &sndFile);
+	ModSequenceSet(ModSequenceSet &&) noexcept = default;
 
 	// Remove all sequences and initialize default sequence
 	void Initialize();

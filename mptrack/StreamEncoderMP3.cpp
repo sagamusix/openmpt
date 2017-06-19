@@ -599,10 +599,19 @@ public:
 		{
 			return traits;
 		}
+		mpt::ustring version;
+		if(get_lame_version())
+		{
+			version = MPT_USTRING("Lame ") + mpt::ToUnicode(mpt::CharsetASCII, get_lame_version());
+		} else
+		{
+			version = MPT_USTRING("Lame");
+		}
 		traits.fileExtension = MPT_PATHSTRING("mp3");
-		traits.fileShortDescription = (compatible ? MPT_USTRING("MP3 (compatible)") : MPT_USTRING("MP3"));
-		traits.fileDescription = (compatible ? MPT_USTRING("MPEG-1 Layer 3") : MPT_USTRING("MPEG-1/2 Layer 3"));
+		traits.fileShortDescription = (compatible ? mpt::format(MPT_USTRING("compatible MP3 (%1)"))(version) : mpt::format(MPT_USTRING("MP3 (%1)"))(version));
 		traits.encoderSettingsName = (compatible ? MPT_USTRING("MP3LameCompatible") : MPT_USTRING("MP3Lame"));
+		traits.showEncoderInfo = true;
+		traits.fileDescription = (compatible ? MPT_USTRING("MPEG-1 Layer 3") : MPT_USTRING("MPEG-1/2 Layer 3"));
 		traits.encoderName = MPT_USTRING("libMP3Lame");
 		traits.description += MPT_USTRING("Version: ");
 		traits.description += mpt::ToUnicode(mpt::CharsetASCII, get_lame_version()?get_lame_version():"");
@@ -1203,7 +1212,9 @@ public:
 			return traits;
 		}
 		traits.fileExtension = MPT_PATHSTRING("mp3");
-		traits.fileShortDescription = MPT_USTRING("MP3");
+		traits.fileShortDescription = MPT_USTRING("MP3 (ACM)");
+		traits.encoderSettingsName = MPT_USTRING("MP3ACM");
+		traits.showEncoderInfo = true;
 		traits.fileDescription = MPT_USTRING("MPEG Layer 3");
 		DWORD ver = acmGetVersion();
 		if(ver & 0xffff)
@@ -1213,7 +1224,6 @@ public:
 		{
 			traits.encoderName = mpt::String::Print(MPT_USTRING("%1 %2.%3"), MPT_USTRING("Microsoft Windows ACM"), mpt::ufmt::hex0<2>((ver>>24)&0xff), mpt::ufmt::hex0<2>((ver>>16)&0xff));
 		}
-		traits.encoderSettingsName = MPT_USTRING("MP3ACM");
 		for(const auto &i : drivers)
 		{
 			traits.description += i;
@@ -1516,25 +1526,25 @@ MP3Encoder::~MP3Encoder()
 }
 
 
-IAudioStreamEncoder *MP3Encoder::ConstructStreamEncoder(std::ostream &file) const
+std::unique_ptr<IAudioStreamEncoder> MP3Encoder::ConstructStreamEncoder(std::ostream &file) const
 //-------------------------------------------------------------------------------
 {
-	StreamWriterBase *result = nullptr;
+	std::unique_ptr<IAudioStreamEncoder> result = nullptr;
 	if(false)
 	{
 		// nothing
 #ifdef MPT_MP3ENCODER_LAME
 	} else if(m_Type == MP3EncoderLame || m_Type == MP3EncoderLameCompatible)
 	{
-		result = new MP3LameStreamWriter(*m_Lame, file, (m_Type == MP3EncoderLameCompatible));
+		result = mpt::make_unique<MP3LameStreamWriter>(*m_Lame, file, (m_Type == MP3EncoderLameCompatible));
 #endif // MPT_MP3ENCODER_LAME
 #ifdef MPT_MP3ENCODER_ACM
 	} else if(m_Type == MP3EncoderACM)
 	{
-		result = new MP3AcmStreamWriter(*m_Acm, file);
+		result = mpt::make_unique<MP3AcmStreamWriter>(*m_Acm, file);
 #endif // MPT_MP3ENCODER_ACM
 	}
-	return result;
+	return std::move(result);
 }
 
 

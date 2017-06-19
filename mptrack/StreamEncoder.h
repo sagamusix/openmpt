@@ -40,6 +40,11 @@ static MPT_CONSTEXPR11_VAR uint32 opus_samplerates [] = {
 	24000,           16000,
 	12000,            8000
 };
+static MPT_CONSTEXPR11_VAR uint32 opus_all_samplerates [] = {
+	48000,  44100,  32000,
+	24000,  22050,  16000,
+	12000,  11025,   8000
+};
 static MPT_CONSTEXPR11_VAR uint32 vorbis_samplerates [] = {
 	 48000,  44100,  32000,
 	 24000,  22050,  16000,
@@ -110,9 +115,11 @@ namespace Encoder
 	{
 		
 		mpt::PathString fileExtension;
-		mpt::ustring fileDescription;
 		mpt::ustring fileShortDescription;
 		mpt::ustring encoderSettingsName;
+
+		bool showEncoderInfo;
+		mpt::ustring fileDescription;
 		mpt::ustring encoderName;
 		mpt::ustring description;
 
@@ -139,8 +146,9 @@ namespace Encoder
 		int defaultDitherType;
 
 		Traits()
-			: canCues(false)
+			: showEncoderInfo(false)
 			, canTags(false)
+			, canCues(false)
 			, modesWithFixedGenres(0)
 			, maxChannels(0)
 			, modes(Encoder::ModeInvalid)
@@ -264,7 +272,7 @@ protected:
 	virtual ~EncoderFactoryBase() { }
 	void SetTraits(const Encoder::Traits &traits);
 public:
-	virtual IAudioStreamEncoder *ConstructStreamEncoder(std::ostream &file) const = 0;
+	virtual std::unique_ptr<IAudioStreamEncoder> ConstructStreamEncoder(std::ostream &file) const = 0;
 	const Encoder::Traits &GetTraits() const
 	{
 		return m_Traits;
