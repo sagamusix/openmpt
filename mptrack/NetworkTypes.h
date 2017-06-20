@@ -99,6 +99,32 @@ struct SetCursorPosMsg
 	}
 };
 
+
+struct ModCommandMask
+{
+	ModCommand m;
+	std::bitset<sizeof(ModCommand)> mask;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(m, mask);
+	}
+};
+
+
+struct PatternEditMsg
+{
+	uint32 pattern, row, channel, numRows, numChannels;
+	std::vector<ModCommandMask> commands;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(pattern, row, channel, numRows, numChannels, commands);
+	}
+};
+
 }
 
 
@@ -145,8 +171,7 @@ void CSoundFile::load(Archive &archive)
 		if(ins)
 		{
 			archive(*ins);
-		}
-		else
+		} else
 		{
 			ModInstrument temp;
 			archive(temp);
