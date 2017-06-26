@@ -665,7 +665,7 @@ private:
 	std::streamoff id3v2Size;
 	FileTags Tags;
 public:
-	MP3LameStreamWriter(const ComponentLame &lame_, std::ostream &stream, bool compatible)
+	MP3LameStreamWriter(const ComponentLame &lame_, std::ostream &stream, bool compatible, const Encoder::Settings &settings, const FileTags &tags)
 		: StreamWriterBase(stream)
 		, lame(lame_)
 		, compatible(compatible)
@@ -675,13 +675,7 @@ public:
 		gfp = lame_t();
 		id3type = ID3v2Lame;
 		id3v2Size = 0;
-	}
-	virtual ~MP3LameStreamWriter()
-	{
-		Finalize();
-	}
-	virtual void SetFormat(const Encoder::Settings &settings)
-	{
+
 		if(!gfp)
 		{
 			gfp = lame.lame_init();
@@ -799,33 +793,35 @@ public:
 		}
 
 		Mode = settings.Mode;
-	}
-	virtual void WriteMetatags(const FileTags &tags)
-	{
-		if(id3type == ID3v2Lame || id3type == ID3v1)
+
+		if(settings.Tags)
 		{
-			// Lame API expects Latin1, which is sad, but we cannot change that.
-			if(!tags.title.empty())    lame.id3tag_set_title(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.title   ).c_str());
-			if(!tags.artist.empty())   lame.id3tag_set_artist( gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.artist  ).c_str());
-			if(!tags.album.empty())    lame.id3tag_set_album(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.album   ).c_str());
-			if(!tags.year.empty())     lame.id3tag_set_year(   gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.year    ).c_str());
-			if(!tags.comments.empty()) lame.id3tag_set_comment(gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.comments).c_str());
-			if(!tags.trackno.empty())  lame.id3tag_set_track(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.trackno ).c_str());
-			if(!tags.genre.empty())    lame.id3tag_set_genre(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.genre   ).c_str());
-		} else if(id3type == ID3v2OpenMPT)
-		{
-			Tags = tags;
-			std::streampos id3beg = f.tellp();
-			ID3V2Tagger tagger;
-			ReplayGain replayGain;
-			if(StreamEncoderSettings::Instance().MP3LameCalculatePeakSample || StreamEncoderSettings::Instance().MP3LameCalculateReplayGain)
+			if(id3type == ID3v2Lame || id3type == ID3v1)
 			{
-				replayGain.Tag = ReplayGain::TagReserve;
+				// Lame API expects Latin1, which is sad, but we cannot change that.
+				if(!tags.title.empty())    lame.id3tag_set_title(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.title   ).c_str());
+				if(!tags.artist.empty())   lame.id3tag_set_artist( gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.artist  ).c_str());
+				if(!tags.album.empty())    lame.id3tag_set_album(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.album   ).c_str());
+				if(!tags.year.empty())     lame.id3tag_set_year(   gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.year    ).c_str());
+				if(!tags.comments.empty()) lame.id3tag_set_comment(gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.comments).c_str());
+				if(!tags.trackno.empty())  lame.id3tag_set_track(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.trackno ).c_str());
+				if(!tags.genre.empty())    lame.id3tag_set_genre(  gfp, mpt::ToCharset(mpt::CharsetISO8859_1, tags.genre   ).c_str());
+			} else if(id3type == ID3v2OpenMPT)
+			{
+				Tags = tags;
+				std::streampos id3beg = f.tellp();
+				ID3V2Tagger tagger;
+				ReplayGain replayGain;
+				if(StreamEncoderSettings::Instance().MP3LameCalculatePeakSample || StreamEncoderSettings::Instance().MP3LameCalculateReplayGain)
+				{
+					replayGain.Tag = ReplayGain::TagReserve;
+				}
+				tagger.WriteID3v2Tags(f, tags, replayGain);
+				std::streampos id3end = f.tellp();
+				id3v2Size = id3end - id3beg;
 			}
-			tagger.WriteID3v2Tags(f, tags, replayGain);
-			std::streampos id3end = f.tellp();
-			id3v2Size = id3end - id3beg;
 		}
+
 	}
 	virtual void WriteInterleaved(size_t count, const float *interleaved)
 	{
@@ -845,7 +841,7 @@ public:
 		}
 		WriteBuffer();
 	}
-	virtual void Finalize()
+	virtual ~MP3LameStreamWriter()
 	{
 		if(!gfp)
 		{
@@ -1266,20 +1262,14 @@ private:
 
 	std::vector<int16> samples;
 public:
-	MP3AcmStreamWriter(const ComponentAcmMP3 &acm_, std::ostream &stream)
+	MP3AcmStreamWriter(const ComponentAcmMP3 &acm_, std::ostream &stream, const Encoder::Settings &settings, const FileTags &tags)
 		: StreamWriterBase(stream)
 		, acm(acm_)
 	{
 		acmDriver = NULL;
 		acmStream = NULL;
 		MemsetZero(acmHeader);
-	}
-	virtual ~MP3AcmStreamWriter()
-	{
-		Finalize();
-	}
-	virtual void SetFormat(const Encoder::Settings &settings)
-	{
+
 		uint32 samplerate = settings.Samplerate;
 		uint16 channels = settings.Channels;
 
@@ -1347,11 +1337,12 @@ public:
 			acmDriver = NULL;
 			return;
 		}
-	}
-	virtual void WriteMetatags(const FileTags &tags)
-	{
-		ID3V2Tagger tagger;
-		tagger.WriteID3v2Tags(f, tags);
+
+		if(settings.Tags)
+		{
+			ID3V2Tagger tagger;
+			tagger.WriteID3v2Tags(f, tags);
+		}
 	}
 	virtual void WriteInterleaved(size_t count, const float *interleaved)
 	{
@@ -1406,7 +1397,7 @@ public:
 			}
 		}
 	}
-	virtual void Finalize()
+	virtual ~MP3AcmStreamWriter()
 	{
 		if(!acmStream)
 		{
@@ -1526,8 +1517,8 @@ MP3Encoder::~MP3Encoder()
 }
 
 
-std::unique_ptr<IAudioStreamEncoder> MP3Encoder::ConstructStreamEncoder(std::ostream &file) const
-//-------------------------------------------------------------------------------
+std::unique_ptr<IAudioStreamEncoder> MP3Encoder::ConstructStreamEncoder(std::ostream &file, const Encoder::Settings &settings, const FileTags &tags) const
+//--------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	std::unique_ptr<IAudioStreamEncoder> result = nullptr;
 	if(false)
@@ -1536,12 +1527,12 @@ std::unique_ptr<IAudioStreamEncoder> MP3Encoder::ConstructStreamEncoder(std::ost
 #ifdef MPT_MP3ENCODER_LAME
 	} else if(m_Type == MP3EncoderLame || m_Type == MP3EncoderLameCompatible)
 	{
-		result = mpt::make_unique<MP3LameStreamWriter>(*m_Lame, file, (m_Type == MP3EncoderLameCompatible));
+		result = mpt::make_unique<MP3LameStreamWriter>(*m_Lame, file, (m_Type == MP3EncoderLameCompatible), settings, tags);
 #endif // MPT_MP3ENCODER_LAME
 #ifdef MPT_MP3ENCODER_ACM
 	} else if(m_Type == MP3EncoderACM)
 	{
-		result = mpt::make_unique<MP3AcmStreamWriter>(*m_Acm, file);
+		result = mpt::make_unique<MP3AcmStreamWriter>(*m_Acm, file, settings, tags);
 #endif // MPT_MP3ENCODER_ACM
 	}
 	return std::move(result);

@@ -80,7 +80,7 @@ protected:
 	RtMidiOut m_midiOut;
 	MidiDevice m_inputDevice;
 	MidiDevice m_outputDevice;
-	bool m_latencyCompensation;
+	bool m_sendTimingInfo;
 
 #ifdef MODPLUG_TRACKER
 	CString m_programName;
@@ -161,8 +161,8 @@ public:
 	virtual int GetNumOutputChannels() const { return 0; }
 
 	virtual bool ProgramsAreChunks() const { return true; }
-	virtual size_t GetChunk(mpt::byte *(&chunk), bool isBank);
-	virtual void SetChunk(size_t size, mpt::byte *chunk, bool isBank);
+	virtual ChunkData GetChunk(bool isBank);
+	virtual void SetChunk(const ChunkData &chunk, bool isBank);
 
 protected:
 	// Open a device for input or output.

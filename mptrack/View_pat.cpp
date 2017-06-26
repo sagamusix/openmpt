@@ -1367,14 +1367,16 @@ void CViewPattern::OnPatternProperties()
 //--------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
-	if(pModDoc && pModDoc->GetrSoundFile().Patterns.IsValidPat(m_nPattern))
+	PATTERNINDEX pat = m_nPattern;
+	if(pModDoc && pModDoc->GetrSoundFile().Patterns.IsValidPat(pat))
 	{
-		CPatternPropertiesDlg dlg(*pModDoc, m_nPattern, this);
+		CPatternPropertiesDlg dlg(*pModDoc, pat, this);
 		if(dlg.DoModal() == IDOK)
 		{
 			UpdateScrollSize();
 			InvalidatePattern(true);
 			SanitizeCursor();
+			pModDoc->UpdateAllViews(this, PatternHint(pat).Data(), this);
 		}
 	}
 }
@@ -3498,7 +3500,7 @@ ModCommand &CViewPattern::GetModCommand(PatternCursor cursor)
 //-----------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
-	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(GetCurrentPattern() && pSndFile->Patterns[GetCurrentPattern()].IsValidRow(cursor.GetRow())))
+	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(GetCurrentPattern()) && pSndFile->Patterns[GetCurrentPattern()].IsValidRow(cursor.GetRow()))
 	{
 		return *pSndFile->Patterns[GetCurrentPattern()].GetpModCommand(cursor.GetRow(), cursor.GetChannel());
 	}

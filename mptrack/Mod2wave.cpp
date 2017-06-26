@@ -922,24 +922,22 @@ CWaveConvertSettings::CWaveConvertSettings(SettingsContainer &conf, const std::v
 	, silencePlugBuffers(false)
 	, outputToSample(false)
 {
-	for(std::size_t i = 0; i < EncoderFactories.size(); ++i)
+	for(const auto & factory : EncoderFactories)
 	{
-		const Encoder::Traits &encTraits = EncoderFactories[i]->GetTraits();
+		const Encoder::Traits &encTraits = factory->GetTraits();
 		EncoderSettings.push_back(
-			std::shared_ptr<Encoder::Settings>(
-				new Encoder::Settings(
-					conf,
-					encTraits.encoderSettingsName,
-					encTraits.canCues,
-					encTraits.canTags,
-					encTraits.defaultSamplerate,
-					encTraits.defaultChannels,
-					encTraits.defaultMode,
-					encTraits.defaultBitrate,
-					encTraits.defaultQuality,
-					encTraits.defaultFormat,
-					encTraits.defaultDitherType
-				)
+			mpt::make_unique<Encoder::Settings>(
+				conf,
+				encTraits.encoderSettingsName,
+				encTraits.canCues,
+				encTraits.canTags,
+				encTraits.defaultSamplerate,
+				encTraits.defaultChannels,
+				encTraits.defaultMode,
+				encTraits.defaultBitrate,
+				encTraits.defaultQuality,
+				encTraits.defaultFormat,
+				encTraits.defaultDitherType
 			)
 		);
 	}
@@ -992,7 +990,6 @@ void CDoWaveConvert::Run()
 	const uint16 channels = encSettings.Channels;
 
 	ASSERT(m_Settings.GetEncoderFactory() && m_Settings.GetEncoderFactory()->IsAvailable());
-	std::unique_ptr<IAudioStreamEncoder> fileEnc = m_Settings.GetEncoderFactory()->ConstructStreamEncoder(fileStream);
 
 	// Silence mix buffer of plugins, for plugins that don't clear their reverb buffers and similar stuff when they are reset
 #ifndef NO_PLUGINS
@@ -1047,14 +1044,10 @@ void CDoWaveConvert::Run()
 	if(!m_dwFileLimit) m_dwFileLimit = Util::MaxValueOfType(m_dwFileLimit) >> 10;
 	m_dwFileLimit <<= 10;
 
-	fileEnc->SetFormat(encSettings);
-	if(encSettings.Tags)
-	{
-		// Tags must be written before audio data,
-		// so that the encoder class could write them before audio data if mandated by the format,
-		// otherwise they should just be cached by the encoder.
-		fileEnc->WriteMetatags(m_Settings.Tags);
-	}
+	// Tags must be known at the stream start,
+	// so that the encoder class could write them before audio data if mandated by the format,
+	// otherwise they should just be cached by the encoder.
+	std::unique_ptr<IAudioStreamEncoder> fileEnc = m_Settings.GetEncoderFactory()->ConstructStreamEncoder(fileStream, encSettings, m_Settings.Tags);
 
 	ullMaxSamples = m_dwFileLimit / (channels * ((m_Settings.FinalSampleFormat.GetBitsPerSample()+7) / 8));
 	if (m_dwSongLimit)
@@ -1344,7 +1337,6 @@ void CDoWaveConvert::Run()
 		m_SndFile.m_PatternCuePoints.clear();
 	}
 
-	fileEnc->Finalize();
 	fileEnc = nullptr;
 
 	fileStream.flush();
