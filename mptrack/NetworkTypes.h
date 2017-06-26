@@ -102,8 +102,24 @@ struct SetCursorPosMsg
 
 struct ModCommandMask
 {
+	enum
+	{
+		kNote,
+		kInstr,
+		kVolCmd,
+		kVol,
+		kCommand,
+		kParam,
+		kNumColumns
+	};
+
 	ModCommand m;
-	std::bitset<sizeof(ModCommand)> mask;
+	std::bitset<kNumColumns> mask;
+
+	ModCommandMask(ModCommand mc = ModCommand::Empty()) : m(mc)
+	{
+		STATIC_ASSERT(sizeof(ModCommand) == kNumColumns);
+	}
 
 	template<class Archive>
 	void serialize(Archive &archive)
@@ -117,6 +133,14 @@ struct PatternEditMsg
 {
 	uint32 pattern, row, channel, numRows, numChannels;
 	std::vector<ModCommandMask> commands;
+
+	PatternEditMsg(PATTERNINDEX p = 0, ROWINDEX r = 0, CHANNELINDEX c = 0, ROWINDEX rc = 0, CHANNELINDEX cc = 0)
+		: pattern(p)
+		, row(r)
+		, channel(c)
+		, numRows(rc)
+		, numChannels(cc)
+	{ }
 
 	template<class Archive>
 	void serialize(Archive &archive)
