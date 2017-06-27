@@ -25,6 +25,7 @@
 #include "../soundlib/plugins/PlugInterface.h"
 #include "VstPresets.h"
 #include "../common/FileReader.h"
+#include "NetworkPatterns.h"
 
 
 #ifdef _DEBUG
@@ -173,6 +174,16 @@ CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrde
 	}
 
 	CriticalSection cs;
+	std::vector<PatternTransaction> transactions;
+	transactions.reserve(m_SndFile.Patterns.Size());
+	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
+	{
+		if(m_SndFile.Patterns[pat].IsValid())
+		{
+			transactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
+		}
+	}
+
 	if(oldNumChannels == newNumChannels)
 	{
 		// Optimization with no pattern re-allocation
@@ -412,6 +423,16 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 		}
 	} else
 	{
+		std::vector<PatternTransaction> transactions;
+		transactions.reserve(m_SndFile.Patterns.Size());
+		for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
+		{
+			if(m_SndFile.Patterns[pat].IsValid())
+			{
+				transactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
+			}
+		}
+
 		PrepareUndoForAllPatterns(false, "Rearrange Samples");
 		m_SndFile.Patterns.ForEachModCommand([&newIndex] (ModCommand &m)
 		{
@@ -490,6 +511,17 @@ INSTRUMENTINDEX CModDoc::ReArrangeInstruments(const std::vector<INSTRUMENTINDEX>
 
 	PrepareUndoForAllPatterns(false, "Rearrange Instrumens");
 	GetInstrumentUndo().RearrangeInstruments(newIndex);
+
+	std::vector<PatternTransaction> transactions;
+	transactions.reserve(m_SndFile.Patterns.Size());
+	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
+	{
+		if(m_SndFile.Patterns[pat].IsValid())
+		{
+			transactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
+		}
+	}
+
 	m_SndFile.Patterns.ForEachModCommand([&newIndex] (ModCommand &m)
 	{
 		if(!m.IsPcNote() && m.instr < newIndex.size())

@@ -15,6 +15,7 @@
 #include "modsmp_ctrl.h"
 #include "Undo.h"
 #include "../common/StringFixer.h"
+#include "NetworkPatterns.h"
 
 #define new DEBUG_NEW
 
@@ -142,6 +143,7 @@ PATTERNINDEX CPatternUndo::Undo(undobuf_t &fromBuf, undobuf_t &toBuf, bool linke
 	// Select most recent undo slot
 	const UndoInfo &undo = fromBuf.back();
 
+	PatternTransaction transaction(sndFile, undo.pattern, PatternCursor(undo.firstRow, undo.firstChannel), PatternCursor(undo.firstRow + undo.numRows - 1, undo.firstChannel + undo.numChannels - 1));
 	PrepareBuffer(toBuf, undo.pattern, undo.firstChannel, undo.firstRow, undo.numChannels, undo.numRows, undo.description, linkedFromPrevious, !undo.channelInfo.empty());
 
 	if(!undo.channelInfo.empty())
