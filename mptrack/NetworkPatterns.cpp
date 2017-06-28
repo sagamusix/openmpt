@@ -2,27 +2,28 @@
 #include "Moddoc.h"
 #include "Networking.h"
 #include "NetworkPatterns.h"
+#include "NetworkTypes.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
 void PatternTransaction::Init(const char *description)
 {
 	CModDoc *pModDoc = m_sndFile.GetpModDoc();
-	CHANNELINDEX nChnBeg = m_rect.GetStartChannel(), nChnEnd = m_rect.GetEndChannel();
-	ROWINDEX nRowBeg = m_rect.GetStartRow(), nRowEnd = m_rect.GetEndRow();
+	CHANNELINDEX chnBeg = m_rect.GetStartChannel(), chnEnd = m_rect.GetEndChannel();
+	ROWINDEX rowBeg = m_rect.GetStartRow(), rowEnd = m_rect.GetEndRow();
 
-	if(nChnEnd < nChnBeg || nRowEnd < nRowBeg || pModDoc == nullptr || !m_sndFile.Patterns.IsValidPat(m_pattern))
+	if(chnEnd < chnBeg || rowEnd < rowBeg || pModDoc == nullptr || !m_sndFile.Patterns.IsValidPat(m_pattern))
 		return;
 
 	if(description != nullptr)
 	{
-		pModDoc->GetPatternUndo().PrepareUndo(m_pattern, nChnBeg, nRowBeg, m_rect.GetNumChannels(), m_rect.GetNumRows(), description);
+		pModDoc->GetPatternUndo().PrepareUndo(m_pattern, chnBeg, rowBeg, m_rect.GetNumChannels(), m_rect.GetNumRows(), description);
 	}
 	m_data.reserve(m_rect.GetNumChannels() * m_rect.GetNumRows());
 	const auto &pat = m_sndFile.Patterns[m_pattern];
-	for(ROWINDEX r = nRowBeg; r <= nRowEnd; r++)
+	for(ROWINDEX r = rowBeg; r <= rowEnd; r++)
 	{
-		m_data.insert(m_data.end(), pat.GetpModCommand(r, nChnBeg), pat.GetpModCommand(r, nChnEnd + 1));
+		m_data.insert(m_data.end(), pat.GetpModCommand(r, chnBeg), pat.GetpModCommand(r, chnEnd + 1));
 	}
 }
 
@@ -53,13 +54,14 @@ PatternTransaction::PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern
 
 PatternTransaction::~PatternTransaction()
 {
-	// Build a difference mask
+	// Build the difference mask
 	Networking::PatternEditMsg msg(m_pattern, m_rect.GetStartRow(), m_rect.GetStartChannel(), m_rect.GetNumRows(), m_rect.GetNumChannels());
 	msg.commands.reserve(m_data.size());
 	ROWINDEX rowBeg = m_rect.GetStartRow(), rowEnd = m_rect.GetEndRow();
 	CHANNELINDEX chnBeg = m_rect.GetStartChannel(), chnEnd = m_rect.GetEndChannel();
 	auto mOrig = m_data.cbegin();
 	const auto &pat = m_sndFile.Patterns[m_pattern];
+	bool anyChanges = false;
 	for(ROWINDEX r = rowBeg; r <= rowEnd; r++)
 	{
 		const ModCommand *m = pat.GetpModCommand(r, chnBeg);
@@ -74,7 +76,22 @@ PatternTransaction::~PatternTransaction()
 			mask.mask[Networking::ModCommandMask::kCommand] = m->command != mOrig->command;
 			mask.mask[Networking::ModCommandMask::kParam] = m->param != mOrig->param;
 			msg.commands.push_back(mask);
+			if(mask.mask.any())
+			{
+				if(!anyChanges)
+				{
+					// Trim the transferred data
+					msg.numRows -= (r - rowBeg);
+					msg.row = r;
+					msg.commands.erase(msg.commands.begin(), msg.commands.begin() + (r - rowBeg) * msg.numChannels);
+					anyChanges = true;
+				}
+			}
 		}
+	}
+	if(anyChanges)
+	{
+		// TODO: Send over network
 	}
 }
 

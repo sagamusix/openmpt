@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NetworkTypes.h"
 #include "PatternCursor.h"
 
 OPENMPT_NAMESPACE_BEGIN

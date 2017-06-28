@@ -18,6 +18,7 @@
 #include "PatternEditorDialogs.h"
 #include "TempoSwingDialog.h"
 #include "../soundlib/mod_specifications.h"
+#include "NetworkPatterns.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -658,6 +659,7 @@ void CEditCommand::OnNoteChanged()
 
 	if(m->note != newNote || m->instr != newInstr)
 	{
+		PatternTransaction transaction(sndFile, editPos.pattern, PatternCursor(editPos.row, editPos.channel));
 		PrepareUndo("Note Entry");
 		CModDoc *modDoc = sndFile.GetpModDoc();
 		m->note = newNote;
@@ -703,6 +705,7 @@ void CEditCommand::OnVolCmdChanged()
 	const bool volCmdChanged = m->volcmd != newVolCmd;
 	if(volCmdChanged || m->vol != newVol)
 	{
+		PatternTransaction transaction(sndFile, editPos.pattern, PatternCursor(editPos.row, editPos.channel));
 		PrepareUndo("Volume Entry");
 		CModDoc *modDoc = sndFile.GetpModDoc();
 		m->volcmd = newVolCmd;
@@ -740,6 +743,7 @@ void CEditCommand::OnCommandChanged()
 
 	if(m->command != newCommand || m->param != newParam)
 	{
+		PatternTransaction transaction(sndFile, editPos.pattern, PatternCursor(editPos.row, editPos.channel));
 		PrepareUndo("Effect Entry");
 
 		m->command = newCommand;
@@ -767,6 +771,7 @@ void CEditCommand::OnPlugParamChanged()
 
 	if(m->GetValueVolCol() != newPlugParam)
 	{
+		PatternTransaction transaction(sndFile, editPos.pattern, PatternCursor(editPos.row, editPos.channel));
 		PrepareUndo("Effect Entry");
 		m->SetValueVolCol(newPlugParam);
 		sndFile.GetpModDoc()->UpdateAllViews(NULL, RowHint(editPos.row), NULL);
@@ -822,6 +827,7 @@ void CEditCommand::UpdateEffectValue(bool set)
 		if((!m->IsPcNote() && m->param != newParam)
 			|| (m->IsPcNote() && m->GetValueVolCol() != newPlugParam))
 		{
+			PatternTransaction transaction(sndFile, editPos.pattern, PatternCursor(editPos.row, editPos.channel));
 			PrepareUndo("Effect Entry");
 			CModDoc *modDoc = sndFile.GetpModDoc();
 			if(m->IsPcNote())

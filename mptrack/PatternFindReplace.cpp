@@ -17,6 +17,7 @@
 #include "PatternFindReplace.h"
 #include "PatternFindReplaceDlg.h"
 #include "../soundlib/mod_specifications.h"
+#include "NetworkPatterns.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -303,6 +304,7 @@ void CViewPattern::OnEditFindNext()
 						// Create separately undo-able items when replacing manually.
 						GetDocument()->GetPatternUndo().PrepareUndo(pat, chn, row, 1, 1, "Find / Replace");
 					}
+					PatternTransaction transaction(GetDocument()->GetrSoundFile(), pat, PatternCursor(row, chn));
 
 					if(FindReplace::instance.replaceFlags[FindReplace::Instr])
 					{
