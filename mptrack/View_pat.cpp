@@ -2466,6 +2466,7 @@ void CViewPattern::OnTransposeChannel()
 			bool changedThisPat = false;
 			if(sndFile.Patterns.IsValidPat(pat))
 			{
+				PatternTransaction transaction(sndFile, pat, PatternCursor(0, 0), PatternCursor(sndFile.Patterns[pat].GetNumRows() - 1, sndFile.GetNumChannels() - 1));
 				ModCommand *m = sndFile.Patterns[pat].GetpModCommand(0, m_MenuCursor.GetChannel());
 				const ROWINDEX numRows = sndFile.Patterns[pat].GetNumRows();
 				for(ROWINDEX row = 0; row < numRows; row++)

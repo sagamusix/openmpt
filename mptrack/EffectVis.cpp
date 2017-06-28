@@ -16,6 +16,7 @@
 #include "Globals.h"
 #include "View_pat.h"
 #include "EffectVis.h"
+#include "NetworkPatterns.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -824,6 +825,7 @@ void CEffectVis::MakeChange(ROWINDEX row, int y)
 	if(!m_pSndFile->Patterns.IsValidPat(m_nPattern))
 		return;
 
+	PatternTransaction transaction(*m_pSndFile, m_nPattern, PatternCursor(row, m_nChan));
 	ModCommand &m = *m_pSndFile->Patterns[m_nPattern].GetpModCommand(row, m_nChan);
 
 	switch (m_nAction)
