@@ -19,6 +19,8 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
+namespace Networking { class CollabClient; }
+
 class EncoderFactoryBase;
 class CChildFrame;
 
@@ -118,6 +120,9 @@ public:
 protected:
 	std::bitset<MAX_BASECHANNELS> m_bsMultiRecordMask;
 	std::bitset<MAX_BASECHANNELS> m_bsMultiSplitRecordMask;
+
+public:
+	std::shared_ptr<Networking::CollabClient> m_collabClient;
 
 protected: // create from serialization only
 	CModDoc();

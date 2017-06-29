@@ -91,7 +91,11 @@ PatternTransaction::~PatternTransaction()
 	}
 	if(anyChanges)
 	{
-		// TODO: Send over network
+		if(Networking::collabServer != nullptr)
+		{
+			// TODO: Send over network
+			//Networking::collabServer->SendMessage(m_sndFile.GetpModDoc(), )
+		}
 	}
 }
 

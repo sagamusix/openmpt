@@ -192,6 +192,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
 	CMainFrame::GetMainFrame()->UpdateTree(modDoc, GeneralHint().General());
+	//modDoc->m_collabClient = 
 	OnOK();
 	return 0;
 }
