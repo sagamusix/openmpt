@@ -757,6 +757,7 @@
     <ClInclude Include="..\..\mptrack\MoveFXSlotDialog.h" />
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
+    <ClInclude Include="..\..\mptrack\NetworkPatterns.h" />
     <ClInclude Include="..\..\mptrack\NetworkTypes.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
     <ClInclude Include="..\..\mptrack\NetworkingDlg.h" />
@@ -804,13 +805,14 @@
     <ClInclude Include="..\..\mptrack\dlg_misc.h" />
     <ClInclude Include="..\..\mptrack\mod2midi.h" />
     <ClInclude Include="..\..\mptrack\mod2wave.h" />
+    <ClInclude Include="..\..\mptrack\plugins\LFOPluginEditor.h" />
+    <ClInclude Include="..\..\mptrack\plugins\MidiInOut.h" />
+    <ClInclude Include="..\..\mptrack\plugins\MidiInOutEditor.h" />
     <ClInclude Include="..\..\mptrack\resource.h" />
     <ClInclude Include="..\..\mptrack\tuningRatioMapWnd.h" />
     <ClInclude Include="..\..\mptrack\view_com.h" />
     <ClInclude Include="..\..\pluginBridge\BridgeCommon.h" />
     <ClInclude Include="..\..\pluginBridge\BridgeWrapper.h" />
-    <ClInclude Include="..\..\plugins\MidiInOut\MidiInOut.h" />
-    <ClInclude Include="..\..\plugins\MidiInOut\MidiInOutEditor.h" />
     <ClInclude Include="..\..\soundbase\SampleFormat.h" />
     <ClInclude Include="..\..\soundbase\SampleFormatConverters.h" />
     <ClInclude Include="..\..\soundbase\SampleFormatCopy.h" />
@@ -875,6 +877,7 @@
     <ClInclude Include="..\..\soundlib\pattern.h" />
     <ClInclude Include="..\..\soundlib\patternContainer.h" />
     <ClInclude Include="..\..\soundlib\plugins\DigiBoosterEcho.h" />
+    <ClInclude Include="..\..\soundlib\plugins\LFOPlugin.h" />
     <ClInclude Include="..\..\soundlib\plugins\OpCodes.h" />
     <ClInclude Include="..\..\soundlib\plugins\PlugInterface.h" />
     <ClInclude Include="..\..\soundlib\plugins\PluginEventQueue.h" />
@@ -993,6 +996,7 @@
     <ClCompile Include="..\..\mptrack\Mpdlgs.cpp" />
     <ClCompile Include="..\..\mptrack\Mpt_midi.cpp" />
     <ClCompile Include="..\..\mptrack\Mptrack.cpp" />
+    <ClCompile Include="..\..\mptrack\NetworkPatterns.cpp" />
     <ClCompile Include="..\..\mptrack\Networking.cpp" />
     <ClCompile Include="..\..\mptrack\NetworkingDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PNG.cpp" />
@@ -1035,11 +1039,12 @@
     <ClCompile Include="..\..\mptrack\WelcomeDialog.cpp" />
     <ClCompile Include="..\..\mptrack\dlg_misc.cpp" />
     <ClCompile Include="..\..\mptrack\mod2midi.cpp" />
+    <ClCompile Include="..\..\mptrack\plugins\LFOPluginEditor.cpp" />
+    <ClCompile Include="..\..\mptrack\plugins\MidiInOut.cpp" />
+    <ClCompile Include="..\..\mptrack\plugins\MidiInOutEditor.cpp" />
     <ClCompile Include="..\..\mptrack\tuningRatioMapWnd.cpp" />
     <ClCompile Include="..\..\mptrack\view_com.cpp" />
     <ClCompile Include="..\..\pluginBridge\BridgeWrapper.cpp" />
-    <ClCompile Include="..\..\plugins\MidiInOut\MidiInOut.cpp" />
-    <ClCompile Include="..\..\plugins\MidiInOut\MidiInOutEditor.cpp" />
     <ClCompile Include="..\..\sounddev\SoundDevice.cpp" />
     <ClCompile Include="..\..\sounddev\SoundDeviceASIO.cpp" />
     <ClCompile Include="..\..\sounddev\SoundDeviceBase.cpp" />
@@ -1138,6 +1143,7 @@
     <ClCompile Include="..\..\soundlib\pattern.cpp" />
     <ClCompile Include="..\..\soundlib\patternContainer.cpp" />
     <ClCompile Include="..\..\soundlib\plugins\DigiBoosterEcho.cpp" />
+    <ClCompile Include="..\..\soundlib\plugins\LFOPlugin.cpp" />
     <ClCompile Include="..\..\soundlib\plugins\PlugInterface.cpp" />
     <ClCompile Include="..\..\soundlib\plugins\PluginManager.cpp" />
     <ClCompile Include="..\..\soundlib\plugins\dmo\Chorus.cpp" />
