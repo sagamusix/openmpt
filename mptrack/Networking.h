@@ -110,6 +110,8 @@ public:
 	void AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
 	void CloseDocument(CModDoc &modDoc);
 
+	void SendMessage(CModDoc &modDoc, const std::string msg);
+
 	void Receive(CollabConnection *source, const std::string &msg) override;
 
 	void StartAccept();

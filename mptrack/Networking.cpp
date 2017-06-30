@@ -216,6 +216,16 @@ void CollabServer::CloseDocument(CModDoc &modDoc)
 }
 
 
+void CollabServer::SendMessage(CModDoc &modDoc, const std::string msg)
+{
+	auto doc = m_documents.find(NetworkedDocument(modDoc));
+	if(doc != m_documents.end())
+	{
+		// TODO
+	}
+}
+
+
 void CollabServer::StartAccept()
 {
 	auto that = shared_from_this();

@@ -25,6 +25,7 @@
 #include "../common/StringFixer.h"
 #include "EffectInfo.h"
 #include "PatternFont.h"
+#include "NetworkTypes.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -1483,6 +1484,16 @@ void CViewPattern::SetCurSel(const PatternCursor &beginSel, const PatternCursor 
 			m_Selection.GetNumChannels(), m_Selection.GetNumChannels() != 1 ? _T("s") : _T(""));
 		CMainFrame::GetMainFrame()->SetInfoText(s);
 	}
+
+	Networking::SetCursorPosMsg msg;
+	msg.sequence = pSndFile->Order.GetCurrentSequenceIndex();
+	msg.order = GetCurrentOrder();
+	msg.pattern = GetCurrentPattern();
+	msg.row = m_Cursor.GetRow();
+	msg.channel = m_Cursor.GetChannel();
+	msg.column = m_Cursor.GetColumnType();
+	//GetDocument()->m_collabClient->
+	// TODO send via network
 
 	pt = GetPointFromPosition(m_Selection.GetUpperLeft());
 	rect2.left = pt.x;
