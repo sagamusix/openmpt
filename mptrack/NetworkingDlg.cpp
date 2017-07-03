@@ -17,6 +17,7 @@
 #include "Moddoc.h"
 #include "Mainfrm.h"
 #include "Childfrm.h"
+#include "View_tre.h"
 #include "../common/version.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include "Reporting.h"
@@ -191,7 +192,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	{
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
-	CMainFrame::GetMainFrame()->UpdateTree(modDoc, GeneralHint().General());
+	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
 	//modDoc->m_collabClient = 
 	OnOK();
 	return 0;

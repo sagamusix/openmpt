@@ -32,9 +32,9 @@ public:
 	static void Show(CWnd *parent);
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL OnInitDialog();
-	virtual void PostNcDestroy();
+	void DoDataExchange(CDataExchange* pDX) override;
+	BOOL OnInitDialog() override;
+	void PostNcDestroy() override;
 
 	//}}AFX_VIRTUAL
 
