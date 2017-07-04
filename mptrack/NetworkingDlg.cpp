@@ -144,7 +144,7 @@ void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
 
 		if(welcome.version != MptVersion::str)
 		{
-			Reporting::Error(mpt::String::Print("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).", welcome.version), "Collaboration Server");
+			Reporting::Error(mpt::format("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).")(welcome.version), "Collaboration Server");
 			return;
 		}
 
@@ -156,8 +156,8 @@ void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
 			int insertAt = m_List.InsertItem(m_List.GetItemCount(), mpt::ToCString(mpt::CharsetUTF8, doc.name));
 			if(insertAt == -1)
 				continue;
-			m_List.SetItemText(insertAt, 1, mpt::String::Print(_T("%1/%2"), doc.collaborators, doc.maxCollaboratos).c_str());
-			m_List.SetItemText(insertAt, 2, mpt::String::Print(_T("%1/%2"), doc.spectators, doc.maxSpectators).c_str());
+			m_List.SetItemText(insertAt, 1, mpt::format(_T("%1/%2"))(doc.collaborators, doc.maxCollaboratos).c_str());
+			m_List.SetItemText(insertAt, 2, mpt::format(_T("%1/%2"))(doc.spectators, doc.maxSpectators).c_str());
 			m_List.SetItemText(insertAt, 3, doc.password ? _T("Yes") : _T("No"));
 			m_List.SetItemData(insertAt, reinterpret_cast<DWORD_PTR>(&doc));
 		}
