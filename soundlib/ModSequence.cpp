@@ -108,8 +108,10 @@ ORDERINDEX ModSequence::GetNextOrderIgnoringSkips(const ORDERINDEX start) const
 {
 	if(empty())
 		return 0;
-	auto next = std::find_if(begin() + start + 1, end(), [] (PATTERNINDEX pat) { return pat != GetIgnoreIndex(); });
-	return std::min(static_cast<ORDERINDEX>(std::distance(begin(), next)), GetLastIndex());
+	auto length = GetLength();
+	ORDERINDEX next = std::min(ORDERINDEX(length - 1), ORDERINDEX(start + 1));
+	while(next + 1 < length && at(next) == GetIgnoreIndex()) next++;
+	return next;
 }
 
 
@@ -451,7 +453,7 @@ bool ModSequenceSet::MergeSequences()
 		const ORDERINDEX lengthTrimmed = seq.GetLengthTailTrimmed();
 		if(firstOrder + lengthTrimmed > m_sndFile.GetModSpecifications().ordersMax)
 		{
-			m_sndFile.AddToLog(mpt::String::Print("WARNING: Cannot merge Sequence %1 (too long!)", seqNum));
+			m_sndFile.AddToLog(mpt::format("WARNING: Cannot merge Sequence %1 (too long!)")(seqNum));
 			continue;
 		}
 		firstSeq.reserve(firstOrder + lengthTrimmed);
@@ -485,7 +487,7 @@ bool ModSequenceSet::MergeSequences()
 						} else
 						{
 							// Cannot create new pattern: notify the user
-							m_sndFile.AddToLog(mpt::String::Print("CONFLICT: Pattern break commands in Pattern %1 might be broken since it has been used in several sequences!", pat));
+							m_sndFile.AddToLog(mpt::format("CONFLICT: Pattern break commands in Pattern %1 might be broken since it has been used in several sequences!")(pat));
 						}
 					}
 					m->param = static_cast<ModCommand::PARAM>(m->param + firstOrder);
@@ -544,7 +546,7 @@ void ReadModSequenceOld(std::istream& iStrm, ModSequenceSet& seq, const size_t)
 	mpt::IO::ReadIntLE<uint16>(iStrm, size);
 	if(size > ModSpecs::mptm.ordersMax)
 	{
-		seq.m_sndFile.AddToLog(mpt::String::Print(str_SequenceTruncationNote, size, ModSpecs::mptm.ordersMax));
+		seq.m_sndFile.AddToLog(mpt::format(str_SequenceTruncationNote)(size, ModSpecs::mptm.ordersMax));
 		size = ModSpecs::mptm.ordersMax;
 	}
 	seq(0).resize(size);

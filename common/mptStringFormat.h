@@ -35,7 +35,7 @@ OPENMPT_NAMESPACE_BEGIN
 //     the same way as '%nd' would do. Appending a '0' to the function name causes zero-filling as print-like '%0nd' would do. Spelling 'HEX'
 //     in upper-case generates upper-case hex digits. If these are not known at compile-time, a more verbose FormatVal(int, format) can be
 //     used.
-//  3. mpt::String::Print(format, ...) provides simplified and type-safe message and localization string formatting.
+//  3. mpt::format(format)(...) provides simplified and type-safe message and localization string formatting.
 //     The only specifier allowed is '%' followed by a single digit n. It references to n-th parameter after the format string (1-based).
 //     This mimics the behaviour of QString::arg() in QT4/5 or MFC AfxFormatString2(). C printf-like functions offer similar functionality
 //     with a '%n$TYPE' syntax. In .NET, the syntax is '{n}'. This is useful to support localization strings that can change the parameter
@@ -66,7 +66,7 @@ namespace mpt
 {
 
 // ToString() converts various built-in types to a well-defined, locale-independent string representation.
-// This is also used as a type-tunnel pattern for mpt::String::Print.
+// This is also used as a type-tunnel pattern for mpt::format.
 // Custom types that need to be converted to strings are encouraged to overload ToString() and ToWString().
 
 // fallback to member function ToString()
@@ -538,208 +538,6 @@ CString PrintImpl(const CString & format
 #endif
 
 } // namespace detail
-
-} // namespace String
-
-namespace String {
-
-template<typename Tformat
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-	);
-}
-
-template<typename Tformat
-	, typename T1
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
-	, typename T4
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-	, const T4& x4
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-		, ToStringTFunctor<Tstring>()(x4)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
-	, typename T4
-	, typename T5
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-	, const T4& x4
-	, const T5& x5
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-		, ToStringTFunctor<Tstring>()(x4)
-		, ToStringTFunctor<Tstring>()(x5)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
-	, typename T4
-	, typename T5
-	, typename T6
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-	, const T4& x4
-	, const T5& x5
-	, const T6& x6
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-		, ToStringTFunctor<Tstring>()(x4)
-		, ToStringTFunctor<Tstring>()(x5)
-		, ToStringTFunctor<Tstring>()(x6)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
-	, typename T4
-	, typename T5
-	, typename T6
-	, typename T7
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-	, const T4& x4
-	, const T5& x5
-	, const T6& x6
-	, const T7& x7
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-		, ToStringTFunctor<Tstring>()(x4)
-		, ToStringTFunctor<Tstring>()(x5)
-		, ToStringTFunctor<Tstring>()(x6)
-		, ToStringTFunctor<Tstring>()(x7)
-	);
-}
-
-template<typename Tformat
-	, typename T1
-	, typename T2
-	, typename T3
-	, typename T4
-	, typename T5
-	, typename T6
-	, typename T7
-	, typename T8
->
-typename mpt::String::detail::to_string_type<Tformat>::type Print(const Tformat & format
-	, const T1& x1
-	, const T2& x2
-	, const T3& x3
-	, const T4& x4
-	, const T5& x5
-	, const T6& x6
-	, const T7& x7
-	, const T8& x8
-)
-{
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return mpt::String::detail::PrintImpl(Tstring(format)
-		, ToStringTFunctor<Tstring>()(x1)
-		, ToStringTFunctor<Tstring>()(x2)
-		, ToStringTFunctor<Tstring>()(x3)
-		, ToStringTFunctor<Tstring>()(x4)
-		, ToStringTFunctor<Tstring>()(x5)
-		, ToStringTFunctor<Tstring>()(x6)
-		, ToStringTFunctor<Tstring>()(x7)
-		, ToStringTFunctor<Tstring>()(x8)
-	);
-}
 
 } // namespace String
 

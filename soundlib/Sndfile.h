@@ -512,7 +512,7 @@ public:
 
 	// Song message
 	SongMessage m_songMessage;
-	std::string m_madeWithTracker;
+	mpt::ustring m_madeWithTracker;
 
 protected:
 	std::vector<FileHistory> m_FileHistory;	// File edit history
@@ -584,14 +584,17 @@ public:
 	MODCONTAINERTYPE GetContainerType() const { return m_ContainerType; }
 
 	// rough heuristic, could be improved
-	mpt::Charset GetCharset() const { return GetCharsetFromModType(GetType()); }
-	mpt::Charset GetCharsetLocaleOrModule() const
+	mpt::Charset GetCharsetFile() const // 8bit string encoding of strings in the on-disk file
 	{
-		#if defined(MPT_ENABLE_CHARSET_LOCALE)
+		return GetCharsetFromModType(GetType());
+	}
+	mpt::Charset GetCharsetInternal() const // 8bit string encoding of strings internal in CSoundFile
+	{
+		#if defined(MODPLUG_TRACKER)
 			return mpt::CharsetLocale;
-		#else // MPT_ENABLE_CHARSET_LOCALE
-			return GetCharset();
-		#endif // MPT_ENABLE_CHARSET_LOCALE
+		#else // MODPLUG_TRACKER
+			return GetCharsetFile();
+		#endif // MODPLUG_TRACKER
 	}
 
 	void SetPreAmp(uint32 vol);
@@ -696,10 +699,10 @@ public:
 
 	static std::vector<const char *> GetSupportedExtensions(bool otherFormats);
 	static mpt::Charset GetCharsetFromModType(MODTYPE modtype);
-	static const char * ModTypeToString(MODTYPE modtype);
-	static std::string ModContainerTypeToString(MODCONTAINERTYPE containertype);
-	static std::string ModTypeToTracker(MODTYPE modtype);
-	static std::string ModContainerTypeToTracker(MODCONTAINERTYPE containertype);
+	static mpt::ustring ModTypeToString(MODTYPE modtype);
+	static mpt::ustring ModContainerTypeToString(MODCONTAINERTYPE containertype);
+	static mpt::ustring ModTypeToTracker(MODTYPE modtype);
+	static mpt::ustring ModContainerTypeToTracker(MODCONTAINERTYPE containertype);
 
 	void UpgradeModule();
 
@@ -717,7 +720,7 @@ public:
 	void LoadExtendedSongProperties(FileReader &file, bool* pInterpretMptMade = nullptr);
 	void LoadMPTMProperties(FileReader &file, uint16 cwtv);
 
-	std::string GetSchismTrackerVersion(uint16 cwtv);
+	mpt::ustring GetSchismTrackerVersion(uint16 cwtv);
 
 	// Reads extended instrument properties(XM/IT/MPTM).
 	// If no errors occur and song extension tag is found, returns pointer to the beginning

@@ -417,7 +417,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_MT2);
 	InitializeChannels();
-	mpt::String::Read<mpt::String::maybeNullTerminated>(m_madeWithTracker, fileHeader.trackerName);
+	mpt::String::Read<mpt::String::maybeNullTerminated>(m_madeWithTracker, mpt::CharsetWindows1252, fileHeader.trackerName);
 	mpt::String::Read<mpt::String::maybeNullTerminated>(m_songName, fileHeader.songName);
 	m_nChannels = fileHeader.numChannels;
 	m_nDefaultSpeed = Clamp<uint8, uint8>(fileHeader.ticksPerLine, 1, 31);
@@ -1114,7 +1114,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 			}
 			SetSamplePath(i + 1, mpt::PathString::FromLocaleSilent(filename));
 #else
-			AddToLog(LogWarning, mpt::String::Print(MPT_USTRING("Loading external sample %1 ('%2') failed: External samples are not supported."), i, mpt::ToUnicode(GetCharsetLocaleOrModule(), filename)));
+			AddToLog(LogWarning, mpt::format(MPT_USTRING("Loading external sample %1 ('%2') failed: External samples are not supported."))(i, mpt::ToUnicode(GetCharsetFile(), filename)));
 #endif // MPT_EXTERNAL_SAMPLES
 		}
 	}

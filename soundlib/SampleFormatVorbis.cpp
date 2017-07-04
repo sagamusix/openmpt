@@ -140,6 +140,8 @@ static FileTags GetVorbisFileTags(OggVorbis_File &vf)
 		tags.year = UStringFromVorbis(vorbis_comment_query(vc, "DATE", 0));
 		tags.url = UStringFromVorbis(vorbis_comment_query(vc, "CONTACT", 0));
 		tags.genre = UStringFromVorbis(vorbis_comment_query(vc, "GENRE", 0));
+	#else // !MPT_WITH_VORBIS
+		MPT_UNREFERENCED_PARAMETER(vf);
 	#endif // MPT_WITH_VORBIS
 	return tags;
 }
@@ -181,7 +183,7 @@ bool CSoundFile::ReadVorbisSample(SAMPLEINDEX sample, FileReader &file)
 			vorbis_info *vi = ov_info(&vf, -1);
 			if(vi && vi->rate > 0 && vi->channels > 0)
 			{
-				sampleName = mpt::ToCharset(GetCharsetLocaleOrModule(), GetSampleNameFromTags(GetVorbisFileTags(vf)));
+				sampleName = mpt::ToCharset(GetCharsetInternal(), GetSampleNameFromTags(GetVorbisFileTags(vf)));
 				rate = vi->rate;
 				channels = vi->channels;
 				std::size_t offset = 0;

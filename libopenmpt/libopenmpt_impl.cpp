@@ -402,7 +402,7 @@ static void mixersettings_to_ramping( int & ramping, const MixerSettings & setti
 }
 
 std::string module_impl::mod_string_to_utf8( const std::string & encoded ) const {
-	return mpt::ToCharset( mpt::CharsetUTF8, m_sndFile->GetCharset(), encoded );
+	return mpt::ToCharset( mpt::CharsetUTF8, m_sndFile->GetCharsetInternal(), encoded );
 }
 void module_impl::apply_mixer_settings( std::int32_t samplerate, int channels ) {
 	bool samplerate_changed = static_cast<std::int32_t>( m_sndFile->m_MixerSettings.gdwMixingFreq ) != samplerate;
@@ -921,15 +921,15 @@ std::vector<std::string> module_impl::get_metadata_keys() const {
 }
 std::string module_impl::get_metadata( const std::string & key ) const {
 	if ( key == std::string("type") ) {
-		return CSoundFile::ModTypeToString( m_sndFile->GetType() );
+		return mpt::ToCharset(mpt::CharsetUTF8, CSoundFile::ModTypeToString( m_sndFile->GetType() ) );
 	} else if ( key == std::string("type_long") ) {
-		return CSoundFile::ModTypeToTracker( m_sndFile->GetType() );
+		return mpt::ToCharset(mpt::CharsetUTF8, CSoundFile::ModTypeToTracker( m_sndFile->GetType() ) );
 	} else if ( key == std::string("container") ) {
-		return CSoundFile::ModContainerTypeToString( m_sndFile->GetContainerType() );
+		return mpt::ToCharset(mpt::CharsetUTF8, CSoundFile::ModContainerTypeToString( m_sndFile->GetContainerType() ) );
 	} else if ( key == std::string("container_long") ) {
-		return CSoundFile::ModContainerTypeToTracker( m_sndFile->GetContainerType() );
+		return mpt::ToCharset(mpt::CharsetUTF8, CSoundFile::ModContainerTypeToTracker( m_sndFile->GetContainerType() ) );
 	} else if ( key == std::string("tracker") ) {
-		return m_sndFile->m_madeWithTracker;
+		return mpt::ToCharset(mpt::CharsetUTF8, m_sndFile->m_madeWithTracker );
 	} else if ( key == std::string("artist") ) {
 		return mpt::ToCharset( mpt::CharsetUTF8, m_sndFile->m_songArtist );
 	} else if ( key == std::string("title") ) {
