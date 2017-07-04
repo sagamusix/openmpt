@@ -32,6 +32,8 @@ struct NetworkMessage
 		memcpy(type, id, 4);
 	}
 
+	bool operator== (const char(&other)[5]) { return !memcmp(type, other, 4); }
+
 	template<class Archive>
 	void serialize(Archive &archive)
 	{

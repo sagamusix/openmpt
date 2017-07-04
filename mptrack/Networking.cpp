@@ -102,6 +102,7 @@ void CollabConnection::Read()
 			{
 				std::string decompressedMessage;
 				decompressedMessage.reserve(header.origSize);
+				std::stringstream decompressedStream(decompressedMessage);
 				auto &strm = that->m_strmIn;
 				strm.avail_in = that->m_inMessage.size();
 				strm.next_in = (Bytef *)that->m_inMessage.data();
@@ -111,11 +112,12 @@ void CollabConnection::Read()
 					strm.avail_out = sizeof(outBuf);
 					strm.next_out = reinterpret_cast<Bytef *>(outBuf);
 					inflate(&strm, Z_FINISH);
-					decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
+					//decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
+					decompressedStream.write(outBuf, sizeof(outBuf) - strm.avail_out);
 				} while(strm.avail_out == 0);
 				if(auto listener = that->m_listener.lock())
 				{
-					listener->Receive(that.get(), decompressedMessage);
+					listener->Receive(that.get(), decompressedStream);
 					that->Read();
 				}
 			}
@@ -243,9 +245,12 @@ void CollabServer::StartAccept()
 }
 
 
-void CollabServer::Receive(CollabConnection *source, const std::string &msg)
+void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 {
-	std::string type = msg.substr(0, 4);
+	cereal::BinaryInputArchive inArchive(msg);
+	NetworkMessage type;
+	inArchive >> type;
+
 	if(type == "LIST")
 	{
 		WelcomeMsg welcome;
@@ -266,13 +271,12 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
+		ar(NetworkMessage("LIST"));
 		ar(welcome);
-		source->Write("LIST" + ss.str());
+		source->Write(ss.str());
 	} else if(type == "CONN")
 	{
-		std::istringstream ssi(msg.substr(4));
 		JoinMsg join;
-		cereal::BinaryInputArchive inArchive(ssi);
 		inArchive >> join;
 		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
 		auto doc = m_documents.find(NetworkedDocument(*modDoc));
@@ -286,20 +290,20 @@ void CollabServer::Receive(CollabConnection *source, const std::string &msg)
 			{
 				CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
 				sndFile.SaveMixPlugins();
+				ar(NetworkMessage("!OK!"));
 				ar(sndFile);
 				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
-				source->Write("!OK!" + sso.str());
 			} else
 			{
-				source->Write("403!");
+				ar(NetworkMessage("403!"));
 			}
 		} else
 		{
-			source->Write("404!");
+			ar(NetworkMessage("404!"));
 		}
 		source->Write(sso.str());
 	}
-	OutputDebugStringA(msg.c_str());
+	OutputDebugStringA(msg.str().c_str());
 }
 
 
@@ -342,7 +346,7 @@ void CollabClient::Write(const std::string &msg)
 }
 
 
-void CollabClient::Receive(CollabConnection *source, const std::string &msg)
+void CollabClient::Receive(CollabConnection *source, std::stringstream &msg)
 {
 	if(auto listener = m_listener.lock())
 	{

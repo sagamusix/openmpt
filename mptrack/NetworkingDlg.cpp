@@ -98,7 +98,10 @@ void NetworkingDlg::OnConnect()
 
 	m_client = std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
 	m_client->Connect();
-	m_client->Write("LIST");
+	std::ostringstream ss;
+	cereal::BinaryOutputArchive ar(ss);
+	ar(NetworkMessage("LIST"));
+	m_client->Write(ss.str());
 }
 
 
@@ -121,21 +124,21 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
+		ar(NetworkMessage("CONN"));
 		ar(join);
-		m_client->Write("CONN" + ss.str());
+		m_client->Write(ss.str());
 	}
 	*pResult = 0;
 }
 
 
-void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
+void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
 {
-	std::string type = msg.substr(0, 4);
+	cereal::BinaryInputArchive inArchive(msg);
+	NetworkMessage type;
+	inArchive >> type;
 	if(type == "LIST")
 	{
-		std::istringstream ss(msg.substr(4));
-		cereal::BinaryInputArchive inArchive(ss);
-
 		WelcomeMsg welcome;
 		inArchive >> welcome;
 
@@ -168,15 +171,14 @@ void NetworkingDlg::Receive(CollabConnection *, const std::string &msg)
 	} else if(type == "!OK!")
 	{
 		// Need to do this in GUI thread
-		SendMessage(WM_USER + 100, reinterpret_cast<WPARAM>(&msg));
+		SendMessage(WM_USER + 100, reinterpret_cast<WPARAM>(&inArchive));
 	}
 }
 
 
 LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 {
-	std::istringstream ss(reinterpret_cast<std::string *>(wParam)->substr(4));
-	cereal::BinaryInputArchive inArchive(ss);
+	cereal::BinaryInputArchive &inArchive = (*reinterpret_cast<cereal::BinaryInputArchive *>(wParam));
 
 	auto pTemplate = theApp.GetModDocTemplate();
 	auto modDoc = static_cast<CModDoc *>(pTemplate->CreateNewDocument());
@@ -186,7 +188,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	std::string title;
 	inArchive >> title;
 	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
-	// TODO Tunings
+	// TODO Tunings and samples
 	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
 	if(pChildFrm != nullptr)
 	{

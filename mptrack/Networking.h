@@ -42,7 +42,7 @@ class Listener
 {
 public:
 	virtual ~Listener() { }
-	virtual void Receive(CollabConnection *source, const std::string &msg) = 0;
+	virtual void Receive(CollabConnection *source, std::stringstream &msg) = 0;
 };
 
 
@@ -112,7 +112,7 @@ public:
 
 	void SendMessage(CModDoc &modDoc, const std::string msg);
 
-	void Receive(CollabConnection *source, const std::string &msg) override;
+	void Receive(CollabConnection *source, std::stringstream &msg) override;
 
 	void StartAccept();
 };
@@ -132,7 +132,7 @@ public:
 	void Close();
 	void Write(const std::string &msg);
 
-	void Receive(CollabConnection *source, const std::string &msg) override;
+	void Receive(CollabConnection *source, std::stringstream &msg) override;
 };
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;
