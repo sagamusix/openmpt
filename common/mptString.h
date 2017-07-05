@@ -411,7 +411,7 @@ namespace String { namespace detail
 		STATIC_ASSERT(size > 0);
 		MemsetZero(buf);
 		std::string encoded = mpt::ToCharset(charset, str);
-		std::copy(encoded.data(), std::min(encoded.length(), size - 1), buf);
+		std::copy(encoded.data(), encoded.data() + std::min(encoded.length(), size - 1), buf);
 		buf[size - 1] = '\0';
 		return (encoded.length() <= size - 1);
 	}
@@ -422,7 +422,7 @@ namespace String { namespace detail
 		STATIC_ASSERT(size > 0);
 		MemsetZero(buf);
 		std::wstring encoded = mpt::ToWide(str);
-		std::copy(encoded.data(), std::min(encoded.length(), size - 1), buf);
+		std::copy(encoded.data(), encoded.data() + std::min(encoded.length(), size - 1), buf);
 		buf[size - 1] = L'\0';
 		return (encoded.length() <= size - 1);
 	}
@@ -475,20 +475,46 @@ inline bool ToTcharBuf(Tchar (&buf)[size], const mpt::ustring &str)
 	return mpt::String::detail::StringToBuffer<mpt::CharsetLocale>(buf, str);
 }
 
-// mpt::FromTcharStr
+// mpt::ToTcharStr
 // Converts mpt::ustring to std::basic_stringy<TCHAR>,
 // which is usable in both ANSI and UNICODE builds.
 // Useful when going through CString is not appropriate.
 
-template <typename Tchar> std::basic_string<Tchar> ToTcharStr(const mpt::ustring &str);
-template <> inline std::string ToTcharStr<char>(const mpt::ustring &str)
+template <typename Tchar> std::basic_string<Tchar> ToTcharStrImpl(const mpt::ustring &str);
+template <> inline std::string ToTcharStrImpl<char>(const mpt::ustring &str)
 {
 	return mpt::ToCharset(mpt::CharsetLocale, str);
 }
-template <> inline std::wstring ToTcharStr<wchar_t>(const mpt::ustring &str)
+template <> inline std::wstring ToTcharStrImpl<wchar_t>(const mpt::ustring &str)
 {
 	return mpt::ToWide(str);
 }
+
+inline std::basic_string<TCHAR> ToTcharStr(const mpt::ustring &str)
+{
+	return ToTcharStrImpl<TCHAR>(str);
+}
+
+#if defined(_MFC_VER)
+
+template <std::size_t size>
+inline CString CStringFromBuffer(const TCHAR (&buf)[size])
+{
+	MPT_STATIC_ASSERT(size > 0);
+	std::size_t len = std::find(buf, buf + size, _T('\0')) - buf; // terminate at \0
+	return CString(buf, len);
+}
+
+template <std::size_t size>
+inline void CopyCStringToBuffer(TCHAR (&buf)[size], const CString &str)
+{
+	MPT_STATIC_ASSERT(size > 0);
+	MemsetZero(buf);
+	std::copy(str.GetString(), str.GetString() + std::min(static_cast<std::size_t>(str.GetLength()), size - 1), buf);
+	buf[size - 1] = _T('\0');
+}
+
+#endif // _MFC_VER
 
 #endif // MPT_OS_WINDOWS
 
