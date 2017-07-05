@@ -78,6 +78,7 @@ public:
 	mpt::ustring m_password;
 	int m_collaborators, m_maxCollaborators;
 	int m_spectators, m_maxSpectators;
+	// TODO: add connections here
 
 	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring())
 		: m_modDoc(modDoc)

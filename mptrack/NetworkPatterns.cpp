@@ -93,11 +93,10 @@ PatternTransaction::~PatternTransaction()
 	{
 		if(Networking::collabServer != nullptr)
 		{
-			// TODO: Send over network
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
 			ar(msg);
-			//Networking::collabServer->SendMessage(m_sndFile.GetpModDoc(), )
+			Networking::collabServer->SendMessage(*m_sndFile.GetpModDoc(), ss.str());
 		}
 	}
 }
