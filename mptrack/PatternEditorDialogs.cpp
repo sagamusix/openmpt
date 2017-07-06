@@ -854,7 +854,7 @@ void CEditCommand::PrepareUndo(const char *description)
 		modDoc->GetPatternUndo().PrepareUndo(editPos.pattern, editPos.channel, editPos.row, 1, 1, description);
 		modified = true;
 	}
-	modDoc->SetModified();
+	//modDoc->SetModified();
 }
 
 

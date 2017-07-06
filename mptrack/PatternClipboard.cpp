@@ -517,7 +517,7 @@ bool PatternClipboard::HandlePaste(CSoundFile &sndFile, ModCommandPos &pastePos,
 
 	auto multiPastePos = ordList.cbegin();
 	pos = startPos;
-	std::shared_ptr<PatternTransaction> transaction;
+	std::unique_ptr<PatternTransaction> transaction;
 
 	while(curRow < sndFile.Patterns[pattern].GetNumRows() || overflowPaste || patternMode == kMultiInsert)
 	{
@@ -677,7 +677,7 @@ bool PatternClipboard::HandlePaste(CSoundFile &sndFile, ModCommandPos &pastePos,
 				// Before changing anything in this pattern, we have to create an undo point.
 				if(prepareUndo)
 				{
-					transaction = std::make_shared<PatternTransaction>(sndFile, pattern, PatternCursor(startRow, startChan), PatternCursor(sndFile.Patterns[pattern].GetNumRows() - 1 - startRow, sndFile.GetNumChannels() - 1 - startChan));
+					transaction = mpt::make_unique<PatternTransaction>(sndFile, pattern, PatternCursor(startRow, startChan), PatternCursor(sndFile.Patterns[pattern].GetNumRows() - 1 - startRow, sndFile.GetNumChannels() - 1 - startChan));
 					modDoc.GetPatternUndo().PrepareUndo(pattern, startChan, startRow, sndFile.GetNumChannels(), sndFile.Patterns[pattern].GetNumRows(), "Paste", !firstUndo);
 					prepareUndo = false;
 					firstUndo = false;

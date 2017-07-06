@@ -91,6 +91,7 @@ PatternTransaction::~PatternTransaction()
 	}
 	if(anyChanges)
 	{
+		m_sndFile.GetpModDoc()->SetModified();
 		if(Networking::collabServer != nullptr)
 		{
 			std::ostringstream ss;

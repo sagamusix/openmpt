@@ -2251,7 +2251,8 @@ void CViewPattern::Interpolate(PatternCursor::Columns type)
 	}
 	
 	const ROWINDEX row0 = m_Selection.GetStartRow(), row1 = m_Selection.GetEndRow();
-	
+	std::unique_ptr<PatternTransaction> transaction;
+
 	//for all channels where type is selected
 	for(auto nchn : validChans)
 	{
@@ -2277,7 +2278,7 @@ void CViewPattern::Interpolate(PatternCursor::Columns type)
 				description = "Interpolate Effect Column";
 				break;
 			}
-			PatternTransaction transaction(*GetSoundFile(), m_nPattern, m_Selection, description);
+			transaction = mpt::make_unique<PatternTransaction>(*GetSoundFile(), m_nPattern, m_Selection, description);
 		}
 
 		bool doPCinterpolation = false;
@@ -4795,7 +4796,7 @@ void CViewPattern::TempEnterOctave(int val)
 			}
 		}
 
-		PatternTransaction transaction(*pSndFile, m_nPattern, m_Cursor, "Octave Entry");
+		//PatternTransaction transaction(*pSndFile, m_nPattern, m_Cursor, "Octave Entry");
 		// The following might look a bit convoluted... This is mostly because the "middle-C" in
 		// custom tunings always has octave 5, no matter how many octaves the tuning actually has.
 		int note = ((target.note - NOTE_MIN) % groupSize) + (val - 5) * groupSize + NOTE_MIDDLEC;
