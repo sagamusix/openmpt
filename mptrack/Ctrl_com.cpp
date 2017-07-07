@@ -145,7 +145,7 @@ void CCtrlComments::UpdateView(UpdateHint hint, CObject *pHint)
 			font.flags[FontSetting::Italic] ? TRUE :FALSE, FALSE, FALSE,
 			DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
 			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-			FIXED_PITCH | FF_MODERN, font.name.c_str());
+			FIXED_PITCH | FF_MODERN, mpt::ToCString(font.name));
 	}
 	m_EditComments.SendMessage(WM_SETFONT, (WPARAM)CMainFrame::GetCommentsFont());
 	CDC * pDC = m_EditComments.GetDC();
@@ -324,7 +324,7 @@ void CCtrlComments::OnCommentsChanged()
 	CString text;
 	m_EditComments.GetWindowText(text);
 	m_EditComments.SetModify(FALSE);
-	if(m_sndFile.m_songMessage.SetFormatted(text.GetString(), SongMessage::leCRLF))
+	if(m_sndFile.m_songMessage.SetFormatted(mpt::ToCharset(m_sndFile.GetCharsetInternal(), text), SongMessage::leCRLF))
 	{
 		m_modDoc.SetModified();
 		m_modDoc.UpdateAllViews(nullptr, CommentHint(), this);

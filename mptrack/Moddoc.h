@@ -135,6 +135,7 @@ public:
 	CSoundFile &GetrSoundFile() { return m_SndFile; }
 	const CSoundFile &GetrSoundFile() const { return m_SndFile; }
 
+	bool IsModified() const { return m_bModified != FALSE; }	// Work-around: CDocument::IsModified() is not const...
 	void SetModified(BOOL bModified=TRUE) { SetModifiedFlag(bModified); bModifiedAutosave = (bModified != FALSE); }
 	bool ModifiedSinceLastAutosave() { bool bRetval = bModifiedAutosave; bModifiedAutosave = false; return bRetval; } // return "IsModified" value and reset it until the next SetModified() (as this is only used for polling)
 	void SetShowSaveDialog(bool b) {m_ShowSavedialog = b;}
@@ -146,7 +147,9 @@ public:
 
 	// Logging for general progress and error events.
 	void AddToLog(LogLevel level, const mpt::ustring &text) const;
+	/*MPT_DEPRECATED*/ void AddToLog(const CString &text) const { AddToLog(LogInformation, mpt::ToUnicode(text)); }
 	/*MPT_DEPRECATED*/ void AddToLog(const std::string &text) const { AddToLog(LogInformation, mpt::ToUnicode(mpt::CharsetLocale, text)); }
+	/*MPT_DEPRECATED*/ void AddToLog(const char *text) const { AddToLog(LogInformation, mpt::ToUnicode(mpt::CharsetLocale, text?text:"")); }
 
 	const std::vector<LogEntry> & GetLog() const { return m_Log; }
 	mpt::ustring GetLogString() const;
