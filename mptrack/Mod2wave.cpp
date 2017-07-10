@@ -199,7 +199,7 @@ BOOL CWaveConvert::OnInitDialog()
 	CString s;
 	for(SAMPLEINDEX smp = 1; smp <= m_SndFile.GetNumSamples(); smp++)
 	{
-		s.Format(_T("%02u: %s%s"), smp, m_SndFile.GetSample(smp).HasSampleData() ? _T("*") : _T(""), m_SndFile.GetSampleName(smp));
+		s.Format(_T("%02u: %s%s"), smp, m_SndFile.GetSample(smp).HasSampleData() ? _T("*") : _T(""), mpt::ToCString(m_SndFile.GetCharsetInternal(), m_SndFile.GetSampleName(smp)).GetString());
 		m_CbnSampleSlot.SetItemData(m_CbnSampleSlot.AddString(s), smp);
 	}
 	if(m_Settings.sampleSlot > m_SndFile.GetNumSamples()) m_Settings.sampleSlot = 0;
@@ -805,7 +805,7 @@ void CWaveConvert::OnOK()
 			m_Settings.Tags.comments = mpt::ToUnicode(mpt::CharsetLocale, m_SndFile.m_songMessage.GetFormatted(SongMessage::leLF));
 		}
 
-		m_Settings.Tags.bpm = mpt::ToUString(m_SndFile.GetCurrentBPM());
+		m_Settings.Tags.bpm = mpt::ufmt::val(m_SndFile.GetCurrentBPM());
 
 		SaveTags();
 

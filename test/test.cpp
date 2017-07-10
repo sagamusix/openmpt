@@ -307,10 +307,10 @@ static MPT_NOINLINE void TestVersion()
 		VERIFY_EQUAL_NONCONT(line_fields[0].length() > 0, true);
 		fields[line_fields[0]] = line_fields[1];
 	}
-	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_MAJOR"], mpt::ToString(OPENMPT_API_VERSION_MAJOR));
-	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_MINOR"], mpt::ToString(OPENMPT_API_VERSION_MINOR));
-	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_PATCH"], mpt::ToString(OPENMPT_API_VERSION_PATCH));
-	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_PREREL"], mpt::ToString(OPENMPT_API_VERSION_PREREL));
+	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_MAJOR"], mpt::fmt::val(OPENMPT_API_VERSION_MAJOR));
+	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_MINOR"], mpt::fmt::val(OPENMPT_API_VERSION_MINOR));
+	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_PATCH"], mpt::fmt::val(OPENMPT_API_VERSION_PATCH));
+	VERIFY_EQUAL(fields["LIBOPENMPT_VERSION_PREREL"], mpt::fmt::val(OPENMPT_API_VERSION_PREREL));
 	if(std::string(OPENMPT_API_VERSION_PREREL).length() > 0)
 	{
 		VERIFY_EQUAL(std::string(OPENMPT_API_VERSION_PREREL).substr(0, 1), "-");
@@ -397,8 +397,8 @@ static void TestFloatFormat(double x, const char * format, mpt::FormatFlags f, s
 #ifdef MODPLUG_TRACKER
 	std::string str_sprintf = StringFormat(format, x);
 #endif
-	std::string str_iostreams = mpt::Format().SetFlags(f).SetWidth(width).SetPrecision(precision).ToString(x);
-	std::string str_parsed = mpt::Format().ParsePrintf(format).ToString(x);
+	std::string str_iostreams = mpt::FormatSpec().SetFlags(f).SetWidth(width).SetPrecision(precision).ToString(x);
+	std::string str_parsed = mpt::FormatSpec().ParsePrintf(format).ToString(x);
 	//Log("%s", str_sprintf.c_str());
 	//Log("%s", str_iostreams.c_str());
 	//Log("%s", str_iostreams.c_str());
@@ -467,15 +467,15 @@ static bool EndsWith(const mpt::ustring &str, const mpt::ustring &match)
 static MPT_NOINLINE void TestStringFormatting()
 //---------------------------------------------
 {
-	VERIFY_EQUAL(mpt::ToString(1.5f), "1.5");
-	VERIFY_EQUAL(mpt::ToString(true), "1");
-	VERIFY_EQUAL(mpt::ToString(false), "0");
-	//VERIFY_EQUAL(mpt::ToString('A'), "A"); // deprecated
-	//VERIFY_EQUAL(mpt::ToString(L'A'), "A"); // deprecated
+	VERIFY_EQUAL(mpt::fmt::val(1.5f), "1.5");
+	VERIFY_EQUAL(mpt::fmt::val(true), "1");
+	VERIFY_EQUAL(mpt::fmt::val(false), "0");
+	//VERIFY_EQUAL(mpt::fmt::val('A'), "A"); // deprecated
+	//VERIFY_EQUAL(mpt::fmt::val(L'A'), "A"); // deprecated
 
-	VERIFY_EQUAL(mpt::ToString(0), "0");
-	VERIFY_EQUAL(mpt::ToString(-23), "-23");
-	VERIFY_EQUAL(mpt::ToString(42), "42");
+	VERIFY_EQUAL(mpt::fmt::val(0), "0");
+	VERIFY_EQUAL(mpt::fmt::val(-23), "-23");
+	VERIFY_EQUAL(mpt::fmt::val(42), "42");
 
 	VERIFY_EQUAL(mpt::fmt::hex<3>((int32)-1), "ffffffff");
 	VERIFY_EQUAL(mpt::fmt::hex(0x123e), "123e");
@@ -489,16 +489,17 @@ static MPT_NOINLINE void TestStringFormatting()
 	VERIFY_EQUAL(mpt::wfmt::hex0<2>(0x123e), L"123e");
 #endif
 
-	VERIFY_EQUAL(mpt::ToString(-87.0f), "-87");
-	if(mpt::ToString(-0.5e-6) != "-5e-007"
-		&& mpt::ToString(-0.5e-6) != "-5e-07"
-		&& mpt::ToString(-0.5e-6) != "-5e-7"
+	VERIFY_EQUAL(mpt::fmt::val(-87.0f), "-87");
+	if(mpt::fmt::val(-0.5e-6) != "-5e-007"
+		&& mpt::fmt::val(-0.5e-6) != "-5e-07"
+		&& mpt::fmt::val(-0.5e-6) != "-5e-7"
 		)
 	{
 		VERIFY_EQUAL(true, false);
 	}
-	VERIFY_EQUAL(mpt::ToString(58.65403492763), "58.654");
-	VERIFY_EQUAL(mpt::Format("%3.1f").ToString(23.42), "23.4");
+	VERIFY_EQUAL(mpt::fmt::val(58.65403492763), "58.654");
+	VERIFY_EQUAL(mpt::FormatSpec("%3.1f").ToString(23.42), "23.4");
+	VERIFY_EQUAL(mpt::fmt::f("%3.1f", 23.42), "23.4");
 
 	VERIFY_EQUAL(ConvertStrTo<uint32>("586"), 586u);
 	VERIFY_EQUAL(ConvertStrTo<uint32>("2147483647"), (uint32)int32_max);
@@ -516,8 +517,8 @@ static MPT_NOINLINE void TestStringFormatting()
 	VERIFY_EQUAL(ConvertStrTo<double>("-0.5e-6"), -0.5e-6);
 	VERIFY_EQUAL(ConvertStrTo<double>("58.65403492763"), 58.65403492763);
 
-	VERIFY_EQUAL(ConvertStrTo<float>(mpt::ToString(-87.0)), -87.0);
-	VERIFY_EQUAL(ConvertStrTo<double>(mpt::ToString(-0.5e-6)), -0.5e-6);
+	VERIFY_EQUAL(ConvertStrTo<float>(mpt::fmt::val(-87.0)), -87.0);
+	VERIFY_EQUAL(ConvertStrTo<double>(mpt::fmt::val(-0.5e-6)), -0.5e-6);
 
 	VERIFY_EQUAL(mpt::String::Parse::Hex<unsigned char>("fe"), 254);
 #if MPT_WSTRING_FORMAT
@@ -541,7 +542,8 @@ static MPT_NOINLINE void TestStringFormatting()
 	TestFloatFormats(1234567890000000.0);
 	TestFloatFormats(0.0000001234567890);
 
-	VERIFY_EQUAL(mpt::Format().ParsePrintf("%7.3f").ToString(6.12345), "  6.123");
+	VERIFY_EQUAL(mpt::FormatSpec().ParsePrintf("%7.3f").ToString(6.12345), "  6.123");
+	VERIFY_EQUAL(mpt::fmt::f("%7.3f", 6.12345), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::flt(6.12345, 7, 3), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::fix(6.12345, 7, 3), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::flt(6.12345, 0, 4), "6.123");
@@ -583,8 +585,8 @@ static MPT_NOINLINE void TestStringFormatting()
 	VERIFY_EQUAL(mpt::format("%b")("a"), "%b");
 
 #if defined(_MFC_VER)
-	VERIFY_EQUAL(mpt::ToUString(CString(_T("foobar"))), MPT_USTRING("foobar"));
-	VERIFY_EQUAL(mpt::ToUString(CString(_T("foobar"))), MPT_USTRING("foobar"));
+	VERIFY_EQUAL(mpt::ufmt::val(CString(_T("foobar"))), MPT_USTRING("foobar"));
+	VERIFY_EQUAL(mpt::ufmt::val(CString(_T("foobar"))), MPT_USTRING("foobar"));
 	VERIFY_EQUAL(mpt::format(CString(_T("%1%2%3")))(1,2,3), _T("123"));
 	VERIFY_EQUAL(mpt::format(CString(_T("%1%2%3")))(1,mpt::tfmt::dec0<3>(2),3), _T("10023"));
 #endif
@@ -2107,7 +2109,7 @@ inline Test::CustomSettingsTestType FromSettingValue(const SettingValue &val)
 template <>
 inline SettingValue ToSettingValue(const Test::CustomSettingsTestType &val)
 {
-	return SettingValue(mpt::ToString(val.x) + "|" + mpt::ToString(val.y), "myType");
+	return SettingValue(mpt::fmt::val(val.x) + "|" + mpt::fmt::val(val.y), "myType");
 }
 
 namespace Test {

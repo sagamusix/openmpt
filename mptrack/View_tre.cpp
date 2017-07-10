@@ -235,7 +235,7 @@ void CModTree::Init()
 		m_hMidiLib = InsertItem(_T("MIDI Library"), IMAGE_FOLDER, IMAGE_FOLDER, TVI_ROOT, TVI_LAST);
 		for (UINT iMidGrp=0; iMidGrp<17; iMidGrp++)
 		{
-			InsertItem(TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM, szMidiGroupNames[iMidGrp], IMAGE_FOLDER, IMAGE_FOLDER, 0, 0, (MODITEM_HDR_MIDIGROUP << MIDILIB_SHIFT) | iMidGrp, m_hMidiLib, TVI_LAST);
+			InsertItem(TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM, mpt::ToCString(mpt::CharsetASCII, szMidiGroupNames[iMidGrp]), IMAGE_FOLDER, IMAGE_FOLDER, 0, 0, (MODITEM_HDR_MIDIGROUP << MIDILIB_SHIFT) | iMidGrp, m_hMidiLib, TVI_LAST);
 		}
 	}
 	m_hInsLib = InsertItem(_T("Instrument Library"), IMAGE_FOLDER, IMAGE_FOLDER, TVI_ROOT, TVI_LAST);
@@ -564,7 +564,7 @@ void CModTree::RefreshMidiLibrary()
 	for(UINT iMidi = 0; iMidi < 128; iMidi++)
 	{
 		DWORD dwImage = IMAGE_INSTRMUTE;
-		s = mpt::ToWString(iMidi) + L": " + mpt::ToWide(mpt::CharsetASCII, szMidiProgramNames[iMidi]);
+		s = mpt::wfmt::val(iMidi) + L": " + mpt::ToWide(mpt::CharsetASCII, szMidiProgramNames[iMidi]);
 		const LPARAM param = (MODITEM_MIDIINSTRUMENT << MIDILIB_SHIFT) | iMidi;
 		if(!midiLib.MidiMap[iMidi].empty())
 		{
@@ -630,7 +630,8 @@ void CModTree::RefreshMidiLibrary()
 void CModTree::RefreshDlsBanks()
 //------------------------------
 {
-	CHAR s[256];
+	const mpt::Charset charset = mpt::CharsetLocale;
+	TCHAR s[256];
 	HTREEITEM hDlsRoot = m_hMidiLib;
 
 	if (IsSampleBrowser()) return;
@@ -664,8 +665,8 @@ void CModTree::RefreshDlsBanks()
 					DLSINSTRUMENT *pDlsIns = pDlsBank->GetInstrument(iIns);
 					if (pDlsIns)
 					{
-						CHAR szName[256];
-						wsprintf(szName, "%u: %s", pDlsIns->ulInstrument & 0x7F, pDlsIns->szName);
+						TCHAR szName[256];
+						wsprintf(szName, _T("%u: %s"), pDlsIns->ulInstrument & 0x7F, mpt::ToCString(charset, pDlsIns->szName).GetString());
 						// Drum Kit
 						if (pDlsIns->ulBank & F_INSTRUMENT_DRUMS)
 						{
@@ -687,13 +688,18 @@ void CModTree::RefreshDlsBanks()
 
 								if (keymin >= keymax)
 								{
-									wsprintf(szName, "%s%u: %s", CSoundFile::m_NoteNames[keymin % 12], keymin / 12, regionName);
+									wsprintf(szName, _T("%s%u: %s"),
+										mpt::ToCString(mpt::CharsetLocale, CSoundFile::m_NoteNames[keymin % 12]).GetString(),
+										keymin / 12,
+										mpt::ToCString(charset, regionName).GetString());
 								} else
 								{
-									wsprintf(szName, "%s%u-%s%u: %s",
-										CSoundFile::m_NoteNames[keymin % 12], keymin / 12,
-										CSoundFile::m_NoteNames[keymax % 12], keymax / 12,
-										regionName);
+									wsprintf(szName, _T("%s%u-%s%u: %s"),
+										mpt::ToCString(mpt::CharsetLocale, CSoundFile::m_NoteNames[keymin % 12]).GetString(),
+										keymin / 12,
+										mpt::ToCString(mpt::CharsetLocale, CSoundFile::m_NoteNames[keymax % 12]).GetString(),
+										keymax / 12,
+										mpt::ToCString(charset, regionName).GetString());
 								}
 								LPARAM lParam = DlsItem::EncodeValuePerc((uint8)(iRgn), (uint16)iIns);
 								InsertItem(TVIF_TEXT|TVIF_IMAGE|TVIF_SELECTEDIMAGE|TVIF_PARAM,
@@ -843,7 +849,7 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 					info.hEffects = InsertItem(_T("Plugins"), IMAGE_FOLDER, IMAGE_FOLDER, info.hSong, info.hInstruments ? info.hInstruments : info.hSamples);
 				}
 
-				wsprintf(s, "FX%u: %s", i + 1, plugin.GetName());
+				wsprintf(s, _T("FX%u: %s"), i + 1, mpt::ToCString(m_SongFile->GetCharsetInternal(), plugin.GetName()).GetString());
 				int nImage = IMAGE_NOPLUGIN;
 				if(plugin.pMixPlugin != nullptr) nImage = (plugin.pMixPlugin->IsInstrument()) ? IMAGE_PLUGININSTRUMENT : IMAGE_EFFECTPLUGIN;
 				
@@ -1004,7 +1010,7 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 			const bool patNamesOnly = patternHint.GetType()[HINT_PATNAMES];
 
 			//if (hintFlagPart == HINT_PATNAMES) && (dwHintParam < sndFile.Order().GetLength())) imin = imax = dwHintParam;
-			std::string patName;
+			CString patName;
 			for (ORDERINDEX iOrd = 0; iOrd < ordLength; iOrd++)
 			{
 				if(patNamesOnly && sndFile.Order(nSeq)[iOrd] != nPat)
@@ -1012,12 +1018,12 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 				UINT state = (iOrd == info.nOrdSel && nSeq == info.nSeqSel) ? TVIS_BOLD : 0;
 				if (sndFile.Order(nSeq)[iOrd] < sndFile.Patterns.Size())
 				{
-					patName = sndFile.Patterns[sndFile.Order(nSeq)[iOrd]].GetName();
-					if(!patName.empty())
+					patName = mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.Patterns[sndFile.Order(nSeq)[iOrd]].GetName());
+					if(!patName.IsEmpty())
 					{
-						wsprintf(s, (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_HEXDISPLAY) ? "[%02Xh] %u: " : "[%02u] %u: ",
+						wsprintf(s, (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_HEXDISPLAY) ? _T("[%02Xh] %u: ") : _T("[%02u] %u: "),
 							iOrd, sndFile.Order(nSeq)[iOrd]);
-						_tcscat(s, patName.c_str());
+						_tcscat(s, patName.GetString());
 					} else
 					{
 						wsprintf(s, (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_HEXDISPLAY) ? _T("[%02Xh] Pattern %u") : _T("[%02u] Pattern %u"),
@@ -1065,7 +1071,7 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 		bool bDelPat = false;
 
 		ASSERT(info.tiPatterns.size() == sndFile.Patterns.Size());
-		std::string patName;
+		CString patName;
 		for(PATTERNINDEX iPat = imin; iPat <= imax; iPat++)
 		{
 			if ((bDelPat) && (info.tiPatterns[iPat]))
@@ -1075,12 +1081,12 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 			}
 			if (sndFile.Patterns.IsValidPat(iPat))
 			{
-				patName = sndFile.Patterns[iPat].GetName();
+				patName = mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.Patterns[iPat].GetName());
 				wsprintf(s, _T("%u"), iPat);
-				if(!patName.empty())
+				if(!patName.IsEmpty())
 				{
 					_tcscat(s, _T(": "));
-					_tcscat(s, patName.c_str());
+					_tcscat(s, patName.GetString());
 				}
 				if (info.tiPatterns[iPat])
 				{
@@ -1135,10 +1141,10 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 					{
 						status = sampleExists ? _T(" [external]") : _T(" [MISSING]");
 					}
-					wsprintf(s, _T("%3d: %s%s%s"), nSmp, sample.uFlags.test_all(SMP_MODIFIED | SMP_KEEPONDISK) ? _T("* ") : _T(""), sndFile.m_szNames[nSmp], status);
+					wsprintf(s, _T("%3d: %s%s%s"), nSmp, sample.uFlags.test_all(SMP_MODIFIED | SMP_KEEPONDISK) ? _T("* ") : _T(""), mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.m_szNames[nSmp]).GetString(), status);
 				} else
 				{
-					wsprintf(s, _T("%3d: %s"), nSmp, sndFile.m_szNames[nSmp]);
+					wsprintf(s, _T("%3d: %s"), nSmp, mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.m_szNames[nSmp]).GetString());
 				}
 
 				if (!hChild)
@@ -1183,7 +1189,7 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 			HTREEITEM hNextChild = GetNextSiblingItem(hChild);
 			if (nIns <= sndFile.GetNumInstruments())
 			{
-				wsprintf(s, _T("%3u: %s"), nIns, sndFile.GetInstrumentName(nIns));
+				wsprintf(s, _T("%3u: %s"), nIns, mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.GetInstrumentName(nIns)).GetString());
 
 				int nImage = IMAGE_INSTRUMENTS;
 				if(info.instrumentsPlaying[nIns]) nImage = IMAGE_INSTRACTIVE;
@@ -1483,9 +1489,7 @@ BOOL CModTree::PlayItem(HTREEITEM hItem, ModCommand::NOTE nParam)
 				if(!m_SongFileName.empty())
 				{
 					// Preview sample / instrument in module
-					char szName[16];
-					mpt::String::CopyN(szName, GetItemText(hItem));
-					const size_t n = ConvertStrTo<size_t>(szName);
+					const size_t n = ConvertStrTo<size_t>(GetItemText(hItem));
 					if (pMainFrm && m_SongFile)
 					{
 						if (modItem.type == MODITEM_INSLIB_INSTRUMENT)
@@ -1789,7 +1793,7 @@ void CModTree::FillInstrumentLibrary()
 			if(pIns)
 			{
 				WCHAR s[MAX_INSTRUMENTNAME + 10];
-				swprintf(s, CountOf(s), L"%3d: %s", ins, mpt::ToWide(mpt::CharsetLocale, pIns->name).c_str());
+				swprintf(s, CountOf(s), L"%3d: %s", ins, mpt::ToWide(m_SongFile->GetCharsetInternal(), pIns->name).c_str());
 				ModTreeInsert(s, IMAGE_INSTRUMENTS);
 			}
 		}
@@ -1799,7 +1803,7 @@ void CModTree::FillInstrumentLibrary()
 			if(sample.pSample)
 			{
 				WCHAR s[MAX_SAMPLENAME + 10];
-				swprintf(s, CountOf(s), L"%3d: %s", smp, mpt::ToWide(mpt::CharsetLocale, m_SongFile->m_szNames[smp]).c_str());
+				swprintf(s, CountOf(s), L"%3d: %s", smp, mpt::ToWide(m_SongFile->GetCharsetInternal(), m_SongFile->m_szNames[smp]).c_str());
 				ModTreeInsert(s, IMAGE_SAMPLES);
 			}
 		}
@@ -3838,7 +3842,7 @@ void CModTree::OnBeginLabelEdit(NMHDR *nmhdr, LRESULT *result)
 				else if(pat == sndFile.Order.GetIgnoreIndex())
 					text = "+++";
 				else
-					text = mpt::ToString(pat);
+					text = mpt::fmt::val(pat);
 				doLabelEdit = true;
 			}
 			break;
@@ -3888,7 +3892,7 @@ void CModTree::OnBeginLabelEdit(NMHDR *nmhdr, LRESULT *result)
 		if(doLabelEdit)
 		{
 			CMainFrame::GetInputHandler()->Bypass(true);
-			editCtrl->SetWindowText(text.c_str());
+			editCtrl->SetWindowText(mpt::ToCString(sndFile.GetCharsetInternal(), text));
 			*result = FALSE;
 			return;
 		}
@@ -3913,17 +3917,18 @@ void CModTree::OnEndLabelEdit(NMHDR *nmhdr, LRESULT *result)
 		CSoundFile &sndFile = modDoc->GetrSoundFile();
 		const CModSpecifications &modSpecs = sndFile.GetModSpecifications();
 
+		const std::string itemText = mpt::ToCharset(sndFile.GetCharsetInternal(), CString(info->item.pszText));
 		switch(modItem.type)
 		{
 		case MODITEM_ORDER:
-			if(info->item.pszText[0])
+			if(itemText[0])
 			{
-				PATTERNINDEX pat = ConvertStrTo<PATTERNINDEX>(info->item.pszText);
+				PATTERNINDEX pat = ConvertStrTo<PATTERNINDEX>(itemText);
 				bool valid = true;
-				if(info->item.pszText[0] == '-')
+				if(itemText[0] == '-')
 				{
 					pat = sndFile.Order.GetInvalidPatIndex();
-				} else if(info->item.pszText[0] == '+')
+				} else if(itemText[0] == '+')
 				{
 					if(modSpecs.hasIgnoreIndex)
 						pat = sndFile.Order.GetIgnoreIndex();
@@ -3945,36 +3950,36 @@ void CModTree::OnEndLabelEdit(NMHDR *nmhdr, LRESULT *result)
 
 		case MODITEM_HDR_ORDERS:
 		case MODITEM_SEQUENCE:
-			if(modItem.val1 < sndFile.Order.GetNumSequences() && sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).GetName() != info->item.pszText)
+			if(modItem.val1 < sndFile.Order.GetNumSequences() && sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).GetName() != itemText)
 			{
-				sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).SetName(info->item.pszText);
+				sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).SetName(itemText);
 				modDoc->SetModified();
 				modDoc->UpdateAllViews(NULL, SequenceHint((SEQUENCEINDEX)modItem.val1).Data().Names());
 			}
 			break;
 
 		case MODITEM_PATTERN:
-			if(modItem.val1 < sndFile.Patterns.GetNumPatterns() && modSpecs.hasPatternNames && sndFile.Patterns[modItem.val1].GetName() != info->item.pszText)
+			if(modItem.val1 < sndFile.Patterns.GetNumPatterns() && modSpecs.hasPatternNames && sndFile.Patterns[modItem.val1].GetName() != itemText)
 			{
-				sndFile.Patterns[modItem.val1].SetName(info->item.pszText);
+				sndFile.Patterns[modItem.val1].SetName(itemText);
 				modDoc->SetModified();
 				modDoc->UpdateAllViews(NULL, PatternHint((PATTERNINDEX)modItem.val1).Data().Names());
 			}
 			break;
 
 		case MODITEM_SAMPLE:
-			if(modItem.val1 <= sndFile.GetNumSamples() && strcmp(sndFile.m_szNames[modItem.val1], info->item.pszText))
+			if(modItem.val1 <= sndFile.GetNumSamples() && strcmp(sndFile.m_szNames[modItem.val1], itemText.c_str()))
 			{
-				mpt::String::CopyN(sndFile.m_szNames[modItem.val1], info->item.pszText, modSpecs.sampleNameLengthMax);
+				mpt::String::CopyN(sndFile.m_szNames[modItem.val1], itemText.c_str(), modSpecs.sampleNameLengthMax);
 				modDoc->SetModified();
 				modDoc->UpdateAllViews(NULL, SampleHint((SAMPLEINDEX)modItem.val1).Info().Names());
 			}
 			break;
 
 		case MODITEM_INSTRUMENT:
-			if(modItem.val1 <= sndFile.GetNumInstruments() && sndFile.Instruments[modItem.val1] != nullptr && strcmp(sndFile.Instruments[modItem.val1]->name, info->item.pszText))
+			if(modItem.val1 <= sndFile.GetNumInstruments() && sndFile.Instruments[modItem.val1] != nullptr && strcmp(sndFile.Instruments[modItem.val1]->name, itemText.c_str()))
 			{
-				mpt::String::CopyN(sndFile.Instruments[modItem.val1]->name, info->item.pszText, modSpecs.instrNameLengthMax);
+				mpt::String::CopyN(sndFile.Instruments[modItem.val1]->name, itemText.c_str(), modSpecs.instrNameLengthMax);
 				modDoc->SetModified();
 				modDoc->UpdateAllViews(NULL, InstrumentHint((INSTRUMENTINDEX)modItem.val1).Info().Names());
 			}

@@ -2836,7 +2836,7 @@ CString CModDoc::GetPatternViewInstrumentName(INSTRUMENTINDEX nInstr,
 //-----------------------------------------------------------------------------------
 {
 	if(nInstr >= MAX_INSTRUMENTS || m_SndFile.GetNumInstruments() == 0 || m_SndFile.Instruments[nInstr] == nullptr)
-		return TEXT("");
+		return CString();
 
 	CString displayName, instrumentName, pluginName;
 
@@ -2848,7 +2848,7 @@ CString CModDoc::GetPatternViewInstrumentName(INSTRUMENTINDEX nInstr,
 	{
 		const SAMPLEINDEX nSmp = m_SndFile.Instruments[nInstr]->Keyboard[NOTE_MIDDLEC - 1];
 		if (nSmp <= m_SndFile.GetNumSamples() && m_SndFile.GetSample(nSmp).pSample)
-			instrumentName.Format(TEXT("s: %s"), m_SndFile.GetSampleName(nSmp));
+			instrumentName = _T("s: ") + mpt::ToCString(m_SndFile.GetCharsetInternal(), m_SndFile.GetSampleName(nSmp));
 	}
 
 	// Get plugin name.
@@ -2861,17 +2861,17 @@ CString CModDoc::GetPatternViewInstrumentName(INSTRUMENTINDEX nInstr,
 		if(bEmptyInsteadOfNoName && instrumentName.IsEmpty())
 			return TEXT("");
 		if(instrumentName.IsEmpty())
-			instrumentName = TEXT("(no name)");
+			instrumentName = _T("(no name)");
 		if (bIncludeIndex)
-			displayName.Format(TEXT("%02d: %s"), nInstr, (LPCTSTR)instrumentName);
+			displayName.Format(_T("%02d: %s"), nInstr, instrumentName.GetString());
 		else
-			displayName.Format(TEXT("%s"), (LPCTSTR)instrumentName);
+			displayName = instrumentName;
 	} else
 	{
 		if (bIncludeIndex)
-			displayName.Format(TEXT("%02d: %s (%s)"), nInstr, (LPCTSTR)instrumentName, (LPCTSTR)pluginName);
+			displayName.Format(TEXT("%02d: %s (%s)"), nInstr, instrumentName.GetString(), pluginName.GetString());
 		else
-			displayName.Format(TEXT("%s (%s)"), (LPCTSTR)instrumentName, (LPCTSTR)pluginName);
+			displayName.Format(TEXT("%s (%s)"), instrumentName.GetString(), pluginName.GetString());
 	}
 	return displayName;
 }
@@ -2956,7 +2956,7 @@ void CModDoc::OnSaveTemplateModule()
 	mpt::PathString sName;
 	for(size_t i = 0; i < 1000; ++i)
 	{
-		sName += MPT_PATHSTRING("newTemplate") + mpt::PathString::FromUnicode(mpt::ToUString(i));
+		sName += MPT_PATHSTRING("newTemplate") + mpt::PathString::FromUnicode(mpt::ufmt::val(i));
 		sName += MPT_PATHSTRING(".") + mpt::PathString::FromUTF8(m_SndFile.GetModSpecifications().fileExtension);
 		if (!(templateFolder + sName).FileOrDirectoryExists())
 			break;

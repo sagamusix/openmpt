@@ -18,6 +18,8 @@
 				toolset "v120_xp"
 			elseif _ACTION == "vs2015" then
 				toolset "v140_xp"
+			elseif _ACTION == "vs2017" then
+				toolset "v141_xp"
 			end
 			defines { "MPT_BUILD_TARGET_XP" }
 		end
@@ -121,37 +123,9 @@
 
 	if _OPTIONS["xp"] then
 
-		-- https://github.com/premake/premake-core/issues/560
-		-- https://github.com/premake/premake-core/issues/592
-	
 		filter {}
 
-		filter { "configurations:Release", "action:vs2012", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseShared", "action:vs2012", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseLTCG", "action:vs2012", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:Release", "action:vs2013", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseShared", "action:vs2013", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseLTCG", "action:vs2013", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:Release", "action:vs2015", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseShared", "action:vs2015", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
-
-		filter { "configurations:ReleaseLTCG", "action:vs2015", "architecture:x86" }
-			buildoptions { "/arch:IA32" }
+			vectorextensions "IA32"
 
 		filter {}
 
