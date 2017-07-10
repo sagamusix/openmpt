@@ -17,7 +17,7 @@
 #include "PatternFindReplace.h"
 #include "PatternFindReplaceDlg.h"
 #include "../soundlib/mod_specifications.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 OPENMPT_NAMESPACE_BEGIN
 

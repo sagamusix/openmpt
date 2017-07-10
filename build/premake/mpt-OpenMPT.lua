@@ -95,7 +95,7 @@ end
   defines { "ASIO_SEPARATE_COMPILATION", "ASIO_STANDALONE" }
 
   largeaddressaware ( true )
-  characterset "MBCS"
+  characterset "Unicode"
   flags { "MFC", "ExtraWarnings", "WinMain" }
   links {
    "asio",

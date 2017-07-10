@@ -19,7 +19,7 @@
 #include "TempoSwingDialog.h"
 #include "../soundlib/mod_specifications.h"
 #include "../common/StringFixer.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -297,6 +297,7 @@ void CPatternPropertiesDlg::OnOK()
 		{
 			modDoc.SetModified();
 		}
+		// TODO: Re-send entire pattern?
 		modDoc.EndWaitCursor();
 	}
 	CDialog::OnOK();

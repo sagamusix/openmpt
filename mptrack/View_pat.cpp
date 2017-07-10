@@ -31,7 +31,7 @@
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include <algorithm>
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN

@@ -25,7 +25,7 @@
 #include "../soundlib/plugins/PlugInterface.h"
 #include "VstPresets.h"
 #include "../common/FileReader.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 
 #ifdef _DEBUG

@@ -15,7 +15,7 @@
 #include "View_pat.h"
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/Tables.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN

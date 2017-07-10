@@ -15,7 +15,7 @@
 #include "modsmp_ctrl.h"
 #include "Undo.h"
 #include "../common/StringFixer.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 #define new DEBUG_NEW
 

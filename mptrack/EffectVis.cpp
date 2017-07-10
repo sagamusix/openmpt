@@ -16,7 +16,7 @@
 #include "Globals.h"
 #include "View_pat.h"
 #include "EffectVis.h"
-#include "NetworkPatterns.h"
+#include "PatternTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
