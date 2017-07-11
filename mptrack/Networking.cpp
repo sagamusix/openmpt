@@ -251,7 +251,7 @@ void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 	NetworkMessage type;
 	inArchive >> type;
 
-	if(type == "LIST")
+	if(type == ListMsg)
 	{
 		WelcomeMsg welcome;
 		welcome.version = MptVersion::str;
@@ -271,10 +271,10 @@ void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
-		ar(NetworkMessage("LIST"));
+		ar(ListMsg);
 		ar(welcome);
 		source->Write(ss.str());
-	} else if(type == "CONN")
+	} else if(type == ConnectMsg)
 	{
 		JoinMsg join;
 		inArchive >> join;
@@ -290,16 +290,16 @@ void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 			{
 				CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
 				sndFile.SaveMixPlugins();
-				ar(NetworkMessage("!OK!"));
+				ar(ConnectOKMsg);
 				ar(sndFile);
 				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
 			} else
 			{
-				ar(NetworkMessage("403!"));
+				ar(WrongPasswordMsg);
 			}
 		} else
 		{
-			ar(NetworkMessage("404!"));
+			ar(DocNotFoundMsg);
 		}
 		source->Write(sso.str());
 	}
@@ -316,7 +316,7 @@ CollabClient::CollabClient(const std::string &server, const std::string &port, s
 }
 
 
-void CollabClient::Connect()
+bool CollabClient::Connect()
 {
 	/*auto that = shared_from_this();
 	asio::async_connect(m_socket, m_endpoint_iterator,
@@ -330,13 +330,15 @@ void CollabClient::Connect()
 	});*/
 	std::error_code ec;
 	asio::connect(m_socket, m_endpoint_iterator, ec);
-	if(!ec)
+	if(ec)
 	{
-		m_connection = std::make_shared<CollabConnection>(std::move(m_socket), shared_from_this());
-		m_connection->Read();
+		return false;
 	}
+	m_connection = std::make_shared<CollabConnection>(std::move(m_socket), shared_from_this());
+	m_connection->Read();
 
 	IOService::Run();
+	return true;
 }
 
 

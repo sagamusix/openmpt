@@ -128,7 +128,7 @@ class CollabClient : public Listener, public std::enable_shared_from_this<Collab
 
 public:
 	CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener);
-	void Connect();
+	bool Connect();
 
 	void Close();
 	void Write(const std::string &msg);

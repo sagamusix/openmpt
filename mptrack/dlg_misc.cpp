@@ -21,6 +21,7 @@
 #include "../soundlib/mod_specifications.h"
 #include "../common/version.h"
 #include "../common/StringFixer.h"
+#include "InstrumentTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -1265,6 +1266,7 @@ void CSampleMapDlg::OnOK()
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
 	if (pIns)
 	{
+		InstrumentTransaction transaction(sndFile, m_nInstrument);
 		BOOL bModified = FALSE;
 		for (UINT i=0; i<NOTE_MAX; i++)
 		{

@@ -36,12 +36,9 @@
 #include "FileDialog.h"
 #include "ProgressDialog.h"
 #include "../common/ComponentManager.h"
-#ifdef _DEBUG
-#include <cmath>
-#endif
-
 #include "../include/r8brain/CDSPResampler.h"
 #include "../soundlib/MixFuncTable.h"
+#include "SampleTransaction.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

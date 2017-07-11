@@ -26,6 +26,7 @@
 #include "../soundlib/mod_specifications.h"
 #include "../common/StringFixer.h"
 #include "FileDialog.h"
+#include "InstrumentTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -611,6 +612,7 @@ bool CViewInstrument::EnvSetFlag(EnvelopeFlags flag, bool enable)
 
 	bool modified = envelope->dwFlags[flag] != enable;
 	PrepareUndo("Toggle Envelope Flag");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	envelope->dwFlags.set(flag, enable);
 	return modified;
 }
@@ -1063,6 +1065,7 @@ bool CViewInstrument::EnvRemovePoint(uint32 nPoint)
 			if(envelope == nullptr || envelope->empty()) return false;
 
 			PrepareUndo("Remove Envelope Point");
+			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			envelope->erase(envelope->begin() + nPoint);
 			if (nPoint >= envelope->size()) nPoint = envelope->size() - 1;
 			if (envelope->nLoopStart > nPoint) envelope->nLoopStart--;
@@ -1125,6 +1128,7 @@ uint32 CViewInstrument::EnvInsertPoint(int nTick, int nValue)
 			}
 
 			PrepareUndo("Insert Envelope Point");
+			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			if(envelope->empty())
 			{
 				envelope->reserve(2);
@@ -1481,6 +1485,7 @@ void CViewInstrument::OnMouseMove(UINT, CPoint pt)
 			PrepareUndo("Move Envelope Point");
 			m_mouseMoveModified = true;
 		}
+		InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 		bool bChanged = false;
 		if (pt.x >= m_rcClient.right - 2) nTick++;
 		if (IsDragItemEnvPoint())
@@ -1832,6 +1837,7 @@ void CViewInstrument::OnEnvLoopChanged()
 {
 	CModDoc *pModDoc = GetDocument();
 	PrepareUndo("Toggle Envelope Loop");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if ((pModDoc) && (EnvSetLoop(!EnvGetLoop())))
 	{
 		InstrumentEnvelope *pEnv = GetEnvelopePtr();
@@ -1851,6 +1857,7 @@ void CViewInstrument::OnEnvSustainChanged()
 {
 	CModDoc *pModDoc = GetDocument();
 	PrepareUndo("Toggle Envelope Sustain");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if ((pModDoc) && (EnvSetSustain(!EnvGetSustain())))
 	{
 		InstrumentEnvelope *pEnv = GetEnvelopePtr();
@@ -1869,6 +1876,7 @@ void CViewInstrument::OnEnvCarryChanged()
 {
 	CModDoc *pModDoc = GetDocument();
 	PrepareUndo("Toggle Envelope Carry");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if ((pModDoc) && (EnvSetCarry(!EnvGetCarry())))
 	{
 		SetModified(InstrumentHint().Envelope(), false);
@@ -1881,6 +1889,7 @@ void CViewInstrument::OnEnvToggleReleasNode()
 	if(IsDragItemEnvPoint())
 	{
 		PrepareUndo("Toggle Envelope Release Node");
+		InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 		if(EnvToggleReleaseNode(m_nDragItem - 1))
 		{
 			SetModified(InstrumentHint().Envelope(), true);
@@ -1893,6 +1902,7 @@ void CViewInstrument::OnEnvVolChanged()
 //-------------------------------------
 {
 	GetDocument()->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Toggle Volume Envelope", ENV_VOLUME);
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if (EnvSetVolEnv(!EnvGetVolEnv()))
 	{
 		SetModified(InstrumentHint().Envelope(), false);
@@ -1904,6 +1914,7 @@ void CViewInstrument::OnEnvPanChanged()
 //-------------------------------------
 {
 	GetDocument()->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Toggle Panning Envelope", ENV_PANNING);
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if (EnvSetPanEnv(!EnvGetPanEnv()))
 	{
 		SetModified(InstrumentHint().Envelope(), false);
@@ -1915,6 +1926,7 @@ void CViewInstrument::OnEnvPitchChanged()
 //---------------------------------------
 {
 	GetDocument()->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Toggle Pitch Envelope", ENV_PITCH);
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if (EnvSetPitchEnv(!EnvGetPitchEnv()))
 	{
 		SetModified(InstrumentHint().Envelope(), false);
@@ -1926,6 +1938,7 @@ void CViewInstrument::OnEnvFilterChanged()
 //----------------------------------------
 {
 	GetDocument()->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Toggle Filter Envelope", ENV_PITCH);
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if (EnvSetFilterEnv(!EnvGetFilterEnv()))
 	{
 		SetModified(InstrumentHint().Envelope(), false);
@@ -1997,6 +2010,7 @@ void CViewInstrument::OnEditPaste()
 {
 	CModDoc *pModDoc = GetDocument();
 	PrepareUndo("Paste Envelope");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if (pModDoc && pModDoc->PasteEnvelope(m_nInstrument, m_nEnv))
 	{
 		SetModified(InstrumentHint().Envelope(), true);
@@ -2079,6 +2093,7 @@ void CViewInstrument::OnDropFiles(HDROP hDropInfo)
 		{
 			const mpt::PathString file = mpt::PathString::FromNative(fileName.data());
 			PrepareUndo("Replace Envelope");
+			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			if(GetDocument()->LoadEnvelope(m_nInstrument, m_nEnv, file))
 			{
 				SetModified(InstrumentHint(m_nInstrument).Envelope(), true);
@@ -2176,6 +2191,7 @@ BOOL CViewInstrument::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 				{
 					CriticalSection cs;
 					pModDoc->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Replace Instrument");
+					InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 					bCanDrop = dlsbank.ExtractInstrument(sndFile, m_nInstrument, nIns, nRgn);
 				}
 				bUpdate = true;
@@ -2206,6 +2222,7 @@ BOOL CViewInstrument::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 			CriticalSection cs;
 
 			pModDoc->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Replace Instrument");
+			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			bCanDrop = pDLSBank->ExtractInstrument(sndFile, m_nInstrument, nIns, nRgn);
 			bUpdate = true;
 		}
@@ -2379,6 +2396,7 @@ void CViewInstrument::OnEnvelopeScalePoints()
 		if(dlg.DoModal() == IDOK)
 		{
 			PrepareUndo("Scale Envelope");
+			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			dlg.Apply();
 			SetModified(InstrumentHint().Envelope(), true);
 		}
@@ -2445,6 +2463,7 @@ void CViewInstrument::EnvKbdMovePointLeft(int stepsize)
 
 	// Move loop points?
 	PrepareUndo("Move Envelope Point");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(m_nDragItem == ENV_DRAGSUSTAINSTART)
 	{
 		if(pEnv->nSustainStart <= 0) return;
@@ -2492,6 +2511,7 @@ void CViewInstrument::EnvKbdMovePointRight(int stepsize)
 
 	// Move loop points?
 	PrepareUndo("Move Envelope Point");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(m_nDragItem == ENV_DRAGSUSTAINSTART)
 	{
 		if(pEnv->nSustainStart >= pEnv->size() - 1) return;
@@ -2537,6 +2557,7 @@ void CViewInstrument::EnvKbdMovePointVertical(int stepsize)
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	int val = pEnv->at(m_nDragItem - 1).value + stepsize;
 	PrepareUndo("Move Envelope Point");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(EnvSetValue(m_nDragItem - 1, int32_min, val, false))
 	{
 		UpdateIndicator();
@@ -2591,6 +2612,7 @@ void CViewInstrument::EnvKbdSetLoopStart()
 	InstrumentEnvelope *pEnv = GetEnvelopePtr();
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	PrepareUndo("Set Envelope Loop Start");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(!EnvGetLoop())
 		EnvSetLoopStart(0);
 	EnvSetLoopStart(m_nDragItem - 1);
@@ -2604,6 +2626,7 @@ void CViewInstrument::EnvKbdSetLoopEnd()
 	InstrumentEnvelope *pEnv = GetEnvelopePtr();
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	PrepareUndo("Set Envelope Loop End");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(!EnvGetLoop())
 	{
 		EnvSetLoop(true);
@@ -2620,6 +2643,7 @@ void CViewInstrument::EnvKbdSetSustainStart()
 	InstrumentEnvelope *pEnv = GetEnvelopePtr();
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	PrepareUndo("Set Envelope Sustain Start");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(!EnvGetSustain())
 		EnvSetSustain(true);
 	EnvSetSustainStart(m_nDragItem - 1);
@@ -2633,6 +2657,7 @@ void CViewInstrument::EnvKbdSetSustainEnd()
 	InstrumentEnvelope *pEnv = GetEnvelopePtr();
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	PrepareUndo("Set Envelope Sustain End");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(!EnvGetSustain())
 	{
 		EnvSetSustain(true);
@@ -2649,6 +2674,7 @@ void CViewInstrument::EnvKbdToggleReleaseNode()
 	InstrumentEnvelope *pEnv = GetEnvelopePtr();
 	if(pEnv == nullptr || !IsDragItemEnvPoint()) return;
 	PrepareUndo("Toggle Release Node");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(EnvToggleReleaseNode(m_nDragItem - 1))
 	{
 		UpdateIndicator();
@@ -2745,6 +2771,7 @@ void CViewInstrument::OnEnvLoad()
 	TrackerSettings::Instance().PathInstruments.SetWorkingDir(dlg.GetWorkingDirectory());
 
 	PrepareUndo("Replace Envelope");
+	InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 	if(GetDocument()->LoadEnvelope(m_nInstrument, m_nEnv, dlg.GetFirstFile()))
 	{
 		SetModified(InstrumentHint(m_nInstrument).Envelope(), true);

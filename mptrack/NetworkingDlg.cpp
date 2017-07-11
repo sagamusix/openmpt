@@ -97,10 +97,15 @@ void NetworkingDlg::OnConnect()
 		port = DEFAULT_PORT;
 
 	m_client = std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
-	m_client->Connect();
+	if(!m_client->Connect())
+	{
+		Reporting::Error(_T("Unable to connect to ") + server);
+		m_client = nullptr;
+		return;
+	}
 	std::ostringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
-	ar(NetworkMessage("LIST"));
+	ar(ListMsg);
 	m_client->Write(ss.str());
 }
 
@@ -124,7 +129,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
-		ar(NetworkMessage("CONN"));
+		ar(ConnectMsg);
 		ar(join);
 		m_client->Write(ss.str());
 	}
@@ -137,7 +142,7 @@ void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
 	cereal::BinaryInputArchive inArchive(msg);
 	NetworkMessage type;
 	inArchive >> type;
-	if(type == "LIST")
+	if(type == ListMsg)
 	{
 		WelcomeMsg welcome;
 		inArchive >> welcome;
@@ -162,13 +167,13 @@ void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
 			m_List.SetItemData(insertAt, reinterpret_cast<DWORD_PTR>(&doc));
 		}
 		m_List.SetRedraw(TRUE);
-	} else if(type == "404!")
+	} else if(type == DocNotFoundMsg)
 	{
 		Reporting::Error("The document you wanted to join was not found.");
-	} else if(type == "403!")
+	} else if(type == WrongPasswordMsg)
 	{
 		Reporting::Error("The password was incorrect.");
-	} else if(type == "!OK!")
+	} else if(type == ConnectOKMsg)
 	{
 		// Need to do this in GUI thread
 		SendMessage(WM_USER + 100, reinterpret_cast<WPARAM>(&inArchive));

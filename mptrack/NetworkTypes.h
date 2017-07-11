@@ -33,6 +33,7 @@ struct NetworkMessage
 	}
 
 	bool operator== (const char(&other)[5]) { return !memcmp(type, other, 4); }
+	bool operator== (const NetworkMessage &other) { return !memcmp(type, other.type, 4); }
 
 	template<class Archive>
 	void serialize(Archive &archive)
@@ -40,6 +41,22 @@ struct NetworkMessage
 		archive(type);
 	}
 };
+
+const NetworkMessage ListMsg("LIST");
+
+const NetworkMessage ConnectMsg("CONN");
+const NetworkMessage ConnectOKMsg("!OK!");
+const NetworkMessage DocNotFoundMsg("404!");
+const NetworkMessage WrongPasswordMsg("403!");
+
+const NetworkMessage VolEnvTransactioMsg("VOTR");
+const NetworkMessage PanEnvTransactioMsg("PATR");
+const NetworkMessage PitchEnvTransactioMsg("PITR");
+const NetworkMessage InstrumentTransactionMsg("INTR");
+
+const NetworkMessage SamplePropertyTransactionMsg("SATR");
+
+const NetworkMessage PatternTransactionMsg("PATR");
 
 struct DocumentInfo
 {
