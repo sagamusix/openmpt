@@ -4,6 +4,7 @@ OPENMPT_NAMESPACE_BEGIN
 
 class InstrumentTransaction
 {
+	//CriticalSection cs;	// TODO
 	CSoundFile &m_sndFile;
 	const ModInstrument m_origInstr;
 	INSTRUMENTINDEX m_instr;

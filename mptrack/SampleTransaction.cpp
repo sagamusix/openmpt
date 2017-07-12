@@ -43,14 +43,15 @@ SamplePropertyTransaction::~SamplePropertyTransaction()
 
 	if(modified)
 	{
-		if(Networking::collabServer != nullptr)
+		auto *modDoc = m_sndFile.GetpModDoc();
+		if(modDoc->m_collabClient)
 		{
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
 			ar(Networking::SamplePropertyTransactionMsg);
 			ar(m_sample);
 			ar(sample);
-			Networking::collabServer->SendMessage(*m_sndFile.GetpModDoc(), ss.str());
+			modDoc->m_collabClient->Write(ss.str());
 		}
 	}
 }

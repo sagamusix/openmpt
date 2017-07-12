@@ -61,7 +61,8 @@ InstrumentTransaction::~InstrumentTransaction()
 
 	if(modified || volEnv || panEnv || pitchEnv)
 	{
-		if(Networking::collabServer != nullptr)
+		auto *modDoc = m_sndFile.GetpModDoc();
+		if(modDoc->m_collabClient)
 		{
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
@@ -91,7 +92,7 @@ InstrumentTransaction::~InstrumentTransaction()
 				ar(m_instr);
 				ar(*instr);
 			}
-			Networking::collabServer->SendMessage(*m_sndFile.GetpModDoc(), ss.str());
+			modDoc->m_collabClient->Write(ss.str());
 		}
 	}
 }

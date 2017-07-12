@@ -137,7 +137,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 }
 
 
-void NetworkingDlg::Receive(CollabConnection *, std::stringstream &msg)
+void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg)
 {
 	cereal::BinaryInputArchive inArchive(msg);
 	NetworkMessage type;
@@ -200,7 +200,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
 	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
-	//modDoc->m_collabClient = 
+	modDoc->m_collabClient = std::move(m_client);
 	OnOK();
 	return 0;
 }

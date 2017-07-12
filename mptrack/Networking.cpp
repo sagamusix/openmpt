@@ -62,6 +62,7 @@ CollabConnection::CollabConnection(asio::ip::tcp::socket socket, std::shared_ptr
 	: m_socket(std::move(socket))
 	, m_strand(io_service)
 	, m_listener(listener)
+	, m_modDoc(nullptr)
 {
 	m_strmIn.zalloc = Z_NULL;
 	m_strmIn.zfree = Z_NULL;
@@ -117,7 +118,7 @@ void CollabConnection::Read()
 				} while(strm.avail_out == 0);
 				if(auto listener = that->m_listener.lock())
 				{
-					listener->Receive(that.get(), decompressedStream);
+					listener->Receive(that, decompressedStream);
 					that->Read();
 				}
 			}
@@ -245,11 +246,12 @@ void CollabServer::StartAccept()
 }
 
 
-void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
+void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
 {
 	cereal::BinaryInputArchive inArchive(msg);
 	NetworkMessage type;
 	inArchive >> type;
+	OutputDebugStringA(std::string(type.type, 4).c_str());
 
 	if(type == ListMsg)
 	{
@@ -293,6 +295,8 @@ void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 				ar(ConnectOKMsg);
 				ar(sndFile);
 				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
+				m_connections.push_back(source);
+				source->m_modDoc = modDoc;
 			} else
 			{
 				ar(WrongPasswordMsg);
@@ -302,8 +306,71 @@ void CollabServer::Receive(CollabConnection *source, std::stringstream &msg)
 			ar(DocNotFoundMsg);
 		}
 		source->Write(sso.str());
+	} else
+	{
+		// Document operation
+		auto *modDoc = source->m_modDoc;
+		auto doc = m_documents.find(NetworkedDocument(*source->m_modDoc));
+		if(doc != m_documents.end())
+		{
+			auto &sndFile = modDoc->GetrSoundFile();
+			if(type == PatternTransactionMsg)
+			{
+				Networking::PatternEditMsg patMsg;
+				inArchive >> patMsg;
+			} else if(type == SamplePropertyTransactionMsg)
+			{
+				SAMPLEINDEX id;
+				ModSample sample;
+				inArchive >> id;
+				inArchive >> sample;
+				if(id > 0 && id <= sndFile.GetNumSamples())
+				{
+
+				}
+			} else if(type == InstrumentTransactionMsg)
+			{
+				INSTRUMENTINDEX id;
+				ModInstrument instr;
+				inArchive >> id;
+				inArchive >> instr;
+				if(id > 0 && id <= sndFile.GetNumInstruments())
+				{
+
+				}
+			} else if(type == VolEnvTransactioMsg)
+			{
+				INSTRUMENTINDEX id;
+				InstrumentEnvelope env;
+				inArchive >> id;
+				inArchive >> env;
+				if(id > 0 && id <= sndFile.GetNumInstruments())
+				{
+
+				}
+			} else if(type == PanEnvTransactioMsg)
+			{
+				INSTRUMENTINDEX id;
+				InstrumentEnvelope env;
+				inArchive >> id;
+				inArchive >> env;
+				if(id > 0 && id <= sndFile.GetNumInstruments())
+				{
+
+				}
+			} else if(type == PitchEnvTransactioMsg)
+			{
+				INSTRUMENTINDEX id;
+				InstrumentEnvelope env;
+				inArchive >> id;
+				inArchive >> env;
+				if(id > 0 && id <= sndFile.GetNumInstruments())
+				{
+
+				}
+			}
+		}
 	}
-	OutputDebugStringA(msg.str().c_str());
 }
 
 
@@ -348,7 +415,7 @@ void CollabClient::Write(const std::string &msg)
 }
 
 
-void CollabClient::Receive(CollabConnection *source, std::stringstream &msg)
+void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
 {
 	if(auto listener = m_listener.lock())
 	{

@@ -37,12 +37,13 @@ public:
 };
 
 class CollabConnection;
+class NetworkedDocument;
 
 class Listener
 {
 public:
 	virtual ~Listener() { }
-	virtual void Receive(CollabConnection *source, std::stringstream &msg) = 0;
+	virtual void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) = 0;
 };
 
 
@@ -54,6 +55,8 @@ class CollabConnection : public std::enable_shared_from_this<CollabConnection>
 	z_stream m_strmIn, m_strmOut;
 	std::string m_inMessage;
 	std::weak_ptr<Listener> m_listener;
+public:
+	CModDoc *m_modDoc;
 
 public:
 	CollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
@@ -78,6 +81,7 @@ public:
 	mpt::ustring m_password;
 	int m_collaborators, m_maxCollaborators;
 	int m_spectators, m_maxSpectators;
+	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 	// TODO: add connections here
 
 	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring())
@@ -113,7 +117,7 @@ public:
 
 	void SendMessage(CModDoc &modDoc, const std::string msg);
 
-	void Receive(CollabConnection *source, std::stringstream &msg) override;
+	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void StartAccept();
 };
@@ -133,7 +137,7 @@ public:
 	void Close();
 	void Write(const std::string &msg);
 
-	void Receive(CollabConnection *source, std::stringstream &msg) override;
+	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 };
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;
