@@ -3205,4 +3205,11 @@ void CModDoc::DeserializeViews()
 	}
 }
 
+
+void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg)
+//------------------------------------------------------------------------------------------
+{
+
+}
+
 OPENMPT_NAMESPACE_END

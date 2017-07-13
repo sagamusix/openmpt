@@ -150,7 +150,11 @@ struct ModCommandMask
 
 struct PatternEditMsg
 {
-	uint32 pattern, row, channel, numRows, numChannels;
+	PATTERNINDEX pattern;
+	ROWINDEX row;
+	CHANNELINDEX channel;
+	ROWINDEX numRows;
+	CHANNELINDEX numChannels;
 	std::vector<ModCommandMask> commands;
 
 	PatternEditMsg(PATTERNINDEX p = 0, ROWINDEX r = 0, CHANNELINDEX c = 0, ROWINDEX rc = 0, CHANNELINDEX cc = 0)

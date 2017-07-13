@@ -16,6 +16,7 @@
 #include "Notification.h"
 #include "UpdateHints.h"
 #include <time.h>
+#include "NetworkListener.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -91,9 +92,9 @@ public:
 };
 
 
-//=============================
-class CModDoc: public CDocument
-//=============================
+//==========================================================
+class CModDoc: public CDocument, public Networking::Listener
+//==========================================================
 {
 protected:
 	friend ScopedLogCapturer;
@@ -123,6 +124,7 @@ protected:
 
 public:
 	std::shared_ptr<Networking::CollabClient> m_collabClient;
+	void Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg) override;
 
 protected: // create from serialization only
 	CModDoc();

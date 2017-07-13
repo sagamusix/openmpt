@@ -759,6 +759,9 @@
     <ClInclude Include="..\..\mptrack\InstrumentTransaction.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\NetworkListener.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\ComponentManager.cpp">

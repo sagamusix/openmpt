@@ -12,6 +12,7 @@
 #include "Networking.h"
 #include "NetworkTypes.h"
 #include "Moddoc.h"
+#include "AudioCriticalSection.h"
 #include "../common/version.h"
 #include <cereal/cereal.hpp>
 #include <iostream>
@@ -253,6 +254,9 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	inArchive >> type;
 	OutputDebugStringA(std::string(type.type, 4).c_str());
 
+	std::ostringstream sso;
+	cereal::BinaryOutputArchive ar(sso);
+
 	if(type == ListMsg)
 	{
 		WelcomeMsg welcome;
@@ -271,20 +275,15 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			welcome.documents.push_back(info);
 		}
 
-		std::ostringstream ss;
-		cereal::BinaryOutputArchive ar(ss);
 		ar(ListMsg);
 		ar(welcome);
-		source->Write(ss.str());
+		source->Write(sso.str());
 	} else if(type == ConnectMsg)
 	{
 		JoinMsg join;
 		inArchive >> join;
 		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
 		auto doc = m_documents.find(NetworkedDocument(*modDoc));
-
-		std::ostringstream sso;
-		cereal::BinaryOutputArchive ar(sso);
 
 		if(doc != m_documents.end())
 		{
@@ -318,6 +317,41 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				Networking::PatternEditMsg patMsg;
 				inArchive >> patMsg;
+				CriticalSection cs;
+				if(sndFile.Patterns.IsValidPat(patMsg.pattern))
+				{
+					auto mask = patMsg.commands.begin();
+					for(ROWINDEX row = patMsg.row; row < patMsg.row + patMsg.numRows; row++)
+					{
+						auto m = sndFile.Patterns[patMsg.pattern].GetpModCommand(row, patMsg.channel);
+						for(CHANNELINDEX chn = patMsg.channel; chn < patMsg.channel + patMsg.numChannels; chn++, mask++, m++)
+						{
+							if(mask->mask[ModCommandMask::kNote])
+								m->note = mask->m.note;
+							if(mask->mask[ModCommandMask::kInstr])
+								m->instr = mask->m.instr;
+							if(mask->mask[ModCommandMask::kVolCmd])
+								m->volcmd = mask->m.volcmd;
+							if(mask->mask[ModCommandMask::kVol])
+								m->vol = mask->m.vol;
+							if(mask->mask[ModCommandMask::kCommand])
+								m->command = mask->m.command;
+							if(mask->mask[ModCommandMask::kParam])
+								m->param = mask->m.param;
+							
+							// For sending back new state to all clients
+							mask->mask.set();
+							mask->m = *m;
+						}
+					}
+					ar(type);
+					ar(patMsg);
+					const std::string s = sso.str();
+					for(auto &c : doc->m_connections)
+					{
+						c->Write(s);
+					}
+				}
 			} else if(type == SamplePropertyTransactionMsg)
 			{
 				SAMPLEINDEX id;

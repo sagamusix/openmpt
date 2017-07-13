@@ -15,6 +15,7 @@
 #include <zlib/zlib.h>
 #include "../common/mptMutex.h"
 #include "../common/mptThread.h"
+#include "NetworkListener.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -39,14 +40,6 @@ public:
 class CollabConnection;
 class NetworkedDocument;
 
-class Listener
-{
-public:
-	virtual ~Listener() { }
-	virtual void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) = 0;
-};
-
-
 class CollabConnection : public std::enable_shared_from_this<CollabConnection>
 {
 	asio::ip::tcp::socket m_socket;
@@ -68,6 +61,8 @@ public:
 
 	void Write(const std::string &message);
 	void Close();
+
+	//void SetListener(std::shared_ptr<Listener>)
 
 protected:
 	void WriteImpl();
