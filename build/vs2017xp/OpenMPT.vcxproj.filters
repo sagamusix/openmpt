@@ -261,6 +261,9 @@
     <ClInclude Include="..\..\mptrack\InputHandler.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\InstrumentTransaction.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\KeyConfigDlg.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -303,7 +306,7 @@
     <ClInclude Include="..\..\mptrack\Mptrack.h">
       <Filter>mptrack</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mptrack\NetworkPatterns.h">
+    <ClInclude Include="..\..\mptrack\NetworkListener.h">
       <Filter>mptrack</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\NetworkTypes.h">
@@ -348,6 +351,9 @@
     <ClInclude Include="..\..\mptrack\PatternGotoDialog.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\PatternTransaction.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\ProgressDialog.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -361,6 +367,9 @@
       <Filter>mptrack</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\SampleGenerator.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\SampleTransaction.h">
       <Filter>mptrack</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\ScaleEnvPointsDlg.h">
@@ -920,6 +929,9 @@
     <ClCompile Include="..\..\mptrack\InputHandler.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\InstrumentTransaction.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\KeyConfigDlg.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -977,7 +989,7 @@
     <ClCompile Include="..\..\mptrack\Mptrack.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mptrack\NetworkPatterns.cpp">
+    <ClCompile Include="..\..\mptrack\NetworkTypes.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\Networking.cpp">
@@ -1013,6 +1025,9 @@
     <ClCompile Include="..\..\mptrack\PatternGotoDialog.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\PatternTransaction.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\ProgressDialog.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -1026,6 +1041,9 @@
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\SampleGenerator.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\SampleTransaction.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\ScaleEnvPointsDlg.cpp">

@@ -765,7 +765,6 @@
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
     <ClInclude Include="..\..\mptrack\NetworkListener.h" />
-    <ClInclude Include="..\..\mptrack\PatternTransaction.h" />
     <ClInclude Include="..\..\mptrack\NetworkTypes.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
     <ClInclude Include="..\..\mptrack\NetworkingDlg.h" />
@@ -780,6 +779,7 @@
     <ClInclude Include="..\..\mptrack\PatternFindReplaceDlg.h" />
     <ClInclude Include="..\..\mptrack\PatternFont.h" />
     <ClInclude Include="..\..\mptrack\PatternGotoDialog.h" />
+    <ClInclude Include="..\..\mptrack\PatternTransaction.h" />
     <ClInclude Include="..\..\mptrack\ProgressDialog.h" />
     <ClInclude Include="..\..\mptrack\Reporting.h" />
     <ClInclude Include="..\..\mptrack\SampleConfigDlg.h" />
@@ -1006,7 +1006,7 @@
     <ClCompile Include="..\..\mptrack\Mpdlgs.cpp" />
     <ClCompile Include="..\..\mptrack\Mpt_midi.cpp" />
     <ClCompile Include="..\..\mptrack\Mptrack.cpp" />
-    <ClCompile Include="..\..\mptrack\PatternTransaction.cpp" />
+    <ClCompile Include="..\..\mptrack\NetworkTypes.cpp" />
     <ClCompile Include="..\..\mptrack\Networking.cpp" />
     <ClCompile Include="..\..\mptrack\NetworkingDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PNG.cpp" />
@@ -1018,6 +1018,7 @@
     <ClCompile Include="..\..\mptrack\PatternFindReplaceDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PatternFont.cpp" />
     <ClCompile Include="..\..\mptrack\PatternGotoDialog.cpp" />
+    <ClCompile Include="..\..\mptrack\PatternTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\ProgressDialog.cpp" />
     <ClCompile Include="..\..\mptrack\Reporting.cpp" />
     <ClCompile Include="..\..\mptrack\SampleConfigDlg.cpp" />

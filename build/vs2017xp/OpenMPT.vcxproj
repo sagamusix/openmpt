@@ -748,6 +748,7 @@
     <ClInclude Include="..\..\mptrack\Globals.h" />
     <ClInclude Include="..\..\mptrack\ImageLists.h" />
     <ClInclude Include="..\..\mptrack\InputHandler.h" />
+    <ClInclude Include="..\..\mptrack\InstrumentTransaction.h" />
     <ClInclude Include="..\..\mptrack\KeyConfigDlg.h" />
     <ClInclude Include="..\..\mptrack\MIDIMacroDialog.h" />
     <ClInclude Include="..\..\mptrack\MIDIMapping.h" />
@@ -762,7 +763,7 @@
     <ClInclude Include="..\..\mptrack\MoveFXSlotDialog.h" />
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
-    <ClInclude Include="..\..\mptrack\NetworkPatterns.h" />
+    <ClInclude Include="..\..\mptrack\NetworkListener.h" />
     <ClInclude Include="..\..\mptrack\NetworkTypes.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
     <ClInclude Include="..\..\mptrack\NetworkingDlg.h" />
@@ -777,11 +778,13 @@
     <ClInclude Include="..\..\mptrack\PatternFindReplaceDlg.h" />
     <ClInclude Include="..\..\mptrack\PatternFont.h" />
     <ClInclude Include="..\..\mptrack\PatternGotoDialog.h" />
+    <ClInclude Include="..\..\mptrack\PatternTransaction.h" />
     <ClInclude Include="..\..\mptrack\ProgressDialog.h" />
     <ClInclude Include="..\..\mptrack\Reporting.h" />
     <ClInclude Include="..\..\mptrack\SampleConfigDlg.h" />
     <ClInclude Include="..\..\mptrack\SampleEditorDialogs.h" />
     <ClInclude Include="..\..\mptrack\SampleGenerator.h" />
+    <ClInclude Include="..\..\mptrack\SampleTransaction.h" />
     <ClInclude Include="..\..\mptrack\ScaleEnvPointsDlg.h" />
     <ClInclude Include="..\..\mptrack\SelectPluginDialog.h" />
     <ClInclude Include="..\..\mptrack\Settings.h" />
@@ -982,6 +985,7 @@
     <ClCompile Include="..\..\mptrack\GeneralConfigDlg.cpp" />
     <ClCompile Include="..\..\mptrack\Globals.cpp" />
     <ClCompile Include="..\..\mptrack\InputHandler.cpp" />
+    <ClCompile Include="..\..\mptrack\InstrumentTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\KeyConfigDlg.cpp" />
     <ClCompile Include="..\..\mptrack\MIDIMacroDialog.cpp" />
     <ClCompile Include="..\..\mptrack\MIDIMapping.cpp" />
@@ -1001,7 +1005,7 @@
     <ClCompile Include="..\..\mptrack\Mpdlgs.cpp" />
     <ClCompile Include="..\..\mptrack\Mpt_midi.cpp" />
     <ClCompile Include="..\..\mptrack\Mptrack.cpp" />
-    <ClCompile Include="..\..\mptrack\NetworkPatterns.cpp" />
+    <ClCompile Include="..\..\mptrack\NetworkTypes.cpp" />
     <ClCompile Include="..\..\mptrack\Networking.cpp" />
     <ClCompile Include="..\..\mptrack\NetworkingDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PNG.cpp" />
@@ -1013,11 +1017,13 @@
     <ClCompile Include="..\..\mptrack\PatternFindReplaceDlg.cpp" />
     <ClCompile Include="..\..\mptrack\PatternFont.cpp" />
     <ClCompile Include="..\..\mptrack\PatternGotoDialog.cpp" />
+    <ClCompile Include="..\..\mptrack\PatternTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\ProgressDialog.cpp" />
     <ClCompile Include="..\..\mptrack\Reporting.cpp" />
     <ClCompile Include="..\..\mptrack\SampleConfigDlg.cpp" />
     <ClCompile Include="..\..\mptrack\SampleEditorDialogs.cpp" />
     <ClCompile Include="..\..\mptrack\SampleGenerator.cpp" />
+    <ClCompile Include="..\..\mptrack\SampleTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\ScaleEnvPointsDlg.cpp" />
     <ClCompile Include="..\..\mptrack\SelectPluginDialog.cpp" />
     <ClCompile Include="..\..\mptrack\Settings.cpp" />

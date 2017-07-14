@@ -320,30 +320,8 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				CriticalSection cs;
 				if(sndFile.Patterns.IsValidPat(patMsg.pattern))
 				{
-					auto mask = patMsg.commands.begin();
-					for(ROWINDEX row = patMsg.row; row < patMsg.row + patMsg.numRows; row++)
-					{
-						auto m = sndFile.Patterns[patMsg.pattern].GetpModCommand(row, patMsg.channel);
-						for(CHANNELINDEX chn = patMsg.channel; chn < patMsg.channel + patMsg.numChannels; chn++, mask++, m++)
-						{
-							if(mask->mask[ModCommandMask::kNote])
-								m->note = mask->m.note;
-							if(mask->mask[ModCommandMask::kInstr])
-								m->instr = mask->m.instr;
-							if(mask->mask[ModCommandMask::kVolCmd])
-								m->volcmd = mask->m.volcmd;
-							if(mask->mask[ModCommandMask::kVol])
-								m->vol = mask->m.vol;
-							if(mask->mask[ModCommandMask::kCommand])
-								m->command = mask->m.command;
-							if(mask->mask[ModCommandMask::kParam])
-								m->param = mask->m.param;
-							
-							// For sending back new state to all clients
-							mask->mask.set();
-							mask->m = *m;
-						}
-					}
+					patMsg.Apply(sndFile.Patterns[patMsg.pattern]);
+					// Send back to all clients
 					ar(type);
 					ar(patMsg);
 					const std::string s = sso.str();

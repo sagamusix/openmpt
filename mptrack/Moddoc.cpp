@@ -43,6 +43,7 @@
 #include "AbstractVstEditor.h"
 #endif
 #include "Networking.h"
+#include "NetworkTypes.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -149,7 +150,8 @@ CModDoc::CModDoc()
 	, m_SampleUndo(*this)
 	, m_InstrumentUndo(*this)
 	, bModifiedAutosave(false)
-//---------------------------------------
+	, m_listener(std::make_shared<Listener>(*this))
+//-------------------------------------------------
 {
 	// Set the creation date of this file (or the load time if we're loading an existing file)
 	time(&m_creationTime);
@@ -3209,7 +3211,22 @@ void CModDoc::DeserializeViews()
 void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg)
 //------------------------------------------------------------------------------------------
 {
+	cereal::BinaryInputArchive inArchive(msg);
+	Networking::NetworkMessage type;
+	inArchive >> type;
+	OutputDebugStringA(std::string(type.type, 4).c_str());
 
+	if(type == Networking::PatternTransactionMsg)
+	{
+		Networking::PatternEditMsg patMsg;
+		inArchive >> patMsg;
+		CriticalSection cs;
+		if(m_SndFile.Patterns.IsValidPat(patMsg.pattern))
+		{
+			patMsg.Apply(m_SndFile.Patterns[patMsg.pattern]);
+		}
+	}
 }
+
 
 OPENMPT_NAMESPACE_END

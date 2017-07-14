@@ -62,7 +62,10 @@ public:
 	void Write(const std::string &message);
 	void Close();
 
-	//void SetListener(std::shared_ptr<Listener>)
+	void SetListener(std::shared_ptr<Listener> listener)
+	{
+		m_listener = listener;
+	}
 
 protected:
 	void WriteImpl();
@@ -133,6 +136,11 @@ public:
 	void Write(const std::string &msg);
 
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
+
+	void SetListener(std::shared_ptr<Listener> listener)
+	{
+		m_listener = listener;
+	}
 };
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;

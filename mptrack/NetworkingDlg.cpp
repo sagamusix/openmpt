@@ -200,6 +200,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
 	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
+	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
 	OnOK();
 	return 0;

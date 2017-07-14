@@ -170,6 +170,8 @@ struct PatternEditMsg
 	{
 		archive(pattern, row, channel, numRows, numChannels, commands);
 	}
+
+	void Apply(CPattern &pattern);
 };
 
 }

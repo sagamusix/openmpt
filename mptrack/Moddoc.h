@@ -124,7 +124,23 @@ protected:
 
 public:
 	std::shared_ptr<Networking::CollabClient> m_collabClient;
-	void Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg) override;
+	void Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg);
+
+	class Listener : public Networking::Listener
+	{
+		CModDoc &m_modDoc;
+	
+	public:
+		Listener(CModDoc &modDoc) : m_modDoc(modDoc) { }
+
+		void Receive(std::shared_ptr<Networking::CollabConnection> conn, std::stringstream &msg) override
+		{
+			m_modDoc.Receive(conn, msg);
+		}
+		CModDoc *operator->() { return &m_modDoc; }
+		const CModDoc *operator->() const { return &m_modDoc; }
+	};
+	std::shared_ptr<Listener> m_listener;
 
 protected: // create from serialization only
 	CModDoc();
