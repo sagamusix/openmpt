@@ -35,15 +35,13 @@ class CTuningCollection //To contain tuning objects.
 public:
 
 //BEGIN TYPEDEFS
-	typedef uint16 EDITMASK;
+
 	//If changing this, see whether serialization should be 
 	//modified as well.
 
 	typedef std::vector<CTuning*> TUNINGVECTOR;
 	typedef TUNINGVECTOR::iterator TITER; //Tuning ITERator.
 	typedef TUNINGVECTOR::const_iterator CTITER;
-
-	typedef uint16 SERIALIZATION_VERSION;
 
 	typedef bool SERIALIZATION_RETURN_TYPE;
 
@@ -53,19 +51,23 @@ public:
 public:
 	enum 
 	{
-		EM_ADD = 1, //true <~> allowed
-		EM_REMOVE = 2,
-		EM_ALLOWALL = 0xffff,
-		EM_CONST = 0,
-
-	    s_SerializationVersion = 3,
-
 		SERIALIZATION_SUCCESS = false,
 		SERIALIZATION_FAILURE = true
 	};
 
 	static const char s_FileExtension[4];
-	static const size_t s_nMaxTuningCount = 255;
+
+	// OpenMPT <= 1.26 had to following limits:
+	//  *  255 built-in tunings (only 2 were ever actually provided)
+	//  *  255 local tunings
+	//  *  255 tune-specific tunings
+	// As 1.27 copies all used tunings into the module, the limit of 255 is no
+	// longer sufficient. In the worst case scenario, the module contains 255
+	// unused tunings and uses 255 local ones. In addition to that, allow the
+	// user to additionally import both built-in tunings.
+	// Older OpenMPT versions will silently skip loading tunings beyond index
+	// 255.
+	static const size_t s_nMaxTuningCount = 255 + 255 + 2;
 
 //END PUBLIC STATIC CONSTS
 
@@ -77,18 +79,10 @@ public:
 	//Note: Given pointer is deleted by CTuningCollection
 	//at some point.
 	bool AddTuning(CTuning* const pT);
-	bool AddTuning(std::istream& inStrm) {return AddTuning(inStrm, false);}
+	bool AddTuning(std::istream& inStrm);
 	
 	bool Remove(const size_t i);
 	bool Remove(const CTuning*);
-
-	bool CanEdit(const EDITMASK& em) const {return (m_EditMask & em) != 0;}
-
-	void SetConstStatus(const EDITMASK& em) {m_EditMask = em;}
-
-	const EDITMASK& GetEditMask() const {return m_EditMask;}
-
-	std::string GetEditMaskString() const;
 
 	CTuning& GetTuning(size_t i) {return *m_Tunings.at(i);}
 	const CTuning& GetTuning(size_t i) const {return *m_Tunings.at(i);}
@@ -103,8 +97,6 @@ public:
 	void SetSavefilePath(const mpt::PathString &psz) {m_SavefilePath = psz;}
 	mpt::PathString GetSaveFilePath() const {return m_SavefilePath;}
 #endif // MODPLUG_NO_FILESAVE
-
-	std::string GetVersionString() const {return mpt::fmt::val(static_cast<int>(s_SerializationVersion));}
 
 	size_t GetNameLengthMax() const {return 256;}
 
@@ -128,7 +120,6 @@ private:
 	//BEGIN: SERIALIZABLE DATA MEMBERS
 	TUNINGVECTOR m_Tunings; //The actual tuningobjects are stored as deletable pointers here.
 	std::string m_Name;
-	EDITMASK m_EditMask;
 	//END: SERIALIZABLE DATA MEMBERS
 
 	//BEGIN: NONSERIALIZABLE DATA MEMBERS
@@ -147,8 +138,6 @@ private:
 	CTuning* FindTuning(const std::string& name) const;
 	size_t FindTuning(const CTuning* const) const;
 
-	bool AddTuning(std::istream& inStrm, const bool ignoreEditmask);
-
 	bool Remove(TITER removable, bool moveToTrashBin = true);
 
 	//Hiding default operators because default meaning might not work right.
@@ -160,5 +149,10 @@ private:
 //END PRIVATE METHODS.
 };
 
+
+#ifdef MODPLUG_TRACKER
+bool UnpackTuningCollection(const mpt::PathString &filename, mpt::PathString dest = mpt::PathString());
+bool UnpackTuningCollection(const CTuningCollection &tc, mpt::PathString dest = mpt::PathString());
+#endif
 
 OPENMPT_NAMESPACE_END

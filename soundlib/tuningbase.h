@@ -45,9 +45,7 @@ public:
 	typedef float32 RATIOTYPE; //If changing RATIOTYPE, serialization methods may need modifications.
 	typedef int32 STEPINDEXTYPE;
 	typedef uint32 USTEPINDEXTYPE;
-	typedef void (*MESSAGEHANDLER)(const char*, const char*);
 
-	typedef int16 SERIALIZATION_VERSION;
 	typedef bool SERIALIZATION_RETURN_TYPE;
 
 	//Validity Range PAIR.
@@ -66,7 +64,6 @@ public:
 
 
 //BEGIN PUBLIC STATICS
-	static const SERIALIZATION_VERSION s_SerializationVersion;
 
 	static const SERIALIZATION_RETURN_TYPE SERIALIZATION_SUCCESS;
 	static const SERIALIZATION_RETURN_TYPE SERIALIZATION_FAILURE;
@@ -98,19 +95,19 @@ public:
 //BEGIN TUNING INTERFACE
 
 	//To return ratio of certain note.
-	virtual RATIOTYPE GetRatio(const NOTEINDEXTYPE&) const {return 0;}
+	virtual RATIOTYPE GetRatio(const NOTEINDEXTYPE&) const = 0;
 
 	//To return ratio from a 'step'(noteindex + stepindex)
-	virtual RATIOTYPE GetRatio(const NOTEINDEXTYPE& s, const STEPINDEXTYPE&) const {return GetRatio(s);}
+	virtual RATIOTYPE GetRatio(const NOTEINDEXTYPE& s, const STEPINDEXTYPE&) const = 0;
 
 	//To return (fine)stepcount between two consecutive mainsteps.
 	virtual USTEPINDEXTYPE GetFineStepCount() const {return m_FineStepCount;}
 
 	//To return 'directed distance' between given notes.
-	virtual STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE& /*from*/, const NOTEINDEXTYPE& /*to*/) const {return 0;}
+	virtual STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE& /*from*/, const NOTEINDEXTYPE& /*to*/) const = 0;
 
 	//To return 'directed distance' between given steps.
-	virtual STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE&, const STEPINDEXTYPE&, const NOTEINDEXTYPE&, const STEPINDEXTYPE&) const {return 0;}
+	virtual STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE&, const STEPINDEXTYPE&, const NOTEINDEXTYPE&, const STEPINDEXTYPE&) const = 0;
 
 
 	//To set finestepcount between two consecutive mainsteps and
@@ -133,7 +130,7 @@ public:
 	bool CreateGeometric(const UNOTEINDEXTYPE& p, const RATIOTYPE& r) {return CreateGeometric(p,r,GetValidityRange());}
 	bool CreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR vr);
 
-	virtual SERIALIZATION_RETURN_TYPE Serialize(std::ostream& /*out*/) const {return false;}
+	virtual SERIALIZATION_RETURN_TYPE Serialize(std::ostream& /*out*/) const = 0;
 
 	NOTESTR GetNoteName(const NOTEINDEXTYPE& x, bool addOctave = true) const;
 
@@ -147,26 +144,19 @@ public:
 
 	bool SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r);
 
-	TUNINGTYPE GetTuningType() const {return m_TuningType;}
-
-	static std::string GetTuningTypeStr(const TUNINGTYPE& tt);
-	static TUNINGTYPE GetTuningType(const char* str);
-
-	bool IsOfType(const TUNINGTYPE& type) const;
+	TUNINGTYPE GetType() const {return m_TuningType;}
 
 	bool ChangeGroupsize(const NOTEINDEXTYPE&);
 	bool ChangeGroupRatio(const RATIOTYPE&);
 
-	static uint32 GetVersion() {return s_SerializationVersion;}
-
-	virtual UNOTEINDEXTYPE GetGroupSize() const {return 0;}
-	virtual RATIOTYPE GetGroupRatio() const {return 0;}
+	virtual UNOTEINDEXTYPE GetGroupSize() const = 0;
+	virtual RATIOTYPE GetGroupRatio() const = 0;
 
 
 	//Tuning might not be valid for arbitrarily large range,
 	//so this can be used to ask where it is valid. Tells the lowest and highest
 	//note that are valid.
-	virtual VRPAIR GetValidityRange() const {return VRPAIR(NOTEINDEXTYPE(0),NOTEINDEXTYPE(0));}
+	virtual VRPAIR GetValidityRange() const = 0;
 
 
 	//To try to set validity range to given range; returns
@@ -179,10 +169,6 @@ public:
 	//Checking that step distances can be presented with
 	//value range of STEPINDEXTYPE with given finestepcount and validityrange.
 	bool IsStepCountRangeSufficient(USTEPINDEXTYPE fs, VRPAIR vrp);
-
-	virtual const char* GetTuningTypeDescription() const;
-
-	static const char* GetTuningTypeDescription(const TUNINGTYPE&);
 
 	bool MayEdit(const EDITMASK& em) const {return (em & m_EditMask) != 0;}
 
@@ -200,22 +186,20 @@ public:
 protected:
 	//Return value: true if change was not done, and false otherwise, in case which
 	//tuningtype is automatically changed to general.
-	virtual bool ProSetRatio(const NOTEINDEXTYPE&, const RATIOTYPE&) {return true;}
+	virtual bool ProSetRatio(const NOTEINDEXTYPE&, const RATIOTYPE&) = 0;
 
 	virtual NOTESTR ProGetNoteName(const NOTEINDEXTYPE&, bool) const;
 
 	//The two methods below return false if action was done, true otherwise.
-	virtual bool ProCreateGroupGeometric(const std::vector<RATIOTYPE>&, const RATIOTYPE&, const VRPAIR&, const NOTEINDEXTYPE /*ratiostartpos*/) {return true;}
-	virtual bool ProCreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR&) {return true;}
+	virtual bool ProCreateGroupGeometric(const std::vector<RATIOTYPE>&, const RATIOTYPE&, const VRPAIR&, const NOTEINDEXTYPE /*ratiostartpos*/) = 0;
+	virtual bool ProCreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR&) = 0;
 
-	virtual VRPAIR ProSetValidityRange(const VRPAIR&) {return GetValidityRange();}
+	virtual VRPAIR ProSetValidityRange(const VRPAIR&) = 0;
+	
+	virtual void ProSetFineStepCount(const USTEPINDEXTYPE&) = 0;
 
-	virtual void ProSetFineStepCount(const USTEPINDEXTYPE&) {}
-
-	virtual NOTEINDEXTYPE ProSetGroupSize(const UNOTEINDEXTYPE&) {return 0;}
-	virtual RATIOTYPE ProSetGroupRatio(const RATIOTYPE&) {return 0;}
-
-	virtual uint32 GetClassVersion() const = 0;
+	virtual NOTEINDEXTYPE ProSetGroupSize(const UNOTEINDEXTYPE&) = 0;
+	virtual RATIOTYPE ProSetGroupRatio(const RATIOTYPE&) = 0;
 
 //END PROTECTED VIRTUALS
 
@@ -225,7 +209,6 @@ protected:
 public:
 	static void TuningCopy(CTuningBase& to, const CTuningBase& from, const bool allowExactnamecopy = false);
 protected:
-	TUNINGTYPE GetType() const {return m_TuningType;}
 
 	//Return true if data loading failed, false otherwise.
 	virtual bool ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize) = 0;
@@ -264,16 +247,6 @@ private:
 	static void ReadNotenamemapPair(std::istream& iStrm, NOTENAMEMAP::value_type& val, const size_t);
 	static void WriteNotenamemappair(std::ostream& oStrm, const NOTENAMEMAP::value_type& val, const size_t);
 
-public:
-	static const char* s_TuningDescriptionGeneral;
-	static const char* s_TuningDescriptionGroupGeometric;
-	static const char* s_TuningDescriptionGeometric;
-	static const char* s_TuningTypeStrGeneral;
-	static const char* s_TuningTypeStrGroupGeometric;
-	static const char* s_TuningTypeStrGeometric;
-
-private:
-	static void DefaultMessageHandler(const char*, const char*) {}
 };
 
 #define NOTEINDEXTYPE_MIN (std::numeric_limits<NOTEINDEXTYPE>::min)()
@@ -283,13 +256,6 @@ private:
 #define STEPINDEXTYPE_MAX (std::numeric_limits<STEPINDEXTYPE>::max)()
 #define USTEPINDEXTYPE_MAX (std::numeric_limits<USTEPINDEXTYPE>::max)()
 
-
-
-inline const char* CTuningBase::GetTuningTypeDescription() const
-//----------------------------------------------------------------------
-{
-	return GetTuningTypeDescription(GetType());
-}
 
 
 inline void CTuningBase::SetName(const std::string& s)

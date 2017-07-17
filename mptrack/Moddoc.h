@@ -386,7 +386,10 @@ protected:
 	virtual BOOL DoFileSave();
 #endif
 
-	MPT_DEPRECATED_PATH virtual BOOL DoSave(LPCSTR lpszPathName, BOOL bSaveAs=TRUE)
+#ifndef UNICODE
+	MPT_DEPRECATED_PATH
+#endif
+	virtual BOOL DoSave(LPCTSTR lpszPathName, BOOL bSaveAs=TRUE)
 	{
 		return DoSave(lpszPathName ? mpt::PathString::TunnelOutofCString(lpszPathName) : mpt::PathString(), bSaveAs);
 	}

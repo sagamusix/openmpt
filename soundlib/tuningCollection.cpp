@@ -13,7 +13,6 @@
 #include "../common/mptIO.h"
 #include "../common/serialization_utils.h"
 #include <algorithm>
-#include <bitset>
 #include "../common/mptFileIO.h"
 #include "Loaders.h"
 
@@ -44,15 +43,15 @@ namespace CTuningS11n
 	void ReadRatioTable(std::istream& iStrm, std::vector<CTuningRTI::RATIOTYPE>& v, const size_t);
 	void WriteStr(std::ostream& oStrm, const std::string& str);
 
-	void ReadTuning(std::istream& iStrm, CTuningCollection& Tc, const size_t) {Tc.AddTuning(iStrm, true);}
+	void ReadTuning(std::istream& iStrm, CTuningCollection& Tc, const size_t) {Tc.AddTuning(iStrm);}
 	void WriteTuning(std::ostream& oStrm, const CTuning& t) {t.Serialize(oStrm);}
 } // namespace CTuningS11n
 
 using namespace CTuningS11n;
 
 
-CTuningCollection::CTuningCollection(const std::string& name) : m_Name(name), m_EditMask(EM_ALLOWALL)
-//---------------------------------------------------------------------------------------------------
+CTuningCollection::CTuningCollection(const std::string& name) : m_Name(name)
+//--------------------------------------------------------------------------
 {
 	if(m_Name.size() > GetNameLengthMax()) m_Name.resize(GetNameLengthMax());
 }
@@ -108,9 +107,10 @@ CTuningCollection::SERIALIZATION_RETURN_TYPE CTuningCollection::Serialize(std::o
 //--------------------------------------------------------------------------------------------------
 {
 	srlztn::SsbWrite ssb(oStrm);
-	ssb.BeginWrite("TC", s_SerializationVersion);
+	ssb.BeginWrite("TC", 3); // version
 	ssb.WriteItem(m_Name, "0", &WriteStr);
-	ssb.WriteItem(m_EditMask, "1");
+	uint16 dummyEditMask = 0xffff;
+	ssb.WriteItem(dummyEditMask, "1");
 
 	const size_t tcount = m_Tunings.size();
 	for(size_t i = 0; i<tcount; i++)
@@ -170,16 +170,17 @@ CTuningCollection::SERIALIZATION_RETURN_TYPE CTuningCollection::Deserialize(std:
 		iStrm.clear();
 		iStrm.seekg(startpos);
 		srlztn::SsbRead ssb(iStrm);
-		ssb.BeginRead("TC", s_SerializationVersion);
+		ssb.BeginRead("TC", 3); // version
 
 		const srlztn::SsbRead::ReadIterator iterBeg = ssb.GetReadBegin();
 		const srlztn::SsbRead::ReadIterator iterEnd = ssb.GetReadEnd();
 		for(srlztn::SsbRead::ReadIterator iter = iterBeg; iter != iterEnd; iter++)
 		{
+			uint16 dummyEditMask = 0xffff;
 			if (ssb.CompareId(iter, "0") == srlztn::SsbRead::IdMatch)
 				ssb.ReadIterItem(iter, m_Name, &ReadStr);
 			else if (ssb.CompareId(iter, "1") == srlztn::SsbRead::IdMatch)
-				ssb.ReadIterItem(iter, m_EditMask);
+				ssb.ReadIterItem(iter, dummyEditMask);
 			else if (ssb.CompareId(iter, "2") == srlztn::SsbRead::IdMatch)
 				ssb.ReadIterItem(iter, *this, &ReadTuning);
 		}
@@ -251,8 +252,6 @@ bool CTuningCollection::DeserializeOLD(std::istream& inStrm, bool& loadingSucces
 	mpt::IO::ReadIntLE<int32>(inStrm, endMarker);
 	if(endMarker != MAGIC4BE('T','C','S','F')) return false;
 
-	m_EditMask = em;
-
 	loadingSuccessful = true;
 
 	return false;
@@ -279,14 +278,11 @@ bool CTuningCollection::Remove(TITER removable, bool moveToTrashBin)
 	//the tuning address remains valid until the destruction of the collection.
 	//Optinally only removing the pointer without deleting or moving
 	//it to trashbin(e.g. when transferring tuning to other collection)
-	if((m_EditMask & EM_REMOVE) != 0)
 	{
 		if(moveToTrashBin) m_DeletedTunings.push_back(*removable);
 		m_Tunings.erase(removable);
 		return false;
 	}
-	else
-		return true;
 }
 
 bool CTuningCollection::Remove(const size_t i)
@@ -302,7 +298,7 @@ bool CTuningCollection::Remove(const size_t i)
 bool CTuningCollection::AddTuning(CTuning* const pT)
 //--------------------------------------------------
 {
-	if((m_EditMask & EM_ADD) == 0 || m_Tunings.size() >= s_nMaxTuningCount)
+	if(m_Tunings.size() >= s_nMaxTuningCount)
 		return true;
 
 	if(pT == NULL)
@@ -314,10 +310,10 @@ bool CTuningCollection::AddTuning(CTuning* const pT)
 }
 
 
-bool CTuningCollection::AddTuning(std::istream& inStrm, const bool ignoreEditmask)
-//--------------------------------------------------------------------------------
+bool CTuningCollection::AddTuning(std::istream& inStrm)
+//-----------------------------------------------------
 {
-	if((!ignoreEditmask && (m_EditMask & EM_ADD) == 0) || m_Tunings.size() >= s_nMaxTuningCount)
+	if(m_Tunings.size() >= s_nMaxTuningCount)
 		return true;
 
 	if(!inStrm.good()) return true;
@@ -358,12 +354,71 @@ bool CTuningCollection::TransferTuning(CTuningCollection* pTCsrc, CTuningCollect
 
 }
 
-std::string CTuningCollection::GetEditMaskString() const
-//------------------------------------------------------
+
+#ifdef MODPLUG_TRACKER
+
+
+bool UnpackTuningCollection(const mpt::PathString &filename, mpt::PathString dest)
+//--------------------------------------------------------------------------------
 {
-	std::bitset<16> mask(m_EditMask);
-	return mask.to_string<char, std::char_traits<char>, std::allocator<char> >();
+	CTuningCollection tc;
+	tc.SetSavefilePath(filename);
+	if(tc.Deserialize() != CTuningCollection::SERIALIZATION_SUCCESS)
+	{
+		return false;
+	}
+	return UnpackTuningCollection(tc, dest);
 }
+
+
+bool UnpackTuningCollection(const CTuningCollection &tc, mpt::PathString dest)
+//----------------------------------------------------------------------------
+{
+	bool error = false;
+	auto numberFmt = mpt::FormatSpec().Dec().FillNul().Width(1 + static_cast<int>(std::log10(tc.GetNumTunings())));
+	for(std::size_t i = 0; i < tc.GetNumTunings(); ++i)
+	{
+		const CTuning & tuning = tc.GetTuning(i);
+		mpt::PathString fn;
+		if(dest.empty())
+		{
+			fn = tc.GetSaveFilePath() + MPT_PATHSTRING(" - ");
+			if(!tc.GetName().empty())
+			{
+				mpt::PathString name = mpt::PathString::FromUnicode(mpt::ToUnicode(mpt::CharsetLocale, tc.GetName()));
+				SanitizeFilename(name);
+				fn += name + MPT_PATHSTRING(" - ");
+			}
+		} else
+		{
+			fn = dest;
+		}
+		mpt::ustring tuningName = mpt::ToUnicode(mpt::CharsetLocale, tuning.GetName());
+		if(tuningName.empty())
+		{
+			tuningName = MPT_USTRING("untitled");
+		}
+		SanitizeFilename(tuningName);
+		fn += mpt::PathString::FromUnicode(mpt::format(MPT_USTRING("%1 - %2"))(numberFmt.ToWString(i + 1), tuningName));
+		fn += mpt::PathString::FromUTF8(CTuning::s_FileExtension);
+		if(fn.FileOrDirectoryExists())
+		{
+			error = true;
+		} else
+		{
+			mpt::ofstream fout(fn, std::ios::binary);
+			if(tuning.Serialize(fout))
+			{
+				error = true;
+			}
+			fout.close();
+		}
+	}
+	return !error;
+}
+
+
+#endif
 
 
 OPENMPT_NAMESPACE_END

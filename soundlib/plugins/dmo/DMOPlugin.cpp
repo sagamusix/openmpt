@@ -453,6 +453,14 @@ void DMOPlugin::Resume()
 }
 
 
+void DMOPlugin::PositionChanged()
+//-------------------------------
+{
+	m_pMediaObject->Discontinuity(0);
+	m_pMediaObject->Flush();
+}
+
+
 void DMOPlugin::Suspend()
 //-----------------------
 {

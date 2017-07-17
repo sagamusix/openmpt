@@ -241,7 +241,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 private:
-	CTuning::TUNINGTYPE GetTuningTypeFromStr(const CString &str) const;
 
 	void UpdateTuningDescription();
 
@@ -281,8 +280,6 @@ private:
 
 	CTuning* m_pActiveTuning;
 	CTuningCollection* m_pActiveTuningCollection;
-
-	CTuningCollection m_TempTunings;
 
 	CComboBox m_CombobTuningType;
 
@@ -385,7 +382,6 @@ public:
 	afx_msg void OnEnKillfocusEditRatioperiod();
 	afx_msg void OnEnKillfocusEditRatiovalue();
 	afx_msg void OnEnKillfocusEditNotename();
-	afx_msg void OnBnClickedButtonTuningcollectionSave();
 
 	//Treeview events
 	afx_msg void OnTvnSelchangedTreeTuning(NMHDR *pNMHDR, LRESULT *pResult);

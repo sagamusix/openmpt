@@ -378,7 +378,7 @@ void CTuningRTI::ProSetFineStepCount(const USTEPINDEXTYPE& fs)
 CTuningRTI::NOTEINDEXTYPE CTuningRTI::GetRefNote(const NOTEINDEXTYPE note) const
 //------------------------------------------------------------------------------
 {
-	if(!IsOfType(TT_GROUPGEOMETRIC)) return 0;
+	if((GetType() != TT_GROUPGEOMETRIC) && (GetType() != TT_GEOMETRIC)) return 0;
 
 	if(note >= 0) return note % GetGroupSize();
 	else return (GetGroupSize() - (mpt::abs(static_cast<int>(note)) % GetGroupSize())) % GetGroupSize();
@@ -388,13 +388,17 @@ CTuningRTI::NOTEINDEXTYPE CTuningRTI::GetRefNote(const NOTEINDEXTYPE note) const
 CTuning* CTuningRTI::Deserialize(std::istream& iStrm)
 //---------------------------------------------------
 {
+	// Note: OpenMPT since at least r323 writes version number (4<<24)+4 while it
+	// reads version number (5<<24)+4 or earlier.
+	// We keep this behaviour.
+
 	if(iStrm.fail())
 		return nullptr;
 
 	CTuningRTI* pTuning = new CTuningRTI;
 
 	srlztn::SsbRead ssb(iStrm);
-	ssb.BeginRead("CTB244RTI", (CTuning::GetVersion() << 24) + GetVersion());
+	ssb.BeginRead("CTB244RTI", (5 << 24) + 4); // version
 	ssb.ReadItem(pTuning->m_TuningName, "0", ReadStr);
 	ssb.ReadItem(pTuning->m_EditMask, "1");
 	ssb.ReadItem(pTuning->m_TuningType, "2");
@@ -442,7 +446,7 @@ bool CTuningRTI::ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize)
 {
 	if (m_GroupSize < 0) {m_GroupSize = 0; return true;}
 	if (m_RatioTable.size() > static_cast<size_t>(NOTEINDEXTYPE_MAX)) return true;
-	if (IsOfType(TT_GROUPGEOMETRIC))
+	if((GetType() == TT_GROUPGEOMETRIC) || (GetType() == TT_GEOMETRIC))
 	{
 		if (ratiotableSize < 1 || ratiotableSize > NOTEINDEXTYPE_MAX) return true;
 		if (GetType() == TT_GEOMETRIC)
@@ -579,8 +583,11 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 CTuning::SERIALIZATION_RETURN_TYPE CTuningRTI::Serialize(std::ostream& outStrm) const
 //-----------------------------------------------------------------------------------
 {
+	// Note: OpenMPT since at least r323 writes version number (4<<24)+4 while it
+	// reads version number (5<<24)+4.
+	// We keep this behaviour.
 	srlztn::SsbWrite ssb(outStrm);
-	ssb.BeginWrite("CTB244RTI", (GetVersion() << 24) + GetClassVersion());
+	ssb.BeginWrite("CTB244RTI", (4 << 24) + 4); // version
 	if (m_TuningName.length() > 0)
 		ssb.WriteItem(m_TuningName, "0", WriteStr);
 	ssb.WriteItem(m_EditMask, "1");
@@ -613,6 +620,76 @@ CTuning::SERIALIZATION_RETURN_TYPE CTuningRTI::Serialize(std::ostream& outStrm) 
 
 	return ((ssb.GetStatus() & srlztn::SNT_FAILURE) != 0) ? SERIALIZATION_FAILURE : SERIALIZATION_SUCCESS;
 }
+
+
+#ifdef MODPLUG_TRACKER
+
+bool CTuningRTI::WriteSCL(std::ostream &f, const mpt::PathString &filename) const
+//-------------------------------------------------------------------------------
+{
+	mpt::IO::WriteTextCRLF(f, mpt::format("! %1")(mpt::ToCharset(mpt::CharsetISO8859_1, (filename.GetFileName() + filename.GetFileExt()).ToUnicode())));
+	mpt::IO::WriteTextCRLF(f, "!");
+	std::string name = mpt::ToCharset(mpt::CharsetISO8859_1, mpt::CharsetLocale, GetName());
+	for(auto & c : name) { if(c < 32) c = ' '; } // remove control characters
+	if(name.length() >= 1 && name[0] == '!') name[0] = '?'; // do not confuse description with comment
+	mpt::IO::WriteTextCRLF(f, name);
+	if(GetType() == TT_GEOMETRIC)
+	{
+		mpt::IO::WriteTextCRLF(f, mpt::format(" %1")(m_GroupSize));
+		mpt::IO::WriteTextCRLF(f, "!");
+		for(NOTEINDEXTYPE n = 0; n < m_GroupSize; ++n)
+		{
+			double ratio = std::pow(static_cast<double>(m_GroupRatio), static_cast<double>(n + 1) / static_cast<double>(m_GroupSize));
+			double cents = std::log2(ratio) * 1200.0;
+			mpt::IO::WriteTextCRLF(f, mpt::format(" %1 ! %2")(
+				mpt::fmt::fix(cents),
+				mpt::ToCharset(mpt::CharsetISO8859_1, mpt::CharsetLocale, GetNoteName((n + 1) % m_GroupSize, false))
+				));
+		}
+	} else if(GetType() == TT_GROUPGEOMETRIC)
+	{
+		mpt::IO::WriteTextCRLF(f, mpt::format(" %1")(m_GroupSize));
+		mpt::IO::WriteTextCRLF(f, "!");
+		for(NOTEINDEXTYPE n = 0; n < m_GroupSize; ++n)
+		{
+			double baseratio = static_cast<double>(GetRatio(0));
+			double ratio = static_cast<double>(GetRatio(n + 1)) / baseratio;
+			double cents = std::log2(ratio) * 1200.0;
+			mpt::IO::WriteTextCRLF(f, mpt::format(" %1 ! %2")(
+				mpt::fmt::fix(cents),
+				mpt::ToCharset(mpt::CharsetISO8859_1, mpt::CharsetLocale, GetNoteName((n + 1) % m_GroupSize, false))
+				));
+		}
+	} else if(GetType() == TT_GENERAL)
+	{
+		mpt::IO::WriteTextCRLF(f, mpt::format(" %1")(m_RatioTable.size() + 1));
+		mpt::IO::WriteTextCRLF(f, "!");
+		double baseratio = 1.0;
+		for(NOTEINDEXTYPE n = 0; n < mpt::saturate_cast<NOTEINDEXTYPE>(m_RatioTable.size()); ++n)
+		{
+			baseratio = std::min(baseratio, static_cast<double>(m_RatioTable[n]));
+		}
+		for(NOTEINDEXTYPE n = 0; n < mpt::saturate_cast<NOTEINDEXTYPE>(m_RatioTable.size()); ++n)
+		{
+			double ratio = static_cast<double>(m_RatioTable[n]) / baseratio;
+			double cents = std::log2(ratio) * 1200.0;
+			mpt::IO::WriteTextCRLF(f, mpt::format(" %1 ! %2")(
+				mpt::fmt::fix(cents),
+				mpt::ToCharset(mpt::CharsetISO8859_1, mpt::CharsetLocale, GetNoteName(n + m_StepMin, false))
+				));
+		}
+		mpt::IO::WriteTextCRLF(f, mpt::format(" %1 ! %2")(
+			mpt::fmt::val(1),
+			std::string()
+			));
+	} else
+	{
+		return false;
+	}
+	return true;
+}
+
+#endif
 
 
 namespace CTuningS11n
