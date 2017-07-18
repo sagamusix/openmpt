@@ -16,13 +16,9 @@
 OPENMPT_NAMESPACE_BEGIN
 
 
-typedef CTuningBase CTuning;
-
-
-
-//================================
-class CTuningRTI : public CTuning //RTI <-> Ratio Table Implementation
-//================================
+//===================================
+class CTuningRTI : public CTuningBase //RTI <-> Ratio Table Implementation
+//===================================
 {
 
 public:
@@ -56,7 +52,7 @@ public:
 	virtual STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE& noteFrom, const STEPINDEXTYPE& stepDistFrom, const NOTEINDEXTYPE& noteTo, const STEPINDEXTYPE& stepDistTo) const
 		{return GetStepDistance(noteFrom, noteTo) + stepDistTo - stepDistFrom;}
 
-	static CTuning* Deserialize(std::istream& inStrm);
+	static CTuningRTI* Deserialize(std::istream& inStrm);
 
 	//Try to read old version (v.3) and return pointer to new instance if succesfull, else nullptr.
 	static CTuningRTI* DeserializeOLD(std::istream&);
@@ -67,30 +63,12 @@ public:
 	bool WriteSCL(std::ostream &f, const mpt::PathString &filename) const;
 #endif
 
+	bool UpdateRatioGroupGeometric(NOTEINDEXTYPE s, RATIOTYPE r);
+
 public:
 	//PUBLIC CONSTRUCTORS/DESTRUCTORS:
-	CTuningRTI(const std::vector<RATIOTYPE>& ratios,
-				const NOTEINDEXTYPE& stepMin = s_StepMinDefault,
-				const std::string& name = "")
-				: CTuning(name)
-	{
-		SetDummyValues();
-		m_StepMin = stepMin;
-		m_RatioTable = ratios;
-	}
-
-	//Copy tuning.
-	CTuningRTI(const CTuning* const pTun);
 
 	CTuningRTI() {SetDummyValues();}
-
-	CTuningRTI(const std::string& name) : CTuning(name) {SetDummyValues();}
-
-	CTuningRTI(const NOTEINDEXTYPE& stepMin, const std::string& name) : CTuning(name)
-	{
-		SetDummyValues();
-		m_StepMin = stepMin;
-	}
 
 	virtual ~CTuningRTI() {}
 
@@ -102,9 +80,6 @@ protected:
 	virtual void ProSetFineStepCount(const USTEPINDEXTYPE&);
 
 	virtual NOTESTR ProGetNoteName(const NOTEINDEXTYPE& xi, bool addOctave) const;
-
-	//Not implemented.
-	VRPAIR ProSetValidityRange(const VRPAIR&);
 
 	//Note: Groupsize is restricted to interval [0, NOTEINDEXTYPE_MAX]
 	NOTEINDEXTYPE ProSetGroupSize(const UNOTEINDEXTYPE& p) {return m_GroupSize = (p<=static_cast<UNOTEINDEXTYPE>(NOTEINDEXTYPE_MAX)) ? static_cast<NOTEINDEXTYPE>(p) : NOTEINDEXTYPE_MAX;}
@@ -163,6 +138,9 @@ private:
 	//<----Actual data members
 
 }; //End: CTuningRTI declaration.
+
+
+typedef CTuningRTI CTuning;
 
 
 OPENMPT_NAMESPACE_END

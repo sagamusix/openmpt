@@ -51,8 +51,6 @@ public:
 	//Validity Range PAIR.
 	typedef std::pair<NOTEINDEXTYPE, NOTEINDEXTYPE> VRPAIR;
 
-	typedef uint16 EDITMASK;
-
 	typedef uint16 TUNINGTYPE;
 
 	typedef std::string NOTESTR;
@@ -69,20 +67,6 @@ public:
 	static const SERIALIZATION_RETURN_TYPE SERIALIZATION_FAILURE;
 
 	static const char s_FileExtension[5];
-
-	static const EDITMASK EM_RATIOS;
-	static const EDITMASK EM_NOTENAME;
-	static const EDITMASK EM_TYPE;
-	static const EDITMASK EM_NAME;
-	static const EDITMASK EM_FINETUNE;
-	static const EDITMASK EM_EDITMASK;
-	static const EDITMASK EM_VALIDITYRANGE;
-
-	static const EDITMASK EM_ALLOWALL;
-	static const EDITMASK EM_CONST;
-	static const EDITMASK EM_CONST_STRICT; //This won't allow even changing const status
-	//NOTE: When adding editmasks, check definition of EDITMASK -
-	//might need to be modified.
 
 	static const TUNINGTYPE TT_GENERAL;
 	static const TUNINGTYPE TT_GROUPGEOMETRIC;
@@ -159,22 +143,12 @@ public:
 	virtual VRPAIR GetValidityRange() const = 0;
 
 
-	//To try to set validity range to given range; returns
-	//the range valid after trying to set the new range.
-	VRPAIR SetValidityRange(const VRPAIR& vrp);
-
 	//Return true if note is within validity range - false otherwise.
 	bool IsValidNote(const NOTEINDEXTYPE n) const {return (n >= GetValidityRange().first && n <= GetValidityRange().second);}
 
 	//Checking that step distances can be presented with
 	//value range of STEPINDEXTYPE with given finestepcount and validityrange.
 	bool IsStepCountRangeSufficient(USTEPINDEXTYPE fs, VRPAIR vrp);
-
-	bool MayEdit(const EDITMASK& em) const {return (em & m_EditMask) != 0;}
-
-	bool SetEditMask(const EDITMASK& em);
-
-	EDITMASK GetEditMask() const {return m_EditMask;}
 
 	bool DeserializeOLD(std::istream&);
 
@@ -193,8 +167,6 @@ protected:
 	//The two methods below return false if action was done, true otherwise.
 	virtual bool ProCreateGroupGeometric(const std::vector<RATIOTYPE>&, const RATIOTYPE&, const VRPAIR&, const NOTEINDEXTYPE /*ratiostartpos*/) = 0;
 	virtual bool ProCreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR&) = 0;
-
-	virtual VRPAIR ProSetValidityRange(const VRPAIR&) = 0;
 	
 	virtual void ProSetFineStepCount(const USTEPINDEXTYPE&) = 0;
 
@@ -206,44 +178,31 @@ protected:
 
 
 //PROTECTED INTERFACE
-public:
-	static void TuningCopy(CTuningBase& to, const CTuningBase& from, const bool allowExactnamecopy = false);
+
 protected:
 
 	//Return true if data loading failed, false otherwise.
 	virtual bool ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize) = 0;
 
-
 //END PROTECTED INTERFACE
-
-
-//BEGIN PRIVATE METHODS
-private:
-	bool SetType(const TUNINGTYPE& tt);
-//END PRIVATE METHODS
 
 
 //BEGIN: DATA MEMBERS
 protected:
 	std::string m_TuningName;
-	EDITMASK m_EditMask; //Behavior: true <~> allow modification
 	TUNINGTYPE m_TuningType;
 	NOTENAMEMAP m_NoteNameMap;
 	USTEPINDEXTYPE m_FineStepCount;
-	//NOTE: If adding new members, TuningCopy might need to be modified.
 
 //END DATA MEMBERS
 
 protected:
 	CTuningBase(const std::string name = "Unnamed") :
 		m_TuningName(name),
-		m_EditMask(uint16_max), //All bits to true - allow all by default.
 		m_TuningType(TT_GENERAL), //Unspecific tuning by default.
 		m_FineStepCount(0)
 		{}
 private:
-	CTuningBase(CTuningBase&) {}
-	CTuningBase& operator=(const CTuningBase&) {return *this;}
 	static void ReadNotenamemapPair(std::istream& iStrm, NOTENAMEMAP::value_type& val, const size_t);
 	static void WriteNotenamemappair(std::ostream& oStrm, const NOTENAMEMAP::value_type& val, const size_t);
 
@@ -261,7 +220,7 @@ private:
 inline void CTuningBase::SetName(const std::string& s)
 //-----------------------------------------------
 {
-	if(MayEdit(EM_NAME)) m_TuningName = s;
+	m_TuningName = s;
 }
 
 
@@ -275,16 +234,6 @@ inline bool CTuningBase::IsStepCountRangeSufficient(USTEPINDEXTYPE fs, VRPAIR vr
 	}
 	if(fs > static_cast<USTEPINDEXTYPE>(STEPINDEXTYPE_MAX) / (vrp.second - vrp.first + 1)) return false;
 	else return true;
-}
-
-
-inline bool CTuningBase::SetEditMask(const EDITMASK& em)
-//------------------------------------------------------
-{
-	if(MayEdit(EM_EDITMASK))
-		{m_EditMask = em; return false;}
-	else
-		return true;
 }
 
 

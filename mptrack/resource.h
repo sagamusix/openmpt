@@ -749,7 +749,6 @@
 #define IDC_EDIT_FINETUNESTEPS          2268
 #define IDC_ADD_TUNING                  2269
 #define IDC_REMOVE_TUNING               2270
-#define IDC_CHECK_READONLY              2271
 #define IDC_EDIT_RATIOVALUE             2272
 #define IDC_EDIT_NOTENAME               2273
 #define IDC_BUTTON_SETVALUES            2274
@@ -763,8 +762,6 @@
 #define IDC_COMBOTUNINGNAME             2282
 #define IDC_EDIT_NAME                   2283
 #define IDC_EDIT_MISC_ACTIONS           2284
-#define IDC_EDIT_TUNINGCOLLECTION_PATH  2286
-#define IDC_EDIT_TUNINGCOLLECTION_NAME  2291
 #define IDC_TREE_TUNING                 2292
 #define IDC_PATTERN_FOLLOWSONG          2293
 #define IDC_TEXT_BPM                    2300
@@ -772,7 +769,6 @@
 #define IDC_SPIN_RPB                    2302
 #define IDC_EDIT_RPB                    2303
 #define IDC_NAMEFILTER                  2304
-#define IDC_TUNINGTYPE_DESC             2305
 #define IDC_MIDIVOL_TO_NOTEVOL          2306
 #define IDC_PLUGIN_VELOCITYSTYLE        2307
 #define IDC_PLUGIN_VOLUMESTYLE          2308
@@ -972,6 +968,8 @@
 #define IDC_STATIC_WINE_PULSEAUDIO      2497
 #define IDC_COMBO_WINE_PORTAUDIO        2498
 #define IDC_COMBO_WINE_PULSEAUDIO       2499
+#define IDC_BUTTON_TUNING_NEW           2500
+#define IDC_BUTTON_TUNING_REMOVE        2501
 #define ID_FILE_NEWMOD                  32771
 #define ID_FILE_NEWXM                   32772
 #define ID_FILE_NEWS3M                  32773
@@ -1141,8 +1139,6 @@
 #define ID_PATTERN_TRANSITIONSOLO       36021
 #define ID_PATTERN_TRANSITION_UNMUTEALL 36022
 #define ID_REMOVETUNING                 36023
-#define ID_ADDTUNING                    36024
-#define ID_MOVETUNING                   36025
 #define ID_COPYTUNING                   36026
 #define ID_REMOVETUNINGCOLLECTION       36027
 #define ID_SHOWTIMEATROW                36028
@@ -1151,6 +1147,9 @@
 #define ID_VSTPRESETBACKWARDJUMP        36031
 #define ID_VSTPRESETFORWARDJUMP         36032
 #define ID_VSTPRESETNAME                36033
+#define ID_ADDTUNINGGENERAL             36034
+#define ID_ADDTUNINGGROUPGEOMETRIC      36035
+#define ID_ADDTUNINGGEOMETRIC           36036
 #define ID_SELECTINST                   36100
 // From here: Command range [ID_SELECTINST, ID_SELECTINST + MAX_INSTRUMENTS]
 #define ID_PLUG_RECORDAUTOMATION        37003
@@ -1268,7 +1267,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        542
 #define _APS_NEXT_COMMAND_VALUE         44646
-#define _APS_NEXT_CONTROL_VALUE         2500
+#define _APS_NEXT_CONTROL_VALUE         2502
 #define _APS_NEXT_SYMED_VALUE           901
 #endif
 #endif

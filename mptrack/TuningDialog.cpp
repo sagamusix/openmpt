@@ -34,11 +34,7 @@ typedef CTuning::RATIOTYPE RATIOTYPE;
 #define TT_GENERAL CTuning::TT_GENERAL
 #define TT_GROUPGEOMETRIC CTuning::TT_GROUPGEOMETRIC
 #define TT_GEOMETRIC CTuning::TT_GEOMETRIC
-#define EM_CONST CTuning::EM_CONST
-#define EM_CONST_STRICT CTuning::EM_CONST_STRICT
-#define TUNINGTYPE CTuning::TUNINGTYPE
 #define NOTEINDEXTYPE CTuning::NOTEINDEXTYPE
-#define EM_ALLOWALL CTuning::EM_ALLOWALL
 
 
 /*
@@ -173,8 +169,6 @@ BOOL CTuningDialog::OnInitDialog()
 
 	m_RatioMapWnd.Init(this, 0);
 
-	SetDlgItemText(IDC_TUNINGTYPE_DESC, _T(""));
-
 	//-->Creating treeview
 	m_TreeItemTuningItemMap.ClearMapping();
 	for(const auto &tuningCol : m_TuningCollections)
@@ -189,6 +183,7 @@ BOOL CTuningDialog::OnInitDialog()
 	m_CombobTuningType.SetItemData(m_CombobTuningType.AddString(_T("General")), TT_GENERAL);
 	m_CombobTuningType.SetItemData(m_CombobTuningType.AddString(_T("GroupGeometric")), TT_GROUPGEOMETRIC);
 	m_CombobTuningType.SetItemData(m_CombobTuningType.AddString(_T("Geometric")), TT_GEOMETRIC);
+	m_CombobTuningType.EnableWindow(FALSE);
 
 	m_ButtonSet.EnableWindow(FALSE);
 
@@ -200,6 +195,38 @@ BOOL CTuningDialog::OnInitDialog()
 	UpdateView();
 
 	return TRUE;
+}
+
+
+bool CTuningDialog::CanEdit(CTuning * pT, CTuningCollection * pTC) const
+{
+	if(!pT)
+	{
+		return false;
+	}
+	if(!pTC)
+	{
+		return false;
+	}
+	if(pTC != m_TuningCollections[0])
+	{
+		return false;
+	}
+	return true;
+}
+
+
+bool CTuningDialog::CanEdit(CTuningCollection * pTC) const
+{
+	if(!pTC)
+	{
+		return false;
+	}
+	if(pTC != m_TuningCollections[0])
+	{
+		return false;
+	}
+	return true;
 }
 
 
@@ -241,15 +268,6 @@ void CTuningDialog::UpdateView(const int updateMask)
 		return;
 	}
 
-	//Updating tuning collection part-->
-	if(updateMask == 0 || updateMask & UM_TUNINGCOLLECTION)
-	{
-		m_EditTuningCollectionName.SetWindowText(mpt::ToCString(TuningCharset, m_pActiveTuningCollection->GetName()));
-		//m_EditTuningCollectionItemNum.SetWindowText(mpt::ToCString(TuningCharset, mpt::fmt::val(m_pActiveTuningCollection->GetNumTunings())));
-		::SetWindowTextW(m_EditTuningCollectionPath.m_hWnd, m_pActiveTuningCollection->GetSaveFilePath().ToWide().c_str());
-	}
-	//<-- Updating tuning collection part
-
 	//Updating tuning part-->
 	if(m_pActiveTuning != NULL && (updateMask & UM_TUNINGDATA || updateMask == 0))
 	{
@@ -272,46 +290,29 @@ void CTuningDialog::UpdateView(const int updateMask)
 
 		const UNOTEINDEXTYPE period = m_pActiveTuning->GetGroupSize();
 		const RATIOTYPE GroupRatio = m_pActiveTuning->GetGroupRatio();
-		if(period > 0)
+		if(m_pActiveTuning->GetType() == TT_GROUPGEOMETRIC || m_pActiveTuning->GetType() == TT_GEOMETRIC)
 		{
-			m_EditSteps.EnableWindow();
+			m_EditSteps.EnableWindow(TRUE);
+			m_EditRatioPeriod.EnableWindow(TRUE);
 			m_EditSteps.SetWindowText(mpt::tfmt::val(period));
-
-			m_EditRatioPeriod.EnableWindow();
 			m_EditRatioPeriod.SetWindowText(mpt::tfmt::val(GroupRatio));
-		}
-		else //case: m_pActiveTuning is of type general.
+		} else
 		{
-			//m_EditSteps.EnableWindow(false);
-			//m_EditRatioPeriod.EnableWindow(false);
+			m_EditSteps.EnableWindow(FALSE);
+			m_EditRatioPeriod.EnableWindow(FALSE);
+			m_EditSteps.SetWindowText(_T(""));
+			m_EditRatioPeriod.SetWindowText(_T(""));
 		}
 
 		m_EditRatioPeriod.Invalidate();
 		m_EditSteps.Invalidate();
 
-		bool enableControls = true;
+		bool enableControls = CanEdit(m_pActiveTuning, m_pActiveTuningCollection);
 
-		if(m_pActiveTuning->GetEditMask() == EM_CONST ||
-		m_pActiveTuning->GetEditMask() == EM_CONST_STRICT)
-		{
-			CheckDlgButton(IDC_CHECK_READONLY, BST_CHECKED);
-			if(m_pActiveTuning->GetEditMask() == EM_CONST_STRICT)
-				m_ButtonReadOnly.EnableWindow(FALSE);
-			else
-				m_ButtonReadOnly.EnableWindow(TRUE);
-
-			enableControls = false;
-		}
-		else
-		{
-			CheckDlgButton(IDC_CHECK_READONLY, BST_UNCHECKED);
-			m_ButtonReadOnly.EnableWindow();
-		}
-
-		m_CombobTuningType.EnableWindow(enableControls);
+		m_CombobTuningType.EnableWindow(FALSE);
 		m_EditSteps.SetReadOnly(!enableControls);
 		m_EditRatioPeriod.SetReadOnly(!enableControls);
-		m_EditRatio.SetReadOnly(!enableControls);
+		m_EditRatio.SetReadOnly((m_pActiveTuning->GetType() == TT_GEOMETRIC) ? TRUE : !enableControls);
 		m_EditNotename.SetReadOnly(!enableControls);
 		m_EditMiscActions.SetReadOnly(!enableControls);
 		m_EditFineTuneSteps.SetReadOnly(!enableControls);
@@ -336,11 +337,7 @@ void CTuningDialog::UpdateView(const int updateMask)
 			m_EditFineTuneSteps.SetWindowText(_T(""));
 			m_EditName.SetWindowText(_T(""));
 
-			SetDlgItemText(IDC_TUNINGTYPE_DESC, _T(""));
-
 			m_CombobTuningType.SetCurSel(-1);
-
-			m_ButtonReadOnly.EnableWindow(FALSE);
 
 			m_RatioMapWnd.ShowWindow(SW_HIDE);
 			m_RatioMapWnd.m_pTuning = NULL;
@@ -362,31 +359,30 @@ void CTuningDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_RATIOVALUE, m_EditRatio);
 	DDX_Control(pDX, IDC_EDIT_NOTENAME, m_EditNotename);
 	DDX_Control(pDX, IDC_BUTTON_SETVALUES, m_ButtonSet);
-	DDX_Control(pDX, IDC_BUTTON_EXPORT, m_ButtonExport);
+	DDX_Control(pDX, IDC_BUTTON_TUNING_NEW, m_ButtonNew);
 	DDX_Control(pDX, IDC_BUTTON_IMPORT, m_ButtonImport);
+	DDX_Control(pDX, IDC_BUTTON_EXPORT, m_ButtonExport);
+	DDX_Control(pDX, IDC_BUTTON_TUNING_REMOVE, m_ButtonRemove);
 	DDX_Control(pDX, IDC_EDIT_MISC_ACTIONS, m_EditMiscActions);
 	DDX_Control(pDX, IDC_EDIT_FINETUNESTEPS, m_EditFineTuneSteps);
-	DDX_Control(pDX, IDC_CHECK_READONLY, m_ButtonReadOnly);
 	DDX_Control(pDX, IDC_EDIT_NAME, m_EditName);
 	DDX_Control(pDX, IDC_TREE_TUNING, m_TreeCtrlTuning);
-	DDX_Control(pDX, IDC_EDIT_TUNINGCOLLECTION_NAME, m_EditTuningCollectionName);
-	DDX_Control(pDX, IDC_EDIT_TUNINGCOLLECTION_PATH, m_EditTuningCollectionPath);
 }
 
 
 
 BEGIN_MESSAGE_MAP(CTuningDialog, CDialog)
-	ON_CBN_SELCHANGE(IDC_COMBO_TTYPE, OnCbnSelchangeComboTtype)
 	ON_EN_CHANGE(IDC_EDIT_STEPS, OnEnChangeEditSteps)
 	ON_EN_CHANGE(IDC_EDIT_RATIOPERIOD, OnEnChangeEditRatioperiod)
 	ON_EN_CHANGE(IDC_EDIT_NOTENAME, OnEnChangeEditNotename)
 	ON_BN_CLICKED(IDC_BUTTON_SETVALUES, OnBnClickedButtonSetvalues)
 	ON_EN_CHANGE(IDC_EDIT_RATIOVALUE, OnEnChangeEditRatiovalue)
-	ON_BN_CLICKED(IDC_BUTTON_EXPORT, OnBnClickedButtonExport)
+	ON_BN_CLICKED(IDC_BUTTON_TUNING_NEW, OnBnClickedButtonNew)
 	ON_BN_CLICKED(IDC_BUTTON_IMPORT, OnBnClickedButtonImport)
+	ON_BN_CLICKED(IDC_BUTTON_EXPORT, OnBnClickedButtonExport)
+	ON_BN_CLICKED(IDC_BUTTON_TUNING_REMOVE, OnBnClickedButtonRemove)
 	ON_EN_CHANGE(IDC_EDIT_FINETUNESTEPS, OnEnChangeEditFinetunesteps)
 	ON_EN_KILLFOCUS(IDC_EDIT_FINETUNESTEPS, OnEnKillfocusEditFinetunesteps)
-	ON_BN_CLICKED(IDC_CHECK_READONLY, OnBnClickedCheckReadonly)
 	ON_EN_KILLFOCUS(IDC_EDIT_NAME, OnEnKillfocusEditName)
 	ON_EN_KILLFOCUS(IDC_EDIT_STEPS, OnEnKillfocusEditSteps)
 	ON_EN_KILLFOCUS(IDC_EDIT_RATIOPERIOD, OnEnKillfocusEditRatioperiod)
@@ -397,8 +393,9 @@ BEGIN_MESSAGE_MAP(CTuningDialog, CDialog)
 	ON_NOTIFY(NM_RCLICK, IDC_TREE_TUNING, OnNMRclickTreeTuning)
 	ON_NOTIFY(TVN_BEGINDRAG, IDC_TREE_TUNING, OnTvnBegindragTreeTuning)
 	ON_COMMAND(ID_REMOVETUNING, OnRemoveTuning)
-	ON_COMMAND(ID_ADDTUNING, OnAddTuning)
-	ON_COMMAND(ID_MOVETUNING, OnMoveTuning)
+	ON_COMMAND(ID_ADDTUNINGGENERAL, OnAddTuningGeneral)
+	ON_COMMAND(ID_ADDTUNINGGROUPGEOMETRIC, OnAddTuningGroupGeometric)
+	ON_COMMAND(ID_ADDTUNINGGEOMETRIC, OnAddTuningGeometric)
 	ON_COMMAND(ID_COPYTUNING, OnCopyTuning)
 	ON_COMMAND(ID_REMOVETUNINGCOLLECTION, OnRemoveTuningCollection)
 END_MESSAGE_MAP()
@@ -432,64 +429,42 @@ void CTuningDialog::UpdateTuningType()
 			else
 				m_CombobTuningType.SetCurSel(0);
 	}
-	UpdateTuningDescription();
 }
 
 
-void CTuningDialog::OnCbnSelchangeComboTtype()
-//--------------------------------------------
+
+bool CTuningDialog::AddTuning(CTuningCollection* pTC, CTuning::TUNINGTYPE type)
+//-----------------------------------------------------------------------------
 {
-	if(m_pActiveTuning != NULL)
+	if(!pTC)
 	{
-		const TUNINGTYPE oldType = m_pActiveTuning->GetType();
-		TUNINGTYPE newType = static_cast<TUNINGTYPE>(m_CombobTuningType.GetItemData(m_CombobTuningType.GetCurSel()));
-		if(m_pActiveTuning->GetType() != newType)
-		{
-			bool changed = false;
-			if(newType == TT_GENERAL)
-			{
-				Reporting::Message(LogError, _T("Cannot change Tuning back to General type."), this);
-			} else if(Reporting::Confirm("This action may change the ratio values; continue?") == cnfYes)
-			{
-				m_ModifiedTCs[GetpTuningCollection(m_pActiveTuning)] = true;
-
-				CString buffer;
-
-				m_EditSteps.GetWindowText(buffer);
-				NOTEINDEXTYPE steps = ConvertStrTo<NOTEINDEXTYPE>(buffer);
-
-				m_EditRatioPeriod.GetWindowText(buffer);
-				RATIOTYPE pr = ConvertStrTo<RATIOTYPE>(buffer);
-
-				if(steps <= 0)
-						steps = 1;
-					if(pr <= 0)
-						pr = 1;
-
-				if(newType == TT_GROUPGEOMETRIC)
-					m_pActiveTuning->CreateGroupGeometric(steps, pr, 0);
-				else
-					if(newType == TT_GEOMETRIC)
-						m_pActiveTuning->CreateGeometric(steps, pr);
-
-				UpdateView(UM_TUNINGDATA);
-				changed = true;
-			}
-			if(!changed){
-				//Restoring tuning type combobox.
-				if(oldType == TT_GEOMETRIC)
-					m_CombobTuningType.SetCurSel(2);
-				else
-				{
-					if(oldType == TT_GROUPGEOMETRIC)
-						m_CombobTuningType.SetCurSel(1);
-					else
-						m_CombobTuningType.SetCurSel(0);
-				}
-			}
-		}
+		Reporting::Notification("No tuning collection chosen");
+		return true;
 	}
-	UpdateTuningDescription();
+
+	CTuning* pNewTuning = new CTuningRTI();
+	if(type == TT_GROUPGEOMETRIC)
+	{
+		pNewTuning->SetFineStepCount(15);
+		pNewTuning->CreateGroupGeometric(12, 2, 0);
+	} else if(type == TT_GEOMETRIC)
+	{
+		pNewTuning->SetFineStepCount(15);
+		pNewTuning->CreateGeometric(12, 2);
+	}
+
+	if(pTC->AddTuning(pNewTuning))
+	{
+		Reporting::Notification("Add tuning failed");
+		delete pNewTuning;
+		return true;
+	}
+	AddTreeItem(pNewTuning, m_TreeItemTuningItemMap.GetMapping_21(TUNINGTREEITEM(pTC)), NULL);
+	m_pActiveTuning = pNewTuning;
+	m_ModifiedTCs[pTC] = true;
+	UpdateView();
+
+	return false;
 }
 
 
@@ -555,7 +530,13 @@ void CTuningDialog::OnEnChangeEditRatiovalue()
 	std::string str = mpt::ToCharset(TuningCharset, buffer);
 	if(str.length() > 0)
 	{
-		m_pActiveTuning->SetRatio(currentNote, ConvertStrTo<RATIOTYPE>(buffer));
+		if(m_pActiveTuning->GetType() == TT_GROUPGEOMETRIC)
+		{
+			m_pActiveTuning->UpdateRatioGroupGeometric(currentNote, ConvertStrTo<RATIOTYPE>(buffer));
+		} else
+		{
+			m_pActiveTuning->SetRatio(currentNote, ConvertStrTo<RATIOTYPE>(buffer));
+		}
 		m_ModifiedTCs[GetpTuningCollection(m_pActiveTuning)] = true;
 		UpdateTuningType();
 		m_RatioMapWnd.Invalidate();
@@ -595,6 +576,27 @@ void CTuningDialog::UpdateRatioMapEdits(const NOTEINDEXTYPE& note)
 	m_EditNotename.Invalidate();
 }
 
+
+void CTuningDialog::OnBnClickedButtonNew()
+//----------------------------------------
+{
+	POINT point;
+	GetCursorPos(&point);
+
+	HMENU popUpMenu = CreatePopupMenu();
+	if(popUpMenu == NULL) return;
+
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGENERAL, _T("Add General tuning"));
+
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add GroupGeometric tuning"));
+
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGEOMETRIC, _T("Add Geometric tuning"));
+
+	m_CommandItemDest.Set(m_TuningCollections[0]);
+
+	TrackPopupMenu(popUpMenu, TPM_LEFTALIGN|TPM_RIGHTBUTTON, point.x, point.y, 0, m_hWnd, NULL);
+	DestroyMenu(popUpMenu);
+}
 
 
 void CTuningDialog::OnBnClickedButtonExport()
@@ -723,6 +725,27 @@ void CTuningDialog::OnBnClickedButtonExport()
 }
 
 
+void CTuningDialog::OnBnClickedButtonRemove()
+//-------------------------------------------
+{
+	if(m_pActiveTuning)
+	{
+		if(CanEdit(m_pActiveTuning, m_pActiveTuningCollection))
+		{
+			m_CommandItemDest.Set(m_pActiveTuning);
+			OnRemoveTuning();
+		}
+	} else if(m_pActiveTuningCollection)
+	{
+		if(IsDeletable(m_pActiveTuningCollection))
+		{
+			m_CommandItemDest.Set(m_pActiveTuningCollection);
+			OnRemoveTuningCollection();
+		}
+	}
+}
+
+
 template <typename Tfile, std::size_t N> static bool CheckMagic(Tfile &f, mpt::IO::Offset offset, const uint8(&magic)[N])
 //-----------------------------------------------------------------------------------------------------------------------
 {
@@ -802,8 +825,7 @@ void CTuningDialog::OnBnClickedButtonImport()
 				if(pTC->GetNumTunings() == 1)
 				{
 					Reporting::Message(LogInformation, MPT_USTRING("- Tuning Collection with a Tuning file extension (.tun) detected. It only contains a single Tuning, importing the file as a Tuning.\n"), this);
-					pT = new CTuningRTI();
-					CTuningBase::TuningCopy(*pT, pTC->GetTuning(0), true);
+					pT = new CTuningRTI(pTC->GetTuning(0));
 					delete pTC;
 					pTC = nullptr;
 					// ok
@@ -830,6 +852,7 @@ void CTuningDialog::OnBnClickedButtonImport()
 				// fail
 			} else
 			{
+				pTC->SetName("loaded: " + pTC->GetName());
 				// ok
 			}
 
@@ -915,30 +938,6 @@ void CTuningDialog::OnEnKillfocusEditFinetunesteps()
 		m_ModifiedTCs[GetpTuningCollection(m_pActiveTuning)] = true;
 		m_EditFineTuneSteps.Invalidate();
 	}
-}
-
-
-void CTuningDialog::OnBnClickedCheckReadonly()
-//--------------------------------------------
-{
-	if(m_pActiveTuning == NULL)
-		return;
-
-	if(IsDlgButtonChecked(IDC_CHECK_READONLY))
-	{
-		if(m_pActiveTuning->SetEditMask(EM_CONST))
-			CheckDlgButton(IDC_CHECK_READONLY, BST_UNCHECKED);
-		else
-			UpdateView(UM_TUNINGDATA);
-	}
-	else
-	{
-		if(m_pActiveTuning->SetEditMask(EM_ALLOWALL))
-			CheckDlgButton(IDC_CHECK_READONLY, BST_CHECKED);
-		else
-			UpdateView(UM_TUNINGDATA);
-	}
-	m_ModifiedTCs[GetpTuningCollection(m_pActiveTuning)] = true;
 }
 
 
@@ -1134,7 +1133,10 @@ void CTuningDialog::OnNMRclickTreeTuning(NMHDR *, LRESULT *pResult)
 		if(pTC != NULL)
 		{
 			UINT mask = MF_STRING;
-
+			if(!CanEdit(pT, pTC))
+			{
+				mask |= MF_GRAYED;
+			}
 			AppendMenu(popUpMenu, mask, ID_REMOVETUNING, _T("Remove"));
 
 			m_CommandItemDest.Set(pT);
@@ -1146,13 +1148,25 @@ void CTuningDialog::OnNMRclickTreeTuning(NMHDR *, LRESULT *pResult)
 		{
 			UINT mask = MF_STRING;
 
-			AppendMenu(popUpMenu, mask, ID_ADDTUNING, _T("Add tuning"));
+			mask = MF_STRING;
+			if (!CanEdit(pTC))
+				mask |= MF_GRAYED;
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGENERAL, _T("Add General tuning"));
+
+			mask = MF_STRING;
+			if (!CanEdit(pTC))
+				mask |= MF_GRAYED;
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add GroupGeometric tuning"));
+
+			mask = MF_STRING;
+			if (!CanEdit(pTC))
+				mask |= MF_GRAYED;
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGEOMETRIC, _T("Add Geometric tuning"));
 
 			mask = MF_STRING;
 			if(!IsDeletable(pTC))
 				mask |= MF_GRAYED;
-
-			AppendMenu(popUpMenu, mask, ID_REMOVETUNINGCOLLECTION, _T("Delete tuning collection"));
+			AppendMenu(popUpMenu, mask, ID_REMOVETUNINGCOLLECTION, _T("Unload tuning collection"));
 
 			m_CommandItemDest.Set(pTC);
 		}
@@ -1263,9 +1277,11 @@ void CTuningDialog::OnEndDrag(HTREEITEM dragDestItem)
 		POINT point;
 		GetCursorPos(&point);
 
+		if(!CanEdit(pTCdest))
+		{
+			mask |= MF_GRAYED;
+		}
 		AppendMenu(popUpMenu, mask, ID_COPYTUNING, _T("Copy here"));
-
-		AppendMenu(popUpMenu, mask, ID_MOVETUNING, _T("Move here"));
 
 		GetCursorPos(&point);
 		TrackPopupMenu(popUpMenu, TPM_LEFTALIGN|TPM_RIGHTBUTTON, point.x, point.y, 0, m_hWnd, NULL);
@@ -1286,7 +1302,14 @@ bool CTuningDialog::AddTuning(CTuningCollection* pTC, CTuning* pT)
 		return true;
 	}
 
-	CTuning* pNewTuning = new CTuningRTI(pT);
+	CTuning* pNewTuning = nullptr;
+	if(pT)
+	{
+		pNewTuning = new CTuningRTI(*pT);
+	} else
+	{
+		pNewTuning = new CTuningRTI();
+	}
 	if(pTC->AddTuning(pNewTuning))
 	{
 		Reporting::Notification("Add tuning failed");
@@ -1301,8 +1324,8 @@ bool CTuningDialog::AddTuning(CTuningCollection* pTC, CTuning* pT)
 	return false;
 }
 
-void CTuningDialog::OnAddTuning()
-//-------------------------------
+void CTuningDialog::OnAddTuningGeneral()
+//--------------------------------------
 {
 	if(!m_CommandItemDest.GetTC())
 	{
@@ -1313,7 +1336,37 @@ void CTuningDialog::OnAddTuning()
 	CTuningCollection* pTC = m_CommandItemDest.GetTC();
 	m_CommandItemDest = s_notFoundItemTuning;
 	m_ModifiedTCs[pTC];
-	AddTuning(pTC);
+	AddTuning(pTC, TT_GENERAL);
+}
+
+void CTuningDialog::OnAddTuningGroupGeometric()
+//---------------------------------------------
+{
+	if(!m_CommandItemDest.GetTC())
+	{
+		m_CommandItemDest = s_notFoundItemTuning;
+		return;
+	}
+
+	CTuningCollection* pTC = m_CommandItemDest.GetTC();
+	m_CommandItemDest = s_notFoundItemTuning;
+	m_ModifiedTCs[pTC];
+	AddTuning(pTC, TT_GROUPGEOMETRIC);
+}
+
+void CTuningDialog::OnAddTuningGeometric()
+//----------------------------------------
+{
+	if(!m_CommandItemDest.GetTC())
+	{
+		m_CommandItemDest = s_notFoundItemTuning;
+		return;
+	}
+
+	CTuningCollection* pTC = m_CommandItemDest.GetTC();
+	m_CommandItemDest = s_notFoundItemTuning;
+	m_ModifiedTCs[pTC];
+	AddTuning(pTC, TT_GEOMETRIC);
 }
 
 void CTuningDialog::OnRemoveTuning()
@@ -1343,44 +1396,6 @@ void CTuningDialog::OnRemoveTuning()
 	}
 
 	m_CommandItemDest = s_notFoundItemTuning;
-}
-
-void CTuningDialog::OnMoveTuning()
-//--------------------------------
-{
-	if(!m_CommandItemDest)
-		return;
-
-	CTuning* pT = m_CommandItemSrc.GetT();
-	CTuningCollection* pTCsrc = GetpTuningCollection(pT);
-
-	if(pT == NULL)
-	{
-		m_CommandItemDest = s_notFoundItemTuning;
-		return;
-	}
-
-	CTuningCollection* pTCdest = NULL;
-	if(m_CommandItemDest.GetT())
-		pTCdest = GetpTuningCollection(m_CommandItemDest.GetT());
-	else
-		pTCdest = m_CommandItemDest.GetTC();
-
-
-	HTREEITEM treeItemSrcTC = m_TreeItemTuningItemMap.GetMapping_21(TUNINGTREEITEM(pTCsrc));
-	HTREEITEM treeItemDestTC = m_TreeItemTuningItemMap.GetMapping_21(TUNINGTREEITEM(pTCdest));
-	DeleteTreeItem(pT);
-	m_ModifiedTCs[pTCsrc] = true;
-	m_ModifiedTCs[pTCdest] = true;
-	if(CTuningCollection::TransferTuning(pTCsrc, pTCdest, pT))
-	{
-		Reporting::Message(LogNotification, _T("Operation failed."), this);
-		AddTreeItem(pT, treeItemSrcTC, NULL);
-	}
-	else
-		AddTreeItem(pT, treeItemDestTC, NULL);
-
-	UpdateView();
 }
 
 
@@ -1430,21 +1445,6 @@ void CTuningDialog::OnRemoveTuningCollection()
 	delete deletableTC; deletableTC = 0;
 
 	UpdateView();
-}
-
-
-void CTuningDialog::UpdateTuningDescription()
-//-------------------------------------------
-{
-	TUNINGTYPE type = static_cast<TUNINGTYPE>(m_CombobTuningType.GetItemData(m_CombobTuningType.GetCurSel()));
-	if(type == TT_GENERAL)
-		SetDlgItemText(IDC_TUNINGTYPE_DESC, _T("No ratio restrictions"));
-	else if(type == TT_GROUPGEOMETRIC)
-		SetDlgItemText(IDC_TUNINGTYPE_DESC, _T("Ratio of ratios with distance of 'groupsize' is constant."));
-	else if(type == TT_GEOMETRIC)
-		SetDlgItemText(IDC_TUNINGTYPE_DESC, _T("Ratio of successive ratios is constant."));
-	else
-		SetDlgItemText(IDC_TUNINGTYPE_DESC, _T("Unknown type"));
 }
 
 
@@ -1676,7 +1676,7 @@ CTuningDialog::EnSclImport CTuningDialog::ImportScl(std::istream& iStrm, const m
 			return enSclImportFailNegativeRatio;
 	}
 
-	CTuning* pT = new CTuningRTI;
+	CTuning* pT = new CTuningRTI();
 	CTuningRTI::RATIOTYPE groupRatio = fRatios.back();
 	fRatios.pop_back();
 	if(pT->CreateGroupGeometric(fRatios, groupRatio, pT->GetValidityRange(), 0) != false)

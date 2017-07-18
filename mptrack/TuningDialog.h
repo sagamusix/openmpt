@@ -242,7 +242,8 @@ protected:
 
 private:
 
-	void UpdateTuningDescription();
+	bool CanEdit(CTuningCollection * pTC) const;
+	bool CanEdit(CTuning * pT, CTuningCollection * pTC) const;
 
 	void UpdateView(const int UpdateMask = 0);
 	void UpdateTuningType();
@@ -293,15 +294,11 @@ private:
 	CEdit m_EditName;
 	//<--Tuning Edits
 
-	//-->Tuning collection edits
-	CEdit m_EditTuningCollectionName;
-	CEdit m_EditTuningCollectionPath;
-	//<--Tuningcollection edits
-
 	CButton m_ButtonSet;
+	CButton m_ButtonNew;
 	CButton m_ButtonExport;
 	CButton m_ButtonImport;
-	CButton m_ButtonReadOnly;
+	CButton m_ButtonRemove;
 
 	CTuningTreeCtrl m_TreeCtrlTuning;
 
@@ -347,7 +344,8 @@ private:
 	static const TUNINGTREEITEM s_notFoundItemTuning;
 	static const HTREEITEM s_notFoundItemTree;
 
-	bool AddTuning(CTuningCollection*, CTuning* pT = NULL);
+	bool AddTuning(CTuningCollection*, CTuning* pT);
+	bool AddTuning(CTuningCollection*, CTuning::TUNINGTYPE type);
 
 	//Flag to prevent multiple exit error-messages.
 	bool m_DoErrorExit;
@@ -359,24 +357,25 @@ private:
 //Treectrl context menu functions.
 public:
 	afx_msg void OnRemoveTuning();
-	afx_msg void OnAddTuning();
-	afx_msg void OnMoveTuning();
+	afx_msg void OnAddTuningGeneral();
+	afx_msg void OnAddTuningGroupGeometric();
+	afx_msg void OnAddTuningGeometric();
 	afx_msg void OnCopyTuning();
 	afx_msg void OnRemoveTuningCollection();
 
 //Event-functions
 public:
-	afx_msg void OnCbnSelchangeComboTtype();
 	afx_msg void OnEnChangeEditSteps();
 	afx_msg void OnEnChangeEditRatioperiod();
 	afx_msg void OnEnChangeEditNotename();
 	afx_msg void OnBnClickedButtonSetvalues();
 	afx_msg void OnEnChangeEditRatiovalue();
+	afx_msg void OnBnClickedButtonNew();
 	afx_msg void OnBnClickedButtonExport();
 	afx_msg void OnBnClickedButtonImport();
+	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnEnChangeEditFinetunesteps();
 	afx_msg void OnEnKillfocusEditFinetunesteps();
-	afx_msg void OnBnClickedCheckReadonly();
 	afx_msg void OnEnKillfocusEditName();
 	afx_msg void OnEnKillfocusEditSteps();
 	afx_msg void OnEnKillfocusEditRatioperiod();
