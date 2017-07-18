@@ -26,6 +26,10 @@
 #include "../mod_specifications.h"
 #endif // MODPLUG_TRACKER
 
+#include "../../mptrack/Networking.h"
+#include "../../mptrack/NetworkTypes.h"
+#include <sstream>
+
 #include <cmath>
 
 #ifndef NO_PLUGINS
@@ -629,6 +633,16 @@ void IMixPlugin::AutomateParameter(PlugParamIndex param)
 	{
 		// Record parameter change
 		modDoc->RecordParamChange(GetSlot(), param);
+	}
+
+	if(modDoc->m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::PluginDataTransactionMsg);
+		Networking::PluginEditMsg msg{ GetSlot(), { { param, GetParameter(param) } },{} };
+		ar(msg);
+		modDoc->m_collabClient->Write(ss.str());
 	}
 
 	modDoc->PostMessageToAllViews(WM_MOD_PLUGPARAMAUTOMATE, m_nSlot, param);

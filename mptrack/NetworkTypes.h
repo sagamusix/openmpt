@@ -58,6 +58,8 @@ const NetworkMessage SamplePropertyTransactionMsg("SATR");
 
 const NetworkMessage PatternTransactionMsg("PATR");
 
+const NetworkMessage PluginDataTransactionMsg("PLTR");
+
 struct DocumentInfo
 {
 	std::string name;
@@ -172,6 +174,33 @@ struct PatternEditMsg
 	}
 
 	void Apply(CPattern &pattern);
+};
+
+
+struct PluginParam
+{
+	PlugParamIndex param;
+	PlugParamValue value;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(param, value);
+	}
+};
+
+
+struct PluginEditMsg
+{
+	PLUGINDEX plugin;
+	std::vector<PluginParam> params;
+	std::vector<mpt::byte> chunk;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(plugin, params, chunk);
+	}
 };
 
 }

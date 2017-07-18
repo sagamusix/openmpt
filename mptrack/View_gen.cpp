@@ -27,6 +27,10 @@
 #include "../common/StringFixer.h"
 #include "AbstractVstEditor.h"
 
+#include "Networking.h"
+#include "NetworkTypes.h"
+#include <sstream>
+
 // This is used for retrieving the correct background colour for the
 // frames on the general tab when using WinXP Luna or Vista/Win7 Aero.
 #include <uxtheme.h>
@@ -777,9 +781,20 @@ void CViewGlobals::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 					{
 						if (nSBCode == SB_THUMBPOSITION || nSBCode == SB_THUMBTRACK || nSBCode == SB_ENDSCROLL)
 						{
-							pPlugin->SetParameter(m_nCurrentParam, 0.01f * n);
+							PlugParamValue val = 0.01f * n;
+							pPlugin->SetParameter(m_nCurrentParam, val);
 							OnParamChanged();
 							SetPluginModified();
+							
+							if(pModDoc->m_collabClient)
+							{
+								std::ostringstream ss;
+								cereal::BinaryOutputArchive ar(ss);
+								ar(Networking::PluginDataTransactionMsg);
+								Networking::PluginEditMsg msg{ m_nCurrentPlugin, { { m_nCurrentParam, val } }, {} };
+								ar(msg);
+								pModDoc->m_collabClient->Write(ss.str());
+							}
 						}
 					}
 				}
@@ -1108,6 +1123,15 @@ void CViewGlobals::OnSetParameter()
 			pPlugin->SetParameter(m_nCurrentParam, fValue);
 			OnParamChanged();
 			SetPluginModified();
+			if(GetDocument()->m_collabClient)
+			{
+				std::ostringstream ss;
+				cereal::BinaryOutputArchive ar(ss);
+				ar(Networking::PluginDataTransactionMsg);
+				Networking::PluginEditMsg msg{ m_nCurrentPlugin, { { m_nCurrentParam, fValue } }, {} };
+				ar(msg);
+				GetDocument()->m_collabClient->Write(ss.str());
+			}
 		}
 	}
 }

@@ -12,6 +12,7 @@
 #include "Networking.h"
 #include "NetworkTypes.h"
 #include "Moddoc.h"
+#include "../soundlib/plugins/PlugInterface.h"
 #include "AudioCriticalSection.h"
 #include "../common/version.h"
 #include <cereal/cereal.hpp>
@@ -247,9 +248,9 @@ void CollabServer::StartAccept()
 }
 
 
-void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
+void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &inMsg)
 {
-	cereal::BinaryInputArchive inArchive(msg);
+	cereal::BinaryInputArchive inArchive(inMsg);
 	NetworkMessage type;
 	inArchive >> type;
 	OutputDebugStringA(std::string(type.type, 4).c_str());
@@ -379,6 +380,24 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
 
+				}
+			} else if(type == PluginDataTransactionMsg)
+			{
+				PluginEditMsg plugMsg;
+				inArchive >> plugMsg;
+				CriticalSection  cs;
+				if(sndFile.m_MixPlugins[plugMsg.plugin].pMixPlugin)
+				{
+					for(auto &param : plugMsg.params)
+					{
+						sndFile.m_MixPlugins[plugMsg.plugin].pMixPlugin->SetParameter(param.param, param.value);
+					}
+				}
+				ar(plugMsg);
+				const std::string s = sso.str();
+				for(auto &c : doc->m_connections)
+				{
+					c->Write(s);
 				}
 			}
 		}
