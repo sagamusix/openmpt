@@ -177,6 +177,21 @@ struct PatternEditMsg
 };
 
 
+struct SamplePropertyEditMsg
+{
+	SAMPLEINDEX id;
+	ModSample sample;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(id, sample);
+	}
+
+	void Apply(ModSample &modSample);
+};
+
+
 struct PluginParam
 {
 	PlugParamIndex param;

@@ -3208,22 +3208,31 @@ void CModDoc::DeserializeViews()
 }
 
 
-void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg)
-//------------------------------------------------------------------------------------------
+void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &inMsg)
+//--------------------------------------------------------------------------------------------
 {
-	cereal::BinaryInputArchive inArchive(msg);
+	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
 	inArchive >> type;
 	OutputDebugStringA(std::string(type.type, 4).c_str());
 
 	if(type == Networking::PatternTransactionMsg)
 	{
-		Networking::PatternEditMsg patMsg;
-		inArchive >> patMsg;
+		Networking::PatternEditMsg msg;
+		inArchive >> msg;
 		CriticalSection cs;
-		if(m_SndFile.Patterns.IsValidPat(patMsg.pattern))
+		if(m_SndFile.Patterns.IsValidPat(msg.pattern))
 		{
-			patMsg.Apply(m_SndFile.Patterns[patMsg.pattern]);
+			msg.Apply(m_SndFile.Patterns[msg.pattern]);
+		}
+	} else if(type == Networking::SamplePropertyTransactionMsg)
+	{
+		Networking::SamplePropertyEditMsg msg;
+		inArchive >> msg;
+		CriticalSection cs;
+		if(msg.id > 0 && msg.id <= GetNumSamples())
+		{
+			msg.Apply(m_SndFile.GetSample(msg.id));
 		}
 	}
 }

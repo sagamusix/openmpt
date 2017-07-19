@@ -333,13 +333,20 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				}
 			} else if(type == SamplePropertyTransactionMsg)
 			{
-				SAMPLEINDEX id;
-				ModSample sample;
-				inArchive >> id;
-				inArchive >> sample;
-				if(id > 0 && id <= sndFile.GetNumSamples())
+				SamplePropertyEditMsg msg;
+				inArchive >> msg;
+				if(msg.id > 0 && msg.id <= sndFile.GetNumSamples())
 				{
-
+					CriticalSection cs;
+					msg.Apply(sndFile.GetSample(msg.id));
+					// Send back to all clients
+					ar(type);
+					ar(msg);
+					const std::string s = sso.str();
+					for(auto &c : doc->m_connections)
+					{
+						c->Write(s);
+					}
 				}
 			} else if(type == InstrumentTransactionMsg)
 			{

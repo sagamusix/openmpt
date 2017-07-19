@@ -49,8 +49,8 @@ SamplePropertyTransaction::~SamplePropertyTransaction()
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
 			ar(Networking::SamplePropertyTransactionMsg);
-			ar(m_sample);
-			ar(sample);
+			Networking::SamplePropertyEditMsg msg{ m_sample, sample };
+			ar(msg);
 			modDoc->m_collabClient->Write(ss.str());
 		}
 	}

@@ -44,6 +44,32 @@ void PatternEditMsg::Apply(CPattern &pat)
 	}
 }
 
+
+void SamplePropertyEditMsg::Apply(ModSample &modSample)
+{
+
+	//nLength;
+	modSample.nLoopStart = sample.nLoopStart;
+	modSample.nLoopEnd = sample.nLoopEnd;
+	modSample.nSustainStart = sample.nSustainStart;
+	modSample.nSustainEnd = sample.nSustainEnd;
+	modSample.nC5Speed = sample.nC5Speed;
+	modSample.nPan = sample.nPan;
+	modSample.nVolume = sample.nVolume;
+	modSample.nGlobalVol = sample.nGlobalVol;
+	modSample.uFlags = sample.uFlags;
+	modSample.RelativeTone = sample.RelativeTone;
+	modSample.nFineTune = sample.nFineTune;
+	modSample.nVibType = sample.nVibType;
+	modSample.nVibSweep = sample.nVibSweep;
+	modSample.nVibDepth = sample.nVibDepth;
+	modSample.nVibRate = sample.nVibRate;
+	modSample.rootNote = sample.rootNote;
+	strcpy(modSample.filename, sample.filename);
+	MemCopy(modSample.cues, sample.cues);
+}
+
+
 }
 
 OPENMPT_NAMESPACE_END

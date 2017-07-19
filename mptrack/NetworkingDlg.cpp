@@ -202,6 +202,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
+	m_List.DeleteAllItems();
 	OnOK();
 	return 0;
 }
