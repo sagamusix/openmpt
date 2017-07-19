@@ -455,6 +455,11 @@ CTuningRTI* CTuningRTI::Deserialize(std::istream& iStrm)
 bool CTuningRTI::ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize)
 //---------------------------------------------------------------------------
 {
+	// reject unknown types
+	if(m_TuningType != TT_GENERAL && m_TuningType != TT_GROUPGEOMETRIC && m_TuningType != TT_GEOMETRIC)
+	{
+		return true;
+	}
 	if (m_GroupSize < 0) {m_GroupSize = 0; return true;}
 	if (m_RatioTable.size() > static_cast<size_t>(NOTEINDEXTYPE_MAX)) return true;
 	if((GetType() == TT_GROUPGEOMETRIC) || (GetType() == TT_GEOMETRIC))
@@ -524,8 +529,67 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 
 	CTuningRTI* pT = new CTuningRTI;
 
-	//Baseclass deserialization
-	if(pT->CTuningBase::DeserializeOLD(inStrm) == SERIALIZATION_FAILURE)
+	char begin2[8];
+	MemsetZero(begin2);
+	inStrm.read(begin2, sizeof(begin2));
+	if(std::memcmp(begin2, "CT<sfs>B", 8))
+	{
+		delete pT;
+		return 0;
+	}
+
+	int16 version2 = 0;
+	mpt::IO::ReadIntLE<int16>(inStrm, version2);
+	if(version2 != 4)
+	{
+		delete pT;
+		return 0;
+	}
+
+	//Tuning name
+	if(!mpt::IO::ReadSizedStringLE<uint8>(inStrm, pT->m_TuningName))
+	{
+		delete pT;
+		return 0;
+	}
+
+	//Const mask
+	int16 em = 0;
+	mpt::IO::ReadIntLE<int16>(inStrm, em);
+
+	//Tuning type
+	int16 tt = 0;
+	mpt::IO::ReadIntLE<int16>(inStrm, tt);
+	pT->m_TuningType = tt;
+
+	//Notemap
+	uint16 size = 0;
+	mpt::IO::ReadIntLE<uint16>(inStrm, size);
+	for(UNOTEINDEXTYPE i = 0; i<size; i++)
+	{
+		std::string str;
+		int16 n = 0;
+		mpt::IO::ReadIntLE<int16>(inStrm, n);
+		if(!mpt::IO::ReadSizedStringLE<uint8>(inStrm, str))
+		{
+			delete pT;
+			return 0;
+		}
+		pT->m_NoteNameMap[n] = str;
+	}
+
+	//End marker
+	char end2[8];
+	MemsetZero(end2);
+	inStrm.read(end2, sizeof(end2));
+	if(std::memcmp(end2, "CT<sfs>E", 8))
+	{
+		delete pT;
+		return 0;
+	}
+
+	// reject unknown types
+	if(pT->m_TuningType != TT_GENERAL && pT->m_TuningType != TT_GROUPGEOMETRIC && pT->m_TuningType != TT_GEOMETRIC)
 	{
 		delete pT;
 		return 0;

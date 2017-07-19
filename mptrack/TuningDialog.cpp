@@ -1581,8 +1581,24 @@ CTuningDialog::EnSclImport CTuningDialog::ImportScl(std::istream& iStrm, const m
 	MPT_ASSERT(result == nullptr);
 	result = nullptr;
 	std::string str;
-	SkipCommentLines(iStrm, str);
-	// str should now contain description text.
+
+	std::string filename;
+	bool first = true;
+	std::string whitespace(" \t");
+	while(std::getline(iStrm, str))
+	{
+		auto start = str.find_first_not_of(whitespace);
+		// Lines starting with a ! are comments
+		if(start != std::string::npos && str[start] != '!')
+			break;
+		if(first)
+		{
+			filename = mpt::String::Trim(str.substr(start + 1), std::string(" \t\r\n"));
+		}
+		first = false;
+	}
+	std::string description = mpt::String::Trim(str, std::string(" \t\r\n"));
+
 	SkipCommentLines(iStrm, str);
 	// str should now contain number of notes.
 	const size_t nNotes = 1 + ConvertStrTo<size_t>(str.c_str());
@@ -1679,13 +1695,28 @@ CTuningDialog::EnSclImport CTuningDialog::ImportScl(std::istream& iStrm, const m
 	CTuning* pT = new CTuningRTI();
 	CTuningRTI::RATIOTYPE groupRatio = fRatios.back();
 	fRatios.pop_back();
+	pT->SetFineStepCount(15);
 	if(pT->CreateGroupGeometric(fRatios, groupRatio, pT->GetValidityRange(), 0) != false)
 	{
 		delete pT;
 		return enSclImportTuningCreationFailure;
 	}
 
-	pT->SetName(mpt::ToCharset(mpt::CharsetLocale, name));
+	mpt::ustring tuningName;
+	if(!description.empty())
+	{
+		tuningName = mpt::ToUnicode(mpt::CharsetISO8859_1, description);
+	} else if(!filename.empty())
+	{
+		tuningName = mpt::ToUnicode(mpt::CharsetISO8859_1, filename);
+	} else if(!name.empty())
+	{
+		tuningName = name;
+	} else
+	{
+		tuningName = mpt::format(MPT_USTRING("%1 notes: %2:%3"))(nNotes - 1, mpt::ufmt::fix(groupRatio), 1);
+	}
+	pT->SetName(mpt::ToCharset(mpt::CharsetLocale, tuningName));
 
 	bool allNamesEmpty = true;
 	bool allNamesValid = true;
