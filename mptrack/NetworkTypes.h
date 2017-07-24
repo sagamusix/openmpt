@@ -181,14 +181,15 @@ struct SamplePropertyEditMsg
 {
 	SAMPLEINDEX id;
 	ModSample sample;
+	char name[MAX_SAMPLENAME];
 
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(id, sample);
+		archive(id, sample, name);
 	}
 
-	void Apply(ModSample &modSample);
+	void Apply(CSoundFile &sndFile, SAMPLEINDEX smp);
 };
 
 

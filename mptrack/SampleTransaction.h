@@ -15,4 +15,12 @@ public:
 	~SamplePropertyTransaction();
 };
 
+
+class SampleDataTransaction //: public SamplePropertyTransaction
+{
+public:
+	SampleDataTransaction() { }
+	~SampleDataTransaction() { }
+};
+
 OPENMPT_NAMESPACE_END

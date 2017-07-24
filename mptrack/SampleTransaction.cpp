@@ -3,6 +3,7 @@
 #include "Networking.h"
 #include "SampleTransaction.h"
 #include "NetworkTypes.h"
+#include "../common/StringFixer.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -50,6 +51,7 @@ SamplePropertyTransaction::~SamplePropertyTransaction()
 			cereal::BinaryOutputArchive ar(ss);
 			ar(Networking::SamplePropertyTransactionMsg);
 			Networking::SamplePropertyEditMsg msg{ m_sample, sample };
+			mpt::String::Copy(msg.name, m_sndFile.m_szNames[m_sample]);
 			ar(msg);
 			modDoc->m_collabClient->Write(ss.str());
 		}

@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 #include "NetworkTypes.h"
+#include "../common/StringFixer.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -19,7 +20,7 @@ namespace Networking
 void PatternEditMsg::Apply(CPattern &pat)
 {
 	auto mask = commands.begin();
-	for(ROWINDEX r = row; row < row + numRows; row++)
+	for(ROWINDEX r = row; r < row + numRows; r++)
 	{
 		auto m = pat.GetpModCommand(r, channel);
 		for(CHANNELINDEX c = channel; c < channel + numChannels; c++, mask++, m++)
@@ -45,9 +46,9 @@ void PatternEditMsg::Apply(CPattern &pat)
 }
 
 
-void SamplePropertyEditMsg::Apply(ModSample &modSample)
+void SamplePropertyEditMsg::Apply(CSoundFile &sndFile, SAMPLEINDEX smp)
 {
-
+	ModSample &modSample = sndFile.GetSample(smp);
 	//nLength;
 	modSample.nLoopStart = sample.nLoopStart;
 	modSample.nLoopEnd = sample.nLoopEnd;
@@ -65,8 +66,9 @@ void SamplePropertyEditMsg::Apply(ModSample &modSample)
 	modSample.nVibDepth = sample.nVibDepth;
 	modSample.nVibRate = sample.nVibRate;
 	modSample.rootNote = sample.rootNote;
-	strcpy(modSample.filename, sample.filename);
+	mpt::String::Copy(modSample.filename, sample.filename);
 	MemCopy(modSample.cues, sample.cues);
+	mpt::String::Copy(sndFile.m_szNames[smp], name);
 }
 
 

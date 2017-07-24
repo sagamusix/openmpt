@@ -112,7 +112,10 @@ void NetworkingDlg::OnConnect()
 
 void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	DocumentInfo *doc = reinterpret_cast<DocumentInfo *>(m_List.GetItemData(reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem));
+	int item = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
+	if(item < 0)
+		return;
+	DocumentInfo *doc = reinterpret_cast<DocumentInfo *>(m_List.GetItemData(item));
 	if(doc != nullptr)
 	{
 		JoinMsg join;

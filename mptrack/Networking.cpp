@@ -316,7 +316,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			auto &sndFile = modDoc->GetrSoundFile();
 			if(type == PatternTransactionMsg)
 			{
-				Networking::PatternEditMsg patMsg;
+				PatternEditMsg patMsg;
 				inArchive >> patMsg;
 				CriticalSection cs;
 				if(sndFile.Patterns.IsValidPat(patMsg.pattern))
@@ -338,7 +338,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				if(msg.id > 0 && msg.id <= sndFile.GetNumSamples())
 				{
 					CriticalSection cs;
-					msg.Apply(sndFile.GetSample(msg.id));
+					msg.Apply(sndFile, msg.id);
 					// Send back to all clients
 					ar(type);
 					ar(msg);

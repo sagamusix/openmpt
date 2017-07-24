@@ -3232,7 +3232,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		CriticalSection cs;
 		if(msg.id > 0 && msg.id <= GetNumSamples())
 		{
-			msg.Apply(m_SndFile.GetSample(msg.id));
+			msg.Apply(m_SndFile, msg.id);
 		}
 	}
 }
