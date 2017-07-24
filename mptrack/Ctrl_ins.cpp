@@ -2982,7 +2982,7 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 
 	//Case: Chosen tuning editor to be displayed.
 	//Creating vector for the CTuningDialog.
-	CTuningDialog td(this, { &m_sndFile.GetTuneSpecificTunings() }, pInstH->pTuning);
+	CTuningDialog td(this, m_nInstrument, m_sndFile);
 	td.DoModal();
 	if(td.GetModifiedStatus(&m_sndFile.GetTuneSpecificTunings()))
 	{

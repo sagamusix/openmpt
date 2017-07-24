@@ -18,6 +18,9 @@
 OPENMPT_NAMESPACE_BEGIN
 
 
+namespace Tuning {
+
+
 class CTuningCollection;
 
 namespace CTuningS11n
@@ -28,32 +31,11 @@ namespace CTuningS11n
 
 
 //=====================
-class CTuningCollection //To contain tuning objects.
+class CTuningCollection
 //=====================
 {
-	friend class CTuningstreamer;
+
 public:
-
-//BEGIN TYPEDEFS
-
-	//If changing this, see whether serialization should be 
-	//modified as well.
-
-	typedef std::vector<CTuning*> TUNINGVECTOR;
-	typedef TUNINGVECTOR::iterator TITER; //Tuning ITERator.
-	typedef TUNINGVECTOR::const_iterator CTITER;
-
-	typedef bool SERIALIZATION_RETURN_TYPE;
-
-//END TYPEDEFS
-
-//BEGIN PUBLIC STATIC CONSTS
-public:
-	enum 
-	{
-		SERIALIZATION_SUCCESS = false,
-		SERIALIZATION_FAILURE = true
-	};
 
 	static const char s_FileExtension[4];
 
@@ -69,87 +51,46 @@ public:
 	// 255.
 	static const size_t s_nMaxTuningCount = 255 + 255 + 2;
 
-//END PUBLIC STATIC CONSTS
-
-//BEGIN INTERFACE:
 public:
-	CTuningCollection(const std::string& name = "");
-	~CTuningCollection();
-	
+
 	//Note: Given pointer is deleted by CTuningCollection
 	//at some point.
-	bool AddTuning(CTuning* const pT);
+	bool AddTuning(CTuning *pT);
 	bool AddTuning(std::istream& inStrm);
 	
-	bool Remove(const size_t i);
-	bool Remove(const CTuning*);
+	bool Remove(const std::size_t i);
+	bool Remove(const CTuning *pT);
 
-	CTuning& GetTuning(size_t i) {return *m_Tunings.at(i);}
-	const CTuning& GetTuning(size_t i) const {return *m_Tunings.at(i);}
+	CTuning& GetTuning(size_t i) {return *m_Tunings.at(i).get();}
+	const CTuning& GetTuning(size_t i) const {return *m_Tunings.at(i).get();}
 	CTuning* GetTuning(const std::string& name);
 	const CTuning* GetTuning(const std::string& name) const;
 
 	size_t GetNumTunings() const {return m_Tunings.size();}
 
-	std::string GetName() const { return m_Name; }
-	void SetName(const std::string name) { m_Name = name; }
+	Tuning::SerializationResult Serialize(std::ostream&, const std::string &name) const;
+	Tuning::SerializationResult Deserialize(std::istream&, std::string &name);
 
-#ifndef MODPLUG_NO_FILESAVE
-	void SetSavefilePath(const mpt::PathString &psz) {m_SavefilePath = psz;}
-	mpt::PathString GetSaveFilePath() const {return m_SavefilePath;}
-#endif // MODPLUG_NO_FILESAVE
-
-	size_t GetNameLengthMax() const {return 256;}
-
-	//Serialization/unserialisation
-	bool Serialize(std::ostream&) const;
-	bool Deserialize(std::istream&);
-#ifndef MODPLUG_NO_FILESAVE
-	bool Serialize() const;
-	bool Deserialize();
-#endif // MODPLUG_NO_FILESAVE
-
-//END INTERFACE
-	
-
-//BEGIN: DATA MEMBERS
 private:
-	//BEGIN: SERIALIZABLE DATA MEMBERS
-	TUNINGVECTOR m_Tunings; //The actual tuningobjects are stored as deletable pointers here.
-	std::string m_Name;
-	//END: SERIALIZABLE DATA MEMBERS
 
-	//BEGIN: NONSERIALIZABLE DATA MEMBERS
-	TUNINGVECTOR m_DeletedTunings; //See Remove()-method for explanation of this.
-#ifndef MODPLUG_NO_FILESAVE
-	mpt::PathString m_SavefilePath;
-#endif // MODPLUG_NO_FILESAVE
-	//END: NONSERIALIZABLE DATA MEMBERS
-	
-//END: DATA MEMBERS
+	std::vector<std::unique_ptr<CTuning> > m_Tunings;
 
-	friend void CTuningS11n::ReadTuning(std::istream& iStrm, CTuningCollection& Tc, const size_t);
-
-//BEGIN PRIVATE METHODS
 private:
-	CTuning* FindTuning(const std::string& name) const;
-	size_t FindTuning(const CTuning* const) const;
 
-	bool Remove(TITER removable, bool moveToTrashBin = true);
+	Tuning::SerializationResult DeserializeOLD(std::istream&, std::string &name);
 
-	//Hiding default operators because default meaning might not work right.
-	CTuningCollection& operator=(const CTuningCollection&) {return *this;}
-	CTuningCollection(const CTuningCollection&) {}
-
-	bool DeserializeOLD(std::istream&, bool& loadingSuccessful);
-
-//END PRIVATE METHODS.
 };
 
 
 #ifdef MODPLUG_TRACKER
-bool UnpackTuningCollection(const mpt::PathString &filename, mpt::PathString dest = mpt::PathString());
-bool UnpackTuningCollection(const CTuningCollection &tc, mpt::PathString dest = mpt::PathString());
+bool UnpackTuningCollection(const CTuningCollection &tc, const mpt::PathString &prefix);
 #endif
+
+
+} // namespace Tuning
+
+
+typedef Tuning::CTuningCollection CTuningCollection;
+
 
 OPENMPT_NAMESPACE_END

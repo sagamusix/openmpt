@@ -71,7 +71,11 @@ static bool AreNonDefaultTuningsUsed(CSoundFile& sf)
 	return false;
 }
 
-static void WriteTuningCollection(std::ostream& oStrm, const CTuningCollection& tc) {tc.Serialize(oStrm);}
+static void WriteTuningCollection(std::ostream& oStrm, const CTuningCollection& tc)
+//---------------------------------------------------------------------------------
+{
+	tc.Serialize(oStrm, "Tune specific tunings");
+}
 
 static void WriteTuningMap(std::ostream& oStrm, const CSoundFile& sf)
 //-------------------------------------------------------------------
@@ -141,14 +145,20 @@ static void WriteTuningMap(std::ostream& oStrm, const CSoundFile& sf)
 #endif // MODPLUG_NO_FILESAVE
 
 
-static void ReadTuningCollection(std::istream& iStrm, CTuningCollection& tc, const size_t) {tc.Deserialize(iStrm);}
+static void ReadTuningCollection(std::istream& iStrm, CTuningCollection& tc, const size_t)
+//----------------------------------------------------------------------------------------
+{
+	std::string name;
+	tc.Deserialize(iStrm, name);
+}
+
 
 template<class TUNNUMTYPE, class STRSIZETYPE>
 static bool ReadTuningMapTemplate(std::istream& iStrm, std::map<uint16, std::string>& shortToTNameMap, const size_t maxNum = 500)
 //-------------------------------------------------------------------------------------------------------------------------------
 {
 	TUNNUMTYPE numTuning = 0;
-	mpt::IO::ReadIntLE<uint16>(iStrm, numTuning);
+	mpt::IO::ReadIntLE<TUNNUMTYPE>(iStrm, numTuning);
 	if(numTuning > maxNum)
 		return true;
 
@@ -169,11 +179,17 @@ static bool ReadTuningMapTemplate(std::istream& iStrm, std::map<uint16, std::str
 }
 
 
-static void ReadTuningMap(std::istream& iStrm, CSoundFile& csf, const size_t = 0)
-//-------------------------------------------------------------------------------
+static void ReadTuningMapImpl(std::istream& iStrm, CSoundFile& csf, const size_t = 0, bool old = false)
+//-----------------------------------------------------------------------------------------------------
 {
 	std::map<uint16, std::string> shortToTNameMap;
-	ReadTuningMapTemplate<uint16, uint8>(iStrm, shortToTNameMap);
+	if(old)
+	{
+		ReadTuningMapTemplate<uint32, uint32>(iStrm, shortToTNameMap);
+	} else
+	{
+		ReadTuningMapTemplate<uint16, uint8>(iStrm, shortToTNameMap);
+	}
 
 	// Read & set tunings for instruments
 	std::vector<std::string> notFoundTunings;
@@ -200,7 +216,7 @@ static void ReadTuningMap(std::istream& iStrm, CSoundFile& csf, const size_t = 0
 			CTuning *localTuning = TrackerSettings::Instance().oldLocalTunings->GetTuning(str);
 			if(localTuning)
 			{
-				CTuning* pNewTuning = new CTuningRTI(*localTuning);
+				CTuning* pNewTuning = new CTuning(*localTuning);
 				if(!csf.GetTuneSpecificTunings().AddTuning(pNewTuning))
 				{
 					csf.AddToLog("Local tunings are deprecated and no longer supported. Tuning '" + str + "' found in Local tunings has been copied to Tune-specific tunings and will be saved in the module file.");
@@ -267,6 +283,12 @@ static void ReadTuningMap(std::istream& iStrm, CSoundFile& csf, const size_t = 0
 	//End read&set instrument tunings
 }
 
+
+static void ReadTuningMap(std::istream& iStrm, CSoundFile& csf, const size_t dummy = 0)
+//-------------------------------------------------------------------------------------
+{
+	ReadTuningMapImpl(iStrm, csf, dummy, false);
+}
 
 
 //////////////////////////////////////////////////////////
@@ -1218,12 +1240,13 @@ void CSoundFile::LoadMPTMProperties(FileReader &file, uint16 cwtv)
 	} else
 	{
 		// Loading for older files.
-		if(GetTuneSpecificTunings().Deserialize(iStrm))
+		std::string name;
+		if(GetTuneSpecificTunings().Deserialize(iStrm, name) != Tuning::SerializationResult::Success)
 		{
 			AddToLog(LogError, MPT_USTRING("Loading tune specific tunings failed."));
 		} else
 		{
-			ReadTuningMap(iStrm, *this);
+			ReadTuningMapImpl(iStrm, *this, 0, cwtv < 0x88C);
 		}
 	}
 }

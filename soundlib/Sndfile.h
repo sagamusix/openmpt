@@ -19,7 +19,7 @@
 #include <bitset>
 #include <set>
 #include "Snd_defs.h"
-#include "tuning.h"
+#include "tuningbase.h"
 #include "MIDIMacros.h"
 #ifdef MODPLUG_TRACKER
 #include "../mptrack/MIDIMapping.h"
@@ -208,7 +208,10 @@ enum deleteInstrumentSamples
 };
 
 
+namespace Tuning {
 class CTuningCollection;
+} // namespace Tuning
+typedef Tuning::CTuningCollection CTuningCollection;
 struct CModSpecifications;
 #ifdef MODPLUG_TRACKER
 class CModDoc;
@@ -806,9 +809,9 @@ protected:
 	void ProcessPitchPanSeparation(ModChannel *pChn) const;
 	void ProcessPanbrello(ModChannel *pChn) const;
 
-	void ProcessArpeggio(CHANNELINDEX nChn, int &period, CTuning::NOTEINDEXTYPE &arpeggioSteps);
-	void ProcessVibrato(CHANNELINDEX nChn, int &period, CTuning::RATIOTYPE &vibratoFactor);
-	void ProcessSampleAutoVibrato(ModChannel *pChn, int &period, CTuning::RATIOTYPE &vibratoFactor, int &nPeriodFrac) const;
+	void ProcessArpeggio(CHANNELINDEX nChn, int &period, Tuning::NOTEINDEXTYPE &arpeggioSteps);
+	void ProcessVibrato(CHANNELINDEX nChn, int &period, Tuning::RATIOTYPE &vibratoFactor);
+	void ProcessSampleAutoVibrato(ModChannel *pChn, int &period, Tuning::RATIOTYPE &vibratoFactor, int &nPeriodFrac) const;
 
 	void ProcessRamping(ModChannel *pChn) const;
 

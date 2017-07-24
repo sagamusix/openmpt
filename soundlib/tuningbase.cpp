@@ -14,12 +14,16 @@
 #include "../common/mptIO.h"
 #include "../common/serialization_utils.h"
 
+#include <cmath>
+
 #include <istream>
 #include <ostream>
 
 
 OPENMPT_NAMESPACE_BEGIN
 
+
+namespace Tuning {
 
 
 /*
@@ -31,25 +35,19 @@ Version history:
 
 
 
-const CTuningBase::SERIALIZATION_RETURN_TYPE CTuningBase::SERIALIZATION_SUCCESS = false;
+const char CTuningRTI::s_FileExtension[5] = ".tun";
 
 
-const CTuningBase::SERIALIZATION_RETURN_TYPE CTuningBase::SERIALIZATION_FAILURE = true;
+const TUNINGTYPE CTuningRTI::TT_GENERAL = 0; //0...00b
 
+const TUNINGTYPE CTuningRTI::TT_GROUPGEOMETRIC = 1; //0...10b
 
-const char CTuningBase::s_FileExtension[5] = ".tun";
-
-
-const CTuningBase::TUNINGTYPE CTuningBase::TT_GENERAL = 0; //0...00b
-
-const CTuningBase::TUNINGTYPE CTuningBase::TT_GROUPGEOMETRIC = 1; //0...10b
-
-const CTuningBase::TUNINGTYPE CTuningBase::TT_GEOMETRIC = 3; //0...11b
+const TUNINGTYPE CTuningRTI::TT_GEOMETRIC = 3; //0...11b
 
 
 
-bool CTuningBase::SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
-//--------------------------------------------------------------------
+bool CTuningRTI::SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
+//-------------------------------------------------------------------
 {
 	if(GetType() != TT_GENERAL)
 	{
@@ -64,14 +62,14 @@ bool CTuningBase::SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
 }
 
 
-CTuningBase::USTEPINDEXTYPE CTuningBase::SetFineStepCount(const USTEPINDEXTYPE& fs)
-//---------------------------------------------------------------------------------
+USTEPINDEXTYPE CTuningRTI::SetFineStepCount(const USTEPINDEXTYPE& fs)
+//-------------------------------------------------------------------
 {
 	VRPAIR vrp = GetValidityRange();
 
 	if( (vrp.first > vrp.second)
 		||
-		(!IsStepCountRangeSufficient(fs, vrp))
+		(fs > FINESTEPCOUNT_MAX)
 	  ) return GetFineStepCount();
 	else
 	{
@@ -82,28 +80,17 @@ CTuningBase::USTEPINDEXTYPE CTuningBase::SetFineStepCount(const USTEPINDEXTYPE& 
 
 
 
-CTuningBase::NOTESTR CTuningBase::GetNoteName(const NOTEINDEXTYPE& x, bool addOctave) const
-//-----------------------------------------------------------------------------------------
+std::string CTuningRTI::GetNoteName(const NOTEINDEXTYPE& x, bool addOctave) const
+//-------------------------------------------------------------------------------
 {
 	if(!IsValidNote(x)) return "";
 	else return ProGetNoteName(x, addOctave);
 }
 
 
-CTuningBase::NOTESTR CTuningBase::ProGetNoteName(const NOTEINDEXTYPE& x, bool /*addOctave*/) const
-//------------------------------------------------------------------------------------------------
-{
-	NNM_CITER i = m_NoteNameMap.find(x);
-	if(i != m_NoteNameMap.end())
-		return i->second;
-	else
-		return mpt::fmt::val(x);
-}
 
-
-
-bool CTuningBase::SetNoteName(const NOTEINDEXTYPE& n, const std::string& str)
-//---------------------------------------------------------------------------
+bool CTuningRTI::SetNoteName(const NOTEINDEXTYPE& n, const std::string& str)
+//--------------------------------------------------------------------------
 {
 	{
 		m_NoteNameMap[n] = str;
@@ -114,8 +101,8 @@ bool CTuningBase::SetNoteName(const NOTEINDEXTYPE& n, const std::string& str)
 
 
 
-bool CTuningBase::ClearNoteName(const NOTEINDEXTYPE& n, const bool eraseAll)
-//--------------------------------------------------------------------------
+bool CTuningRTI::ClearNoteName(const NOTEINDEXTYPE& n, const bool eraseAll)
+//-------------------------------------------------------------------------
 {
 	{
 		if(eraseAll)
@@ -124,7 +111,7 @@ bool CTuningBase::ClearNoteName(const NOTEINDEXTYPE& n, const bool eraseAll)
 			return false;
 		}
 
-		NNM_ITER iter = m_NoteNameMap.find(n);
+		const auto iter = m_NoteNameMap.find(n);
 		if(iter != m_NoteNameMap.end())
 		{
 			m_NoteNameMap.erase(iter);
@@ -137,8 +124,8 @@ bool CTuningBase::ClearNoteName(const NOTEINDEXTYPE& n, const bool eraseAll)
 
 
 
-bool CTuningBase::Multiply(const RATIOTYPE& r)
-//--------------------------------------------
+bool CTuningRTI::Multiply(const RATIOTYPE& r)
+//-------------------------------------------
 {
 	if(r <= 0)
 		return true;
@@ -155,8 +142,8 @@ bool CTuningBase::Multiply(const RATIOTYPE& r)
 }
 
 
-bool CTuningBase::CreateGroupGeometric(const NOTEINDEXTYPE& s, const RATIOTYPE& r, const NOTEINDEXTYPE& startindex)
-//-----------------------------------------------------------------------------------------------------------------
+bool CTuningRTI::CreateGroupGeometric(const NOTEINDEXTYPE& s, const RATIOTYPE& r, const NOTEINDEXTYPE& startindex)
+//----------------------------------------------------------------------------------------------------------------
 {
 	if(s < 1 || r <= 0 || startindex < GetValidityRange().first)
 		return true;
@@ -169,13 +156,13 @@ bool CTuningBase::CreateGroupGeometric(const NOTEINDEXTYPE& s, const RATIOTYPE& 
 }
 
 
-bool CTuningBase::CreateGroupGeometric(const std::vector<RATIOTYPE>& v, const RATIOTYPE& r, const VRPAIR vr, const NOTEINDEXTYPE ratiostartpos)
-//---------------------------------------------------------------------------------------------------------------------------------------------
+bool CTuningRTI::CreateGroupGeometric(const std::vector<RATIOTYPE>& v, const RATIOTYPE& r, const VRPAIR vr, const NOTEINDEXTYPE ratiostartpos)
+//--------------------------------------------------------------------------------------------------------------------------------------------
 {
 	{
 		if(vr.first > vr.second || v.size() == 0) return true;
 		if(ratiostartpos < vr.first || vr.second < ratiostartpos || static_cast<UNOTEINDEXTYPE>(vr.second - ratiostartpos) < static_cast<UNOTEINDEXTYPE>(v.size() - 1)) return true;
-		if(!IsStepCountRangeSufficient(GetFineStepCount(), vr)) return true;
+		if(GetFineStepCount() > FINESTEPCOUNT_MAX) return true;
 		for(size_t i = 0; i<v.size(); i++) {if(v[i] < 0) return true;}
 		if(ProCreateGroupGeometric(v,r, vr, ratiostartpos))
 			return true;
@@ -190,8 +177,8 @@ bool CTuningBase::CreateGroupGeometric(const std::vector<RATIOTYPE>& v, const RA
 
 
 
-bool CTuningBase::CreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r, const VRPAIR vr)
-//---------------------------------------------------------------------------------------------
+bool CTuningRTI::CreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r, const VRPAIR vr)
+//--------------------------------------------------------------------------------------------
 {
 	{
 		if(vr.first > vr.second) return true;
@@ -210,8 +197,8 @@ bool CTuningBase::CreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r, c
 
 
 
-bool CTuningBase::ChangeGroupsize(const NOTEINDEXTYPE& s)
-//-------------------------------------------------------
+bool CTuningRTI::ChangeGroupsize(const NOTEINDEXTYPE& s)
+//------------------------------------------------------
 {
 	if(s < 1)
 		return true;
@@ -227,8 +214,8 @@ bool CTuningBase::ChangeGroupsize(const NOTEINDEXTYPE& s)
 
 
 
-bool CTuningBase::ChangeGroupRatio(const RATIOTYPE& r)
-//----------------------------------------------------
+bool CTuningRTI::ChangeGroupRatio(const RATIOTYPE& r)
+//---------------------------------------------------
 {
 	if(r <= 0)
 		return true;
@@ -242,6 +229,8 @@ bool CTuningBase::ChangeGroupRatio(const RATIOTYPE& r)
 	return true;
 }
 
+
+} // namespace Tuning
 
 
 OPENMPT_NAMESPACE_END

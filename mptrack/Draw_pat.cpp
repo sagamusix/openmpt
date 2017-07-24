@@ -18,7 +18,7 @@
 #include "View_pat.h"
 #include "EffectVis.h"		//rewbs.fxvis
 #include "ChannelManagerDlg.h"
-#include "../soundlib/tuningbase.h"
+#include "../soundlib/tuning.h"
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/Tables.h"
 #include "../soundlib/plugins/PlugInterface.h"
@@ -382,7 +382,7 @@ void CViewPattern::DrawNote(int x, int y, UINT note, CTuning* pTuning)
 		if(pTuning)
 		{
 			// Drawing custom note names
-			std::string noteStr = pTuning->GetNoteName(static_cast<CTuning::NOTEINDEXTYPE>(note - NOTE_MIDDLEC));
+			std::string noteStr = pTuning->GetNoteName(static_cast<Tuning::NOTEINDEXTYPE>(note - NOTE_MIDDLEC));
 			if(noteStr.size() < 3)
 				noteStr.resize(3, ' ');
 			

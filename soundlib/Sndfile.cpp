@@ -118,7 +118,7 @@ CSoundFile::CSoundFile() :
 	MemsetZero(Instruments);
 	MemsetZero(m_szNames);
 
-	m_pTuningsTuneSpecific = new CTuningCollection("Tune specific tunings");
+	m_pTuningsTuneSpecific = new CTuningCollection();
 }
 
 
@@ -1325,7 +1325,7 @@ bool CSoundFile::DestroySampleThreadsafe(SAMPLEINDEX nSample)
 CTuning* CSoundFile::CreateTuning12TET(const std::string &name)
 //-------------------------------------------------------------
 {
-	CTuningRTI* pT = new CTuningRTI();
+	CTuning* pT = new CTuning();
 	pT->SetName(name);
 	pT->CreateGeometric(12, 2);
 	pT->SetFineStepCount(15);

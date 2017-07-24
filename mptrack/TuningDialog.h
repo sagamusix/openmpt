@@ -224,13 +224,12 @@ public:
 	typedef std::vector<CTuningCollection*> TUNINGVECTOR;
 
 public:
-	CTuningDialog(CWnd* pParent = NULL, const TUNINGVECTOR& = TUNINGVECTOR(), CTuning* pTun = NULL);   // standard constructor
+	CTuningDialog(CWnd* pParent, INSTRUMENTINDEX inst, CSoundFile &csf);
 	virtual ~CTuningDialog();
 
 	BOOL OnInitDialog();
 
-	void AddTuningCollection(CTuningCollection* pTC) {if(pTC) m_TuningCollections.push_back(pTC);}
-	void UpdateRatioMapEdits(const CTuning::NOTEINDEXTYPE&);
+	void UpdateRatioMapEdits(const Tuning::NOTEINDEXTYPE&);
 
 	bool GetModifiedStatus(const CTuningCollection* const pTc) const;
 
@@ -275,9 +274,15 @@ private:
 
 
 private:
+
+	CSoundFile & m_sndFile;
+
 	CTuningRatioMapWnd m_RatioMapWnd;
 	TUNINGVECTOR m_TuningCollections;
 	std::vector<CTuningCollection*> m_DeletableTuningCollections;
+
+	std::map<const CTuningCollection*, CString> m_TuningCollectionsNames;
+	std::map<const CTuningCollection*, mpt::PathString> m_TuningCollectionsFilenames;
 
 	CTuning* m_pActiveTuning;
 	CTuningCollection* m_pActiveTuningCollection;
@@ -345,7 +350,7 @@ private:
 	static const HTREEITEM s_notFoundItemTree;
 
 	bool AddTuning(CTuningCollection*, CTuning* pT);
-	bool AddTuning(CTuningCollection*, CTuning::TUNINGTYPE type);
+	bool AddTuning(CTuningCollection*, Tuning::TUNINGTYPE type);
 
 	//Flag to prevent multiple exit error-messages.
 	bool m_DoErrorExit;
