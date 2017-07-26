@@ -38,87 +38,20 @@ Version history:
 const char CTuningRTI::s_FileExtension[5] = ".tun";
 
 
-const TUNINGTYPE CTuningRTI::TT_GENERAL = 0; //0...00b
 
-const TUNINGTYPE CTuningRTI::TT_GROUPGEOMETRIC = 1; //0...10b
-
-const TUNINGTYPE CTuningRTI::TT_GEOMETRIC = 3; //0...11b
-
-
-
-bool CTuningRTI::SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
-//-------------------------------------------------------------------
-{
-	if(GetType() != TT_GENERAL)
-	{
-		return true;
-	}
-	{
-		if(ProSetRatio(s, r))
-			return true;
-
-		return false;
-	}
-}
-
-
-USTEPINDEXTYPE CTuningRTI::SetFineStepCount(const USTEPINDEXTYPE& fs)
-//-------------------------------------------------------------------
-{
-	VRPAIR vrp = GetValidityRange();
-
-	if( (vrp.first > vrp.second)
-		||
-		(fs > FINESTEPCOUNT_MAX)
-	  ) return GetFineStepCount();
-	else
-	{
-		ProSetFineStepCount(fs);
-		return GetFineStepCount();
-	}
-}
-
-
-
-std::string CTuningRTI::GetNoteName(const NOTEINDEXTYPE& x, bool addOctave) const
-//-------------------------------------------------------------------------------
-{
-	if(!IsValidNote(x)) return "";
-	else return ProGetNoteName(x, addOctave);
-}
-
-
-
-bool CTuningRTI::SetNoteName(const NOTEINDEXTYPE& n, const std::string& str)
+void CTuningRTI::SetNoteName(const NOTEINDEXTYPE& n, const std::string& str)
 //--------------------------------------------------------------------------
 {
+	if(!str.empty())
 	{
 		m_NoteNameMap[n] = str;
-		return false;
-	}
-}
-
-
-
-
-bool CTuningRTI::ClearNoteName(const NOTEINDEXTYPE& n, const bool eraseAll)
-//-------------------------------------------------------------------------
-{
+	} else
 	{
-		if(eraseAll)
-		{
-			m_NoteNameMap.clear();
-			return false;
-		}
-
 		const auto iter = m_NoteNameMap.find(n);
 		if(iter != m_NoteNameMap.end())
 		{
 			m_NoteNameMap.erase(iter);
-			return false;
 		}
-		else
-			return true;
 	}
 }
 
@@ -132,11 +65,9 @@ bool CTuningRTI::Multiply(const RATIOTYPE& r)
 
 	//Note: Multiplying ratios by constant doesn't
 	//change, e.g. 'geometricness' status.
-	VRPAIR vrp = GetValidityRange();
-	for(NOTEINDEXTYPE i = vrp.first; i<vrp.second; i++)
+	for(auto & ratio : m_RatioTable)
 	{
-		if(ProSetRatio(i, r*GetRatio(i)))
-			return true;
+		ratio *= r;
 	}
 	return false;
 }
@@ -169,7 +100,7 @@ bool CTuningRTI::CreateGroupGeometric(const std::vector<RATIOTYPE>& v, const RAT
 		else
 		{
 			m_TuningType = TT_GROUPGEOMETRIC;
-			ProSetFineStepCount(GetFineStepCount());
+			UpdateFineStepTable();
 			return false;
 		}
 	}
@@ -188,7 +119,7 @@ bool CTuningRTI::CreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r, co
 		else
 		{
 			m_TuningType = TT_GEOMETRIC;
-			ProSetFineStepCount(GetFineStepCount());
+			UpdateFineStepTable();
 			return false;
 		}
 	}

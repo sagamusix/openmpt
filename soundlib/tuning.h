@@ -30,9 +30,12 @@ public:
 
 	static const char s_FileExtension[5];
 
-	static const TUNINGTYPE TT_GENERAL;
-	static const TUNINGTYPE TT_GROUPGEOMETRIC;
-	static const TUNINGTYPE TT_GEOMETRIC;
+	enum
+	{
+		TT_GENERAL        = 0,
+		TT_GROUPGEOMETRIC = 1,
+		TT_GEOMETRIC      = 3,
+	};
 
 	static const RATIOTYPE s_DefaultFallbackRatio;
 	static const NOTEINDEXTYPE s_StepMinDefault = -64;
@@ -74,11 +77,10 @@ public:
 	STEPINDEXTYPE GetStepDistance(const NOTEINDEXTYPE& noteFrom, const STEPINDEXTYPE& stepDistFrom, const NOTEINDEXTYPE& noteTo, const STEPINDEXTYPE& stepDistTo) const
 		{return GetStepDistance(noteFrom, noteTo) + stepDistTo - stepDistFrom;}
 
-	//To set finestepcount between two consecutive mainsteps and
-	//return GetFineStepCount(). This might not be the same as
-	//parameter fs if something fails. Finestep count == 0 means that
+	//To set finestepcount between two consecutive mainsteps.
+	//Finestep count == 0 means that
 	//stepdistances become the same as note distances.
-	USTEPINDEXTYPE SetFineStepCount(const USTEPINDEXTYPE& fs);
+	void SetFineStepCount(const USTEPINDEXTYPE& fs);
 
 	//Multiply all ratios by given number.
 	bool Multiply(const RATIOTYPE&);
@@ -89,14 +91,79 @@ public:
 
 	std::string GetNoteName(const NOTEINDEXTYPE& x, bool addOctave = true) const;
 
-	bool SetNoteName(const NOTEINDEXTYPE&, const std::string&);
+	void SetNoteName(const NOTEINDEXTYPE&, const std::string&);
 
-	bool ClearNoteName(const NOTEINDEXTYPE& n, const bool clearAll = false);
-
-	static CTuningRTI* Deserialize(std::istream& inStrm);
+	static CTuningRTI* CreateDeserialize(std::istream & f)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		if(pT->InitDeserialize(f) != SerializationResult::Success)
+		{
+			delete pT;
+			return nullptr;
+		}
+		return pT;
+	}
 
 	//Try to read old version (v.3) and return pointer to new instance if succesfull, else nullptr.
-	static CTuningRTI* DeserializeOLD(std::istream&);
+	static CTuningRTI* CreateDeserializeOLD(std::istream & f)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		if(pT->InitDeserializeOLD(f) != SerializationResult::Success)
+		{
+			delete pT;
+			return nullptr;
+		}
+		return pT;
+	}
+
+	static CTuningRTI* CreateGeneral(const std::string &name)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		pT->SetName(name);
+		return pT;
+	}
+
+	static CTuningRTI* CreateGroupGeometric(const std::string &name, UNOTEINDEXTYPE groupsize, RATIOTYPE groupratio, USTEPINDEXTYPE finestepcount)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		pT->SetName(name);
+		if(pT->CreateGroupGeometric(groupsize, groupratio, 0) != false)
+		{
+			delete pT;
+			return nullptr;
+		}
+		pT->SetFineStepCount(finestepcount);
+		return pT;
+	}
+
+	static CTuningRTI* CreateGroupGeometric(const std::string &name, const std::vector<RATIOTYPE> &ratios, RATIOTYPE groupratio, USTEPINDEXTYPE finestepcount)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		pT->SetName(name);
+		VRPAIR range = std::make_pair(s_StepMinDefault, static_cast<NOTEINDEXTYPE>(s_StepMinDefault + s_RatioTableSizeDefault - 1));
+		range.second = std::max(range.second, mpt::saturate_cast<NOTEINDEXTYPE>(ratios.size() - 1));
+		range.first = 0 - range.second - 1;
+		if(pT->CreateGroupGeometric(ratios, groupratio, range, 0) != false)
+		{
+			delete pT;
+			return nullptr;
+		}
+		pT->SetFineStepCount(finestepcount);
+		return pT;
+	}
+
+	static CTuningRTI* CreateGeometric(const std::string &name, UNOTEINDEXTYPE groupsize, RATIOTYPE groupratio, USTEPINDEXTYPE finestepcount)
+	{
+		CTuningRTI *pT = new CTuningRTI();
+		pT->SetName(name);
+		if(pT->CreateGeometric(groupsize, groupratio) != false)
+		{
+			delete pT;
+			return nullptr;
+		}
+		pT->SetFineStepCount(finestepcount);
+		return pT;
+	}
 
 	Tuning::SerializationResult Serialize(std::ostream& out) const;
 
@@ -104,7 +171,20 @@ public:
 	bool WriteSCL(std::ostream &f, const mpt::PathString &filename) const;
 #endif
 
-	bool UpdateRatioGroupGeometric(NOTEINDEXTYPE s, RATIOTYPE r);
+	bool ChangeGroupsize(const NOTEINDEXTYPE&);
+	bool ChangeGroupRatio(const RATIOTYPE&);
+
+	void SetName(const std::string& s) { m_TuningName = s; }
+	std::string GetName() const {return m_TuningName;}
+
+private:
+
+	CTuningRTI();
+
+	SerializationResult InitDeserialize(std::istream& inStrm);
+
+	//Try to read old version (v.3) and return pointer to new instance if succesfull, else nullptr.
+	SerializationResult InitDeserializeOLD(std::istream&);
 
 	//Create GroupGeometric tuning of *this using virtual ProCreateGroupGeometric.
 	bool CreateGroupGeometric(const std::vector<RATIOTYPE>&, const RATIOTYPE&, const VRPAIR vr, const NOTEINDEXTYPE ratiostartpos);
@@ -117,36 +197,11 @@ public:
 	bool CreateGeometric(const UNOTEINDEXTYPE& p, const RATIOTYPE& r) {return CreateGeometric(p,r,GetValidityRange());}
 	bool CreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR vr);
 
-	bool ChangeGroupsize(const NOTEINDEXTYPE&);
-	bool ChangeGroupRatio(const RATIOTYPE&);
-
-	void SetName(const std::string& s) { m_TuningName = s; }
-	std::string GetName() const {return m_TuningName;}
-
-public:
-
-	CTuningRTI();
-
-private:
-
-	//Return value: true if change was not done, and false otherwise, in case which
-	//tuningtype is automatically changed to general.
-	bool ProSetRatio(const NOTEINDEXTYPE&, const RATIOTYPE&);
-
 	//The two methods below return false if action was done, true otherwise.
 	bool ProCreateGroupGeometric(const std::vector<RATIOTYPE>&, const RATIOTYPE&, const VRPAIR&, const NOTEINDEXTYPE& ratiostartpos);
 	bool ProCreateGeometric(const UNOTEINDEXTYPE&, const RATIOTYPE&, const VRPAIR&);
 
-	void ProSetFineStepCount(const USTEPINDEXTYPE&);
-
-	std::string ProGetNoteName(const NOTEINDEXTYPE& xi, bool addOctave) const;
-
-	//Note: Groupsize is restricted to interval [0, NOTEINDEXTYPE_MAX]
-	NOTEINDEXTYPE ProSetGroupSize(const UNOTEINDEXTYPE& p) {return m_GroupSize = (p<=static_cast<UNOTEINDEXTYPE>(NOTEINDEXTYPE_MAX)) ? static_cast<NOTEINDEXTYPE>(p) : NOTEINDEXTYPE_MAX;}
-	RATIOTYPE ProSetGroupRatio(const RATIOTYPE& pr) {return m_GroupRatio = (pr >= 0) ? pr : -pr;}
-
-	//Return true if data loading failed, false otherwise.
-	bool ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize);
+	void UpdateFineStepTable();
 
 	//Note: Stepdiff should be in range [1, finestepcount]
 	RATIOTYPE GetRatioFine(const NOTEINDEXTYPE& note, USTEPINDEXTYPE stepDiff) const;

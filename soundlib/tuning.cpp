@@ -13,9 +13,6 @@
 #include "tuning.h"
 #include "../common/mptIO.h"
 #include "../common/serialization_utils.h"
-#ifdef MODPLUG_TRACKER
-#include "../mptrack/Reporting.h"
-#endif
 #include "../common/misc_util.h"
 #include <string>
 #include <cmath>
@@ -62,7 +59,6 @@ CTuningRTI::CTuningRTI()
 //----------------------
 	: m_TuningType(TT_GENERAL)
 	, m_FineStepCount(0)
-	, m_TuningName("Unnamed")
 {
 	{
 		m_RatioTable.clear();
@@ -87,8 +83,8 @@ bool CTuningRTI::ProCreateGroupGeometric(const std::vector<RATIOTYPE>& v, const 
 	}
 
 	m_StepMin = vr.first;
-	ProSetGroupSize(static_cast<UNOTEINDEXTYPE>(v.size()));
-	ProSetGroupRatio(r);
+	m_GroupSize = mpt::saturate_cast<NOTEINDEXTYPE>(v.size());
+	m_GroupRatio = std::fabs(r);
 
 	m_RatioTable.resize(vr.second-vr.first+1);
 	std::copy(v.begin(), v.end(), m_RatioTable.begin() + (ratiostartpos - vr.first));
@@ -120,9 +116,10 @@ bool CTuningRTI::ProCreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r,
 		m_RatioTableFine.clear();
 	}
 	m_StepMin = vr.first;
-	ProSetGroupSize(s);
-	ProSetGroupRatio(r);
-	const RATIOTYPE stepRatio = pow(r, static_cast<RATIOTYPE>(1)/s);
+	
+	m_GroupSize = mpt::saturate_cast<NOTEINDEXTYPE>(s);
+	m_GroupRatio = std::fabs(r);
+	const RATIOTYPE stepRatio = std::pow(m_GroupRatio, static_cast<RATIOTYPE>(1.0)/ static_cast<RATIOTYPE>(m_GroupSize));
 
 	m_RatioTable.resize(vr.second - vr.first + 1);
 	for(int32 i = vr.first; i<=vr.second; i++)
@@ -132,9 +129,13 @@ bool CTuningRTI::ProCreateGeometric(const UNOTEINDEXTYPE& s, const RATIOTYPE& r,
 	return false;
 }
 
-std::string CTuningRTI::ProGetNoteName(const NOTEINDEXTYPE& x, bool addOctave) const
-//----------------------------------------------------------------------------------
+std::string CTuningRTI::GetNoteName(const NOTEINDEXTYPE& x, bool addOctave) const
+//-------------------------------------------------------------------------------
 {
+	if(!IsValidNote(x))
+	{
+		return std::string();
+	}
 	if(GetGroupSize() < 1)
 	{
 		const auto i = m_NoteNameMap.find(x);
@@ -145,7 +146,14 @@ std::string CTuningRTI::ProGetNoteName(const NOTEINDEXTYPE& x, bool addOctave) c
 	}
 	else
 	{
-		const NOTEINDEXTYPE pos = ((x % m_GroupSize) + m_GroupSize) % m_GroupSize;
+		NOTEINDEXTYPE pos = 0;
+		if(x >= 0)
+		{
+			pos = x % m_GroupSize;
+		} else
+		{
+			pos = m_GroupSize - ((0 - x - 1 + m_GroupSize) % m_GroupSize) - 1;
+		}
 		const NOTEINDEXTYPE middlePeriodNumber = 5;
 		std::string rValue;
 		const auto nmi = m_NoteNameMap.find(pos);
@@ -165,9 +173,18 @@ std::string CTuningRTI::ProGetNoteName(const NOTEINDEXTYPE& x, bool addOctave) c
 			//By default, using notation nnP for notes; nn <-> note character starting
 			//from 'A' with char ':' as fill char, and P is period integer. For example:
 			//C:5, D:3, R:7
-			rValue = std::string(1, static_cast<char>(pos + 'A'));
-
-			rValue += ":";
+			if(m_GroupSize <= 26)
+			{
+				rValue = std::string(1, static_cast<char>(pos + 'A'));
+				rValue += ":";
+			} else
+			{
+				rValue = mpt::fmt::HEX0<1>(pos % 16) + mpt::fmt::HEX0<1>((pos / 16) % 16);
+				if(pos > 0xff)
+				{
+					rValue = mpt::ToLowerCaseAscii(rValue);
+				}
+			}
 
 			if(addOctave)
 			{
@@ -264,33 +281,14 @@ RATIOTYPE CTuningRTI::GetRatioFine(const NOTEINDEXTYPE& note, USTEPINDEXTYPE sd)
 }
 
 
-bool CTuningRTI::ProSetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
-//----------------------------------------------------------------------
+bool CTuningRTI::SetRatio(const NOTEINDEXTYPE& s, const RATIOTYPE& r)
+//-------------------------------------------------------------------
 {
-	//Creating ratio table if doesn't exist.
-	if(m_RatioTable.empty())
-	{
-		m_RatioTable.assign(s_RatioTableSizeDefault, 1);
-		m_StepMin = s_StepMinDefault;
-	}
-
-	//If note is not within the table, at least for now
-	//simply don't change anything.
-	if(!IsNoteInTable(s))
-		return true;
-
-	m_RatioTable[s - m_StepMin] = fabs(r);
-	return false;
-}
-
-
-bool CTuningRTI::UpdateRatioGroupGeometric(NOTEINDEXTYPE s, RATIOTYPE r)
-//----------------------------------------------------------------------
-{
-	if(GetType() != TT_GROUPGEOMETRIC)
+	if(GetType() != TT_GROUPGEOMETRIC && GetType() != TT_GENERAL)
 	{
 		return false;
 	}
+	//Creating ratio table if doesn't exist.
 	if(m_RatioTable.empty())
 	{
 		m_RatioTable.assign(s_RatioTableSizeDefault, 1);
@@ -301,32 +299,40 @@ bool CTuningRTI::UpdateRatioGroupGeometric(NOTEINDEXTYPE s, RATIOTYPE r)
 		return false;
 	}
 	m_RatioTable[s - m_StepMin] = std::fabs(r);
-	for(NOTEINDEXTYPE n = m_StepMin; n < m_StepMin + static_cast<NOTEINDEXTYPE>(m_RatioTable.size()); ++n)
-	{
-		if(n == s)
+	if(GetType() == TT_GROUPGEOMETRIC)
+	{ // update other groups
+		for(NOTEINDEXTYPE n = m_StepMin; n < m_StepMin + static_cast<NOTEINDEXTYPE>(m_RatioTable.size()); ++n)
 		{
-			// nothing
-		} else if(mpt::abs(n - s) % m_GroupSize == 0)
-		{
-			m_RatioTable[n - m_StepMin] = std::pow(m_GroupRatio, static_cast<RATIOTYPE>(n - s) / static_cast<RATIOTYPE>(m_GroupSize)) * m_RatioTable[s - m_StepMin];
+			if(n == s)
+			{
+				// nothing
+			} else if(mpt::abs(n - s) % m_GroupSize == 0)
+			{
+				m_RatioTable[n - m_StepMin] = std::pow(m_GroupRatio, static_cast<RATIOTYPE>(n - s) / static_cast<RATIOTYPE>(m_GroupSize)) * m_RatioTable[s - m_StepMin];
+			}
 		}
+		UpdateFineStepTable();
 	}
 	return true;
 }
 
 
-void CTuningRTI::ProSetFineStepCount(const USTEPINDEXTYPE& fs)
-//------------------------------------------------------------
+void CTuningRTI::SetFineStepCount(const USTEPINDEXTYPE& fs)
+//---------------------------------------------------------
 {
-	if(fs <= 0)
+	m_FineStepCount = mpt::clamp(mpt::saturate_cast<STEPINDEXTYPE>(fs), 0, FINESTEPCOUNT_MAX);
+	UpdateFineStepTable();
+}
+
+
+void CTuningRTI::UpdateFineStepTable()
+//------------------------------------
+{
+	if(m_FineStepCount <= 0)
 	{
-		m_FineStepCount = 0;
 		m_RatioTableFine.clear();
 		return;
 	}
-
-	m_FineStepCount = (fs > static_cast<UNOTEINDEXTYPE>(NOTEINDEXTYPE_MAX)) ? static_cast<UNOTEINDEXTYPE>(NOTEINDEXTYPE_MAX) : fs;
-
 	if(GetType() == TT_GEOMETRIC)
 	{
 		if(m_FineStepCount > s_RatioTableFineSizeMaxDefault)
@@ -392,81 +398,76 @@ NOTEINDEXTYPE CTuningRTI::GetRefNote(const NOTEINDEXTYPE note) const
 }
 
 
-CTuningRTI* CTuningRTI::Deserialize(std::istream& iStrm)
-//------------------------------------------------------
+SerializationResult CTuningRTI::InitDeserialize(std::istream& iStrm)
+//------------------------------------------------------------------
 {
 	// Note: OpenMPT since at least r323 writes version number (4<<24)+4 while it
 	// reads version number (5<<24)+4 or earlier.
 	// We keep this behaviour.
 
 	if(iStrm.fail())
-		return nullptr;
-
-	CTuningRTI* pTuning = new CTuningRTI;
+		return SerializationResult::Failure;
 
 	srlztn::SsbRead ssb(iStrm);
 	ssb.BeginRead("CTB244RTI", (5 << 24) + 4); // version
-	ssb.ReadItem(pTuning->m_TuningName, "0", ReadStr);
+	ssb.ReadItem(m_TuningName, "0", ReadStr);
 	uint16 dummyEditMask = 0xffff;
 	ssb.ReadItem(dummyEditMask, "1");
-	ssb.ReadItem(pTuning->m_TuningType, "2");
-	ssb.ReadItem(pTuning->m_NoteNameMap, "3", ReadNoteMap);
-	ssb.ReadItem(pTuning->m_FineStepCount, "4");
+	ssb.ReadItem(m_TuningType, "2");
+	ssb.ReadItem(m_NoteNameMap, "3", ReadNoteMap);
+	ssb.ReadItem(m_FineStepCount, "4");
 
 	// RTI entries.
-	ssb.ReadItem(pTuning->m_RatioTable, "RTI0", ReadRatioTable);
-	ssb.ReadItem(pTuning->m_StepMin, "RTI1");
-	ssb.ReadItem(pTuning->m_GroupSize, "RTI2");
-	ssb.ReadItem(pTuning->m_GroupRatio, "RTI3");
+	ssb.ReadItem(m_RatioTable, "RTI0", ReadRatioTable);
+	ssb.ReadItem(m_StepMin, "RTI1");
+	ssb.ReadItem(m_GroupSize, "RTI2");
+	ssb.ReadItem(m_GroupRatio, "RTI3");
 	UNOTEINDEXTYPE ratiotableSize = 0;
 	ssb.ReadItem(ratiotableSize, "RTI4");
 
 	// If reader status is ok and m_StepMin is somewhat reasonable, process data.
-	if ((ssb.GetStatus() & srlztn::SNT_FAILURE) == 0 && pTuning->m_StepMin >= -300 && pTuning->m_StepMin <= 300)
+	if(!((ssb.GetStatus() & srlztn::SNT_FAILURE) == 0 && m_StepMin >= -300 && m_StepMin <= 300))
 	{
-		if (pTuning->ProProcessUnserializationdata(ratiotableSize))
-		{
-#ifdef MODPLUG_TRACKER
-			Reporting::Error(("Processing loaded data for tuning \"" + pTuning->GetName() + "\" failed.").c_str(), "Tuning load failure");
-#else
-			MPT_LOG(LogError, "tuning", MPT_USTRING("Processing loaded data for tuning \"") + mpt::ToUnicode(mpt::CharsetISO8859_1, pTuning->GetName()) + MPT_USTRING("\" failed."));
-#endif
-			delete pTuning; pTuning = nullptr;
-		}
-		else
-		{
-			USTEPINDEXTYPE fsTemp = pTuning->m_FineStepCount;
-			pTuning->m_FineStepCount = 0;
-			pTuning->SetFineStepCount(fsTemp);
-		}
+		return SerializationResult::Failure;
 	}
-	else
-		{delete pTuning; pTuning = nullptr;}
-	return pTuning;
-}
 
-
-bool CTuningRTI::ProProcessUnserializationdata(UNOTEINDEXTYPE ratiotableSize)
-//---------------------------------------------------------------------------
-{
 	// reject unknown types
 	if(m_TuningType != TT_GENERAL && m_TuningType != TT_GROUPGEOMETRIC && m_TuningType != TT_GEOMETRIC)
 	{
-		return true;
+		return SerializationResult::Failure;
 	}
-	if (m_GroupSize < 0) {m_GroupSize = 0; return true;}
-	if (m_RatioTable.size() > static_cast<size_t>(NOTEINDEXTYPE_MAX)) return true;
+	if(m_GroupSize < 0)
+	{
+		return SerializationResult::Failure;
+	}
+	if(m_RatioTable.size() > static_cast<size_t>(NOTEINDEXTYPE_MAX))
+	{
+		return SerializationResult::Failure;
+	}
 	if((GetType() == TT_GROUPGEOMETRIC) || (GetType() == TT_GEOMETRIC))
 	{
-		if (ratiotableSize < 1 || ratiotableSize > NOTEINDEXTYPE_MAX) return true;
-		if (GetType() == TT_GEOMETRIC)
-			return CreateGeometric(GetGroupSize(), GetGroupRatio(), VRPAIR(m_StepMin, static_cast<NOTEINDEXTYPE>(m_StepMin+ratiotableSize-1)));
-		else
+		if(ratiotableSize < 1 || ratiotableSize > NOTEINDEXTYPE_MAX)
 		{
-			return CreateGroupGeometric(m_RatioTable, GetGroupRatio(), VRPAIR(m_StepMin, static_cast<NOTEINDEXTYPE>(m_StepMin+ratiotableSize-1)), m_StepMin);
+			return SerializationResult::Failure;
 		}
+		if(GetType() == TT_GEOMETRIC)
+		{
+			if(CreateGeometric(GetGroupSize(), GetGroupRatio(), VRPAIR(m_StepMin, static_cast<NOTEINDEXTYPE>(m_StepMin + ratiotableSize - 1))) != false)
+			{
+				return SerializationResult::Failure;
+			}
+		} else
+		{
+			if(CreateGroupGeometric(m_RatioTable, GetGroupRatio(), VRPAIR(m_StepMin, static_cast<NOTEINDEXTYPE>(m_StepMin+ratiotableSize-1)), m_StepMin) != false)
+			{
+				return SerializationResult::Failure;
+			}
+		}
+	} else
+	{
+		UpdateFineStepTable();
 	}
-	return false;
+	return SerializationResult::Success;
 }
 
 
@@ -496,11 +497,11 @@ static bool VectorFromBinaryStream(std::istream& inStrm, std::vector<Tdst>& v, c
 }
 
 
-CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
-//----------------------------------------------------------
+SerializationResult CTuningRTI::InitDeserializeOLD(std::istream& inStrm)
+//----------------------------------------------------------------------
 {
 	if(!inStrm.good())
-		return 0;
+		return SerializationResult::Failure;
 
 	const std::streamoff startPos = inStrm.tellg();
 
@@ -512,48 +513,42 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 	{
 		//Returning stream position if beginmarker was not found.
 		inStrm.seekg(startPos);
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	//Version
 	int16 version = 0;
 	mpt::IO::ReadIntLE<int16>(inStrm, version);
 	if(version != 2 && version != 3)
-		return 0;
-
-	CTuningRTI* pT = new CTuningRTI;
+		return SerializationResult::Failure;
 
 	char begin2[8];
 	MemsetZero(begin2);
 	inStrm.read(begin2, sizeof(begin2));
 	if(std::memcmp(begin2, "CT<sfs>B", 8))
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	int16 version2 = 0;
 	mpt::IO::ReadIntLE<int16>(inStrm, version2);
 	if(version2 != 3 && version2 != 4)
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	//Tuning name
 	if(version2 <= 3)
 	{
-		if(!mpt::IO::ReadSizedStringLE<uint32>(inStrm, pT->m_TuningName, 0xffff))
+		if(!mpt::IO::ReadSizedStringLE<uint32>(inStrm, m_TuningName, 0xffff))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	} else
 	{
-		if(!mpt::IO::ReadSizedStringLE<uint8>(inStrm, pT->m_TuningName))
+		if(!mpt::IO::ReadSizedStringLE<uint8>(inStrm, m_TuningName))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	}
 
@@ -564,7 +559,7 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 	//Tuning type
 	int16 tt = 0;
 	mpt::IO::ReadIntLE<int16>(inStrm, tt);
-	pT->m_TuningType = tt;
+	m_TuningType = tt;
 
 	//Notemap
 	uint16 size = 0;
@@ -574,8 +569,7 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 		mpt::IO::ReadIntLE<uint32>(inStrm, tempsize);
 		if(tempsize > 0xffff)
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 		size = mpt::saturate_cast<uint16>(tempsize);
 	} else
@@ -591,18 +585,16 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 		{
 			if(!mpt::IO::ReadSizedStringLE<uint32>(inStrm, str, 0xffff))
 			{
-				delete pT;
-				return 0;
+				return SerializationResult::Failure;
 			}
 		} else
 		{
 			if(!mpt::IO::ReadSizedStringLE<uint8>(inStrm, str))
 			{
-				delete pT;
-				return 0;
+				return SerializationResult::Failure;
 			}
 		}
-		pT->m_NoteNameMap[n] = str;
+		m_NoteNameMap[n] = str;
 	}
 
 	//End marker
@@ -611,94 +603,121 @@ CTuningRTI* CTuningRTI::DeserializeOLD(std::istream& inStrm)
 	inStrm.read(end2, sizeof(end2));
 	if(std::memcmp(end2, "CT<sfs>E", 8))
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	// reject unknown types
-	if(pT->m_TuningType != TT_GENERAL && pT->m_TuningType != TT_GROUPGEOMETRIC && pT->m_TuningType != TT_GEOMETRIC)
+	if(m_TuningType != TT_GENERAL && m_TuningType != TT_GROUPGEOMETRIC && m_TuningType != TT_GEOMETRIC)
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	//Ratiotable
 	if(version <= 2)
 	{
-		if(VectorFromBinaryStream<IEEE754binary32LE, uint32>(inStrm, pT->m_RatioTable, 0xffff))
+		if(VectorFromBinaryStream<IEEE754binary32LE, uint32>(inStrm, m_RatioTable, 0xffff))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	} else
 	{
-		if(VectorFromBinaryStream<IEEE754binary32LE, uint16>(inStrm, pT->m_RatioTable))
+		if(VectorFromBinaryStream<IEEE754binary32LE, uint16>(inStrm, m_RatioTable))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	}
 
 	//Fineratios
 	if(version <= 2)
 	{
-		if(VectorFromBinaryStream<IEEE754binary32LE, uint32>(inStrm, pT->m_RatioTableFine, 0xffff))
+		if(VectorFromBinaryStream<IEEE754binary32LE, uint32>(inStrm, m_RatioTableFine, 0xffff))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	} else
 	{
-		if(VectorFromBinaryStream<IEEE754binary32LE, uint16>(inStrm, pT->m_RatioTableFine))
+		if(VectorFromBinaryStream<IEEE754binary32LE, uint16>(inStrm, m_RatioTableFine))
 		{
-			delete pT;
-			return 0;
+			return SerializationResult::Failure;
 		}
 	}
-	pT->m_FineStepCount = pT->m_RatioTableFine.size();
+	m_FineStepCount = m_RatioTableFine.size();
 
 	//m_StepMin
 	int16 stepmin = 0;
 	mpt::IO::ReadIntLE<int16>(inStrm, stepmin);
-	pT->m_StepMin = stepmin;
-	if(pT->m_StepMin < -200 || pT->m_StepMin > 200)
+	m_StepMin = stepmin;
+	if(m_StepMin < -200 || m_StepMin > 200)
 	{
-		delete pT;
-		return nullptr;
+		return SerializationResult::Failure;
 	}
 
 	//m_GroupSize
 	int16 groupsize = 0;
 	mpt::IO::ReadIntLE<int16>(inStrm, groupsize);
-	pT->m_GroupSize = groupsize;
-	if(pT->m_GroupSize < 0)
+	m_GroupSize = groupsize;
+	if(m_GroupSize < 0)
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
 	//m_GroupRatio
 	IEEE754binary32LE groupratio = IEEE754binary32LE(0.0f);
 	mpt::IO::Read(inStrm, groupratio);
-	pT->m_GroupRatio = groupratio;
-	if(pT->m_GroupRatio < 0)
+	m_GroupRatio = groupratio;
+	if(m_GroupRatio < 0)
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
-
-	if(pT->GetFineStepCount() > 0) pT->ProSetFineStepCount(pT->GetFineStepCount() - 1);
 
 	char end[8];
 	MemsetZero(end);
 	inStrm.read(reinterpret_cast<char*>(&end), sizeof(end));
 	if(std::memcmp(end, "CTRTI_E.", 8))
 	{
-		delete pT;
-		return 0;
+		return SerializationResult::Failure;
 	}
 
-	return pT;
+	// reject corrupt tunings
+	if(m_RatioTable.size() > static_cast<std::size_t>(NOTEINDEXTYPE_MAX))
+	{
+		return SerializationResult::Failure;
+	}
+	if((m_GroupSize <= 0 || m_GroupRatio <= 0) && m_TuningType != TT_GENERAL)
+	{
+		return SerializationResult::Failure;
+	}
+	if(m_TuningType == TT_GROUPGEOMETRIC || m_TuningType == TT_GEOMETRIC)
+	{
+		if(m_RatioTable.size() < static_cast<std::size_t>(m_GroupSize))
+		{
+			return SerializationResult::Failure;
+		}
+	}
+
+	// convert old finestepcount
+	if(m_FineStepCount > 0)
+	{
+		m_FineStepCount -= 1;
+	}
+	UpdateFineStepTable();
+
+	if(m_TuningType == TT_GEOMETRIC)
+	{
+		// Convert old geometric to new groupgeometric because old geometric tunings
+		// can have ratio(0) != 1.0, which would get lost when saving nowadays.
+		if(mpt::saturate_cast<NOTEINDEXTYPE>(m_RatioTable.size()) >= m_GroupSize - m_StepMin)
+		{
+			std::vector<RATIOTYPE> ratios;
+			for(NOTEINDEXTYPE n = 0; n < m_GroupSize; ++n)
+			{
+				ratios.push_back(m_RatioTable[n - m_StepMin]);
+			}
+			CreateGroupGeometric(ratios, m_GroupRatio, GetValidityRange(), 0);
+		}
+	}
+
+	return SerializationResult::Success;
 }
 
 

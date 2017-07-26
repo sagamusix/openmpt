@@ -17,6 +17,7 @@
 #include "afxcmn.h"
 #include "afxwin.h"
 #include "resource.h"
+#include "CDecimalSupport.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -291,8 +292,8 @@ private:
 
 	//Tuning Edits-->
 	CEdit m_EditSteps;
-	CEdit m_EditRatioPeriod;
-	CEdit m_EditRatio;
+	CNumberEdit m_EditRatioPeriod;
+	CNumberEdit m_EditRatio;
 	CEdit m_EditNotename;
 	CEdit m_EditMiscActions;
 	CEdit m_EditFineTuneSteps;
@@ -331,7 +332,7 @@ private:
 	};
 
 	static CString GetSclImportFailureMsg(EnSclImport);
-	static const size_t s_nSclImportMaxNoteCount = 64;
+	static const size_t s_nSclImportMaxNoteCount = 256;
 
 	//To indicate whether to apply changes made to
 	//those edit boxes(they are modified by certain activities
