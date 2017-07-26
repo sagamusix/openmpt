@@ -105,6 +105,7 @@ class CollabServer : public Listener, public std::enable_shared_from_this<Collab
 	asio::ip::tcp::socket m_socket;
 	mpt::mutex m_mutex;
 	mpt::thread m_thread;
+	const int m_port;
 
 public:
 	CollabServer();
@@ -118,6 +119,8 @@ public:
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void StartAccept();
+
+	int Port() const { return m_port; }
 };
 
 
@@ -133,13 +136,27 @@ public:
 	bool Connect();
 
 	void Close();
-	void Write(const std::string &msg);
+	virtual void Write(const std::string &msg);
 
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void SetListener(std::shared_ptr<Listener> listener)
 	{
 		m_listener = listener;
+	}
+
+	void SetModDoc(CModDoc &modDoc)
+	{
+		m_connection->m_modDoc = &modDoc;
+	}
+};
+
+class LocalCollabClient : public CollabClient, public std::enable_shared_from_this<LocalCollabClient>
+{
+public:
+	void Write(const std::string &msg) override
+	{
+		msg;
 	}
 };
 

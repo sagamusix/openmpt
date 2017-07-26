@@ -197,6 +197,7 @@ void CollabConnection::WriteImpl()
 CollabServer::CollabServer()
 	: m_acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v6(), DEFAULT_PORT))
 	, m_socket(io_service)
+	, m_port(DEFAULT_PORT)
 {
 }
 

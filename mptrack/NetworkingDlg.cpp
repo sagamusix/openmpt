@@ -245,6 +245,16 @@ void SharingDlg::OnOK()
 	}
 
 	collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));
+
+	m_ModDoc.m_collabClient = std::make_shared<CollabClient>("localhost", mpt::ToString(collabServer->Port()), m_ModDoc.m_listener);
+	if(!m_ModDoc.m_collabClient->Connect())
+	{
+		Reporting::Error(_T("Unable to connect to myself!"));
+		m_ModDoc.m_collabClient = nullptr;
+		return;
+	}
+	m_ModDoc.m_collabClient->SetModDoc(m_ModDoc);
+	//collabServer->AddMasterClient(m_ModDoc, m_ModDoc.m_collabClient);
 }
 
 
