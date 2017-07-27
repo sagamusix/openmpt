@@ -126,8 +126,10 @@ public:
 
 class CollabClient : public Listener, public std::enable_shared_from_this<CollabClient>
 {
+private:
 	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
 	asio::ip::tcp::socket m_socket;
+protected:
 	std::shared_ptr<CollabConnection> m_connection;
 	std::weak_ptr<Listener> m_listener;
 
@@ -154,10 +156,9 @@ public:
 class LocalCollabClient : public CollabClient, public std::enable_shared_from_this<LocalCollabClient>
 {
 public:
-	void Write(const std::string &msg) override
-	{
-		msg;
-	}
+	LocalCollabClient(CModDoc &modDoc);
+
+	void Write(const std::string &msg) override;
 };
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;

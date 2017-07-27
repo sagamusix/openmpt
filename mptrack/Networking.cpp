@@ -463,6 +463,20 @@ void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::string
 }
 
 
+LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
+	m_connection(std::make_shared<CollabConnection>())
+{
+
+}
+
+void LocalCollabClient::Write(const std::string &msg)
+{
+	std::stringstream ss(msg);
+	collabServer->Receive(m_connection, ss);
+}
+
+
+
 }
 
 OPENMPT_NAMESPACE_END
