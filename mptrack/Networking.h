@@ -72,6 +72,53 @@ protected:
 };
 
 
+class CollabClient : public Listener
+{
+protected:
+	std::weak_ptr<Listener> m_listener;
+	std::shared_ptr<CollabConnection> m_connection;
+
+public:
+	CollabClient(std::shared_ptr<Listener> listener, std::shared_ptr<CollabConnection> connection = nullptr)
+		: m_listener(listener)
+		, m_connection(connection)
+	{ }
+
+	virtual void Close() { };
+	virtual void Write(const std::string &msg) = 0;
+
+	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
+
+	void SetListener(std::shared_ptr<Listener> listener)
+	{
+		m_listener = listener;
+	}
+};
+
+
+class RemoteCollabClient : public CollabClient, public std::enable_shared_from_this<RemoteCollabClient>
+{
+private:
+	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
+	asio::ip::tcp::socket m_socket;
+public:
+	RemoteCollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener);
+	bool Connect();
+	void Close() override;
+
+	void Write(const std::string &msg) override;
+};
+
+
+class LocalCollabClient : public CollabClient, public std::enable_shared_from_this<LocalCollabClient>
+{
+public:
+	LocalCollabClient(CModDoc &modDoc);
+
+	void Write(const std::string &msg) override;
+};
+
+
 class NetworkedDocument
 {
 public:
@@ -123,43 +170,6 @@ public:
 	int Port() const { return m_port; }
 };
 
-
-class CollabClient : public Listener, public std::enable_shared_from_this<CollabClient>
-{
-private:
-	asio::ip::tcp::resolver::iterator m_endpoint_iterator;
-	asio::ip::tcp::socket m_socket;
-protected:
-	std::shared_ptr<CollabConnection> m_connection;
-	std::weak_ptr<Listener> m_listener;
-
-public:
-	CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener);
-	bool Connect();
-
-	void Close();
-	virtual void Write(const std::string &msg);
-
-	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
-
-	void SetListener(std::shared_ptr<Listener> listener)
-	{
-		m_listener = listener;
-	}
-
-	void SetModDoc(CModDoc &modDoc)
-	{
-		m_connection->m_modDoc = &modDoc;
-	}
-};
-
-class LocalCollabClient : public CollabClient, public std::enable_shared_from_this<LocalCollabClient>
-{
-public:
-	LocalCollabClient(CModDoc &modDoc);
-
-	void Write(const std::string &msg) override;
-};
 
 extern std::vector<std::shared_ptr<CollabClient>> collabClients;
 extern std::shared_ptr<CollabServer> collabServer;

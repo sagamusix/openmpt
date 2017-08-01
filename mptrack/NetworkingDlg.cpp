@@ -96,7 +96,7 @@ void NetworkingDlg::OnConnect()
 	if(port == 0)
 		port = DEFAULT_PORT;
 
-	m_client = std::make_shared<CollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
+	m_client = std::make_shared<RemoteCollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
 	if(!m_client->Connect())
 	{
 		Reporting::Error(_T("Unable to connect to ") + server);
@@ -246,14 +246,7 @@ void SharingDlg::OnOK()
 
 	collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));
 
-	m_ModDoc.m_collabClient = std::make_shared<CollabClient>("localhost", mpt::ToString(collabServer->Port()), m_ModDoc.m_listener);
-	if(!m_ModDoc.m_collabClient->Connect())
-	{
-		Reporting::Error(_T("Unable to connect to myself!"));
-		m_ModDoc.m_collabClient = nullptr;
-		return;
-	}
-	m_ModDoc.m_collabClient->SetModDoc(m_ModDoc);
+	m_ModDoc.m_collabClient = std::make_shared<LocalCollabClient>(m_ModDoc);
 	//collabServer->AddMasterClient(m_ModDoc, m_ModDoc.m_collabClient);
 }
 

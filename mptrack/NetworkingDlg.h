@@ -26,7 +26,7 @@ class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
 	std::vector<DocumentInfo> m_docs;
-	std::shared_ptr<CollabClient> m_client;
+	std::shared_ptr<RemoteCollabClient> m_client;
 
 public:
 	static void Show(CWnd *parent);

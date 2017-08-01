@@ -413,16 +413,16 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 }
 
 
-CollabClient::CollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener)
-	: m_socket(io_service)
-	, m_listener(listener)
+RemoteCollabClient::RemoteCollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener)
+	: CollabClient(listener)
+	, m_socket(io_service)
 {
 	asio::ip::tcp::resolver resolver(io_service);
 	m_endpoint_iterator = resolver.resolve({ server, port });
 }
 
 
-bool CollabClient::Connect()
+bool RemoteCollabClient::Connect()
 {
 	/*auto that = shared_from_this();
 	asio::async_connect(m_socket, m_endpoint_iterator,
@@ -448,7 +448,7 @@ bool CollabClient::Connect()
 }
 
 
-void CollabClient::Write(const std::string &msg)
+void RemoteCollabClient::Write(const std::string &msg)
 {
 	m_connection->Write(msg);
 }
@@ -464,7 +464,7 @@ void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 
 LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
-	m_connection(std::make_shared<CollabConnection>())
+	: CollabClient(modDoc.m_listener, std::make_shared<CollabConnection>())
 {
 
 }
