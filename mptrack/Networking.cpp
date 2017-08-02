@@ -60,11 +60,17 @@ void IOService::Run()
 }
 
 
-CollabConnection::CollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener)
-	: m_socket(std::move(socket))
-	, m_strand(io_service)
-	, m_listener(listener)
+CollabConnection::CollabConnection(std::shared_ptr<Listener> listener)
+	: m_listener(listener)
 	, m_modDoc(nullptr)
+{
+}
+
+
+RemoteCollabConnection::RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener)
+	: CollabConnection(listener)
+	, m_socket(std::move(socket))
+	, m_strand(io_service)
 {
 	m_strmIn.zalloc = Z_NULL;
 	m_strmIn.zfree = Z_NULL;
@@ -78,6 +84,12 @@ CollabConnection::CollabConnection(asio::ip::tcp::socket socket, std::shared_ptr
 }
 
 
+LocalCollabConnection::LocalCollabConnection(std::shared_ptr<Listener> listener)
+	: CollabConnection(listener)
+{
+}
+
+
 CollabConnection::~CollabConnection()
 {
 	Close();
@@ -86,9 +98,9 @@ CollabConnection::~CollabConnection()
 }
 
 
-void CollabConnection::Read()
+void RemoteCollabConnection::Read()
 {
-	auto that = shared_from_this();
+	auto that = std::enable_shared_from_this<RemoteCollabConnection>::shared_from_this();
 	m_inMessage.resize(sizeof(MsgHeader));
 	asio::async_read(m_socket,
 		asio::buffer(&m_inMessage[0], sizeof(MsgHeader)),
@@ -103,30 +115,51 @@ void CollabConnection::Read()
 
 			if(asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], header.compressedSize)) >= header.compressedSize)
 			{
-				std::string decompressedMessage;
-				decompressedMessage.reserve(header.origSize);
-				std::stringstream decompressedStream(decompressedMessage);
-				auto &strm = that->m_strmIn;
-				strm.avail_in = that->m_inMessage.size();
-				strm.next_in = (Bytef *)that->m_inMessage.data();
-				char outBuf[4096];
-				do
+				if(that->Parse())
 				{
-					strm.avail_out = sizeof(outBuf);
-					strm.next_out = reinterpret_cast<Bytef *>(outBuf);
-					inflate(&strm, Z_FINISH);
-					//decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
-					decompressedStream.write(outBuf, sizeof(outBuf) - strm.avail_out);
-				} while(strm.avail_out == 0);
-				if(auto listener = that->m_listener.lock())
-				{
-					listener->Receive(that, decompressedStream);
 					that->Read();
 				}
 			}
 		}
 	});
 }
+
+
+bool CollabConnection::Parse()
+{
+	MsgHeader header;
+	std::memcpy(&header, m_inMessage.data(), sizeof(MsgHeader));
+
+	std::string decompressedMessage;
+	decompressedMessage.reserve(header.origSize);
+	std::stringstream decompressedStream(decompressedMessage);
+	auto &strm = m_strmIn;
+	strm.avail_in = m_inMessage.size();
+	strm.next_in = (Bytef *)m_inMessage.data();
+	char outBuf[4096];
+	do
+	{
+		strm.avail_out = sizeof(outBuf);
+		strm.next_out = reinterpret_cast<Bytef *>(outBuf);
+		inflate(&strm, Z_FINISH);
+		//decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
+		decompressedStream.write(outBuf, sizeof(outBuf) - strm.avail_out);
+	} while(strm.avail_out == 0);
+	if(auto listener = m_listener.lock())
+	{
+		listener->Receive(shared_from_this(), decompressedStream);
+		return true;
+	}
+	return false;
+}
+
+
+void LocalCollabConnection::Send(const std::string &msg)
+{
+	m_inMessage = msg;
+	Parse();
+}
+
 
 void CollabConnection::Write(const std::string &message)
 {
@@ -152,10 +185,16 @@ void CollabConnection::Write(const std::string &message)
 	header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
 	std::memcpy(&compressedMessage[0], &header, sizeof(header));
 
-	auto that = shared_from_this();
-	m_strand.dispatch([that, compressedMessage]()
+	Send(compressedMessage);
+}
+
+
+void RemoteCollabConnection::Send(const std::string &message)
+{
+	auto that = std::enable_shared_from_this<RemoteCollabConnection>::shared_from_this();
+	m_strand.dispatch([that, message]()
 	{
-		that->m_outMessages.push_back(compressedMessage);
+		that->m_outMessages.push_back(message);
 		if(that->m_outMessages.size() > 1)
 		{
 			// Outstanding async_write
@@ -166,16 +205,16 @@ void CollabConnection::Write(const std::string &message)
 }
 
 
-void CollabConnection::Close()
+void RemoteCollabConnection::Close()
 {
 	m_socket.close();
 }
 
 
-void CollabConnection::WriteImpl()
+void RemoteCollabConnection::WriteImpl()
 {
 	const std::string &message = m_outMessages.front();
-	auto that = shared_from_this();
+	auto that = std::enable_shared_from_this<RemoteCollabConnection>::shared_from_this();
 	asio::async_write(m_socket, asio::buffer(message.c_str(), message.size()),
 		m_strand.wrap([that](std::error_code error, const size_t /*bytesTransferred*/)
 	{
@@ -240,7 +279,7 @@ void CollabServer::StartAccept()
 	{
 		if(!ec)
 		{
-			that->m_connections.push_back(std::make_shared<CollabConnection>(std::move(that->m_socket), that));
+			that->m_connections.push_back(std::make_shared<RemoteCollabConnection>(std::move(that->m_socket), that));
 			that->m_connections.back()->Read();
 			that->StartAccept();
 		}
@@ -440,7 +479,7 @@ bool RemoteCollabClient::Connect()
 	{
 		return false;
 	}
-	m_connection = std::make_shared<CollabConnection>(std::move(m_socket), shared_from_this());
+	m_connection = std::make_shared<RemoteCollabConnection>(std::move(m_socket), shared_from_this());
 	m_connection->Read();
 
 	IOService::Run();
@@ -464,7 +503,7 @@ void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 
 LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
-	: CollabClient(modDoc.m_listener, std::make_shared<CollabConnection>())
+	: CollabClient(modDoc.m_listener, std::make_shared<LocalCollabConnection>(modDoc.m_listener))
 {
 
 }

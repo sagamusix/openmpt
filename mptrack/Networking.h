@@ -37,30 +37,23 @@ public:
 	static void Run();
 };
 
-class CollabConnection;
-class NetworkedDocument;
 
 class CollabConnection : public std::enable_shared_from_this<CollabConnection>
 {
-	asio::ip::tcp::socket m_socket;
-	asio::io_service::strand m_strand;
-	std::deque<std::string> m_outMessages;
+public:
 	z_stream m_strmIn, m_strmOut;
 	std::string m_inMessage;
 	std::weak_ptr<Listener> m_listener;
-public:
 	CModDoc *m_modDoc;
 
 public:
-	CollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
-	CollabConnection(const CollabConnection &) = delete;
-	CollabConnection(CollabConnection &&) = default;
-	~CollabConnection();
-
-	void Read();
+	CollabConnection(std::shared_ptr<Listener> listener);
+	virtual ~CollabConnection();
 
 	void Write(const std::string &message);
-	void Close();
+	virtual void Read() = 0;
+	virtual void Close() = 0;
+	virtual void Send(const std::string &message) = 0;
 
 	void SetListener(std::shared_ptr<Listener> listener)
 	{
@@ -68,7 +61,40 @@ public:
 	}
 
 protected:
+	bool Parse();
+};
+
+
+class RemoteCollabConnection : public CollabConnection, public std::enable_shared_from_this<RemoteCollabConnection>
+{
+	std::deque<std::string> m_outMessages;
+	asio::ip::tcp::socket m_socket;
+	asio::io_service::strand m_strand;
+
+public:
+	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
+	RemoteCollabConnection(const RemoteCollabConnection &) = delete;
+	RemoteCollabConnection(RemoteCollabConnection &&) = default;
+
+	void Read() override;
+	void Send(const std::string &message) override;
+	void Close() override;
+
+protected:
 	void WriteImpl();
+};
+
+
+class LocalCollabConnection : public CollabConnection//, public std::enable_shared_from_this<LocalCollabConnection>
+{
+public:
+	LocalCollabConnection(std::shared_ptr<Listener> listener);
+	LocalCollabConnection(const LocalCollabConnection &) = delete;
+	LocalCollabConnection(LocalCollabConnection &&) = default;
+
+	void Send(const std::string &message) override;
+	void Read() override { }
+	void Close() override { }
 };
 
 
