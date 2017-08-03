@@ -268,6 +268,11 @@ void CTuningDialog::UpdateView(const int updateMask)
 		return;
 	}
 
+	m_ButtonNew.EnableWindow(TRUE);
+	m_ButtonImport.EnableWindow(TRUE);
+	m_ButtonExport.EnableWindow((m_pActiveTuning || m_pActiveTuningCollection) ? TRUE : FALSE);
+	m_ButtonRemove.EnableWindow(((m_pActiveTuning && (m_pActiveTuningCollection == m_TuningCollections[0])) || (!m_pActiveTuning && m_pActiveTuningCollection && m_pActiveTuningCollection != m_TuningCollections[0])) ? TRUE : FALSE);
+
 	//Updating tuning part-->
 	if(m_pActiveTuning != NULL && (updateMask & UM_TUNINGDATA || updateMask == 0))
 	{
@@ -579,11 +584,9 @@ void CTuningDialog::OnBnClickedButtonNew()
 	HMENU popUpMenu = CreatePopupMenu();
 	if(popUpMenu == NULL) return;
 
-	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGENERAL, _T("Add General tuning"));
-
-	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add GroupGeometric tuning"));
-
-	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGEOMETRIC, _T("Add Geometric tuning"));
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add &GroupGeometric tuning"));
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGEOMETRIC, _T("Add G&eometric tuning"));
+	AppendMenu(popUpMenu, MF_STRING, ID_ADDTUNINGGENERAL, _T("Add Ge&neral tuning"));
 
 	m_CommandItemDest.Set(m_TuningCollections[0]);
 
@@ -1141,7 +1144,7 @@ void CTuningDialog::OnNMRclickTreeTuning(NMHDR *, LRESULT *pResult)
 			{
 				mask |= MF_GRAYED;
 			}
-			AppendMenu(popUpMenu, mask, ID_REMOVETUNING, _T("Remove"));
+			AppendMenu(popUpMenu, mask, ID_REMOVETUNING, _T("&Remove"));
 
 			m_CommandItemDest.Set(pT);
 		}
@@ -1155,22 +1158,14 @@ void CTuningDialog::OnNMRclickTreeTuning(NMHDR *, LRESULT *pResult)
 			mask = MF_STRING;
 			if (!CanEdit(pTC))
 				mask |= MF_GRAYED;
-			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGENERAL, _T("Add General tuning"));
-
-			mask = MF_STRING;
-			if (!CanEdit(pTC))
-				mask |= MF_GRAYED;
-			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add GroupGeometric tuning"));
-
-			mask = MF_STRING;
-			if (!CanEdit(pTC))
-				mask |= MF_GRAYED;
-			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGEOMETRIC, _T("Add Geometric tuning"));
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGROUPGEOMETRIC, _T("Add &GroupGeometric tuning"));
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGEOMETRIC, _T("Add G&eometric tuning"));
+			AppendMenu(popUpMenu, mask, ID_ADDTUNINGGENERAL, _T("Add Ge&neral tuning"));
 
 			mask = MF_STRING;
 			if(!IsDeletable(pTC))
 				mask |= MF_GRAYED;
-			AppendMenu(popUpMenu, mask, ID_REMOVETUNINGCOLLECTION, _T("Unload tuning collection"));
+			AppendMenu(popUpMenu, mask, ID_REMOVETUNINGCOLLECTION, _T("&Unload tuning collection"));
 
 			m_CommandItemDest.Set(pTC);
 		}
@@ -1285,7 +1280,7 @@ void CTuningDialog::OnEndDrag(HTREEITEM dragDestItem)
 		{
 			mask |= MF_GRAYED;
 		}
-		AppendMenu(popUpMenu, mask, ID_COPYTUNING, _T("Copy here"));
+		AppendMenu(popUpMenu, mask, ID_COPYTUNING, _T("&Copy here"));
 
 		GetCursorPos(&point);
 		TrackPopupMenu(popUpMenu, TPM_LEFTALIGN|TPM_RIGHTBUTTON, point.x, point.y, 0, m_hWnd, NULL);

@@ -156,7 +156,7 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 			chn.pModInstrument = nullptr;
 		}
 
-		for(INSTRUMENTINDEX nIns = 0; nIns <= m_SndFile.GetNumInstruments(); nIns++) if (m_SndFile.Instruments[nIns])
+		for(INSTRUMENTINDEX nIns = 0; nIns <= m_SndFile.GetNumInstruments(); nIns++)
 		{
 			delete m_SndFile.Instruments[nIns];
 			m_SndFile.Instruments[nIns] = nullptr;
@@ -180,16 +180,13 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 		}
 	}
 
+	bool onlyAmigaNotes = true;
 	for(auto &pat : m_SndFile.Patterns) if(pat.IsValid())
 	{
 		// This is used for -> MOD/XM conversion
-		std::vector<std::vector<ModCommand::PARAM>> effMemory(GetNumChannels());
+		std::vector<ModCommand::PARAM[MAX_EFFECTS]> effMemory(GetNumChannels());
 		std::vector<ModCommand::VOL> volMemory(GetNumChannels(), 0);
 		std::vector<ModCommand::INSTR> instrMemory(GetNumChannels(), 0);
-		for(auto &effChn : effMemory)
-		{
-			effChn.resize(MAX_EFFECTS, 0);
-		}
 
 		bool addBreak = false;	// When converting to XM, avoid the E60 bug.
 		CHANNELINDEX chn = 0;
@@ -270,6 +267,10 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 				{
 					const int newNote = m->note + m_SndFile.GetSample(instr).RelativeTone;
 					m->note = static_cast<ModCommand::NOTE>(Clamp(newNote, specs.noteMin, specs.noteMax));
+				}
+				if(!m->IsAmigaNote())
+				{
+					onlyAmigaNotes = false;
 				}
 			}
 
@@ -375,7 +376,6 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 			}
 		}
 
-		// TODO: Pattern notes could be transposed based on the previous relative tone?
 		if(newTypeIsMOD && sample.RelativeTone != 0)
 		{
 			CHANGEMODTYPE_WARNING(wMODSampleFrequency);
@@ -395,9 +395,9 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 		// Convert IT/MPT to XM (fix instruments)
 		if(newTypeIsXM)
 		{
-			for(size_t i = 0; i < CountOf(pIns->NoteMap); i++)
+			for(size_t i = 0; i < mpt::size(pIns->NoteMap); i++)
 			{
-				if (pIns->NoteMap[i] && pIns->NoteMap[i] != static_cast<uint8>(i + 1))
+				if (pIns->NoteMap[i] && pIns->NoteMap[i] != (i + 1))
 				{
 					CHANGEMODTYPE_WARNING(wBrokenNoteMap);
 					break;
@@ -422,12 +422,10 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 			{
 				CHANGEMODTYPE_WARNING(wInstrumentTuning);
 			}
-
 			if(pIns->pitchToTempoLock.GetRaw() != 0)
 			{
 				CHANGEMODTYPE_WARNING(wPitchToTempoLock);
 			}
-
 			if((pIns->nCutSwing | pIns->nResSwing) != 0)
 			{
 				CHANGEMODTYPE_WARNING(wFilterVariation);
@@ -440,21 +438,24 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 	if(newTypeIsMOD)
 	{
 		// Not supported in MOD format
+		auto firstPat = std::find_if(m_SndFile.Order().cbegin(), m_SndFile.Order().cend(), [this](PATTERNINDEX pat) { return m_SndFile.Patterns.IsValidPat(pat); });
+		bool firstPatValid = firstPat != m_SndFile.Order().cend();
 		bool lossy = false;
+
 		if(m_SndFile.m_nDefaultSpeed != 6)
 		{
-			if(!m_SndFile.Order().empty())
+			if(firstPatValid)
 			{
-				m_SndFile.Patterns[m_SndFile.Order()[0]].WriteEffect(EffectWriter(CMD_SPEED, ModCommand::PARAM(m_SndFile.m_nDefaultSpeed)).Retry(EffectWriter::rmTryNextRow));
+				m_SndFile.Patterns[*firstPat].WriteEffect(EffectWriter(CMD_SPEED, ModCommand::PARAM(m_SndFile.m_nDefaultSpeed)).Retry(EffectWriter::rmTryNextRow));
 			}
 			m_SndFile.m_nDefaultSpeed = 6;
 			lossy = true;
 		}
 		if(m_SndFile.m_nDefaultTempo != TEMPO(125, 0))
 		{
-			if(!m_SndFile.Order().empty())
+			if(firstPatValid)
 			{
-				m_SndFile.Patterns[m_SndFile.Order()[0]].WriteEffect(EffectWriter(CMD_TEMPO, ModCommand::PARAM(m_SndFile.m_nDefaultTempo.GetInt())).Retry(EffectWriter::rmTryNextRow));
+				m_SndFile.Patterns[*firstPat].WriteEffect(EffectWriter(CMD_TEMPO, ModCommand::PARAM(m_SndFile.m_nDefaultTempo.GetInt())).Retry(EffectWriter::rmTryNextRow));
 			}
 			m_SndFile.m_nDefaultTempo.Set(125);
 			lossy = true;
@@ -546,7 +547,7 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 	if(oldTypeIsXM && newTypeIsIT_MPT)
 	{
 		m_SndFile.m_SongFlags.set(SONG_ITCOMPATGXX);
-	} else if(newTypeIsMOD)
+	} else if(newTypeIsMOD && GetNumChannels() == 4 && onlyAmigaNotes)
 	{
 		m_SndFile.m_SongFlags.set(SONG_ISAMIGA);
 		m_SndFile.InitAmigaResampler();
@@ -646,7 +647,7 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 	{ wResamplingMode, "Song-specific resampling mode is not supported by the new format." },
 	{ wFractionalTempo, "Fractional tempo is not supported by the new format." },
 	};
-	for(auto &msg : messages)
+	for(const auto &msg : messages)
 	{
 		if(warnings[msg.warning])
 			AddToLog(LogInformation, mpt::ToUnicode(mpt::CharsetUTF8, msg.mesage));
@@ -654,7 +655,7 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 
 	SetModified();
 	GetPatternUndo().ClearUndo();
-	UpdateAllViews(NULL, GeneralHint().General().ModType());
+	UpdateAllViews(nullptr, GeneralHint().General().ModType());
 	EndWaitCursor();
 
 	// Update effect key commands

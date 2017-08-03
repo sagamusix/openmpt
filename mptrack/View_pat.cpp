@@ -144,7 +144,8 @@ CSoundFile *CViewPattern::GetSoundFile() { return (GetDocument() != nullptr) ? G
 CViewPattern::CViewPattern()
 //--------------------------
 {
-	m_pEffectVis = nullptr; //rewbs.fxvis
+	EnableActiveAccessibility();
+	m_pEffectVis = nullptr;
 	m_bLastNoteEntryBlocked = false;
 
 	m_nPattern = 0;
@@ -6896,6 +6897,40 @@ void CViewPattern::ApplyToSelection(Func func)
 			func(*m, row, chn);
 		}
 	}
+}
+
+
+HRESULT CViewPattern::get_accName(VARIANT varChild, BSTR *pszName)
+//----------------------------------------------------------------
+{
+	const ModCommand &m = GetCursorCommand();
+	size_t columnIndex = m_Cursor.GetColumnType();
+	static const TCHAR *column = _T("");
+	static const TCHAR *regularColumns[] = { _T("Note"), _T("Instrument"), _T("Volume"), _T("Effect"), _T("Parameter") };
+	static const TCHAR *pcColumns[] = { _T("Note"), _T("Plugin"), _T("Plugin Parameter"), _T("Parameter Value"), _T("Parameter Value") };
+	STATIC_ASSERT(PatternCursor::lastColumn + 1 == mpt::size(regularColumns));
+	STATIC_ASSERT(PatternCursor::lastColumn + 1 == mpt::size(pcColumns));
+
+	if(m.IsPcNote() && columnIndex < mpt::size(pcColumns))
+		column = pcColumns[columnIndex];
+	else if(!m.IsPcNote() && columnIndex < mpt::size(regularColumns))
+		column = regularColumns[columnIndex];
+
+	const CSoundFile *sndFile = GetSoundFile();
+	CString str = TrackerSettings::Instance().patternAccessibilityFormat;
+	str.Replace(_T("%sequence%"), mpt::tfmt::val(sndFile->Order.GetCurrentSequenceIndex()));
+	str.Replace(_T("%order%"), mpt::tfmt::val(GetCurrentOrder()));
+	str.Replace(_T("%pattern%"), mpt::tfmt::val(GetCurrentPattern()));
+	str.Replace(_T("%row%"), mpt::tfmt::val(m_Cursor.GetRow()));
+	str.Replace(_T("%channel%"), mpt::tfmt::val(m_Cursor.GetChannel() + 1));
+	str.Replace(_T("%column_type%"), column);
+	str.Replace(_T("%column_description%"), GetCursorDescription());
+
+	if(str.IsEmpty())
+		return CModScrollView::get_accName(varChild, pszName);
+
+	*pszName = str.AllocSysString();
+	return S_OK;
 }
 
 OPENMPT_NAMESPACE_END

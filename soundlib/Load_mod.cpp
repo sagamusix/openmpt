@@ -2,7 +2,8 @@
  * Load_mod.cpp
  * ------------
  * Purpose: MOD / NST (ProTracker / NoiseTracker), M15 / STK (Ultimate Soundtracker / Soundtracker) and ST26 (SoundTracker 2.6 / Ice Tracker) module loader / saver
- * Notes  : (currently none)
+ * Notes  : "2000 LOC for processing MOD files?!" you say? Well, this file also contains loaders for some formats that are almost identical to MOD, and extensive
+ *          heuristics for more or less broken MOD files and files saved with tons of different trackers, to allow for the most optimal playback.
  * Authors: Olivier Lapicque
  *          OpenMPT Devs
  * The OpenMPT source code is released under the BSD license. Read LICENSE for more details.
@@ -531,7 +532,7 @@ static PATTERNINDEX GetNumPatterns(FileReader &file, ModSequence &Order, ORDERIN
 		}
 	}
 
-	// Fill order tail with stop patterns, now that we don't need the garbage in there anymore.
+	// Remove the garbage patterns past the official order end now that we don't need them anymore.
 	Order.resize(numOrders);
 
 	const size_t patternStartOffset = file.GetPosition();
@@ -663,7 +664,7 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_MOD);
 	m_nChannels = 4;
-	bool isNoiseTracker = false, isStartrekker = false;
+	bool isNoiseTracker = false, isStartrekker = false, isGenericMultiChannel = false;
 
 	// Check MOD Magic
 	if(IsMagic(magic, "M.K.")		// ProTracker and compatible
@@ -710,12 +711,14 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 		// xCHN - Many trackers
 		m_nChannels = magic[0] - '0';
 		m_madeWithTracker = MPT_USTRING("Generic MOD-compatible Tracker");
+		isGenericMultiChannel = true;
 	} else if(magic[0] >= '1' && magic[0] <= '9' && magic[1]>='0' && magic[1] <= '9'
 		&& (!memcmp(magic + 2, "CH", 2) || !memcmp(magic + 2, "CN", 2)))
 	{
 		// xxCN / xxCH - Many trackers
 		m_nChannels = (magic[0] - '0') * 10 + magic[1] - '0';
 		m_madeWithTracker = MPT_USTRING("Generic MOD-compatible Tracker");
+		isGenericMultiChannel = true;
 	} else if(!memcmp(magic, "TDZ", 3) && magic[3] >= '4' && magic[3] <= '9')
 	{
 		// TDZx - TakeTracker
@@ -813,7 +816,7 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 	// (Ultimate) Soundtracker didn't have a restart position, but instead stored a default tempo in this value.
 	// The default value for this is 0x78 (120 BPM). This is probably the reason why some M.K. modules
 	// have this weird restart position. I think I've read somewhere that NoiseTracker actually writes 0x78 there.
-	// Files that have restart pos == 0x78: action's batman by DJ Uno (M.K.), VALLEY.MOD (M.K.), WormsTDC.MOD (M.K.), ZWARTZ.MOD (M.K.)
+	// M.K. files that have restart pos == 0x78: action's batman by DJ Uno, VALLEY.MOD, WormsTDC.MOD, ZWARTZ.MOD
 	// Files that have an order list longer than 0x78 with restart pos = 0x78: my_shoe_is_barking.mod, papermix.mod
 	// - in both cases it does not appear like the restart position should be used.
 	MPT_ASSERT(fileHeader.restartPos != 0x78 || fileHeader.restartPos + 1u >= realOrders);
@@ -822,7 +825,6 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 		Order().SetRestartPos(0);
 	}
 
-	// Now we can be pretty sure that this is a valid MOD file. Set up default song settings.
 	m_nDefaultSpeed = 6;
 	m_nDefaultTempo.Set(125);
 	m_nMinPeriod = 14 * 4;
@@ -831,7 +833,7 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 	// is the maximum possible sample pre-amp without getting distortion (Compatible mix levels given).
 	// The more channels we have, the less likely it is that all of them are used at the same time, though, so cap at 32...
 	m_nSamplePreAmp = Clamp(256 / m_nChannels, 32, 128);
-	m_SongFlags.reset();
+	m_SongFlags.reset();	// SONG_ISAMIGA will be set conditionally
 
 	// Setup channel pan positions and volume
 	SetupMODPanning();
@@ -856,7 +858,7 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 			{
 				ModCommand m;
 				ReadMODPatternEntry(file, m);
-				if(m.note != NOTE_NONE && (m.note < NOTE_MIDDLEC - 12 || m.note >= NOTE_MIDDLEC + 24))
+				if(!m.IsAmigaNote())
 				{
 					isNoiseTracker = onlyAmigaNotes = false;
 				}
@@ -887,6 +889,9 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 	const CHANNELINDEX readChannels = (isFLT8 ? 4 : m_nChannels); // 4 channels per pattern in FLT8 format.
 	if(isFLT8) numPatterns++; // as one logical pattern consists of two real patterns in FLT8 format, the highest pattern number has to be increased by one.
 	bool hasTempoCommands = false, definitelyCIA = false;	// for detecting VBlank MODs
+	// Heuristic for rejecting E0x commands that are most likely not intended to actually toggle the Amiga LED filter, like in naen_leijasi_ptk.mod by ilmarque
+	bool filterState = false;
+	int filterTransitions = 0;
 
 	// Reading patterns
 	Patterns.ResizeArray(numPatterns);
@@ -965,6 +970,15 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 					{
 						m.param = mpt::saturate_cast<ModCommand::PARAM>(m.param * 2);
 					}
+				} else if(m.command == CMD_MODCMDEX && m.param < 0x10)
+				{
+					// Count LED filter transitions
+					bool newState = !(m.param & 0x01);
+					if(newState != filterState)
+					{
+						filterState = newState;
+						filterTransitions++;
+					}
 				}
 				if(m.note == NOTE_NONE && m.instr > 0 && !isFLT8)
 				{
@@ -1010,6 +1024,11 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 	} else if(!onlyAmigaNotes && fileHeader.restartPos == 0x7F && isMdKd && fileHeader.restartPos + 1u >= realOrders)
 	{
 		m_madeWithTracker = MPT_USTRING("ScreamTracker");
+	}
+
+	if(onlyAmigaNotes && !isGenericMultiChannel && filterTransitions < 7)
+	{
+		m_SongFlags.set(SONG_ISAMIGA);
 	}
 
 	// Reading samples
@@ -1301,7 +1320,7 @@ bool CSoundFile::ReadM15(FileReader &file, ModLoadingFlags loadFlags)
 	m_nMinPeriod = 14 * 4;
 	m_nMaxPeriod = 3424 * 4;
 	m_nSamplePreAmp = 64;
-	m_SongFlags = SONG_PT_MODE;
+	m_SongFlags.set(SONG_PT_MODE);
 	mpt::String::Read<mpt::String::spacePadded>(m_songName, songname);
 
 	// Setup channel pan positions and volume
@@ -1621,7 +1640,7 @@ bool CSoundFile::ReadICE(FileReader &file, ModLoadingFlags loadFlags)
 	m_nMinPeriod = 14 * 4;
 	m_nMaxPeriod = 3424 * 4;
 	m_nSamplePreAmp = 64;
-	m_SongFlags = SONG_PT_MODE;
+	m_SongFlags.set(SONG_PT_MODE);
 
 	// Setup channel pan positions and volume
 	SetupMODPanning();

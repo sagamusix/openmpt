@@ -13,7 +13,7 @@ echo "Gathering version ..."
 . libopenmpt/libopenmpt_version.mk
 
 echo "Cleaning local buid ..."
-make clean
+make NO_SDL=1 NO_SDL2=1 clean
 
 echo "Cleaning dist-autotools.tar ..."
 rm -rf bin/dist-autotools.tar || true
@@ -90,14 +90,14 @@ echo " BUILD_SVNVERSION=${BUILD_SVNVERSION}"
 echo " BUILD_SVNDATE=${BUILD_SVNDATE}"
 
 echo "Building man pages ..."
-make bin/openmpt123.1
+make NO_SDL=1 NO_SDL2=1 bin/openmpt123.1
 
 echo "Copying man pages ..."
 mkdir bin/dist-autotools/man
 cp bin/openmpt123.1 bin/dist-autotools/man/openmpt123.1
 
 echo "Cleaning local buid ..."
-make clean
+make NO_SDL=1 NO_SDL2=1 clean
 
 echo "Changing to autotools package directory ..."
 OLDDIR="$(pwd)"
@@ -123,6 +123,7 @@ cat configure.ac | sed "s/!!MPT_PACKAGE!!/true/g" > configure.ac.tmp && mv confi
 echo "Generating 'Doxyfile.in' ..."
 ( cat libopenmpt/Doxyfile | grep -v '^PROJECT_NUMBER' | sed 's/INPUT                 += /INPUT += @top_srcdir@\//g' > Doxyfile.in ) && ( echo "PROJECT_NUMBER = @PACKAGE_VERSION@" >> Doxyfile.in ) && rm libopenmpt/Doxyfile
 echo "OUTPUT_DIRECTORY = doxygen-doc" >> Doxyfile.in
+echo "WARN_IF_DOC_ERROR = NO" >> Doxyfile.in
 
 echo "Running 'autoreconf -i' ..."
 autoreconf -i
@@ -134,7 +135,11 @@ echo "Running 'make dist' ..."
 make dist
 
 echo "Running 'make distcheck' ..."
-make distcheck
+#make distcheck
+(
+ make distcheck 3>&1 1>&2 2>&3 | ( grep -v 'libtool: install: warning:' || true )
+ exit ${PIPESTATUS[0]}
+) 3>&1 1>&2 2>&3
 
 echo "Running 'make' ..."
 make
@@ -144,7 +149,7 @@ make check
 
 echo "Building dist-autotools.tar ..."
 cd "$OLDDIR"
-MPT_LIBOPENMPT_VERSION=$(make distversion-tarball)
+MPT_LIBOPENMPT_VERSION=$(make NO_SDL=1 NO_SDL2=1 distversion-tarball)
 cd bin/dist-autotools
 rm -rf libopenmpt
 mkdir -p libopenmpt/src.autotools/$MPT_LIBOPENMPT_VERSION/

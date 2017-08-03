@@ -579,7 +579,9 @@ enum STBVorbisError
    #undef __forceinline
    #endif
    #define __forceinline
+#if 0 // OpenMPT
    #define alloca __builtin_alloca
+#endif // OpenMPT
 #elif !defined(_MSC_VER)
    #if __GNUC__
       #define __forceinline inline
@@ -3922,7 +3924,12 @@ static int start_decoder(vorb *f)
             g->sorted_order[j] = (uint8) p[j].id;
          // precompute the neighbors
          for (j=2; j < g->values; ++j) {
+#if 0 // OpenMPT
             int low,hi;
+#else // OpenMPT
+            int low=0; // OpenMPT
+            int hi=0; // OpenMPT
+#endif // OpenMPT
             neighbors(g->Xlist, j, &low,&hi);
             g->neighbors[j][0] = low;
             g->neighbors[j][1] = hi;
