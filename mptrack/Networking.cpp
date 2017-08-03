@@ -92,7 +92,6 @@ LocalCollabConnection::LocalCollabConnection(std::shared_ptr<Listener> listener)
 
 CollabConnection::~CollabConnection()
 {
-	Close();
 	inflateEnd(&m_strmIn);
 	deflateEnd(&m_strmOut);
 }
@@ -202,6 +201,12 @@ void RemoteCollabConnection::Send(const std::string &message)
 		}
 		that->WriteImpl();
 	});
+}
+
+
+RemoteCollabConnection::~RemoteCollabConnection()
+{
+	Close();
 }
 
 

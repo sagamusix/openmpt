@@ -52,7 +52,6 @@ public:
 
 	void Write(const std::string &message);
 	virtual void Read() = 0;
-	virtual void Close() = 0;
 	virtual void Send(const std::string &message) = 0;
 
 	void SetListener(std::shared_ptr<Listener> listener)
@@ -75,10 +74,11 @@ public:
 	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
 	RemoteCollabConnection(const RemoteCollabConnection &) = delete;
 	RemoteCollabConnection(RemoteCollabConnection &&) = default;
+	~RemoteCollabConnection();
 
 	void Read() override;
 	void Send(const std::string &message) override;
-	void Close() override;
+	void Close();
 
 protected:
 	void WriteImpl();
@@ -94,7 +94,6 @@ public:
 
 	void Send(const std::string &message) override;
 	void Read() override { }
-	void Close() override { }
 };
 
 
@@ -110,7 +109,6 @@ public:
 		, m_connection(connection)
 	{ }
 
-	virtual void Close() { };
 	virtual void Write(const std::string &msg) = 0;
 
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
@@ -130,7 +128,6 @@ private:
 public:
 	RemoteCollabClient(const std::string &server, const std::string &port, std::shared_ptr<Listener> listener);
 	bool Connect();
-	void Close() override;
 
 	void Write(const std::string &msg) override;
 };
