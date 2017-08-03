@@ -45,6 +45,7 @@ public:
 	std::string m_inMessage;
 	std::weak_ptr<Listener> m_listener;
 	CModDoc *m_modDoc;
+	uint32 m_origSize;
 
 public:
 	CollabConnection(std::shared_ptr<Listener> listener);
@@ -64,7 +65,7 @@ protected:
 };
 
 
-class RemoteCollabConnection : public CollabConnection, public std::enable_shared_from_this<RemoteCollabConnection>
+class RemoteCollabConnection : public CollabConnection
 {
 	std::deque<std::string> m_outMessages;
 	asio::ip::tcp::socket m_socket;
@@ -85,7 +86,7 @@ protected:
 };
 
 
-class LocalCollabConnection : public CollabConnection//, public std::enable_shared_from_this<LocalCollabConnection>
+class LocalCollabConnection : public CollabConnection
 {
 public:
 	LocalCollabConnection(std::shared_ptr<Listener> listener);
@@ -117,6 +118,11 @@ public:
 	{
 		m_listener = listener;
 	}
+
+	std::shared_ptr<CollabConnection> GetConnection()
+	{
+		return m_connection;
+	}
 };
 
 
@@ -133,7 +139,7 @@ public:
 };
 
 
-class LocalCollabClient : public CollabClient, public std::enable_shared_from_this<LocalCollabClient>
+class LocalCollabClient : public CollabClient
 {
 public:
 	LocalCollabClient(CModDoc &modDoc);
@@ -149,21 +155,28 @@ public:
 	mpt::ustring m_password;
 	int m_collaborators, m_maxCollaborators;
 	int m_spectators, m_maxSpectators;
-	std::vector<std::shared_ptr<CollabConnection>> m_connections;
-	// TODO: add connections here
+	mutable std::vector<std::shared_ptr<CollabConnection>> m_connections;
 
-	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring())
+	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)
 		: m_modDoc(modDoc)
 		, m_password(password)
 		, m_collaborators(0)
 		, m_maxCollaborators(collaborators)
 		, m_spectators(0)
 		, m_maxSpectators(spectators)
-	{ }
+	{
+		if(connection != nullptr)
+		{
+			m_connections.push_back(connection);
+		}
+	}
 
 	operator CModDoc& () { return m_modDoc; }
 	operator const CModDoc& () const { return m_modDoc; }
+	bool operator== (const NetworkedDocument &other) const { return &m_modDoc == &other.m_modDoc; }
 	bool operator< (const NetworkedDocument &other) const { return &m_modDoc < &other.m_modDoc; }
+	bool operator== (const CModDoc *modDoc) const { return &m_modDoc == modDoc; }
+	bool operator< (const CModDoc *modDoc) const { return &m_modDoc < modDoc; }
 };
 
 
@@ -181,7 +194,7 @@ public:
 	CollabServer();
 	~CollabServer();
 
-	void AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
+	std::shared_ptr<LocalCollabClient> AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
 	void CloseDocument(CModDoc &modDoc);
 
 	void SendMessage(CModDoc &modDoc, const std::string msg);

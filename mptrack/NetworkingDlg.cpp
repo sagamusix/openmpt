@@ -244,10 +244,7 @@ void SharingDlg::OnOK()
 		collabServer->StartAccept();
 	}
 
-	collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));
-
-	m_ModDoc.m_collabClient = std::make_shared<LocalCollabClient>(m_ModDoc);
-	//collabServer->AddMasterClient(m_ModDoc, m_ModDoc.m_collabClient);
+	m_ModDoc.m_collabClient = collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));;
 }
 
 
