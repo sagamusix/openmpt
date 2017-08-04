@@ -336,14 +336,21 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		{
 			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
 			{
-				CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
-				sndFile.SaveMixPlugins();
-				ar(ConnectOKMsg);
-				ar(sndFile);
-				ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
-				m_connections.push_back(source);
-				doc->m_connections.push_back(source);
-				source->m_modDoc = modDoc;
+				if(doc->m_collaborators < doc->m_maxCollaborators)
+				{
+					CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
+					sndFile.SaveMixPlugins();
+					ar(ConnectOKMsg);
+					ar(sndFile);
+					ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
+					m_connections.push_back(source);
+					doc->m_connections.push_back(source);
+					doc->m_collaborators++;
+					source->m_modDoc = modDoc;
+				} else
+				{
+					ar(NoMoreClientsMsg);
+				}
 			} else
 			{
 				ar(WrongPasswordMsg);

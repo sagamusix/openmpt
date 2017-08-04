@@ -53,6 +53,7 @@ enum
 	WM_MOD_RECORDPARAM,
 	WM_MOD_PLUGPARAMAUTOMATE,
 	WM_MOD_MIDIMAPPING,
+	WM_MOD_UPDATEVIEWS,
 };
 
 enum
@@ -531,6 +532,7 @@ protected:
 	afx_msg LRESULT OnUpdateCheckFailure(WPARAM wparam, LPARAM lparam);
 	afx_msg void OnHelp();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
+	afx_msg LRESULT OnUpdateAllViews(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:

@@ -176,6 +176,9 @@ void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream
 	} else if(type == WrongPasswordMsg)
 	{
 		Reporting::Error("The password was incorrect.");
+	} else if(type == NoMoreClientsMsg)
+	{
+		Reporting::Error("No more clients can join this shared song.");
 	} else if(type == ConnectOKMsg)
 	{
 		// Need to do this in GUI thread

@@ -105,6 +105,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_MOD_SPECIALKEY,			OnSpecialKey)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,			OnCustomKeyMsg)
 	ON_MESSAGE(WM_MOD_MIDIMAPPING,			OnViewMIDIMapping)
+	ON_MESSAGE(WM_MOD_UPDATEVIEWS,			OnUpdateAllViews)
 	ON_COMMAND(ID_INTERNETUPDATE,			OnInternetUpdate)
 	ON_COMMAND(ID_HELP_SHOWSETTINGSFOLDER,	OnShowSettingsFolder)
 	ON_MESSAGE(MPT_WM_APP_UPDATECHECK_PROGRESS, OnUpdateCheckProgress)
@@ -2884,6 +2885,15 @@ void CMainFrame::UpdateMRUList()
 			::InsertMenuW(pMenu->m_hMenu, firstMenu + i, MF_STRING | MF_BYPOSITION, ID_MRU_LIST_FIRST + i, s.c_str());
 		}
 	}
+}
+
+
+LRESULT CMainFrame::OnUpdateAllViews(WPARAM wParam, LPARAM lParam)
+//----------------------------------------------------------------
+{
+	// TODO: As this is called from PostMessage, verify that CModDoc is still valid?
+	reinterpret_cast<CModDoc *>(wParam)->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(lParam));
+	return 0;
 }
 
 

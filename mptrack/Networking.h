@@ -153,8 +153,8 @@ class NetworkedDocument
 public:
 	CModDoc &m_modDoc;
 	mpt::ustring m_password;
-	int m_collaborators, m_maxCollaborators;
-	int m_spectators, m_maxSpectators;
+	mutable int m_collaborators, m_spectators;
+	int m_maxCollaborators, m_maxSpectators;
 	mutable std::vector<std::shared_ptr<CollabConnection>> m_connections;
 
 	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)

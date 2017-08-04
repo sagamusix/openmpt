@@ -3238,6 +3238,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	Networking::NetworkMessage type;
 	inArchive >> type;
 	OutputDebugStringA(std::string(type.type, 4).c_str());
+	UpdateHint hint;
 
 	if(type == Networking::PatternTransactionMsg)
 	{
@@ -3248,6 +3249,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		{
 			msg.Apply(m_SndFile.Patterns[msg.pattern]);
 		}
+		hint = PatternHint(msg.pattern).Names().Data();
 	} else if(type == Networking::SamplePropertyTransactionMsg)
 	{
 		Networking::SamplePropertyEditMsg msg;
@@ -3257,6 +3259,12 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		{
 			msg.Apply(m_SndFile, msg.id);
 		}
+		hint = SampleHint(msg.id).Names().Info();
+	}
+
+	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
+	{
+		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), hint.AsLPARAM());
 	}
 }
 
