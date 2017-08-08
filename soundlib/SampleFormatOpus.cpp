@@ -144,22 +144,31 @@ bool CSoundFile::ReadOpusSample(SAMPLEINDEX sample, FileReader &file)
 		return false;
 	}
 
+	if((raw_sample_data.size() / channels) > MAX_SAMPLE_LENGTH)
+	{
+		return false;
+	}
+
 	DestroySampleThreadsafe(sample);
 	strcpy(m_szNames[sample], "");
 	Samples[sample].Initialize();
 	Samples[sample].nC5Speed = rate;
-	Samples[sample].nLength = raw_sample_data.size() / channels;
+	Samples[sample].nLength = mpt::saturate_cast<SmpLength>(raw_sample_data.size() / channels);
 
 	Samples[sample].uFlags.set(CHN_16BIT);
 	Samples[sample].uFlags.set(CHN_STEREO, channels == 2);
-	Samples[sample].AllocateSample();
+
+	if(!Samples[sample].AllocateSample())
+	{
+		return false;
+	}
 
 	std::copy(raw_sample_data.begin(), raw_sample_data.end(), Samples[sample].pSample16);
 
 	Samples[sample].Convert(MOD_TYPE_IT, GetType());
 	Samples[sample].PrecomputeLoops(*this, false);
 
-	return Samples[sample].pSample != nullptr;
+	return true;
 
 #else // !MPT_WITH_OPUSFILE
 
