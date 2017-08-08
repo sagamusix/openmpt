@@ -10,8 +10,8 @@
 
 #pragma once
 #include <asio.hpp>
-#include <set>
 #include <deque>
+#include <map>
 #include <zlib/zlib.h>
 #include "../common/mptMutex.h"
 #include "../common/mptThread.h"
@@ -151,15 +151,13 @@ public:
 class NetworkedDocument
 {
 public:
-	CModDoc &m_modDoc;
 	mpt::ustring m_password;
-	mutable int m_collaborators, m_spectators;
-	int m_maxCollaborators, m_maxSpectators;
-	mutable std::vector<std::shared_ptr<CollabConnection>> m_connections;
+	int m_collaborators, m_maxCollaborators;
+	int m_spectators, m_maxSpectators;
+	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 
-	NetworkedDocument(CModDoc &modDoc, int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)
-		: m_modDoc(modDoc)
-		, m_password(password)
+	NetworkedDocument(int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)
+		: m_password(password)
 		, m_collaborators(0)
 		, m_maxCollaborators(collaborators)
 		, m_spectators(0)
@@ -170,19 +168,12 @@ public:
 			m_connections.push_back(connection);
 		}
 	}
-
-	operator CModDoc& () { return m_modDoc; }
-	operator const CModDoc& () const { return m_modDoc; }
-	bool operator== (const NetworkedDocument &other) const { return &m_modDoc == &other.m_modDoc; }
-	bool operator< (const NetworkedDocument &other) const { return &m_modDoc < &other.m_modDoc; }
-	bool operator== (const CModDoc *modDoc) const { return &m_modDoc == modDoc; }
-	bool operator< (const CModDoc *modDoc) const { return &m_modDoc < modDoc; }
 };
 
 
 class CollabServer : public Listener, public std::enable_shared_from_this<CollabServer>
 {
-	std::set<NetworkedDocument> m_documents;
+	std::map<CModDoc *, NetworkedDocument> m_documents;
 	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 	asio::ip::tcp::acceptor m_acceptor;
 	asio::ip::tcp::socket m_socket;

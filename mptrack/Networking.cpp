@@ -254,7 +254,7 @@ std::shared_ptr<LocalCollabClient> CollabServer::AddDocument(CModDoc &modDoc, in
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	auto client = std::make_shared<LocalCollabClient>(modDoc);
-	m_documents.insert(NetworkedDocument(modDoc, collaborators, spectators, password, client->GetConnection()));
+	m_documents[&modDoc] = NetworkedDocument(collaborators, spectators, password, client->GetConnection());
 	return client;
 }
 
@@ -263,13 +263,13 @@ void CollabServer::CloseDocument(CModDoc &modDoc)
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	// TODO: Close connections for all clients that belong to this document
-	m_documents.erase(NetworkedDocument(modDoc));
+	m_documents.erase(&modDoc);
 }
 
 
 void CollabServer::SendMessage(CModDoc &modDoc, const std::string msg)
 {
-	auto doc = m_documents.find(NetworkedDocument(modDoc));
+	auto doc = m_documents.find(&modDoc);
 	if(doc != m_documents.end())
 	{
 		// TODO
@@ -312,13 +312,13 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		for(auto &doc : m_documents)
 		{
 			DocumentInfo info;
-			info.id = reinterpret_cast<uint64>(&doc.m_modDoc);
-			info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.m_modDoc.GetTitle());
-			info.collaborators = doc.m_collaborators;
-			info.maxCollaboratos = doc.m_maxCollaborators;
-			info.spectators = doc.m_spectators;
-			info.maxSpectators = doc.m_maxSpectators;
-			info.password = !doc.m_password.empty();
+			info.id = reinterpret_cast<uint64>(doc.first);
+			info.name = mpt::ToCharset(mpt::CharsetUTF8, doc.first->GetTitle());
+			info.collaborators = doc.second.m_collaborators;
+			info.maxCollaboratos = doc.second.m_maxCollaborators;
+			info.spectators = doc.second.m_spectators;
+			info.maxSpectators = doc.second.m_maxSpectators;
+			info.password = !doc.second.m_password.empty();
 			welcome.documents.push_back(info);
 		}
 
@@ -330,22 +330,21 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		JoinMsg join;
 		inArchive >> join;
 		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
-		auto doc = m_documents.find(NetworkedDocument(*modDoc));
-
-		if(doc != m_documents.end())
+		if(m_documents.count(modDoc))
 		{
-			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc->m_password)
+			auto &doc = m_documents.at(modDoc);
+			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc.m_password)
 			{
-				if(doc->m_collaborators < doc->m_maxCollaborators)
+				if(doc.m_collaborators < doc.m_maxCollaborators)
 				{
-					CSoundFile &sndFile = doc->m_modDoc.GetrSoundFile();
+					CSoundFile &sndFile = modDoc->GetrSoundFile();
 					sndFile.SaveMixPlugins();
 					ar(ConnectOKMsg);
 					ar(sndFile);
-					ar(mpt::ToCharset(mpt::CharsetUTF8, doc->m_modDoc.GetTitle()));
-					m_connections.push_back(source);
-					doc->m_connections.push_back(source);
-					doc->m_collaborators++;
+					ar(mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()));
+					//m_connections.push_back(source);
+					doc.m_connections.push_back(source);
+					doc.m_collaborators++;
 					source->m_modDoc = modDoc;
 				} else
 				{
@@ -364,9 +363,9 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	{
 		// Document operation
 		auto *modDoc = source->m_modDoc;
-		auto doc = m_documents.find(NetworkedDocument(*source->m_modDoc));
-		if(doc != m_documents.end())
+		if(m_documents.count(modDoc))
 		{
+			auto &doc = m_documents.at(modDoc);
 			auto &sndFile = modDoc->GetrSoundFile();
 			if(type == PatternTransactionMsg)
 			{
@@ -380,7 +379,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(type);
 					ar(patMsg);
 					const std::string s = sso.str();
-					for(auto &c : doc->m_connections)
+					for(auto &c : doc.m_connections)
 					{
 						c->Write(s);
 					}
@@ -397,7 +396,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(type);
 					ar(msg);
 					const std::string s = sso.str();
-					for(auto &c : doc->m_connections)
+					for(auto &c : doc.m_connections)
 					{
 						c->Write(s);
 					}
@@ -414,7 +413,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(id);
 					ar(instr);
 					const std::string s = sso.str();
-					for(auto &c : doc->m_connections)
+					for(auto &c : doc.m_connections)
 					{
 						c->Write(s);
 					}
@@ -434,7 +433,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(envType);
 					ar(env);
 					const std::string s = sso.str();
-					for(auto &c : doc->m_connections)
+					for(auto &c : doc.m_connections)
 					{
 						c->Write(s);
 					}
@@ -453,7 +452,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				}
 				ar(plugMsg);
 				const std::string s = sso.str();
-				for(auto &c : doc->m_connections)
+				for(auto &c : doc.m_connections)
 				{
 					c->Write(s);
 				}
