@@ -410,37 +410,34 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> instr;
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
-
+					// Send back to all clients
+					ar(id);
+					ar(instr);
+					const std::string s = sso.str();
+					for(auto &c : doc->m_connections)
+					{
+						c->Write(s);
+					}
 				}
-			} else if(type == VolEnvTransactioMsg)
+			} else if(type == EnvelopeTransactioMsg)
 			{
 				INSTRUMENTINDEX id;
+				EnvelopeType envType;
 				InstrumentEnvelope env;
 				inArchive >> id;
+				inArchive >> envType;
 				inArchive >> env;
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
-
-				}
-			} else if(type == PanEnvTransactioMsg)
-			{
-				INSTRUMENTINDEX id;
-				InstrumentEnvelope env;
-				inArchive >> id;
-				inArchive >> env;
-				if(id > 0 && id <= sndFile.GetNumInstruments())
-				{
-
-				}
-			} else if(type == PitchEnvTransactioMsg)
-			{
-				INSTRUMENTINDEX id;
-				InstrumentEnvelope env;
-				inArchive >> id;
-				inArchive >> env;
-				if(id > 0 && id <= sndFile.GetNumInstruments())
-				{
-
+					// Send back to all clients
+					ar(id);
+					ar(envType);
+					ar(env);
+					const std::string s = sso.str();
+					for(auto &c : doc->m_connections)
+					{
+						c->Write(s);
+					}
 				}
 			} else if(type == PluginDataTransactionMsg)
 			{

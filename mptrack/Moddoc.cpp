@@ -3260,6 +3260,19 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			msg.Apply(m_SndFile, msg.id);
 		}
 		hint = SampleHint(msg.id).Names().Info();
+	} else if(type == Networking::InstrumentTransactionMsg)
+	{
+		//Networking::Instr msg;
+		INSTRUMENTINDEX id;
+		ModInstrument instr;
+		inArchive >> id;
+		inArchive >> instr;
+		CriticalSection cs;
+		if(id > 0 && id <= GetNumInstruments())
+		{
+			//msg.Apply(m_SndFile, msg.id);
+		}
+		//hint = InstrumentHint(id).Names().Info();
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

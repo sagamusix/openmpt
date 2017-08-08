@@ -50,9 +50,7 @@ const NetworkMessage DocNotFoundMsg("404!");
 const NetworkMessage WrongPasswordMsg("403!");
 const NetworkMessage NoMoreClientsMsg("FULL");
 
-const NetworkMessage VolEnvTransactioMsg("VOTR");
-const NetworkMessage PanEnvTransactioMsg("PATR");
-const NetworkMessage PitchEnvTransactioMsg("PITR");
+const NetworkMessage EnvelopeTransactioMsg("ENTR");
 const NetworkMessage InstrumentTransactionMsg("INTR");
 
 const NetworkMessage SamplePropertyTransactionMsg("SATR");

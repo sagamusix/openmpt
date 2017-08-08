@@ -70,20 +70,23 @@ InstrumentTransaction::~InstrumentTransaction()
 			{
 				if(volEnv)
 				{
-					ar(Networking::VolEnvTransactioMsg);
+					ar(Networking::EnvelopeTransactioMsg);
 					ar(m_instr);
+					ar(ENV_VOLUME);
 					ar(instr->VolEnv);
 				}
 				if(panEnv)
 				{
-					ar(Networking::PanEnvTransactioMsg);
+					ar(Networking::EnvelopeTransactioMsg);
 					ar(m_instr);
+					ar(ENV_PANNING);
 					ar(instr->PanEnv);
 				}
 				if(pitchEnv)
 				{
-					ar(Networking::PitchEnvTransactioMsg);
+					ar(Networking::EnvelopeTransactioMsg);
 					ar(m_instr);
+					ar(ENV_PITCH);
 					ar(instr->PitchEnv);
 				}
 			} else
