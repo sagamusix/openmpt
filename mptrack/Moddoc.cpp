@@ -3262,17 +3262,31 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SampleHint(msg.id).Names().Info();
 	} else if(type == Networking::InstrumentTransactionMsg)
 	{
-		//Networking::Instr msg;
 		INSTRUMENTINDEX id;
 		ModInstrument instr;
 		inArchive >> id;
 		inArchive >> instr;
 		CriticalSection cs;
-		if(id > 0 && id <= GetNumInstruments())
+		if(id > 0 && id <= GetNumInstruments() && m_SndFile.Instruments[id] != nullptr)
 		{
-			//msg.Apply(m_SndFile, msg.id);
+			
+			*m_SndFile.Instruments[id] = instr;
 		}
-		//hint = InstrumentHint(id).Names().Info();
+		hint = InstrumentHint(id).Names().Envelope().Info();
+	} else if(type == Networking::EnvelopeTransactioMsg)
+	{
+		INSTRUMENTINDEX id;
+		EnvelopeType envType;
+		InstrumentEnvelope env;
+		inArchive >> id;
+		inArchive >> envType;
+		inArchive >> env;
+		CriticalSection cs;
+		if(id > 0 && id <= GetNumInstruments() && m_SndFile.Instruments[id] != nullptr)
+		{
+			m_SndFile.Instruments[id]->GetEnvelope(envType) = env;
+		}
+		hint = InstrumentHint(id).Names().Envelope();
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

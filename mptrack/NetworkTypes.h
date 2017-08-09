@@ -77,12 +77,10 @@ struct DocumentInfo
 };
 
 
-struct WelcomeMsg// : public NetworkMessage
+struct WelcomeMsg
 {
 	std::string version;
 	std::vector<DocumentInfo> documents;
-
-	//WelcomeMsg() : NetworkMessage("LIST") { }
 
 	template<class Archive>
 	void serialize(Archive &archive)
@@ -92,13 +90,11 @@ struct WelcomeMsg// : public NetworkMessage
 };
 
 
-struct JoinMsg// : public NetworkMessage
+struct JoinMsg
 {
 	uint64 id;
 	std::string password;
 	int32 accessType;
-
-	//JoinMsg() : NetworkMessage("JOIN") { }
 
 	template<class Archive>
 	void serialize(Archive &archive)

@@ -410,6 +410,11 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
 					// Send back to all clients
+					if(sndFile.Instruments[id] != nullptr)
+					{
+						*sndFile.Instruments[id] = instr;
+					}
+					ar(type);
 					ar(id);
 					ar(instr);
 					const std::string s = sso.str();
@@ -428,7 +433,12 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> env;
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
+					if(sndFile.Instruments[id] != nullptr)
+					{
+						sndFile.Instruments[id]->GetEnvelope(envType) = env;
+					}
 					// Send back to all clients
+					ar(type);
 					ar(id);
 					ar(envType);
 					ar(env);
