@@ -56,6 +56,7 @@ const NetworkMessage InstrumentTransactionMsg("INTR");
 const NetworkMessage SamplePropertyTransactionMsg("SATR");
 
 const NetworkMessage PatternTransactionMsg("PATR");
+const NetworkMessage PatternResizeMsg("PSTR");
 
 const NetworkMessage PluginDataTransactionMsg("PLTR");
 

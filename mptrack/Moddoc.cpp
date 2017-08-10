@@ -3287,6 +3287,23 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			m_SndFile.Instruments[id]->GetEnvelope(envType) = env;
 		}
 		hint = InstrumentHint(id).Names().Envelope();
+	} else if(type == Networking::PatternResizeMsg)
+	{
+		PATTERNINDEX pat;
+		ROWINDEX rows;
+		bool atEnd;
+		inArchive >> pat;
+		inArchive >> rows;
+		inArchive >> atEnd;
+		CriticalSection cs;
+		if(m_SndFile.Patterns.IsValidPat(pat))
+		{
+			m_SndFile.Patterns[pat].Resize(rows, false, atEnd);
+		} else
+		{
+			m_SndFile.Patterns.Insert(pat, rows);
+		}
+		hint = PatternHint(pat).Names().Data();
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

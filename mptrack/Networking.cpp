@@ -365,6 +365,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
+			ar(type);
 			auto &doc = m_documents.at(modDoc);
 			auto &sndFile = modDoc->GetrSoundFile();
 			if(type == PatternTransactionMsg)
@@ -376,7 +377,6 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					patMsg.Apply(sndFile.Patterns[patMsg.pattern]);
 					// Send back to all clients
-					ar(type);
 					ar(patMsg);
 					const std::string s = sso.str();
 					for(auto &c : doc.m_connections)
@@ -393,7 +393,6 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					CriticalSection cs;
 					msg.Apply(sndFile, msg.id);
 					// Send back to all clients
-					ar(type);
 					ar(msg);
 					const std::string s = sso.str();
 					for(auto &c : doc.m_connections)
@@ -410,11 +409,6 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
 					// Send back to all clients
-					if(sndFile.Instruments[id] != nullptr)
-					{
-						*sndFile.Instruments[id] = instr;
-					}
-					ar(type);
 					ar(id);
 					ar(instr);
 					const std::string s = sso.str();
@@ -433,12 +427,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> env;
 				if(id > 0 && id <= sndFile.GetNumInstruments())
 				{
-					if(sndFile.Instruments[id] != nullptr)
-					{
-						sndFile.Instruments[id]->GetEnvelope(envType) = env;
-					}
 					// Send back to all clients
-					ar(type);
 					ar(id);
 					ar(envType);
 					ar(env);
@@ -461,6 +450,22 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					}
 				}
 				ar(plugMsg);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
+			} else if(type == PatternResizeMsg)
+			{
+				PATTERNINDEX pat;
+				ROWINDEX rows;
+				bool atEnd;
+				inArchive >> pat;
+				inArchive >> rows;
+				inArchive >> atEnd;
+				ar(pat);
+				ar(rows);
+				ar(atEnd);
 				const std::string s = sso.str();
 				for(auto &c : doc.m_connections)
 				{
