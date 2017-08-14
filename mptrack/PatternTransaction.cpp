@@ -128,6 +128,7 @@ PatternResizeTransaction::~PatternResizeTransaction()
 		//modDoc->SetModified();
 		if(modDoc->m_collabClient)
 		{
+			// TODO: we probably need to synchronize all clients here
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
 			ar(Networking::PatternResizeMsg);

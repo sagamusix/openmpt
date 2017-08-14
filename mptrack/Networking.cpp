@@ -406,7 +406,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				ModInstrument instr;
 				inArchive >> id;
 				inArchive >> instr;
-				if(id > 0 && id <= sndFile.GetNumInstruments())
+				if(id > 0)
 				{
 					// Send back to all clients
 					ar(id);
@@ -425,7 +425,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> id;
 				inArchive >> envType;
 				inArchive >> env;
-				if(id > 0 && id <= sndFile.GetNumInstruments())
+				if(id > 0)
 				{
 					// Send back to all clients
 					ar(id);

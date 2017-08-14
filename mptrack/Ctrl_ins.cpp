@@ -143,6 +143,7 @@ void CNoteMapWnd::SetCurrentInstrument(INSTRUMENTINDEX nIns)
 		CSoundFile &sndFile = m_modDoc.GetrSoundFile();
 		if(m_nInstrument > 0 && m_nInstrument <= sndFile.GetNumInstruments() && sndFile.Instruments[m_nInstrument] == nullptr)
 		{
+			InstrumentTransaction tr(sndFile, m_nInstrument);
 			ModInstrument *instrument = sndFile.AllocateInstrument(m_nInstrument);
 			if(instrument == nullptr)
 				return;

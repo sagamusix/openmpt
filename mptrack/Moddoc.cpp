@@ -3239,8 +3239,12 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		Networking::SamplePropertyEditMsg msg;
 		inArchive >> msg;
 		CriticalSection cs;
-		if(msg.id > 0 && msg.id <= GetNumSamples())
+		if(msg.id > 0 && msg.id < MAX_SAMPLES)
 		{
+			if(msg.id > GetNumSamples())
+			{
+				m_SndFile.m_nSamples = msg.id;
+			}
 			msg.Apply(m_SndFile, msg.id);
 		}
 		hint = SampleHint(msg.id).Names().Info();
@@ -3251,12 +3255,19 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> id;
 		inArchive >> instr;
 		CriticalSection cs;
-		if(id > 0 && id <= GetNumInstruments() && m_SndFile.Instruments[id] != nullptr)
+		bool hadInstruments = GetNumInstruments() > 0;
+		if(id > 0 && id < MAX_INSTRUMENTS)
 		{
-			
+			if(id > GetNumInstruments() || m_SndFile.Instruments[id] == nullptr)
+			{
+				if(m_SndFile.AllocateInstrument(id) == nullptr)
+					return;
+			}
 			*m_SndFile.Instruments[id] = instr;
 		}
 		hint = InstrumentHint(id).Names().Envelope().Info();
+		if(!hadInstruments)
+			hint.ModType();
 	} else if(type == Networking::EnvelopeTransactioMsg)
 	{
 		INSTRUMENTINDEX id;
@@ -3266,11 +3277,19 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> envType;
 		inArchive >> env;
 		CriticalSection cs;
-		if(id > 0 && id <= GetNumInstruments() && m_SndFile.Instruments[id] != nullptr)
+		bool hadInstruments = GetNumInstruments() > 0;
+		if(id > 0 && id < MAX_INSTRUMENTS)
 		{
+			if(id > GetNumInstruments() || m_SndFile.Instruments[id] == nullptr)
+			{
+				if(m_SndFile.AllocateInstrument(id) == nullptr)
+					return;
+			}
 			m_SndFile.Instruments[id]->GetEnvelope(envType) = env;
 		}
 		hint = InstrumentHint(id).Names().Envelope();
+		if(!hadInstruments)
+			hint.ModType();
 	} else if(type == Networking::PatternResizeMsg)
 	{
 		PATTERNINDEX pat;

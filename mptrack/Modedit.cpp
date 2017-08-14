@@ -27,6 +27,8 @@
 #include "VstPresets.h"
 #include "../common/FileReader.h"
 #include "PatternTransaction.h"
+#include "InstrumentTransaction.h"
+#include "SampleTransaction.h"
 
 
 #ifdef _DEBUG
@@ -696,6 +698,7 @@ SAMPLEINDEX CModDoc::InsertSample()
 		ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 		return SAMPLEINDEX_INVALID;
 	}
+	SamplePropertyTransaction tr(m_SndFile, i);
 	const bool newSlot = (i > m_SndFile.GetNumSamples());
 	if(newSlot || !m_SndFile.m_szNames[i][0]) strcpy(m_SndFile.m_szNames[i], "untitled");
 	if(newSlot) m_SndFile.m_nSamples = i;
@@ -749,6 +752,7 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 	}
 
 	// Determine which sample slot to use
+	InstrumentTransaction tr(m_SndFile, newins);
 	SAMPLEINDEX newsmp = 0;
 	if (nSample < m_SndFile.GetModSpecifications().samplesMax)
 	{
