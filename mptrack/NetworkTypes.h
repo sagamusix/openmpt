@@ -50,7 +50,7 @@ const NetworkMessage DocNotFoundMsg("404!");
 const NetworkMessage WrongPasswordMsg("403!");
 const NetworkMessage NoMoreClientsMsg("FULL");
 
-const NetworkMessage EnvelopeTransactioMsg("ENTR");
+const NetworkMessage EnvelopeTransactionMsg("ENTR");
 const NetworkMessage InstrumentTransactionMsg("INTR");
 
 const NetworkMessage SamplePropertyTransactionMsg("SATR");

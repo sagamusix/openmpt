@@ -417,7 +417,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
-			} else if(type == EnvelopeTransactioMsg)
+			} else if(type == EnvelopeTransactionMsg)
 			{
 				INSTRUMENTINDEX id;
 				EnvelopeType envType;

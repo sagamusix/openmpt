@@ -3268,7 +3268,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(id).Names().Envelope().Info();
 		if(!hadInstruments)
 			hint.ModType();
-	} else if(type == Networking::EnvelopeTransactioMsg)
+	} else if(type == Networking::EnvelopeTransactionMsg)
 	{
 		INSTRUMENTINDEX id;
 		EnvelopeType envType;
