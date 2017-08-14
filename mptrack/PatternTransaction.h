@@ -21,4 +21,18 @@ public:
 	~PatternTransaction();
 };
 
+
+class PatternResizeTransaction
+{
+	CSoundFile &m_sndFile;
+	PATTERNINDEX m_pattern;
+	ROWINDEX m_rows;
+	bool m_resizeAtEnd;
+
+public:
+	PatternResizeTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, bool resizeAtEnd);
+	~PatternResizeTransaction();
+
+};
+
 OPENMPT_NAMESPACE_END

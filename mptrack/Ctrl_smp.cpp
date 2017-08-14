@@ -3601,36 +3601,6 @@ void CCtrlSamples::OnAutotune()
 		if(dlg.DoModal() == IDOK)
 		{
 			BeginWaitCursor();
-			selection.nStart, selection.nEnd);
-
-		if(ctrlSmp::StereoSepSample(sample, selection.nStart, selection.nEnd, separation, m_sndFile))
-		{
-			SetModified(SampleHint().Info().Data(), true, true);
-		} else
-		{
-			m_modDoc.GetSampleUndo().RemoveLastUndoStep(m_nSample);
-		}
-	}
-	SwitchToView();
-}
-
-
-void CCtrlSamples::OnAutotune()
-//-----------------------------
-{
-	SampleSelectionPoints selection = GetSelectionPoints();
-	if(!selection.selectionActive)
-	{
-		selection.nStart = selection.nEnd = 0;
-	}
-
-	Autotune at(m_sndFile.GetSample(m_nSample), m_sndFile.GetType(), selection.nStart, selection.nEnd);
-	if(at.CanApply())
-	{
-		CAutotuneDlg dlg(this);
-		if(dlg.DoModal() == IDOK)
-		{
-			BeginWaitCursor();
 			SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 			PrepareUndo("Automatic Sample Tuning");
 			at.Apply(static_cast<double>(dlg.GetPitchReference()), dlg.GetTargetNote());

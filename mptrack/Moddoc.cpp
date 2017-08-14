@@ -3287,7 +3287,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		{
 			m_SndFile.Patterns.Insert(pat, rows);
 		}
-		hint = PatternHint(pat).Names().Data();
+		hint = PatternHint(pat).Data();
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

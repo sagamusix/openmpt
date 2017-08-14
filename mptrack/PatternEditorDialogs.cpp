@@ -275,6 +275,7 @@ void CPatternPropertiesDlg::OnOK()
 	// Check if any pattern data would be removed.
 	bool resize = (newSize != sndFile.Patterns[m_nPattern].GetNumRows());
 	bool resizeAtEnd = IsDlgButtonChecked(IDC_RADIO2) != BST_UNCHECKED;
+	PatternResizeTransaction tr(sndFile, m_nPattern, resizeAtEnd);
 	if(newSize < sndFile.Patterns[m_nPattern].GetNumRows())
 	{
 		ROWINDEX firstRow = resizeAtEnd ? newSize : 0;

@@ -104,4 +104,40 @@ PatternTransaction::~PatternTransaction()
 	}
 }
 
+
+PatternResizeTransaction::PatternResizeTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, bool resizeAtEnd)
+	: m_sndFile(sndFile)
+	, m_pattern(pattern)
+	, m_rows(0)
+	, m_resizeAtEnd(resizeAtEnd)
+{
+	if(m_sndFile.Patterns.IsValidPat(m_pattern))
+		m_rows = m_sndFile.Patterns[m_pattern].GetNumRows();
+}
+
+
+PatternResizeTransaction::~PatternResizeTransaction()
+{
+	ROWINDEX newRows = 0;
+	if(m_sndFile.Patterns.IsValidPat(m_pattern))
+		newRows = m_sndFile.Patterns[m_pattern].GetNumRows();
+
+	if(newRows != m_rows)
+	{
+		auto *modDoc = m_sndFile.GetpModDoc();
+		//modDoc->SetModified();
+		if(modDoc->m_collabClient)
+		{
+			std::ostringstream ss;
+			cereal::BinaryOutputArchive ar(ss);
+			ar(Networking::PatternResizeMsg);
+			ar(m_pattern);
+			ar(newRows);
+			ar(m_resizeAtEnd);
+			modDoc->m_collabClient->Write(ss.str());
+		}
+	}
+}
+
+
 OPENMPT_NAMESPACE_END
