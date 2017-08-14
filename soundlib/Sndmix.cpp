@@ -635,6 +635,7 @@ bool CSoundFile::ProcessRow()
 		ModCommand *m = Patterns[m_PlayState.m_nPattern].GetRow(m_PlayState.m_nRow);
 		for (ModChannel *pChn = m_PlayState.Chn, *pEnd = pChn + m_nChannels; pChn != pEnd; pChn++, m++)
 		{
+			// First, handle some quirks that happen after the last tick of the previous row...
 			if(m_playBehaviour[KST3PortaAfterArpeggio]
 				&& pChn->nCommand == CMD_ARPEGGIO	// Previous row state!
 				&& (m->command == CMD_PORTAMENTOUP || m->command == CMD_PORTAMENTODOWN))
@@ -642,6 +643,24 @@ bool CSoundFile::ProcessRow()
 				// In ST3, a portamento immediately following an arpeggio continues where the arpeggio left off.
 				// Test case: PortaAfterArp.s3m
 				pChn->nPeriod = GetPeriodFromNote(pChn->nArpeggioLastNote, pChn->nFineTune, pChn->nC5Speed);
+			}
+
+			if(m_playBehaviour[kMODOutOfRangeNoteDelay]
+				&& !m->IsNote()
+				&& pChn->rowCommand.IsNote()
+				&& pChn->rowCommand.command == CMD_MODCMDEX && (pChn->rowCommand.param & 0xF0) == 0xD0
+				&& (pChn->rowCommand.param & 0x0Fu) >= m_PlayState.m_nMusicSpeed)
+			{
+				// In ProTracker, a note triggered by an out-of-range note delay can be heard on the next row
+				// if there is no new note on that row.
+				// Test case: NoteDelay-NextRow.mod
+				pChn->nPeriod = GetPeriodFromNote(pChn->rowCommand.note, pChn->nFineTune, 0);
+			}
+			if(m_playBehaviour[kMODTempoOnSecondTick] && !m_playBehaviour[kMODVBlankTiming] && m_PlayState.m_nMusicSpeed == 1 && pChn->rowCommand.command == CMD_TEMPO)
+			{
+				// ProTracker sets the tempo after the first tick. This block handles the case of one tick per row.
+				// Test case: TempoChange.mod
+				m_PlayState.m_nMusicTempo = TEMPO(pChn->rowCommand.param, 0);
 			}
 
 			pChn->rowCommand = *m;
@@ -1512,7 +1531,7 @@ void CSoundFile::ProcessVibrato(CHANNELINDEX nChn, int &period, Tuning::RATIOTYP
 		{
 			//Hack implementation: Scaling vibratofactor to [0.95; 1.05]
 			//using figure from above tables and vibratodepth parameter
-			vibratoFactor += 0.05F * vdelta * chn.m_VibratoDepth / 128.0F;
+			vibratoFactor += 0.05f * (vdelta * chn.nVibratoDepth) / (128.0f * 60.0f);
 			chn.m_CalculateFreq = true;
 			chn.m_ReCalculateFreqOnFirstTick = false;
 
@@ -2213,8 +2232,8 @@ bool CSoundFile::ReadNote()
 		if (pChn->nRightVU > VUMETER_DECAY) pChn->nRightVU -= VUMETER_DECAY; else pChn->nRightVU = 0;
 
 		pChn->newLeftVol = pChn->newRightVol = 0;
-		pChn->pCurrentSample = (pChn->pModSample && pChn->pModSample->pSample && pChn->nLength && !pChn->increment.IsZero()) ? pChn->pModSample->pSample : nullptr;
-		if(pChn->pCurrentSample || (pChn->HasMIDIOutput() && !pChn->dwFlags[CHN_KEYOFF | CHN_NOTEFADE]))
+		pChn->pCurrentSample = (pChn->pModSample && pChn->pModSample->pSample && pChn->nLength && pChn->IsSamplePlaying()) ? pChn->pModSample->pSample : nullptr;
+		if (pChn->pCurrentSample || (pChn->HasMIDIOutput() && !pChn->dwFlags[CHN_KEYOFF | CHN_NOTEFADE]))
 		{
 			// Update VU-Meter (nRealVolume is 14-bit)
 			uint32 vul = (pChn->nRealVolume * pChn->nRealPan) / (1 << 14);

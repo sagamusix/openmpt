@@ -342,7 +342,7 @@ void CViewPattern::DrawLetter(int x, int y, char letter, int sizex, int ofsx)
 }
 
 
-MPT_FORCEINLINE static void DrawPadding(CFastBitmap &dib, const PATTERNFONT *pfnt, int x, int y, int col)
+static MPT_FORCEINLINE void DrawPadding(CFastBitmap &dib, const PATTERNFONT *pfnt, int x, int y, int col)
 {
 	if(pfnt->padding[col])
 		dib.TextBlt(x + pfnt->nEltWidths[col] - pfnt->padding[col], y, pfnt->padding[col], pfnt->spacingY, pfnt->nClrX + pfnt->nEltWidths[col] - pfnt->padding[col], pfnt->nClrY, pfnt->dib);
@@ -1395,7 +1395,7 @@ BOOL CViewPattern::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 		{
 			rect.left = m_szHeader.cx;
 			rect.top = 0;
-			if(mpt::Windows::IsWine())
+			if(TrackerSettings::Instance().patternAlwaysDrawWholePatternOnScrollSlow || mpt::Windows::IsWine())
 			{
 				InvalidateRect(&rect, FALSE);
 			} else
@@ -1408,7 +1408,7 @@ BOOL CViewPattern::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 		{
 			rect.left = 0;
 			rect.top = m_szHeader.cy;
-			if(mpt::Windows::IsWine())
+			if(TrackerSettings::Instance().patternAlwaysDrawWholePatternOnScrollSlow || mpt::Windows::IsWine())
 			{
 				InvalidateRect(&rect, FALSE);
 			} else
