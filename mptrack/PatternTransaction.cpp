@@ -23,7 +23,7 @@ void PatternTransaction::Init(const char *description)
 	const auto &pat = m_sndFile.Patterns[m_pattern];
 	for(ROWINDEX r = rowBeg; r <= rowEnd; r++)
 	{
-		m_data.insert(m_data.end(), pat.GetpModCommand(r, chnBeg), pat.GetpModCommand(r, chnEnd + 1));
+		m_data.insert(m_data.end(), pat.GetpModCommand(r, chnBeg), pat.GetpModCommand(r, chnEnd) + 1);
 	}
 }
 

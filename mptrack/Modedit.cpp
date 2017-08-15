@@ -344,6 +344,7 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 	// Remove sample data references from now unused slots.
 	for(SAMPLEINDEX i = newNumSamples + 1; i <= oldNumSamples; i++)
 	{
+		SamplePropertyTransaction tr(m_SndFile, i);
 		m_SndFile.GetSample(i).pSample = nullptr;
 		m_SndFile.GetSample(i).nLength = 0;
 		strcpy(m_SndFile.m_szNames[i], "");
@@ -353,6 +354,7 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 	m_SndFile.m_nSamples = std::max(m_SndFile.m_nSamples, newNumSamples);	// Avoid assertions when using GetSample()...
 	for(SAMPLEINDEX i = 0; i < newNumSamples; i++)
 	{
+		SamplePropertyTransaction tr(m_SndFile, i + 1);
 		const SAMPLEINDEX origSlot = newOrder[i];
 		ModSample &target = m_SndFile.GetSample(i + 1);
 		if(origSlot > 0 && origSlot <= oldNumSamples)
@@ -415,6 +417,7 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 			{
 				continue;
 			}
+			InstrumentTransaction tr(m_SndFile, i);
 			GetInstrumentUndo().RearrangeSamples(i, newIndex);
 			for(auto &sample : ins->Keyboard)
 			{
@@ -492,6 +495,7 @@ INSTRUMENTINDEX CModDoc::ReArrangeInstruments(const std::vector<INSTRUMENTINDEX>
 	// Now, create new instrument list.
 	for(INSTRUMENTINDEX i = 0; i < newNumInstruments; i++)
 	{
+		InstrumentTransaction tr(m_SndFile, i + 1);
 		ModInstrument *ins = m_SndFile.AllocateInstrument(i + 1);
 		if(ins == nullptr)
 		{
@@ -509,6 +513,7 @@ INSTRUMENTINDEX CModDoc::ReArrangeInstruments(const std::vector<INSTRUMENTINDEX>
 	// Free unused instruments
 	for(INSTRUMENTINDEX i = newNumInstruments + 1; i <= oldNumInstruments; i++)
 	{
+		InstrumentTransaction tr(m_SndFile, i);
 		m_SndFile.DestroyInstrument(i, doNoDeleteAssociatedSamples);
 	}
 
