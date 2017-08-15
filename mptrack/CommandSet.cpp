@@ -1533,7 +1533,7 @@ ctx:UID:Description:Modifier:Key:EventMask
 
 	for (int ctx = 0; ctx < kCtxMaxInputContexts; ctx++)
 	{
-		f << "\n//----( " << KeyCombination::GetContextText((InputTargetContext)ctx) << " (" << ctx << ") )------------\n";
+		f << "\n//----( " << mpt::ToCharset(mpt::CharsetUTF8, KeyCombination::GetContextText((InputTargetContext)ctx)) << " (" << ctx << ") )------------\n";
 
 		for (int cmd=0; cmd<kcNumCommands; cmd++)
 		{
@@ -1755,8 +1755,8 @@ int CCommandSet::FindCmd(int uid) const
 }
 
 
-const TCHAR *KeyCombination::GetContextText(InputTargetContext ctx)
-//-----------------------------------------------------------------
+CString KeyCombination::GetContextText(InputTargetContext ctx)
+//------------------------------------------------------------
 {
 	switch(ctx)
 	{
