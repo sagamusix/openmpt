@@ -43,6 +43,26 @@ void PatternEditMsg::Apply(CPattern &pat)
 			mask->m = *m;
 		}
 	}
+	if(nameChanged)
+	{
+		pat.SetName(name);
+	}
+	nameChanged = true;
+	name = pat.GetName();
+}
+
+
+void SequenceMsg::Apply(ModSequence &order)
+{
+	order.resize(length);
+	if(nameChanged) order.SetName(name);
+	nameChanged = true; // For sending back new state to all clients
+	name = order.GetName();
+	for(ORDERINDEX ord = 0; ord < pat.size(); ord++)
+	{
+		if(patChanged[ord]) order[ord] = pat[ord];
+		patChanged[ord] = true; // For sending back new state to all clients
+	}
 }
 
 

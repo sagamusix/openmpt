@@ -11,6 +11,7 @@ class PatternTransaction
 	PatternRect m_rect;
 	PATTERNINDEX m_pattern;
 	std::vector<ModCommand> m_data;
+	std::string m_name;
 
 	void Init(const char *description);
 

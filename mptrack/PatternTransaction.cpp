@@ -25,6 +25,7 @@ void PatternTransaction::Init(const char *description)
 	{
 		m_data.insert(m_data.end(), pat.GetpModCommand(r, chnBeg), pat.GetpModCommand(r, chnEnd) + 1);
 	}
+	m_name = pat.GetName();
 }
 
 
@@ -61,7 +62,11 @@ PatternTransaction::~PatternTransaction()
 	CHANNELINDEX chnBeg = m_rect.GetStartChannel(), chnEnd = m_rect.GetEndChannel();
 	auto mOrig = m_data.cbegin();
 	const auto &pat = m_sndFile.Patterns[m_pattern];
-	bool anyChanges = false;
+	bool anyChanges = msg.nameChanged = m_name != pat.GetName();
+	if(msg.nameChanged)
+	{
+		msg.name = pat.GetName();
+	}
 	for(ROWINDEX r = rowBeg; r <= rowEnd; r++)
 	{
 		const ModCommand *m = pat.GetpModCommand(r, chnBeg);

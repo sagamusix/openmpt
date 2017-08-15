@@ -471,6 +471,21 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
+			} else if(type == SequenceTransactionMsg)
+			{
+				SequenceMsg msg;
+				inArchive >> msg;
+				while(msg.seq >= sndFile.Order.GetNumSequences() && msg.seq < MAX_SEQUENCES)
+					sndFile.Order.AddSequence(false);
+				if(msg.seq < sndFile.Order.GetNumSequences())
+					msg.Apply(sndFile.Order(msg.seq));
+				// Send back to clients
+				ar(msg);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
 			}
 		}
 	}

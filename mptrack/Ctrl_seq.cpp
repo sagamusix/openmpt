@@ -19,6 +19,7 @@
 #include "Globals.h"
 #include "Ctrl_pat.h"
 #include "PatternClipboard.h"
+#include "SequenceTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -645,6 +646,7 @@ void COrderList::EnterPatternNum(int enterNum)
 	// apply
 	if (curIndex != sndFile.Order()[m_nScrollPos])
 	{
+		SequenceTransaction tr(sndFile);
 		sndFile.Order()[m_nScrollPos] = curIndex;
 		m_pModDoc.SetModified();
 		m_pModDoc.UpdateAllViews(nullptr, SequenceHint().Data(), this);
@@ -933,6 +935,7 @@ void COrderList::OnLButtonUp(UINT nFlags, CPoint pt)
 				// drag one order or multiple orders?
 				bool multiSelection = (selection.firstOrd != selection.lastOrd);
 
+				SequenceTransaction tr(m_pModDoc.GetrSoundFile());
 				for(int i = 0; i <= moveCount; i++)
 				{
 					if(!m_pModDoc.MoveOrder(movePos, m_nDropPos, true, copyOrders)) return;
@@ -1214,6 +1217,7 @@ void COrderList::OnInsertOrder()
 	// insert the same order(s) after the currently selected order(s)
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 	ModSequence &order = sndFile.Order();
+	SequenceTransaction tr(sndFile);
 
 	const OrdSelection selection = GetCurSel(false);
 	const ORDERINDEX insertCount = order.insert(selection.lastOrd + 1, selection.lastOrd - selection.firstOrd + 1);
@@ -1247,6 +1251,7 @@ void COrderList::OnInsertSeparatorPattern()
 	// Insert a separator pattern after the current pattern, don't move order list cursor
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 	ModSequence &order = sndFile.Order();
+	SequenceTransaction tr(sndFile);
 
 	const OrdSelection selection = GetCurSel(true);
 	ORDERINDEX insertPos = selection.firstOrd;
@@ -1283,6 +1288,7 @@ void COrderList::OnDeleteOrder()
 //------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
+	SequenceTransaction tr(sndFile);
 
 	OrdSelection selection = GetCurSel(false);
 	// remove selection
@@ -1367,6 +1373,7 @@ void COrderList::OnSetRestartPos()
 //--------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
+	SequenceTransaction tr(sndFile);
 	bool modified = false;
 	if(m_nScrollPos == sndFile.Order().GetRestartPos())
 	{
@@ -1404,6 +1411,7 @@ LRESULT COrderList::OnDragonDropping(WPARAM doDrop, LPARAM lParam)
 
 	if ((!pDropInfo) || (&m_pModDoc != pDropInfo->pModDoc) || (!m_cxFont)) return FALSE;
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
+	SequenceTransaction tr(sndFile);
 	canDrop = FALSE;
 	switch(pDropInfo->dwDropType)
 	{
@@ -1454,6 +1462,8 @@ void COrderList::SelectSequence(const SEQUENCEINDEX nSeq)
 
 	CMainFrame::GetMainFrame()->ResetNotificationBuffer();
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
+	SequenceTransaction tr(sndFile);
+
 	const bool editSequence = nSeq >= sndFile.Order.GetNumSequences();
 	if(nSeq == MAX_SEQUENCES + 2)
 	{

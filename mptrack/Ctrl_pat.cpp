@@ -23,6 +23,8 @@
 #include "PatternEditorDialogs.h"
 #include "ChannelManagerDlg.h"
 #include "../common/StringFixer.h"
+#include "PatternTransaction.h"
+#include "SequenceTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -814,6 +816,7 @@ void CCtrlPatterns::OnPatternDuplicate()
 	std::vector<PATTERNINDEX> patReplaceIndex(m_sndFile.Patterns.Size(), PATTERNINDEX_INVALID);
 
 	ModSequence &order = m_sndFile.Order();
+	SequenceTransaction tr(m_sndFile);
 	for(ORDERINDEX i = 0; i < insertCount; i++)
 	{
 		PATTERNINDEX curPat = order[insertFrom + i];
@@ -1054,6 +1057,7 @@ void CCtrlPatterns::OnPatternNameChanged()
 
 		if(m_sndFile.Patterns[nPat].GetName() != s)
 		{
+			PatternTransaction tr(m_sndFile, nPat, PatternRect());
 			if(m_sndFile.Patterns[nPat].SetName(s))
 			{
 				if(m_sndFile.GetType() & (MOD_TYPE_XM|MOD_TYPE_IT|MOD_TYPE_MPT)) m_modDoc.SetModified();
@@ -1072,6 +1076,7 @@ void CCtrlPatterns::OnSequenceNameChanged()
 	const std::string str = mpt::ToCharset(m_sndFile.GetCharsetInternal(), tmp);
 	if(str != m_sndFile.Order().GetName())
 	{
+		SequenceTransaction tr(m_sndFile);
 		m_sndFile.Order().SetName(str);
 		m_modDoc.SetModified();
 		m_modDoc.UpdateAllViews(nullptr, SequenceHint(m_sndFile.Order.GetCurrentSequenceIndex()).Names(), this);

@@ -58,6 +58,8 @@ const NetworkMessage SamplePropertyTransactionMsg("SATR");
 const NetworkMessage PatternTransactionMsg("PATR");
 const NetworkMessage PatternResizeMsg("PSTR");
 
+const NetworkMessage SequenceTransactionMsg("SQTR");
+
 const NetworkMessage PluginDataTransactionMsg("PLTR");
 
 struct DocumentInfo
@@ -154,6 +156,8 @@ struct PatternEditMsg
 	ROWINDEX numRows;
 	CHANNELINDEX numChannels;
 	std::vector<ModCommandMask> commands;
+	std::string name;
+	bool nameChanged;
 
 	PatternEditMsg(PATTERNINDEX p = 0, ROWINDEX r = 0, CHANNELINDEX c = 0, ROWINDEX rc = 0, CHANNELINDEX cc = 0)
 		: pattern(p)
@@ -166,10 +170,29 @@ struct PatternEditMsg
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(pattern, row, channel, numRows, numChannels, commands);
+		archive(pattern, row, channel, numRows, numChannels, commands, name, nameChanged);
 	}
 
 	void Apply(CPattern &pattern);
+};
+
+
+struct SequenceMsg
+{
+	SEQUENCEINDEX seq;
+	std::string name;
+	std::vector<PATTERNINDEX> pat;
+	std::vector<bool> patChanged;
+	ORDERINDEX length;
+	bool nameChanged;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(seq, nameChanged, name, length, pat, patChanged);
+	}
+
+	void Apply(ModSequence &order);
 };
 
 

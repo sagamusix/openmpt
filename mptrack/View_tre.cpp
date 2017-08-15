@@ -26,6 +26,7 @@
 #include "FolderScanner.h"
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/plugins/PlugInterface.h"
+#include "SequenceTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -2290,6 +2291,7 @@ bool CModTree::CanDrop(HTREEITEM hItem, bool bDoDrop)
 
 				if (nSeqFrom != nSeqTo || nOrdFrom != nOrdTo)
 				{
+					SequenceTransaction tr(pModDoc->GetrSoundFile());
 					if(pModDoc->MoveOrder(nOrdFrom, nOrdTo, true, false, nSeqFrom, nSeqTo) == true)
 					{
 						pModDoc->SetModified();
@@ -2312,11 +2314,12 @@ bool CModTree::CanDrop(HTREEITEM hItem, bool bDoDrop)
 				const SEQUENCEINDEX nOrigSeq = (SEQUENCEINDEX)modItemDragID;
 				const ModSequence &origSeq = dragSndFile.Order(nOrigSeq);
 
+				SequenceTransaction tr(*pSndFile);
+
 				if(pSndFile->GetModSpecifications().sequencesMax > 1)
 				{
 					pSndFile->Order.AddSequence(false);
-				}
-				else
+				} else
 				{
 					if(Reporting::Confirm(_T("Replace the current orderlist?"), _T("Sequence import")) == cnfNo)
 						return false;
@@ -3948,6 +3951,7 @@ void CModTree::OnEndLabelEdit(NMHDR *nmhdr, LRESULT *result)
 				PATTERNINDEX &target = sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val2)).at(static_cast<ORDERINDEX>(modItem.val1));
 				if(valid && pat != target)
 				{
+					SequenceTransaction tr(sndFile);
 					target = pat;
 					modDoc->SetModified();
 					modDoc->UpdateAllViews(nullptr, SequenceHint().Data());
@@ -3959,6 +3963,7 @@ void CModTree::OnEndLabelEdit(NMHDR *nmhdr, LRESULT *result)
 		case MODITEM_SEQUENCE:
 			if(modItem.val1 < sndFile.Order.GetNumSequences() && sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).GetName() != itemText)
 			{
+				SequenceTransaction tr(sndFile);
 				sndFile.Order(static_cast<SEQUENCEINDEX>(modItem.val1)).SetName(itemText);
 				modDoc->SetModified();
 				modDoc->UpdateAllViews(NULL, SequenceHint((SEQUENCEINDEX)modItem.val1).Data().Names());

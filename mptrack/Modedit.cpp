@@ -29,6 +29,7 @@
 #include "PatternTransaction.h"
 #include "InstrumentTransaction.h"
 #include "SampleTransaction.h"
+#include "SequenceTransaction.h"
 
 
 #ifdef _DEBUG
@@ -684,8 +685,11 @@ PATTERNINDEX CModDoc::InsertPattern(ORDERINDEX nOrd, ROWINDEX nRows)
 //------------------------------------------------------------------
 {
 	PATTERNINDEX pat = m_SndFile.Patterns.InsertAny(nRows, true);
+	// TODO: Need to have some different sort of message, e.g. CreatePattern
+	PatternResizeTransaction tr(m_SndFile, pat, true);
 	if(pat != PATTERNINDEX_INVALID)
 	{
+		SequenceTransaction tr(m_SndFile);
 		m_SndFile.Order().insert(nOrd, 1, pat);
 		SetModified();
 	}
@@ -860,6 +864,7 @@ bool CModDoc::RemoveOrder(SEQUENCEINDEX nSeq, ORDERINDEX nOrd)
 		return false;
 
 	CriticalSection cs;
+	SequenceTransaction tr(m_SndFile);
 	m_SndFile.Order(nSeq).Remove(nOrd, nOrd);
 	SetModified();
 
