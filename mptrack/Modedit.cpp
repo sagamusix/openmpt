@@ -681,16 +681,19 @@ void CModDoc::ClonePlugin(SNDMIXPLUGIN &target, const SNDMIXPLUGIN &source)
 }
 
 
-PATTERNINDEX CModDoc::InsertPattern(ORDERINDEX nOrd, ROWINDEX nRows)
-//------------------------------------------------------------------
+PATTERNINDEX CModDoc::InsertPattern(ROWINDEX rows, ORDERINDEX ord)
+//----------------------------------------------------------------
 {
-	PATTERNINDEX pat = m_SndFile.Patterns.InsertAny(nRows, true);
+	PATTERNINDEX pat = m_SndFile.Patterns.InsertAny(rows, true);
 	// TODO: Need to have some different sort of message, e.g. CreatePattern
 	PatternResizeTransaction tr(m_SndFile, pat, true);
 	if(pat != PATTERNINDEX_INVALID)
 	{
-		SequenceTransaction tr(m_SndFile);
-		m_SndFile.Order().insert(nOrd, 1, pat);
+		if(ord != ORDERINDEX_INVALID)
+		{
+			SequenceTransaction tr(m_SndFile);
+			m_SndFile.Order().insert(ord, 1, pat);
+		}
 		SetModified();
 	}
 	return pat;
@@ -1245,7 +1248,7 @@ void CModDoc::CheckUsedChannels(std::vector<bool> &usedMask, CHANNELINDEX maxRem
 }
 
 
-// Check if a given channel contains note data.
+// Check if a given channel contains note data or global effects.
 bool CModDoc::IsChannelUnused(CHANNELINDEX nChn) const
 //----------------------------------------------------
 {
@@ -1259,12 +1262,10 @@ bool CModDoc::IsChannelUnused(CHANNELINDEX nChn) const
 		if(pat.IsValid())
 		{
 			const ModCommand *p = pat.GetpModCommand(0, nChn);
-			for(ROWINDEX nRow = pat.GetNumRows(); nRow > 0; nRow--, p += nChannels)
+			for(ROWINDEX row = pat.GetNumRows(); row > 0; row--, p += nChannels)
 			{
-				if(!p->IsEmpty())
-				{
+				if(p->IsNote() || p->IsInstrPlug() || p->IsGlobalCommand())
 					return false;
-				}
 			}
 		}
 	}

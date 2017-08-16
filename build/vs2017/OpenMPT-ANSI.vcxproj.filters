@@ -378,6 +378,9 @@
     <ClInclude Include="..\..\mptrack\SelectPluginDialog.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\SequenceTransaction.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\Settings.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -1050,6 +1053,9 @@
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\SelectPluginDialog.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\SequenceTransaction.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\Settings.cpp">
