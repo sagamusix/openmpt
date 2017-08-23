@@ -156,7 +156,7 @@ public:
 	int m_spectators, m_maxSpectators;
 	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 
-	NetworkedDocument(int collaborators = 0, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)
+	NetworkedDocument(int collaborators = 1, int spectators = 0, const mpt::ustring &password = mpt::ustring(), std::shared_ptr<CollabConnection> connection = nullptr)
 		: m_password(password)
 		, m_collaborators(0)
 		, m_maxCollaborators(collaborators)
@@ -177,7 +177,7 @@ class CollabServer : public Listener, public std::enable_shared_from_this<Collab
 	std::vector<std::shared_ptr<CollabConnection>> m_connections;
 	asio::ip::tcp::acceptor m_acceptor;
 	asio::ip::tcp::socket m_socket;
-	mpt::mutex m_mutex;
+	mutable mpt::mutex m_mutex;
 	mpt::thread m_thread;
 	const int m_port;
 
@@ -186,7 +186,8 @@ public:
 	~CollabServer();
 
 	std::shared_ptr<LocalCollabClient> AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
-	NetworkedDocument *GetDocument(CModDoc &modDoc);
+	// Return the document's sharing properties, or default properties if document is not shared yet.
+	NetworkedDocument GetDocument(CModDoc &modDoc) const;
 	void CloseDocument(CModDoc &modDoc);
 
 	void SendMessage(CModDoc &modDoc, const std::string msg);

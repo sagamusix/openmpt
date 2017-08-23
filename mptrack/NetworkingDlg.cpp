@@ -229,17 +229,14 @@ BOOL SharingDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 	m_CollaboratorsSpin.SetRange(0, 99);
 	m_SpectatorsSpin.SetRange(0, 99);
-	NetworkedDocument *doc;
-	if(collabServer && (doc = collabServer->GetDocument(m_ModDoc)) != nullptr)
+	NetworkedDocument doc;
+	if(collabServer)
 	{
-		SetDlgItemInt(IDC_EDIT1, doc->m_maxCollaborators);
-		SetDlgItemInt(IDC_EDIT2, doc->m_maxSpectators);
-		SetDlgItemText(IDC_EDIT3, mpt::ToCString(doc->m_password));
-	} else
-	{
-		SetDlgItemInt(IDC_EDIT1, 1);
-		SetDlgItemInt(IDC_EDIT2, 0);
+		doc = collabServer->GetDocument(m_ModDoc);
 	}
+	SetDlgItemInt(IDC_EDIT1, doc.m_maxCollaborators);
+	SetDlgItemInt(IDC_EDIT2, doc.m_maxSpectators);
+	SetDlgItemText(IDC_EDIT3, mpt::ToCString(doc.m_password));
 
 	return TRUE;
 }

@@ -269,16 +269,16 @@ std::shared_ptr<LocalCollabClient> CollabServer::AddDocument(CModDoc &modDoc, in
 }
 
 
-NetworkedDocument *CollabServer::GetDocument(CModDoc &modDoc)
+NetworkedDocument CollabServer::GetDocument(CModDoc &modDoc) const
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	auto doc = m_documents.find(&modDoc);
 	if(doc == m_documents.end())
 	{
-		return nullptr;
+		return NetworkedDocument();
 	} else
 	{
-		return &doc->second;
+		return doc->second;
 	}
 }
 
@@ -288,16 +288,6 @@ void CollabServer::CloseDocument(CModDoc &modDoc)
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	// TODO: Close connections for all clients that belong to this document
 	m_documents.erase(&modDoc);
-}
-
-
-void CollabServer::SendMessage(CModDoc &modDoc, const std::string msg)
-{
-	auto doc = m_documents.find(&modDoc);
-	if(doc != m_documents.end())
-	{
-		// TODO
-	}
 }
 
 
