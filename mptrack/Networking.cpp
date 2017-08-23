@@ -253,9 +253,33 @@ CollabServer::~CollabServer()
 std::shared_ptr<LocalCollabClient> CollabServer::AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password)
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	auto client = std::make_shared<LocalCollabClient>(modDoc);
-	m_documents[&modDoc] = NetworkedDocument(collaborators, spectators, password, client->GetConnection());
-	return client;
+	auto doc = m_documents.find(&modDoc);
+	if(doc == m_documents.end())
+	{
+		auto client = std::make_shared<LocalCollabClient>(modDoc);
+		m_documents[&modDoc] = NetworkedDocument(collaborators, spectators, password, client->GetConnection());
+		return client;
+	} else
+	{
+		doc->second.m_maxCollaborators = collaborators;
+		doc->second.m_maxSpectators = spectators;
+		doc->second.m_password = password;
+		return nullptr;
+	}
+}
+
+
+NetworkedDocument *CollabServer::GetDocument(CModDoc &modDoc)
+{
+	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
+	auto doc = m_documents.find(&modDoc);
+	if(doc == m_documents.end())
+	{
+		return nullptr;
+	} else
+	{
+		return &doc->second;
+	}
 }
 
 

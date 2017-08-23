@@ -163,7 +163,7 @@ public:
 		, m_spectators(0)
 		, m_maxSpectators(spectators)
 	{
-		if(connection != nullptr)
+		if(connection)
 		{
 			m_connections.push_back(connection);
 		}
@@ -186,6 +186,7 @@ public:
 	~CollabServer();
 
 	std::shared_ptr<LocalCollabClient> AddDocument(CModDoc &modDoc, int collaborators, int spectators, const mpt::ustring &password);
+	NetworkedDocument *GetDocument(CModDoc &modDoc);
 	void CloseDocument(CModDoc &modDoc);
 
 	void SendMessage(CModDoc &modDoc, const std::string msg);

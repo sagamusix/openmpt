@@ -229,8 +229,18 @@ BOOL SharingDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 	m_CollaboratorsSpin.SetRange(0, 99);
 	m_SpectatorsSpin.SetRange(0, 99);
-	SetDlgItemInt(IDC_EDIT1, 1);
-	SetDlgItemInt(IDC_EDIT2, 0);
+	NetworkedDocument *doc;
+	if(collabServer && (doc = collabServer->GetDocument(m_ModDoc)) != nullptr)
+	{
+		SetDlgItemInt(IDC_EDIT1, doc->m_maxCollaborators);
+		SetDlgItemInt(IDC_EDIT2, doc->m_maxSpectators);
+		SetDlgItemText(IDC_EDIT3, mpt::ToCString(doc->m_password));
+	} else
+	{
+		SetDlgItemInt(IDC_EDIT1, 1);
+		SetDlgItemInt(IDC_EDIT2, 0);
+	}
+
 	return TRUE;
 }
 
@@ -247,7 +257,12 @@ void SharingDlg::OnOK()
 		collabServer->StartAccept();
 	}
 
-	m_ModDoc.m_collabClient = collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));;
+	auto newConnection = collabServer->AddDocument(m_ModDoc, collaborators, spectators, mpt::ToUnicode(password));
+	// May be nullptr if we just update the document
+	if(newConnection)
+	{
+		m_ModDoc.m_collabClient = newConnection;
+	}
 }
 
 
