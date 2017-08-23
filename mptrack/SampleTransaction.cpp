@@ -58,4 +58,37 @@ SamplePropertyTransaction::~SamplePropertyTransaction()
 	}
 }
 
+
+SampleDataTransaction::SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample)
+	: m_sndFile(sndFile)
+	, m_sample(sample)
+{
+	ModSample &smp = sndFile.GetSample(sample);
+	if(smp.HasSampleData())
+	{
+		m_oldData.assign(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
+	}
+}
+
+
+SampleDataTransaction::~SampleDataTransaction()
+{
+	ModSample &smp = m_sndFile.GetSample(m_sample);
+	auto newData = mpt::as_span(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
+	if(mpt::as_span(m_oldData) != newData)
+	{
+		auto *modDoc = m_sndFile.GetpModDoc();
+		if(modDoc->m_collabClient)
+		{
+			std::ostringstream ss;
+			cereal::BinaryOutputArchive ar(ss);
+			ar(Networking::SampleDataTransactionMsg);
+			ar(cereal::make_size_tag(static_cast<cereal::size_type>(newData.size())));
+			ar(cereal::binary_data(newData.data(), newData.size() * sizeof(newData[0])));
+			modDoc->m_collabClient->Write(ss.str());
+		}
+	}
+}
+
+
 OPENMPT_NAMESPACE_END

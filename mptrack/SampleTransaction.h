@@ -18,9 +18,13 @@ public:
 
 class SampleDataTransaction //: public SamplePropertyTransaction
 {
+	CSoundFile &m_sndFile;
+	std::vector<int8> m_oldData;
+	SAMPLEINDEX m_sample;
+
 public:
-	SampleDataTransaction() { }
-	~SampleDataTransaction() { }
+	SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample);
+	~SampleDataTransaction();
 };
 
 OPENMPT_NAMESPACE_END

@@ -920,7 +920,7 @@ bool CCtrlSamples::OpenSample(const mpt::PathString &fileName, FlagSet<OpenSampl
 	}
 
 	PrepareUndo("Replace", sundo_replace);
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	bool bOk = false;
 	if(types[OpenSampleKnown])
 	{
@@ -1036,7 +1036,7 @@ bool CCtrlSamples::OpenSample(const CSoundFile &sndFile, SAMPLEINDEX nSample)
 
 	BeginWaitCursor();
 
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Replace", sundo_replace);
 	if(m_sndFile.ReadSampleFromSong(m_nSample, sndFile, nSample))
 	{
@@ -1144,7 +1144,7 @@ bool CCtrlSamples::InsertSample(bool duplicate, int8 *confirm)
 
 		if(duplicate && nOldSmp >= 1 && nOldSmp <= sndFile.GetNumSamples())
 		{
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(m_sndFile, m_nSample);
 			m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_replace, "Duplicate");
 			sndFile.ReadSampleFromSong(smp, sndFile, nOldSmp);
 		}
@@ -1529,7 +1529,7 @@ void CCtrlSamples::OnNormalize()
 				}
 			}
 
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(m_sndFile, m_nSample);
 			m_modDoc.GetSampleUndo().PrepareUndo(iSmp, sundo_update, "Normalize", selStart, selEnd);
 
 			if(sample.uFlags[CHN_STEREO]) { selStart *= 2; selEnd *= 2; }
@@ -1629,7 +1629,7 @@ void CCtrlSamples::OnRemoveDCOffset()
 			selEnd = selection.nEnd;
 		}
 
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(m_sndFile, m_nSample);
 		m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Remove DC Offset", selStart, selEnd);
 
 		const float fOffset = ctrlSmp::RemoveDCOffset(m_sndFile.GetSample(smp), selStart, selEnd, m_sndFile.GetType(), m_sndFile);
@@ -1717,7 +1717,7 @@ void CCtrlSamples::ApplyAmplify(int32 lAmp, int32 fadeIn, int32 fadeOut, Fade::L
 
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Amplify", sundo_update, selection.nStart, selection.nEnd);
 
 	selection.nStart *= sample.GetNumChannels();
@@ -1956,7 +1956,7 @@ void CCtrlSamples::ApplyResample(uint32_t newRate, ResamplingMode mode)
 			}
 		}
 
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(m_sndFile, m_nSample);
 		PrepareUndo((newRate > oldRate) ? "Upsample" : "Downsample", sundo_replace);
 
 		// Adjust loops
@@ -2338,7 +2338,7 @@ public:
 			MPT_ASSERT(nNewSampleLength >= outPos);
 
 			CSoundFile &sndFile = m_modDoc.GetrSoundFile();
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_sample);
 			m_parent.PrepareUndo("Time Stretch", sundo_replace);
 			// Swap sample buffer pointer to new buffer, update song + sample data & free old sample buffer
 			ctrlSmp::ReplaceSample(sample, pNewSample, std::min(outPos, nNewSampleLength), sndFile);
@@ -2509,7 +2509,7 @@ public:
 
 		if(!m_abort)
 		{
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(m_modDoc.GetrSoundFile(), m_sample);
 			m_parent.PrepareUndo("Pitch Shift", sundo_replace);
 			ctrlSmp::ReplaceSample(sample, pNewSample, sample.nLength, m_modDoc.GetrSoundFile());
 		}
@@ -2599,7 +2599,7 @@ void CCtrlSamples::OnReverse()
 
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Reverse", sundo_reverse, selection.nStart, selection.nEnd);
 	if(ctrlSmp::ReverseSample(sample, selection.nStart, selection.nEnd, m_sndFile))
 	{
@@ -2620,7 +2620,7 @@ void CCtrlSamples::OnInvert()
 
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Invert", sundo_invert, selection.nStart, selection.nEnd);
 	if(ctrlSmp::InvertSample(sample, selection.nStart, selection.nEnd, m_sndFile) == true)
 	{
@@ -2646,7 +2646,7 @@ void CCtrlSamples::OnSignUnSign()
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Unsign", sundo_unsign, selection.nStart, selection.nEnd);
 	if(ctrlSmp::UnsignSample(sample, selection.nStart, selection.nEnd, m_sndFile) == true)
 	{
@@ -3531,7 +3531,7 @@ void CCtrlSamples::OnXFade()
 		LimitMax(fadeSamples, maxSamples);
 		if(fadeSamples < 2) return;
 
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(m_sndFile, m_nSample);
 		PrepareUndo("Crossfade", sundo_update,
 			loopEnd - fadeSamples,
 			loopEnd + (dlg.m_afterloopFade ? std::min(sample.nLength - loopEnd, fadeSamples) : 0));
@@ -3569,7 +3569,7 @@ void CCtrlSamples::OnStereoSeparation()
 		separation = dlg.resultAsDouble;
 
 		SampleSelectionPoints selection = GetSelectionPoints();
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(m_sndFile, m_nSample);
 		PrepareUndo("Stereo Separation", sundo_update,
 			selection.nStart, selection.nEnd);
 

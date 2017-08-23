@@ -190,8 +190,6 @@ public:
 	NetworkedDocument GetDocument(CModDoc &modDoc) const;
 	void CloseDocument(CModDoc &modDoc);
 
-	void SendMessage(CModDoc &modDoc, const std::string msg);
-
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void StartAccept();

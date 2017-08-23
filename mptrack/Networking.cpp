@@ -256,11 +256,13 @@ std::shared_ptr<LocalCollabClient> CollabServer::AddDocument(CModDoc &modDoc, in
 	auto doc = m_documents.find(&modDoc);
 	if(doc == m_documents.end())
 	{
+		// New document
 		auto client = std::make_shared<LocalCollabClient>(modDoc);
 		m_documents[&modDoc] = NetworkedDocument(collaborators, spectators, password, client->GetConnection());
 		return client;
 	} else
 	{
+		// Update
 		doc->second.m_maxCollaborators = collaborators;
 		doc->second.m_maxSpectators = spectators;
 		doc->second.m_password = password;
@@ -414,6 +416,15 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
+			} else if(type == SampleDataTransactionMsg)
+			{
+				cereal::size_type size;
+				inArchive >> size;
+				std::vector<int8> data(static_cast<size_t>(size));
+				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(size)));
+				//ar(make_size_tag(size));
+				//str.resize(static_cast<std::size_t>(size));
+				//ar(cereal::binary_data(const_cast<CharT *>(str.data()), static_cast<std::size_t>(size) * sizeof(CharT)));
 			} else if(type == InstrumentTransactionMsg)
 			{
 				INSTRUMENTINDEX id;

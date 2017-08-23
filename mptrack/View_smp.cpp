@@ -1709,7 +1709,7 @@ void CViewSample::OnLButtonDown(UINT, CPoint point)
 	if (m_dwStatus[SMPSTATUS_DRAWING])
 	{
 		m_lastDrawPoint = point;
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(sndFile, m_nSample);
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Draw Sample");
 		if(sample.GetElementarySampleSize() == 2)
 			SetInitialDrawPoint<int16, uint16>(sample, point);
@@ -2048,7 +2048,7 @@ void CViewSample::OnEditDelete()
 	 || (m_dwEndSel - m_dwBeginSel + 4 >= sample.nLength))
 	{
 		if (Reporting::Confirm("Remove this sample?", "Remove Sample", true) != cnfYes) return;
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(sndFile, m_nSample);
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Delete Sample");
 
 		sndFile.DestroySampleThreadsafe(m_nSample);
@@ -2056,7 +2056,7 @@ void CViewSample::OnEditDelete()
 		updateHint.Names();
 	} else
 	{
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(sndFile, m_nSample);
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Delete Selection", m_dwBeginSel, m_dwEndSel);
 
 		CriticalSection cs;
@@ -2237,7 +2237,7 @@ void CViewSample::DoPaste(PasteMode pasteMode)
 
 		if ((hCpy) && ((p = (LPBYTE)GlobalLock(hCpy)) != NULL))
 		{
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(pModDoc->GetrSoundFile(), m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Paste");
 
 			CSoundFile &sndFile = pModDoc->GetrSoundFile();
@@ -2421,7 +2421,7 @@ void CViewSample::On8BitConvert()
 		if(sample.uFlags[CHN_16BIT] && sample.pSample != nullptr && sample.nLength != 0)
 		{
 			ASSERT(sample.GetElementarySampleSize() == 2);
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "8-Bit Conversion");
 
 			CriticalSection cs;
@@ -2447,7 +2447,7 @@ void CViewSample::On16BitConvert()
 		if(!sample.uFlags[CHN_16BIT] && sample.pSample != nullptr && sample.nLength != 0)
 		{
 			ASSERT(sample.GetElementarySampleSize() == 1);
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "16-Bit Conversion");
 			if(!ctrlSmp::ConvertTo16Bit(sample, sndFile))
 			{
@@ -2487,7 +2487,7 @@ void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
 				}
 			}
 
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Mono Conversion");
 
 			if(ctrlSmp::ConvertToMono(sample, sndFile, convert))
@@ -2564,7 +2564,7 @@ void CViewSample::TrimSample(bool trimToLoopEnd)
 
 	if ((sample.pSample) && (nStart+nEnd <= sample.nLength) && (nEnd >= MIN_TRIM_LENGTH))
 	{
-		SampleDataTransaction transaction;
+		SampleDataTransaction transaction(sndFile, m_nSample);
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Trim");
 
 		CriticalSection cs;
@@ -2745,7 +2745,7 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 				{
 					CriticalSection cs;
 
-					SampleDataTransaction transaction;
+					SampleDataTransaction transaction(sndFile, m_nSample);
 					pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Replace");
 					bCanDrop = dlsbank.ExtractSample(sndFile, m_nSample, nIns, nRgn);
 				}
@@ -2774,7 +2774,7 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 			}
 			CriticalSection cs;
 
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Replace");
 			bCanDrop = pDLSBank->ExtractSample(sndFile, m_nSample, nIns, nRgn);
 
@@ -3004,13 +3004,13 @@ void CViewSample::OnAddSilence()
 		// resize - dlg.m_nSamples = new size
 		if(dlg.m_nSamples == 0)
 		{
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Delete Sample");
 			sndFile.DestroySampleThreadsafe(m_nSample);
 		} else if(dlg.m_nSamples != sample.nLength)
 		{
 			CriticalSection cs;
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 
 			if(dlg.m_nSamples < sample.nLength)	// make it shorter!
 				pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Resize", dlg.m_nSamples, sample.nLength);
@@ -3024,7 +3024,7 @@ void CViewSample::OnAddSilence()
 		if(dlg.m_nSamples > 0)
 		{
 			CriticalSection cs;
-			SampleDataTransaction transaction;
+			SampleDataTransaction transaction(sndFile, m_nSample);
 
 			SmpLength nStart = (dlg.m_nEditOption == CAddSilenceDlg::kSilenceAtEnd) ? sample.nLength : 0;
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_insert, "Add Silence", nStart, nStart + dlg.m_nSamples);
@@ -3329,7 +3329,7 @@ void CViewSample::OnSampleSlice()
 		}
 	}
 	
-	SampleDataTransaction transaction;
+	SampleDataTransaction transaction(sndFile, m_nSample);
 	pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Slice Sample", cues[1], sample.nLength);
 	ctrlSmp::ResizeSample(sample, cues[1], sndFile);
 	sample.PrecomputeLoops(sndFile, true);
