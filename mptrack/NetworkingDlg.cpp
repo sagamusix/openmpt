@@ -250,6 +250,7 @@ void SharingDlg::OnOK()
 	GetDlgItemText(IDC_EDIT3, password);
 	if(collabServer == nullptr)
 	{
+		VLDEnable();
 		collabServer = std::make_shared<Networking::CollabServer>();
 		collabServer->StartAccept();
 	}

@@ -100,27 +100,68 @@ CollabConnection::~CollabConnection()
 void RemoteCollabConnection::Read()
 {
 	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
-	m_inMessage.resize(sizeof(MsgHeader));
-	asio::async_read(m_socket,
-		asio::buffer(&m_inMessage[0], sizeof(MsgHeader)),
-		[that](std::error_code ec, std::size_t length)
+	m_thread = mpt::thread([that]()
 	{
-		if(!ec)
+		while(that->m_threadRunning)
 		{
+			that->m_inMessage.resize(sizeof(MsgHeader));
+			asio::error_code ec;
+			auto length = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)), ec);
+			if(ec)
+			{
+				return;
+			}
+
 			MsgHeader header;
 			MPT_ASSERT(length == sizeof(MsgHeader));
 			std::memcpy(&header, that->m_inMessage.data(), sizeof(MsgHeader));
 			that->m_inMessage.resize(header.compressedSize);
 			that->m_origSize = header.origSize;
 
-			if(asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], header.compressedSize)) >= header.compressedSize)
+			Log("Trying to read %d (%d available)", header.compressedSize, that->m_socket.available());
+			asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], header.compressedSize), ec);
+			if(ec)
 			{
+				return;
+			}
+			that->Parse();
+		}
+	});
+	return;
+
+	m_inMessage.resize(sizeof(MsgHeader));
+	m_strand.dispatch([that]()
+	{
+		asio::async_read(that->m_socket,
+			asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)),
+			[that](std::error_code ec, std::size_t length)
+		{
+			if(!ec)
+			{
+				MsgHeader header;
+				MPT_ASSERT(length == sizeof(MsgHeader));
+				std::memcpy(&header, that->m_inMessage.data(), sizeof(MsgHeader));
+				that->m_inMessage.resize(header.compressedSize);
+				that->m_origSize = header.origSize;
+
+				auto remain = header.compressedSize.get();
+				size_t offset = 0;
+				while(remain)
+				{
+					Log("Trying to read %d (%d available)", remain, that->m_socket.available());
+					auto read = remain;
+					LimitMax(read, that->m_socket.available());
+					auto actualRead = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[offset], read));
+					remain -= actualRead;
+					offset += actualRead;
+					MPT_ASSERT(read == actualRead);
+				}
 				if(that->Parse())
 				{
 					that->Read();
 				}
 			}
-		}
+		});
 	});
 }
 
@@ -181,18 +222,22 @@ void CollabConnection::Write(const std::string &message)
 	} while(m_strmOut.avail_out == 0);
 	header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(compressedMessage.size() - sizeof(header));
 	header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
+	Log("Writing %d / %d", header.compressedSize.get(), compressedMessage.size());
 	std::memcpy(&compressedMessage[0], &header, sizeof(header));
 
 	Send(compressedMessage);
+	Log("Writing done.");
 }
 
 
 void RemoteCollabConnection::Send(const std::string &message)
 {
+	//MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
+	//asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
 	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
 	m_strand.dispatch([that, message]()
 	{
-		that->m_outMessages.push_back(message);
+		that->m_outMessages.push_back({ message, message.size(), 0 });
 		if(that->m_outMessages.size() > 1)
 		{
 			// Outstanding async_write
@@ -212,28 +257,69 @@ RemoteCollabConnection::~RemoteCollabConnection()
 void RemoteCollabConnection::Close()
 {
 	m_socket.close();
+	m_threadRunning = false;
+	if(m_thread.joinable())
+	{
+		m_thread.join();
+	}
 }
 
 
 void RemoteCollabConnection::WriteImpl()
 {
-	const std::string &message = m_outMessages.front();
 	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
-	asio::async_write(m_socket, asio::buffer(message.c_str(), message.size()),
-		m_strand.wrap([that](std::error_code error, const size_t /*bytesTransferred*/)
+#if 1
+	const Message &message = that->m_outMessages.front();
+	asio::async_write(m_socket, asio::buffer(message.msg.data() + message.written, std::min(size_t(8192), message.remain)),
+		m_strand.wrap([that](std::error_code error, const size_t written)
 	{
-		that->m_outMessages.pop_front();
 		if(error)
 		{
 			std::cerr << "Write Error: " << std::system_error(error).what() << std::endl;
 			return;
 		}
 
-		if(!that->m_outMessages.empty())
+		Message &message = that->m_outMessages.front();
+		message.written += written;
+		message.remain -= written;
+		if(!message.remain)
+		{
+			that->m_outMessages.pop_front();
+			if(!that->m_outMessages.empty())
+			{
+				that->WriteImpl();
+			}
+		} else
 		{
 			that->WriteImpl();
 		}
 	}));
+#else
+	m_strand.dispatch([that]()
+	{
+		while(!that->m_outMessages.empty())
+		{
+			const std::string &message = that->m_outMessages.front();
+
+			std::error_code error;
+			size_t remain = message.size(), pos = 0;
+			while(remain)
+			{
+				size_t toWrite = std::min(remain, size_t(8192));
+				auto written = asio::write(that->m_socket, asio::buffer(message.data() + pos, toWrite), error);
+				remain -= written;
+				pos += written;
+				Log("Remains to write: %d / %d", remain, message.size());
+				if(error)
+				{
+					std::cerr << "Write Error: " << std::system_error(error).what() << std::endl;
+					return;
+				}
+			}
+			that->m_outMessages.pop_front();
+		}
+	});
+#endif
 }
 
 
@@ -315,7 +401,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	cereal::BinaryInputArchive inArchive(inMsg);
 	NetworkMessage type;
 	inArchive >> type;
-	OutputDebugStringA(std::string(type.type, 4).c_str());
+	Log(std::string(type.type, 4).c_str());
 
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);

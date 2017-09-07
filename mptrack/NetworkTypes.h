@@ -265,21 +265,22 @@ template<class Archive>
 void CSoundFile::save(Archive &archive) const
 {
 	const_cast<CSoundFile *>(this)->serializeCommon(archive);
-	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
-	{
-		cereal::size_type size = Samples[i].GetSampleSizeInBytes();
-		archive(cereal::make_size_tag(size));
-		if(size)
-		{
-			archive(cereal::binary_data(Samples[i].pSample8, static_cast<size_t>(size)));
-		}
-	}
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		if(Instruments[i])
 			archive(*Instruments[i]);
 		else
 			archive(ModInstrument());
+	}
+	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
+	{
+		/*cereal::size_type size = Samples[i].GetSampleSizeInBytes();
+		archive(cereal::make_size_tag(size));
+		archive(cereal::binary_data(Samples[i].pSample8, static_cast<size_t>(size)));*/
+		if(Samples[i].nLength)
+		{
+			archive(cereal::binary_data(Samples[i].pSample8, Samples[i].GetSampleSizeInBytes()));
+		}
 	}
 	// TODO Tunings
 }
@@ -289,15 +290,6 @@ void CSoundFile::load(Archive &archive)
 	serializeCommon(archive);
 	SetModSpecsPointer(m_pModSpecs, GetType());
 	SetMixLevels(m_nMixLevels);
-	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
-	{
-		cereal::size_type size;
-		archive(cereal::make_size_tag(size));
-		if(size && Samples[i].AllocateSample())
-		{
-			archive(cereal::binary_data(Samples[i].pSample8, static_cast<size_t>(size)));
-		}
-	}
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		ModInstrument *ins = AllocateInstrument(i);
@@ -308,6 +300,16 @@ void CSoundFile::load(Archive &archive)
 		{
 			ModInstrument temp;
 			archive(temp);
+		}
+	}
+	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
+	{
+		//cereal::size_type size;
+		//archive(cereal::make_size_tag(size));
+		if(Samples[i].nLength && Samples[i].AllocateSample())
+		{
+			//archive(cereal::binary_data(Samples[i].pSample8, static_cast<size_t>(size)));
+			archive(cereal::binary_data(Samples[i].pSample8, Samples[i].GetSampleSizeInBytes()));
 		}
 	}
 	// TODO Tunings

@@ -10,6 +10,7 @@
 
 #pragma once
 #include <asio.hpp>
+#include <atomic>
 #include <deque>
 #include <map>
 #include <zlib/zlib.h>
@@ -67,9 +68,18 @@ protected:
 
 class RemoteCollabConnection : public CollabConnection
 {
-	std::deque<std::string> m_outMessages;
+	struct Message
+	{
+		std::string msg;
+		size_t remain, written;
+	};
+	std::deque<Message> m_outMessages;
 	asio::ip::tcp::socket m_socket;
 	asio::io_service::strand m_strand;
+	mpt::thread m_thread;
+	std::atomic<bool> m_threadRunning = true;
+
+	//mutable mpt::mutex m_mutex;
 
 public:
 	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
