@@ -351,7 +351,6 @@ LIBOPENMPT_API void openmpt_log_func_silent( const char * message, void * user )
  *
  * Checks whether an error code represents a transient error which may not occur again in a later try if for example memory has been freed up after an out-of-memory error.
  * \param error Error code.
- * \return Mask of OPENMPT_ERROR_FUNC_RESULT_LOG and OPENMPT_ERROR_FUNC_RESULT_STORE.
  * \retval 0 Error is not transient.
  * \retval 1 Error is transient.
  * \sa OPENMPT_ERROR_OUT_OF_MEMORY
@@ -1292,6 +1291,7 @@ LIBOPENMPT_API const char * openmpt_module_ctl_get( openmpt_module * mod, const 
  * \param mod The module handle to work on.
  * \param ctl The ctl key whose value should be set.
  * \param value The value that should be set.
+ * \return 1 if successful, 0 in case the value is not sensible (e.g. negative tempo factor) or the ctl is not recognized.
  * \sa openmpt_module_get_ctls
  */
 LIBOPENMPT_API int openmpt_module_ctl_set( openmpt_module * mod, const char * ctl, const char * value );

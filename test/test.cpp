@@ -60,7 +60,7 @@
 #include <zlib.h>
 #elif defined(MPT_WITH_MINIZ)
 #define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-#include <miniz/miniz.c>
+#include <miniz/miniz.h>
 #endif
 
 #ifdef _DEBUG
@@ -87,7 +87,8 @@ namespace Test {
 
 static MPT_NOINLINE void TestVersion();
 static MPT_NOINLINE void TestTypes();
-static MPT_NOINLINE void TestMisc();
+static MPT_NOINLINE void TestMisc1();
+static MPT_NOINLINE void TestMisc2();
 static MPT_NOINLINE void TestRandom();
 static MPT_NOINLINE void TestCharsets();
 static MPT_NOINLINE void TestStringFormatting();
@@ -168,7 +169,8 @@ void DoTests()
 
 	DO_TEST(TestVersion);
 	DO_TEST(TestTypes);
-	DO_TEST(TestMisc);
+	DO_TEST(TestMisc1);
+	DO_TEST(TestMisc2);
 	DO_TEST(TestRandom);
 	DO_TEST(TestCharsets);
 	DO_TEST(TestStringFormatting);
@@ -635,8 +637,8 @@ Gregorian TestDate2(int s, int m, int h, int D, int M, int Y) {
 	return Gregorian{Y,M,D,h,m,s};
 }
 
-static MPT_NOINLINE void TestMisc()
-//---------------------------------
+static MPT_NOINLINE void TestMisc1()
+//----------------------------------
 {
 
 	VERIFY_EQUAL(mpt::endian(), mpt::detail::endian_probe());
@@ -1097,13 +1099,142 @@ static MPT_NOINLINE void TestMisc()
 
 #endif
 
+
 	VERIFY_EQUAL(mpt::wrapping_modulo(-25, 12), 11);
 	VERIFY_EQUAL(mpt::wrapping_modulo(-24, 12), 0);
 	VERIFY_EQUAL(mpt::wrapping_modulo(-23, 12), 1);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-8, 7), 6);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-7, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-6, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-5, 7), 2);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-4, 7), 3);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-3, 7), 4);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-2, 7), 5);
+	VERIFY_EQUAL(mpt::wrapping_modulo(-1, 7), 6);
 	VERIFY_EQUAL(mpt::wrapping_modulo(0, 12), 0);
+	VERIFY_EQUAL(mpt::wrapping_modulo(0, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_modulo(1, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_modulo(2, 7), 2);
+	VERIFY_EQUAL(mpt::wrapping_modulo(3, 7), 3);
+	VERIFY_EQUAL(mpt::wrapping_modulo(4, 7), 4);
+	VERIFY_EQUAL(mpt::wrapping_modulo(5, 7), 5);
+	VERIFY_EQUAL(mpt::wrapping_modulo(6, 7), 6);
+	VERIFY_EQUAL(mpt::wrapping_modulo(7, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_modulo(8, 7), 1);
 	VERIFY_EQUAL(mpt::wrapping_modulo(23, 12), 11);
 	VERIFY_EQUAL(mpt::wrapping_modulo(24, 12), 0);
 	VERIFY_EQUAL(mpt::wrapping_modulo(25, 12), 1);
+	VERIFY_EQUAL(mpt::wrapping_modulo(uint32(0x7fffffff), uint32(0x80000000)), uint32(0x7fffffff));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(0x7ffffffe), int32(0x7fffffff)), int32(0x7ffffffe));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), int32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), int32(2)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff), int32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff), int32(2)), int32(1));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe), int32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe), int32(2)), int32(0));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), int32(0x7fffffff)), int32(0x7ffffffe));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , int32(0x7fffffff)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , int32(0x7fffffff)), int32(1));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), int32(0x7ffffffe)), int32(0x7ffffffc));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , int32(0x7ffffffe)), int32(0x7ffffffd));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , int32(0x7ffffffe)), int32(0));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), int32(0x7ffffffd)), int32(0x7ffffffa));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , int32(0x7ffffffd)), int32(0x7ffffffb));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , int32(0x7ffffffd)), int32(0x7ffffffc));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(0) , int32(0x7fffffff)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-1), int32(0x7fffffff)), int32(0x7ffffffe));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-2), int32(0x7fffffff)), int32(0x7ffffffd));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(0) , int32(0x7ffffffe)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-1), int32(0x7ffffffe)), int32(0x7ffffffd));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-2), int32(0x7ffffffe)), int32(0x7ffffffc));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(2)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff), uint32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff), uint32(2)), int32(1));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe), uint32(1)), int32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe), uint32(2)), int32(0));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x40000001)  , uint32(0xffffffff)), uint32(0xbffffffe));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x40000000)  , uint32(0xffffffff)), uint32(0xbfffffff));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x3fffffff)  , uint32(0xffffffff)), uint32(0xc0000000));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x80000000)), uint32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x80000000)), uint32(1));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x80000000)), uint32(2));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x80000001)), uint32(1));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x80000001)), uint32(2));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x80000001)), uint32(3));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x80000000)), uint32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x80000000)), uint32(1));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x80000000)), uint32(2));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x7fffffff)), uint32(0x7ffffffe));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x7fffffff)), uint32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x7fffffff)), uint32(1));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x7ffffffe)), uint32(0x7ffffffc));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x7ffffffe)), uint32(0x7ffffffd));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x7ffffffe)), uint32(0));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x80000000ll), uint32(0x7ffffffd)), uint32(0x7ffffffa));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7fffffff)  , uint32(0x7ffffffd)), uint32(0x7ffffffb));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-0x7ffffffe)  , uint32(0x7ffffffd)), uint32(0x7ffffffc));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(0) , uint32(0x7fffffff)), uint32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-1), uint32(0x7fffffff)), uint32(0x7ffffffe));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-2), uint32(0x7fffffff)), uint32(0x7ffffffd));
+
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(0) , uint32(0x7ffffffe)), uint32(0));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-1), uint32(0x7ffffffe)), uint32(0x7ffffffd));
+	VERIFY_EQUAL(mpt::wrapping_modulo(int32(-2), uint32(0x7ffffffe)), uint32(0x7ffffffc));
+
+	VERIFY_EQUAL(mpt::wrapping_divide(-15, 7), -3);
+	VERIFY_EQUAL(mpt::wrapping_divide(-14, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-13, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-12, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-11, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-10, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-9, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-8, 7), -2);
+	VERIFY_EQUAL(mpt::wrapping_divide(-7, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-6, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-5, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-4, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-3, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-2, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(-1, 7), -1);
+	VERIFY_EQUAL(mpt::wrapping_divide(0, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(1, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(2, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(3, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(4, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(5, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(6, 7), 0);
+	VERIFY_EQUAL(mpt::wrapping_divide(7, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(8, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(9, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(10, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(11, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(12, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(13, 7), 1);
+	VERIFY_EQUAL(mpt::wrapping_divide(14, 7), 2);
+	VERIFY_EQUAL(mpt::wrapping_divide(15, 7), 2);
+
+}
+
+
+static MPT_NOINLINE void TestMisc2()
+//----------------------------------
+{
 
 	VERIFY_EQUAL( mpt::String::LTrim(std::string(" ")), "" );
 	VERIFY_EQUAL( mpt::String::RTrim(std::string(" ")), "" );

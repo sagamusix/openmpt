@@ -1285,7 +1285,7 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)
 	{
 		pMainFrame->InitPreview();
-		pMainFrame->PreparePreview(NOTE_NOTECUT);
+		pMainFrame->PreparePreview(NOTE_NOTECUT, 0);
 		pMainFrame->PlayPreview();
 	}
 
@@ -1526,7 +1526,7 @@ void CTrackApp::OpenModulesDialog(std::vector<mpt::PathString> &files, const mpt
 		"FastTracker Modules (*.xm)|*.xm;*.xmz|"
 		"Impulse Tracker Modules (*.it)|*.it;*.itz|"
 		"OpenMPT Modules (*.mptm)|*.mptm;*.mptmz|"
-		"Other Modules (mtm,okt,mdl,669,far,...)|*.mtm;*.669;*.ult;*.wow;*.far;*.mdl;*.okt;*.dmf;*.ptm;*.med;*.ams;*.dbm;*.digi;*.dsm;*.umx;*.amf;*.psm;*.mt2;*.gdm;*.imf;*.itp;*.j2b;*.ice;*.st26;*.plm;*.stp;*.sfx;*.sfx2;*.mms|"
+		"Other Modules (mtm,okt,mdl,669,far,...)|*.mtm;*.669;*.ult;*.wow;*.far;*.mdl;*.okt;*.dmf;*.ptm;*.med;*.ams;*.dbm;*.digi;*.dsm;*.dtm;*.umx;*.amf;*.psm;*.mt2;*.gdm;*.imf;*.itp;*.j2b;*.ice;*.st26;*.plm;*.stp;*.sfx;*.sfx2;*.mms|"
 		"Wave Files (*.wav)|*.wav|"
 		"MIDI Files (*.mid,*.rmi)|*.mid;*.rmi;*.smf|"
 		"All Files (*.*)|*.*||")
@@ -2283,17 +2283,21 @@ const TCHAR *CTrackApp::GetResamplingModeName(ResamplingMode mode, bool addTaps)
 }
 
 
-mpt::ustring CTrackApp::GetFriendlyMIDIPortName(const mpt::ustring &deviceName, bool isInputPort)
-//-----------------------------------------------------------------------------------------------
+mpt::ustring CTrackApp::GetFriendlyMIDIPortName(const mpt::ustring &deviceName, bool isInputPort, bool addDeviceName)
+//-------------------------------------------------------------------------------------------------------------------
 {
-	return GetSettings().Read<mpt::ustring>(isInputPort ? "MIDI Input Ports" : "MIDI Output Ports", deviceName, deviceName);
+	auto friendlyName = GetSettings().Read<mpt::ustring>(isInputPort ? "MIDI Input Ports" : "MIDI Output Ports", deviceName, deviceName);
+	if(addDeviceName && friendlyName != deviceName)
+		return friendlyName + MPT_ULITERAL(" (") + deviceName + MPT_ULITERAL(")");
+	else
+		return friendlyName;
 }
 
 
-CString CTrackApp::GetFriendlyMIDIPortName(const CString &deviceName, bool isInputPort)
-//-------------------------------------------------------------------------------------
+CString CTrackApp::GetFriendlyMIDIPortName(const CString &deviceName, bool isInputPort, bool addDeviceName)
+//---------------------------------------------------------------------------------------------------------
 {
-	return mpt::ToCString(GetFriendlyMIDIPortName(mpt::ToUnicode(deviceName), isInputPort));
+	return mpt::ToCString(GetFriendlyMIDIPortName(mpt::ToUnicode(deviceName), isInputPort, addDeviceName));
 }
 
 

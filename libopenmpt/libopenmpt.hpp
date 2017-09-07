@@ -19,24 +19,7 @@
 #include <string>
 #include <vector>
 
-#ifndef LIBOPENMPT_QUIRK_NO_CSTDINT
 #include <cstdint>
-#else
-#include <stdint.h>
-namespace openmpt {
-namespace std {
-typedef ::int8_t   int8_t;
-typedef ::int16_t  int16_t;
-typedef ::int32_t  int32_t;
-typedef ::int64_t  int64_t;
-typedef ::uint8_t  uint8_t; 
-typedef ::uint16_t uint16_t; 
-typedef ::uint32_t uint32_t;
-typedef ::uint64_t uint64_t;
-using namespace ::std;
-}
-}
-#endif
 
 /*!
  * \page libopenmpt_cpp_overview C++ API
@@ -152,13 +135,22 @@ namespace openmpt {
 #pragma warning(push)
 #pragma warning(disable:4275)
 #endif
+//! libopenmpt exception base class
+/*!
+  Base class used for all exceptions that are thrown by libopenmpt itself. Libopenmpt may additionally throw any exception thrown by the standard library which are all derived from std::exception.
+  \sa \ref libopenmpt_cpp_error
+*/
 class LIBOPENMPT_CXX_API exception : public std::exception {
 private:
 	char * text;
 public:
-	exception( const std::string & text ) LIBOPENMPT_NOEXCEPT;
-	virtual ~exception() LIBOPENMPT_NOEXCEPT;
-	virtual const char * what() const LIBOPENMPT_NOEXCEPT;
+	exception( const std::string & text ) noexcept;
+	exception( const exception & other ) noexcept;
+	exception( exception && other ) noexcept;
+	exception & operator = ( const exception & other ) noexcept;
+	exception & operator = ( exception && other ) noexcept;
+	virtual ~exception() noexcept;
+	virtual const char * what() const noexcept;
 }; // class exception
 #if defined(_MSC_VER)
 #pragma warning(pop)
@@ -942,6 +934,7 @@ public:
 	/*!
 	  \param ctl The ctl key whose value should be set.
 	  \param value The value that should be set.
+	  \throws openmpt::exception Throws an exception derived from openmpt::exception in case the value is not sensible (e.g. negative tempo factor) or under the circumstances outlined in openmpt::module::get_ctls.
 	  \sa openmpt::module::get_ctls
 	*/
 	void ctl_set( const std::string & ctl, const std::string & value );

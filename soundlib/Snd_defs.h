@@ -77,7 +77,7 @@ enum MODTYPE
 	MOD_TYPE_ULT	= 0x80,
 	MOD_TYPE_STM	= 0x100,
 	MOD_TYPE_FAR	= 0x200,
-	// unused   	= 0x400,
+	MOD_TYPE_DTM	= 0x400,
 	MOD_TYPE_AMF	= 0x800,
 	MOD_TYPE_AMS	= 0x1000,
 	MOD_TYPE_DSM	= 0x2000,
@@ -95,10 +95,9 @@ enum MODTYPE
 	MOD_TYPE_IMF	= 0x2000000,
 	MOD_TYPE_AMS2	= 0x4000000,
 	MOD_TYPE_DIGI	= 0x8000000,
-	// unused   	= 0x10000000,
+	MOD_TYPE_STP	= 0x10000000,
 	MOD_TYPE_PLM	= 0x20000000,
 	MOD_TYPE_SFX	= 0x40000000,
-	MOD_TYPE_STP	= 0x80000000,
 };
 DECLARE_FLAGSET(MODTYPE)
 
@@ -503,7 +502,7 @@ public:
 
 	SamplePosition() : v(0) { }
 	explicit SamplePosition(value_t pos) : v(pos) { }
-	SamplePosition(int32 intPart, uint32 fractPart) : v((static_cast<value_t>(intPart) << 32) | fractPart) { }
+	SamplePosition(int32 intPart, uint32 fractPart) : v((static_cast<value_t>(intPart) * (1ll<<32)) | fractPart) { }
 	static SamplePosition Ratio(uint32 dividend, uint32 divisor) { return SamplePosition((static_cast<int64>(dividend) << 32) / divisor); }
 	static SamplePosition FromDouble(double pos) { return SamplePosition(static_cast<value_t>(pos * 4294967296.0)); }
 

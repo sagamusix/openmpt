@@ -56,25 +56,34 @@ is just a high-level summary.
  *  [**Change**] The optional dependencies on `libltdl` or `libdl` are gone.
     They are no longer needed for any functionality.
 
+ *  [**Regression**] Compiling client code using the C++ API now requires a
+    compiler running in C++11 mode.
  *  [**Regression**] Support for GCC 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7 has been
     removed.
  *  [**Regression**] Support for Clang 3.0, 3.1, 3.2, 3.3 has been removed.
- *  [**Regression**] Support for Emscripten verions older than 1.31.0 has been
+ *  [**Regression**] Support for Emscripten versions older than 1.31.0 has been
     removed.
  *  [**Regression**] Support for Android NDK versions older than 11 has been
     removed.
  *  [**Regression**] Visual Studio 2008, 2010, 2012, 2013 support has been
     removed.
- *  [**Regression**] In order to securely load libmpg123, the Windows binary
-    packages only support the precise libmpg123 binary that is downloaded by the
-    `download_mpg123.vbs` script. Other binaries might also work, but this has
-    neither been tested nor is officially supported from now on.
+ *  [**Regression**] Dynamic run-time loading of libmpg123 is no longer
+    supported. Libmpg123 must be linked at link-time now.
  *  [**Regression**] xmp-openmpt: xmp-openmpt now requires XMPlay 3.8 or later
     and compiling xmp-openmpt requires an appropriate XMPlay SDK with
     `XMPIN_FACE` >= `4`.
  *  [**Regression**] Support for libmpg123 older than 1.13.0 has been removed.
  *  [**Regression**] Un4seen unmo3 support has been removed.
 
+ *  [**Bug**] C++ API: `openmpt::exception` did not define copy and move
+    constructors or copy and move assignment operators in libopenmpt 0.2. The
+    compiler-generated ones were not adequate though. libopenmpt 0.3 adds the
+    appropriate special member functions. This adds the respective symbol names
+    to the exported ABI, which, depending on the compiler, might or might not
+    have been there in libopenmpt 0.2. The possibly resulting possible ODR
+    violation only affects cases that did crash in the libopenmpt 0.2 API anyway
+    due to memory double-free, and does not cause any further problems in
+    practice for all known platforms and compilers.
  *  [**Bug**] The test suite could fail on MacOSX or FreeBSD in non-fatal ways
     when no locale was active.
  *  [**Bug**] The C API could crash instead of failing gracefully in
@@ -107,9 +116,10 @@ is just a high-level summary.
     libmodplug C++ API returned the wrong value, causing qmmp (and possibly
     other software) to crash.
 
+ *  Support for SoundTracker Pro II (STP) and Digital Tracker (DTM) modules.
  *  Increased accuracy of the sample position and sample rate to drift less when
     playing very long samples.
- *  Playback improvements for IT and XM files.
+ *  Various playback improvements for IT and XM files.
  *  Channel frequency could wrap around after some excessive portamento / down
     in some formats since libopenmpt 0.2-beta17.
  *  Playback improvements for S3M files made with Impulse Tracker and
@@ -141,6 +151,7 @@ is just a high-level summary.
  *  MT2 files with instruments that had both sample and plugin assignments were
     not read correctly.
  *  Support for VBlank timing flag and comment field in PT36 files.
+ *  Improved accuracy of vibrato command in DIGI / DBM files.
  *  STM: Add support for "WUZAMOD!" magic bytes and allow some slightly
     malformed STM files to load which were previously rejected.
  *  Detect whether "hidden" patterns in the order list of SoundTracker modules
@@ -159,9 +170,7 @@ is just a high-level summary.
  *  Autotools build system now has options `--disable-openmpt123`,
     `--disable-tests` and `--disable-examples` which may be desireable when
     cross-compiling.
- *  Windows binary packages now include a script `download_mpg123.vbs` which
-    downloads libmpg123 and copies it to the appropriate directories relative
-    to the uncompressed binary archive.
+ *  Windows binary packages now ship with libmpg123 included.
 
 ### libopenmpt 0.2-beta20 (2016-08-07)
 

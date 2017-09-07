@@ -102,8 +102,8 @@ IMixPlugin::ChunkData MidiInOut::GetChunk(bool /*isBank*/)
 	const std::string programName8 = mpt::ToCharset(mpt::CharsetUTF8, m_programName);
 	uint32 flags = kLatencyCompensation | kLatencyPresent | (m_sendTimingInfo ? 0 : kIgnoreTiming);
 #ifdef MODPLUG_TRACKER
-	std::string inFriendlyName = mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, m_inputDevice.name), true));
-	std::string outFriendlyName = mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, m_outputDevice.name), false));
+	std::string inFriendlyName = mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, m_inputDevice.name), true, false));
+	std::string outFriendlyName = mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, m_outputDevice.name), false, false));
 	if(inFriendlyName != m_inputDevice.name)
 	{
 		flags |= kFriendlyInputName;
@@ -149,22 +149,27 @@ IMixPlugin::ChunkData MidiInOut::GetChunk(bool /*isBank*/)
 static void FindPort(MidiDevice::ID &id, unsigned int numPorts, const std::string &name, const std::string &friendlyName, MidiDevice &midiDevice, bool isInput)
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
+	bool foundFriendly = false;
 	for(unsigned int i = 0; i < numPorts; i++)
 	{
 		try
 		{
 			auto portName = midiDevice.GetPortName(i);
 #ifdef MODPLUG_TRACKER
-			if(!friendlyName.empty() && friendlyName == mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, portName), isInput)))
+			if(!friendlyName.empty() && friendlyName == mpt::ToCharset(mpt::CharsetUTF8, theApp.GetFriendlyMIDIPortName(mpt::ToUnicode(mpt::CharsetUTF8, portName), isInput, false)))
 			{
 				// Preferred match
 				id = i;
-				return;
+				foundFriendly = true;
+				if(name == portName)
+				{
+					return;
+				}
 			}
 #else
 			MPT_UNREFERENCED_PARAMETER(friendlyName)
 #endif
-			if(name == portName)
+			if(name == portName && !foundFriendly)
 			{
 				id = i;
 			}
@@ -290,7 +295,7 @@ void MidiInOut::Process(float *, float *, uint32 numFrames)
 		{
 			if(m_sendTimingInfo)
 			{
-				m_outQueue.push_back({ GetOutputTimestamp(), { 0xF8 } });
+				m_outQueue.push_back(Message(GetOutputTimestamp(), 0xF8));
 			}
 
 			double bpm = m_SndFile.GetCurrentBPM();
@@ -303,9 +308,9 @@ void MidiInOut::Process(float *, float *, uint32 numFrames)
 
 		double now = m_clock.Now() * (1.0 / 1000.0);
 		auto message = m_outQueue.begin();
-		while(message != m_outQueue.end() && message->time <= now)
+		while(message != m_outQueue.end() && message->m_time <= now)
 		{
-			m_midiOut.sendMessage(&message->msg);
+			m_midiOut.sendMessage(message->m_message, message->m_size);
 			message++;
 		}
 		m_outQueue.erase(m_outQueue.begin(), message);
@@ -363,8 +368,7 @@ void MidiInOut::Resume()
 	OpenDevice(m_outputDevice.index, false);
 	if(m_midiOut.isPortOpen() && m_sendTimingInfo)
 	{
-		std::vector<unsigned char> message(1, 0xFA);	// Start
-		m_midiOut.sendMessage(&message);
+		MidiSend(0xFA);	// Start
 	}
 }
 
@@ -376,8 +380,8 @@ void MidiInOut::Suspend()
 	// Suspend MIDI I/O
 	if(m_midiOut.isPortOpen() && m_sendTimingInfo)
 	{
-		std::vector<unsigned char> message(1, 0xFC);	// Stop
-		m_midiOut.sendMessage(&message);
+		unsigned char message[1] = { 0xFC };	// Stop
+		m_midiOut.sendMessage(message, 1);
 	}
 	//CloseDevice(inputDevice);
 	CloseDevice(m_outputDevice);
@@ -420,11 +424,7 @@ bool MidiInOut::MidiSend(uint32 midiCode)
 	}
 
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	Message message;
-	message.time = GetOutputTimestamp();
-	message.msg.resize(3, 0);
-	memcpy(message.msg.data(), &midiCode, 3);
-	m_outQueue.push_back(std::move(message));
+	m_outQueue.push_back(Message(GetOutputTimestamp(), &midiCode, 3));
 	return true;
 }
 
@@ -439,10 +439,7 @@ bool MidiInOut::MidiSysexSend(const void *sysex, uint32 length)
 	}
 
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	Message message;
-	message.time = GetOutputTimestamp();
-	message.msg.assign(static_cast<const unsigned char *>(sysex), static_cast<const unsigned char *>(sysex) + length);
-	m_outQueue.push_back(std::move(message));
+	m_outQueue.push_back(Message(GetOutputTimestamp(), sysex, length));
 	return true;
 }
 

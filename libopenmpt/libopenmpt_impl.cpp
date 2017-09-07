@@ -52,7 +52,7 @@ static int Warning_libopenmpt_for_WinRT_is_built_with_reduced_functionality_Plea
 #endif // _WIN32_WINNT
 #endif // MPT_OS_WINDOWS && MPT_OS_WINDOWS_WINRT
 
-#if MPT_COMPILER_MSVC || MPT_COMPILER_MSVCCLANGC2
+#if defined(MPT_BUILD_MSVC)
 #if MPT_OS_WINDOWS_WINRT
 #pragma comment(lib, "ole32.lib")
 #else
@@ -69,7 +69,7 @@ static int Warning_libopenmpt_for_WinRT_is_built_with_reduced_functionality_Plea
 #pragma comment(lib, "dmoguids.lib")
 #pragma comment(lib, "strmiids.lib")
 #endif // !NO_DMO
-#endif // MPT_COMPILER_MSVC || MPT_COMPILER_MSVCCLANGC2
+#endif // MPT_BUILD_MSVC
 
 #if MPT_PLATFORM_MULTITHREADED && MPT_MUTEX_NONE
 #if MPT_COMPILER_MSVC
@@ -577,14 +577,11 @@ std::vector<std::string> module_impl::get_supported_extensions() {
 	std::copy( extensions.begin(), extensions.end(), std::back_insert_iterator<std::vector<std::string> >( retval ) );
 	return retval;
 }
-static char tolower_char( char c ) {
-	return static_cast<char>( tolower( c ) );
+bool module_impl::is_extension_supported( const char * extension ) {
+	return CSoundFile::IsExtensionSupported( extension );
 }
 bool module_impl::is_extension_supported( const std::string & extension ) {
-	std::vector<std::string> extensions = get_supported_extensions();
-	std::string lowercase_ext = extension;
-	std::transform( lowercase_ext.begin(), lowercase_ext.end(), lowercase_ext.begin(), &tolower_char);
-	return std::find( extensions.begin(), extensions.end(), lowercase_ext ) != extensions.end();
+	return CSoundFile::IsExtensionSupported( extension.c_str() );
 }
 double module_impl::could_open_probability( const OpenMPT::FileReader & file, double effort, std::unique_ptr<log_interface> log ) {
 	try {
@@ -1514,7 +1511,11 @@ void module_impl::ctl_set( std::string ctl, const std::string & value, bool thro
 			m_sndFile->SetResamplerSettings( newsettings );
 		}
 	} else if ( ctl == "dither" ) {
-		m_Dither->SetMode( static_cast<DitherMode>( ConvertStrTo<int>( value ) ) );
+		int dither = ConvertStrTo<int>( value );
+		if ( dither < 0 || dither >= NumDitherModes ) {
+			dither = DitherDefault;
+		}
+		m_Dither->SetMode( static_cast<DitherMode>( dither ) );
 	} else {
 		if ( throw_if_unknown ) {
 			throw openmpt::exception("unknown ctl: " + ctl + " := " + value);
