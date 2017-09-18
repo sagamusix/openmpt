@@ -129,7 +129,7 @@ void RemoteCollabConnection::Read()
 	});
 	return;
 
-	m_inMessage.resize(sizeof(MsgHeader));
+/*	m_inMessage.resize(sizeof(MsgHeader));
 	m_strand.dispatch([that]()
 	{
 		asio::async_read(that->m_socket,
@@ -162,7 +162,7 @@ void RemoteCollabConnection::Read()
 				}
 			}
 		});
-	});
+	});*/
 }
 
 
@@ -222,11 +222,27 @@ void CollabConnection::Write(const std::string &message)
 	} while(m_strmOut.avail_out == 0);
 	header.compressedSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(compressedMessage.size() - sizeof(header));
 	header.origSize = mpt::saturate_cast<decltype(header.compressedSize)::base_type>(message.size());
-	Log("Writing %d / %d", header.compressedSize.get(), compressedMessage.size());
+	//Log("Writing %d / %d", header.compressedSize.get(), compressedMessage.size());
 	std::memcpy(&compressedMessage[0], &header, sizeof(header));
 
 	Send(compressedMessage);
-	Log("Writing done.");
+	//Log("Writing done.");
+}
+
+
+std::string CollabConnection::WriteWithResult(const std::string &message)
+{
+	std::ostringstream ss;
+	cereal::BinaryOutputArchive ar(ss);
+	ar(ReturnValTransactionMsg);
+	ar(reinterpret_cast<uint64>(&m_promise));
+	ar(message);
+
+	std::string result;
+	auto future = m_promise.get_future();
+	Write(ss.str());
+	future.wait();
+	return future.get();
 }
 
 
@@ -464,6 +480,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	} else
 	{
 		// Document operation
+		// TODO: Check here if the source is a collaborator or spectator?
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
@@ -597,6 +614,42 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
+			} else if(type == ReturnValTransactionMsg)
+			{
+				uint64 handle;
+				std::string msg;
+				inArchive >> handle;
+				inArchive >> msg;
+				std::istringstream retMsg(msg);
+				cereal::BinaryInputArchive inArchiveRet(retMsg);
+				NetworkMessage retType;
+				inArchiveRet >> retType;
+				ar(handle);
+				std::string retVal;
+				// Request to insert pattern
+				if(retType == InsertPatternMsg)
+				{
+					ROWINDEX rows;
+					inArchiveRet >> rows;
+					PATTERNINDEX pat = sndFile.Patterns.InsertAny(rows, true);
+					if(pat != PATTERNINDEX_INVALID)
+					{
+						std::ostringstream ssoRet;
+						cereal::BinaryOutputArchive arRet(ssoRet);
+						arRet(InsertPatternMsg);
+						arRet(pat);
+						arRet(rows);
+						const std::string s = ssoRet.str();
+						for(auto &c : doc.m_connections)
+						{
+							c->Write(s);
+						}
+					}
+					retVal = mpt::ToString(pat);
+				}
+				// Notify the blocked caller
+				ar(std::move(retVal));
+				source->Write(sso.str());
 			}
 		}
 	}
@@ -644,6 +697,12 @@ void RemoteCollabClient::Write(const std::string &msg)
 }
 
 
+std::string RemoteCollabClient::WriteWithResult(const std::string &msg)
+{
+	return m_connection->WriteWithResult(msg);
+}
+
+
 void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
 {
 	if(auto listener = m_listener.lock())
@@ -664,6 +723,22 @@ void LocalCollabClient::Write(const std::string &msg)
 {
 	std::stringstream ss(msg);
 	collabServer->Receive(m_connection, ss);
+}
+
+
+std::string LocalCollabClient::WriteWithResult(const std::string &msg)
+{
+	std::stringstream ss;
+	cereal::BinaryOutputArchive ar(ss);
+	ar(ReturnValTransactionMsg);
+	ar(reinterpret_cast<uint64>(&m_connection->m_promise));
+	ar(msg);
+
+	std::string result;
+	auto future = m_connection->m_promise.get_future();
+	collabServer->Receive(m_connection, ss);
+	//future.wait();
+	return future.get();
 }
 
 

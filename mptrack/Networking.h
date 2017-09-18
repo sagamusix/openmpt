@@ -12,6 +12,7 @@
 #include <asio.hpp>
 #include <atomic>
 #include <deque>
+#include <future>
 #include <map>
 #include <zlib/zlib.h>
 #include "../common/mptMutex.h"
@@ -47,12 +48,14 @@ public:
 	std::weak_ptr<Listener> m_listener;
 	CModDoc *m_modDoc;
 	uint32 m_origSize;
+	std::promise<std::string> m_promise;
 
 public:
 	CollabConnection(std::shared_ptr<Listener> listener);
 	virtual ~CollabConnection();
 
 	void Write(const std::string &message);
+	std::string WriteWithResult(const std::string &message);
 	virtual void Read() = 0;
 	virtual void Send(const std::string &message) = 0;
 
@@ -121,6 +124,7 @@ public:
 	{ }
 
 	virtual void Write(const std::string &msg) = 0;
+	virtual std::string WriteWithResult(const std::string &msg) = 0;
 
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
@@ -146,6 +150,7 @@ public:
 	bool Connect();
 
 	void Write(const std::string &msg) override;
+	std::string WriteWithResult(const std::string &msg) override;
 };
 
 
@@ -155,6 +160,7 @@ public:
 	LocalCollabClient(CModDoc &modDoc);
 
 	void Write(const std::string &msg) override;
+	std::string WriteWithResult(const std::string &msg) override;
 };
 
 

@@ -63,6 +63,12 @@ const NetworkMessage SequenceTransactionMsg("SQTR");
 
 const NetworkMessage PluginDataTransactionMsg("PLTR");
 
+const NetworkMessage ReturnValTransactionMsg("RETV");
+
+const NetworkMessage InsertPatternMsg("INPA");
+const NetworkMessage InsertSampleMsg("INSA");
+const NetworkMessage InsertInstrumentMsg("ININ");
+
 struct DocumentInfo
 {
 	std::string name;

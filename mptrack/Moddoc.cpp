@@ -3317,6 +3317,21 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(msg.seq < m_SndFile.Order.GetNumSequences())
 			msg.Apply(m_SndFile.Order(msg.seq));
 		hint = SequenceHint(msg.seq).Names().Data();
+	} else if(type == Networking::InsertPatternMsg)
+	{
+		PATTERNINDEX pat;
+		ROWINDEX rows;
+		inArchive >> pat;
+		inArchive >> rows;
+		m_SndFile.Patterns.Insert(pat, rows);
+		hint = PatternHint(pat).Names().Data();
+	} else if(type == Networking::ReturnValTransactionMsg)
+	{
+		uint64 handle;
+		std::string retVal;
+		inArchive >> handle;
+		inArchive >> retVal;
+		reinterpret_cast<std::promise<std::string> *>(handle)->set_value(retVal);
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

@@ -30,6 +30,8 @@
 #include "InstrumentTransaction.h"
 #include "SampleTransaction.h"
 #include "SequenceTransaction.h"
+#include "Networking.h"
+#include "NetworkTypes.h"
 
 
 #ifdef _DEBUG
@@ -684,9 +686,20 @@ void CModDoc::ClonePlugin(SNDMIXPLUGIN &target, const SNDMIXPLUGIN &source)
 PATTERNINDEX CModDoc::InsertPattern(ROWINDEX rows, ORDERINDEX ord)
 //----------------------------------------------------------------
 {
-	PATTERNINDEX pat = m_SndFile.Patterns.InsertAny(rows, true);
+	PATTERNINDEX pat;
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::InsertPatternMsg);
+		ar(rows);
+		pat = ConvertStrTo<PATTERNINDEX>(m_collabClient->WriteWithResult(ss.str()));
+	} else
+	{
+		pat = m_SndFile.Patterns.InsertAny(rows, true);
+	}
 	// TODO: Need to have some different sort of message, e.g. CreatePattern
-	PatternResizeTransaction tr(m_SndFile, pat, true);
+	//PatternResizeTransaction tr(m_SndFile, pat, true);
 	if(pat != PATTERNINDEX_INVALID)
 	{
 		if(ord != ORDERINDEX_INVALID)
