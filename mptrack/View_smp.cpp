@@ -2483,6 +2483,7 @@ void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
 					sndFile.ReadSampleFromSong(rightSmp, sndFile, m_nSample);
 				} else
 				{
+					ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 					return;
 				}
 			}
@@ -3310,7 +3311,10 @@ void CViewSample::OnSampleSlice()
 		{
 			SAMPLEINDEX nextSmp = pModDoc->InsertSample();
 			if(nextSmp == SAMPLEINDEX_INVALID)
+			{
+				ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 				break;
+			}
 
 			ModSample &newSample = sndFile.GetSample(nextSmp);
 			newSample = sample;

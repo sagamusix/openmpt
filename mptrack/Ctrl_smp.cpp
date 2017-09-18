@@ -1168,6 +1168,9 @@ bool CCtrlSamples::InsertSample(bool duplicate, int8 *confirm)
 				m_parent.InstrumentChanged(nins);
 			}
 		}
+	} else
+	{
+		ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 	}
 	return (smp != SAMPLEINDEX_INVALID);
 }

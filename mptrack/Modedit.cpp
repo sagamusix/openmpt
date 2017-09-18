@@ -713,14 +713,22 @@ PATTERNINDEX CModDoc::InsertPattern(ROWINDEX rows, ORDERINDEX ord)
 }
 
 
-SAMPLEINDEX CModDoc::InsertSample()
-//---------------------------------
+SAMPLEINDEX CModDoc::InsertSample(bool forceLocal)
+//------------------------------------------------
 {
+	if(!forceLocal && m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::InsertSampleMsg);
+		SAMPLEINDEX i = ConvertStrTo<SAMPLEINDEX>(m_collabClient->WriteWithResult(ss.str()));
+		SetModified();
+		return i;
+	}
 	SAMPLEINDEX i = m_SndFile.GetNextFreeSample();
 
 	if((i > std::numeric_limits<ModCommand::INSTR>::max() && !m_SndFile.GetNumInstruments()) || i == SAMPLEINDEX_INVALID)
 	{
-		ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 		return SAMPLEINDEX_INVALID;
 	}
 	SamplePropertyTransaction tr(m_SndFile, i);
@@ -731,7 +739,10 @@ SAMPLEINDEX CModDoc::InsertSample()
 	
 	m_SndFile.ResetSamplePath(i);
 
-	SetModified();
+	if(!forceLocal)
+		SetModified();
+	else
+		CMainFrame::GetMainFrame()->ThreadSafeSetModified(this);
 	return i;
 }
 
@@ -790,7 +801,10 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 		{
 			// Add a new sample
 			const SAMPLEINDEX inssmp = InsertSample();
-			if (inssmp != SAMPLEINDEX_INVALID) newsmp = inssmp;
+			if (inssmp != SAMPLEINDEX_INVALID)
+				newsmp = inssmp;
+			else
+				ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 		}
 	}
 

@@ -232,13 +232,14 @@ void CollabConnection::Write(const std::string &message)
 
 std::string CollabConnection::WriteWithResult(const std::string &message)
 {
+	m_promise.swap(std::promise<std::string>());
+	
 	std::ostringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
 	ar(ReturnValTransactionMsg);
 	ar(reinterpret_cast<uint64>(&m_promise));
 	ar(message);
 
-	std::string result;
 	auto future = m_promise.get_future();
 	Write(ss.str());
 	future.wait();
@@ -646,6 +647,10 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						}
 					}
 					retVal = mpt::ToString(pat);
+				} else if(retType == InsertSampleMsg)
+				{
+					SAMPLEINDEX smp = modDoc->InsertSample(true);
+					retVal = mpt::ToString(smp);
 				}
 				// Notify the blocked caller
 				ar(std::move(retVal));
