@@ -12,6 +12,7 @@
 #include "Networking.h"
 #include "NetworkTypes.h"
 #include "Moddoc.h"
+#include "TrackerSettings.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include "AudioCriticalSection.h"
 #include "../common/version.h"
@@ -60,9 +61,12 @@ void IOService::Run()
 }
 
 
+uint32 CollabConnection::m_nextId = 0;
+
 CollabConnection::CollabConnection(std::shared_ptr<Listener> listener)
 	: m_listener(listener)
 	, m_modDoc(nullptr)
+	, m_id(m_nextId++)
 {
 	m_strmIn.zalloc = Z_NULL;
 	m_strmIn.zfree = Z_NULL;
@@ -87,6 +91,7 @@ RemoteCollabConnection::RemoteCollabConnection(asio::ip::tcp::socket socket, std
 LocalCollabConnection::LocalCollabConnection(std::shared_ptr<Listener> listener)
 	: CollabConnection(listener)
 {
+	m_userName = TrackerSettings::Instance().defaultArtist;
 }
 
 
@@ -232,7 +237,7 @@ void CollabConnection::Write(const std::string &message)
 
 std::string CollabConnection::WriteWithResult(const std::string &message)
 {
-	m_promise.swap(std::promise<std::string>());
+	m_promise = std::promise<std::string>();
 	
 	std::ostringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
@@ -465,6 +470,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					doc.m_connections.push_back(source);
 					doc.m_collaborators++;
 					source->m_modDoc = modDoc;
+					source->m_userName = mpt::ToUnicode(mpt::CharsetUTF8, join.userName);
 				} else
 				{
 					ar(NoMoreClientsMsg);
@@ -600,7 +606,8 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == SequenceTransactionMsg)
+			}
+			else if(type == SequenceTransactionMsg)
 			{
 				SequenceMsg msg;
 				inArchive >> msg;
@@ -609,6 +616,19 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				if(msg.seq < sndFile.Order.GetNumSequences())
 					msg.Apply(sndFile.Order(msg.seq));
 				// Send back to clients
+				ar(msg);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
+			} else if(type == EditPosMsg)
+			{
+				// Update edit pos of this client
+				Networking::SetCursorPosMsg msg;
+				inArchive >> msg;
+				// Send back to clients
+				ar(source->m_id);
 				ar(msg);
 				const std::string s = sso.str();
 				for(auto &c : doc.m_connections)

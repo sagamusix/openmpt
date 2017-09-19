@@ -26,6 +26,7 @@
 #include "EffectInfo.h"
 #include "PatternFont.h"
 #include "NetworkTypes.h"
+#include "Networking.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -1485,15 +1486,22 @@ void CViewPattern::SetCurSel(PatternCursor beginSel, PatternCursor endSel)
 		CMainFrame::GetMainFrame()->SetInfoText(s);
 	}
 
-	Networking::SetCursorPosMsg msg;
-	msg.sequence = pSndFile->Order.GetCurrentSequenceIndex();
-	msg.order = GetCurrentOrder();
-	msg.pattern = GetCurrentPattern();
-	msg.row = m_Cursor.GetRow();
-	msg.channel = m_Cursor.GetChannel();
-	msg.column = m_Cursor.GetColumnType();
-	//GetDocument()->m_collabClient->
-	// TODO send via network
+	if(GetDocument()->m_collabClient)
+	{
+		Networking::SetCursorPosMsg msg;
+		msg.sequence = pSndFile->Order.GetCurrentSequenceIndex();
+		msg.order = GetCurrentOrder();
+		msg.pattern = GetCurrentPattern();
+		msg.row = m_Cursor.GetRow();
+		msg.channel = m_Cursor.GetChannel();
+		msg.column = m_Cursor.GetColumnType();
+
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::EditPosMsg);
+		ar(msg);
+		GetDocument()->m_collabClient->Write(ss.str());
+	}
 
 	pt = GetPointFromPosition(m_Selection.GetUpperLeft());
 	rect2.left = pt.x;

@@ -55,7 +55,7 @@ END_MESSAGE_MAP()
 void NetworkingDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CModTypeDlg)
+	//{{AFX_DATA_MAP(NetworkingDlg)
 	DDX_Control(pDX, IDC_LIST1, m_List);
 	//}}AFX_DATA_MAP
 }
@@ -120,6 +120,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		JoinMsg join;
 		join.id = doc->id;
+		join.userName = mpt::ToCharset(mpt::CharsetUTF8, TrackerSettings::Instance().defaultArtist);
 		join.accessType = 0;	// Collaborator
 		join.password = "";
 		if(doc->password)
@@ -217,7 +218,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 void SharingDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CModTypeDlg)
+	//{{AFX_DATA_MAP(SharingDlg)
 	DDX_Control(pDX, IDC_SPIN1, m_CollaboratorsSpin);
 	DDX_Control(pDX, IDC_SPIN2, m_SpectatorsSpin);
 	//}}AFX_DATA_MAP
@@ -263,6 +264,27 @@ void SharingDlg::OnOK()
 	}
 }
 
+
+void ChatDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(ChatDlg)
+	DDX_Control(pDX, IDC_EDIT1, m_History);
+	DDX_Control(pDX, IDC_EDIT2, m_Input);
+	//}}AFX_DATA_MAP
+}
+
+
+ChatDlg::ChatDlg(CModDoc &modDoc)
+	: m_ModDoc(modDoc)
+{
+}
+
+
+void ChatDlg::OnOK()
+{
+	// Send message
+}
 
 
 }

@@ -3317,6 +3317,9 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(msg.seq < m_SndFile.Order.GetNumSequences())
 			msg.Apply(m_SndFile.Order(msg.seq));
 		hint = SequenceHint(msg.seq).Names().Data();
+	} else if(type == Networking::EditPosMsg)
+	{
+		Networking::SetCursorPosMsg msg;
 	} else if(type == Networking::InsertPatternMsg)
 	{
 		PATTERNINDEX pat;

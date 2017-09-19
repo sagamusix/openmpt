@@ -47,8 +47,11 @@ public:
 	std::string m_inMessage;
 	std::weak_ptr<Listener> m_listener;
 	CModDoc *m_modDoc;
+	mpt::ustring m_userName;
 	uint32 m_origSize;
 	std::promise<std::string> m_promise;
+	const uint32 m_id;
+	static uint32 m_nextId;
 
 public:
 	CollabConnection(std::shared_ptr<Listener> listener);

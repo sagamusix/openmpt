@@ -58,6 +58,7 @@ const NetworkMessage SampleDataTransactionMsg("SDTR");
 
 const NetworkMessage PatternTransactionMsg("PATR");
 const NetworkMessage PatternResizeMsg("PSTR");
+const NetworkMessage EditPosMsg("EDPS");
 
 const NetworkMessage SequenceTransactionMsg("SQTR");
 
@@ -103,13 +104,14 @@ struct WelcomeMsg
 struct JoinMsg
 {
 	uint64 id;
+	std::string userName;
 	std::string password;
 	int32 accessType;
 
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(id, password, accessType);
+		archive(id, userName, password, accessType);
 	}
 };
 

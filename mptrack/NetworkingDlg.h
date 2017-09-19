@@ -65,6 +65,20 @@ protected:
 	void OnOK() override;
 };
 
+
+class ChatDlg : public CDialog
+{
+	CEdit m_History, m_Input;
+	CModDoc &m_ModDoc;
+
+public:
+	ChatDlg(CModDoc &modDoc);
+
+protected:
+	void DoDataExchange(CDataExchange* pDX) override;
+	void OnOK() override;
+};
+
 }
 
 OPENMPT_NAMESPACE_END
