@@ -651,6 +651,22 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					SAMPLEINDEX smp = modDoc->InsertSample(true);
 					retVal = mpt::ToString(smp);
+				} else if(retType == InsertInstrumentMsg)
+				{
+					INSTRUMENTINDEX ins = modDoc->GetrSoundFile().GetNextFreeInstrument();
+					if(ins != INSTRUMENTINDEX_INVALID)
+					{
+						std::ostringstream ssoRet;
+						cereal::BinaryOutputArchive arRet(ssoRet);
+						arRet(InsertInstrumentMsg);
+						arRet(ins);
+						const std::string s = ssoRet.str();
+						for(auto &c : doc.m_connections)
+						{
+							c->Write(s);
+						}
+					}
+					retVal = mpt::ToString(ins);
 				}
 				// Notify the blocked caller
 				ar(std::move(retVal));

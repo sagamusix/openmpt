@@ -731,10 +731,10 @@ SAMPLEINDEX CModDoc::InsertSample(bool forceLocal)
 	{
 		return SAMPLEINDEX_INVALID;
 	}
-	SamplePropertyTransaction tr(m_SndFile, i);
 	const bool newSlot = (i > m_SndFile.GetNumSamples());
-	if(newSlot || !m_SndFile.m_szNames[i][0]) strcpy(m_SndFile.m_szNames[i], "untitled");
 	if(newSlot) m_SndFile.m_nSamples = i;
+	SamplePropertyTransaction tr(m_SndFile, i);
+	if(newSlot || !m_SndFile.m_szNames[i][0]) strcpy(m_SndFile.m_szNames[i], "untitled");
 	m_SndFile.GetSample(i).Initialize(m_SndFile.GetType());
 	
 	m_SndFile.ResetSamplePath(i);
@@ -776,8 +776,19 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 			}
 		}
 	}
+
+	INSTRUMENTINDEX newins;
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::InsertInstrumentMsg);
+		newins = ConvertStrTo<INSTRUMENTINDEX>(m_collabClient->WriteWithResult(ss.str()));
+	} else
+	{
+		newins = m_SndFile.GetNextFreeInstrument();
+	}
 	
-	const INSTRUMENTINDEX newins = m_SndFile.GetNextFreeInstrument();
 	if(newins == INSTRUMENTINDEX_INVALID)
 	{
 		ErrorBox(IDS_ERR_TOOMANYINS, CMainFrame::GetMainFrame());

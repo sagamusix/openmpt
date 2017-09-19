@@ -3325,6 +3325,12 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> rows;
 		m_SndFile.Patterns.Insert(pat, rows);
 		hint = PatternHint(pat).Names().Data();
+	} else if(type == Networking::InsertInstrumentMsg)
+	{
+		INSTRUMENTINDEX ins;
+		inArchive >> ins;
+		m_SndFile.AllocateInstrument(ins);
+		hint = InstrumentHint(ins).Envelope().Info().Names();
 	} else if(type == Networking::ReturnValTransactionMsg)
 	{
 		uint64 handle;
