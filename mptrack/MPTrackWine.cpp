@@ -151,9 +151,15 @@ bool WineSetupIsSupported(mpt::Wine::VersionContext & wineVersion)
 {
 	bool supported = true;
 	if(wineVersion.RawBuildID().empty()) supported = false;
-	if(!TrackerSettings::Instance().WineSupportAllowNonLinux)
+	if(!TrackerSettings::Instance().WineSupportAllowUnknownHost)
 	{
-		if(!wineVersion.HostIsLinux()) supported = false;
+		if(wineVersion.HostIsLinux() || (wineVersion.HostIsBSD() && wineVersion.RawHostSysName() == "FreeBSD"))
+		{
+			// ok
+		} else
+		{
+			supported = false;
+		}
 	}
 	if(!wineVersion.Version().IsValid()) supported = false;
 	if(!wineVersion.Version().IsAtLeast(mpt::Wine::Version(1,4,0))) supported = false;
@@ -248,18 +254,6 @@ void Initialize()
 	}
 
 	mpt::ustring lf = MPT_USTRING("\n");
-
-#if 0
-	if(!TrackerSettings::Instance().WineSupportInitialQuestionAsked)
-	{
-		TrackerSettings::Instance().WineSupportInitialQuestionAsked = true;
-		mpt::ustring msg;
-		msg += MPT_USTRING("OpenMPT detected running on Wine.") + lf;
-		msg += lf;
-		msg += MPT_USTRING("Do you want to enable EXPERIMENTAL native Wine Integration now?") + lf;
-		TrackerSettings::Instance().WineSupportEnabled  = (Reporting::Confirm(msg, WineGetWindowTitle(), false, true) == cnfYes);
-	}
-#endif
 
 	if(!TrackerSettings::Instance().WineSupportEnabled)
 	{

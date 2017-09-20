@@ -766,10 +766,17 @@ void CModTree::RefreshInstrumentLibrary()
 //---------------------------------------
 {
 	SetRedraw(FALSE);
+	// Check if the currently selected item should be selected after refreshing
+	CStringW oldItem;
+	if((IsSampleBrowser() || GetParentRootItem(GetSelectedItem()) == m_hInsLib)
+		&& GetItemTextW(GetSampleBrowser()->m_hInsLib) == (m_SongFileName.empty() ? m_InstrLibPath : m_SongFileName).ToCStringW())
+	{
+		oldItem = GetItemTextW(GetSelectedItem());
+	}
 	EmptyInstrumentLibrary();
-	FillInstrumentLibrary();
+	FillInstrumentLibrary(oldItem);
 	SetRedraw(TRUE);
-	if (m_pDataTree)
+	if(!IsSampleBrowser())
 	{
 		m_pDataTree->InsLibSetFullPath(m_InstrLibPath, m_SongFileName);
 		m_pDataTree->RefreshInstrumentLibrary();
@@ -1772,8 +1779,8 @@ void CModTree::EmptyInstrumentLibrary()
 
 
 // Refresh Instrument Library
-void CModTree::FillInstrumentLibrary()
-//------------------------------------
+void CModTree::FillInstrumentLibrary(const WCHAR *selectedItem)
+//-------------------------------------------------------------
 {
 	if (!m_hInsLib) return;
 
@@ -1790,7 +1797,7 @@ void CModTree::FillInstrumentLibrary()
 			{
 				WCHAR s[MAX_INSTRUMENTNAME + 10];
 				swprintf(s, CountOf(s), L"%3d: %s", ins, mpt::ToWide(m_SongFile->GetCharsetInternal(), pIns->name).c_str());
-				ModTreeInsert(s, IMAGE_INSTRUMENTS);
+				ModTreeInsert(s, IMAGE_INSTRUMENTS, selectedItem);
 			}
 		}
 		for(SAMPLEINDEX smp = 1; smp <= m_SongFile->GetNumSamples(); smp++)
@@ -1800,7 +1807,7 @@ void CModTree::FillInstrumentLibrary()
 			{
 				WCHAR s[MAX_SAMPLENAME + 10];
 				swprintf(s, CountOf(s), L"%3d: %s", smp, mpt::ToWide(m_SongFile->GetCharsetInternal(), m_SongFile->m_szNames[smp]).c_str());
-				ModTreeInsert(s, IMAGE_SAMPLES);
+				ModTreeInsert(s, IMAGE_SAMPLES, selectedItem);
 			}
 		}
 	} else
@@ -1833,7 +1840,7 @@ void CModTree::FillInstrumentLibrary()
 				{
 					SHFILEINFOW fileInfo;
 					SHGetFileInfoW(s, 0, &fileInfo, sizeof(fileInfo), SHGFI_ICON | SHGFI_SMALLICON);
-					ModTreeInsert(s, images.Add(fileInfo.hIcon));
+					ModTreeInsert(s, images.Add(fileInfo.hIcon), selectedItem);
 					DestroyIcon(fileInfo.hIcon);
 				}
 			}
@@ -1860,7 +1867,7 @@ void CModTree::FillInstrumentLibrary()
 				{
 					if(showDirs)
 					{
-						ModTreeInsert(wfd.cFileName, IMAGE_FOLDERPARENT);
+						ModTreeInsert(wfd.cFileName, IMAGE_FOLDERPARENT, selectedItem);
 					}
 				} else if (wfd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_SYSTEM))
 				{
@@ -1871,7 +1878,7 @@ void CModTree::FillInstrumentLibrary()
 					// Directory
 					if(wcscmp(wfd.cFileName, L".") && showDirs)
 					{
-						ModTreeInsert(wfd.cFileName, IMAGE_FOLDER);
+						ModTreeInsert(wfd.cFileName, IMAGE_FOLDER, selectedItem);
 					}
 				} else if(wfd.nFileSizeHigh > 0 || wfd.nFileSizeLow >= 16)
 				{
@@ -1897,21 +1904,21 @@ void CModTree::FillInstrumentLibrary()
 						// Instruments
 						if(showInstrs)
 						{
-							ModTreeInsert(wfd.cFileName, IMAGE_INSTRUMENTS);
+							ModTreeInsert(wfd.cFileName, IMAGE_INSTRUMENTS, selectedItem);
 						}
 					} else if(std::find(sampleExts.begin(), sampleExts.end(), ext) != sampleExts.end())
 					{
 						// Samples
 						if(showInstrs)
 						{
-							ModTreeInsert(wfd.cFileName, IMAGE_SAMPLES);
+							ModTreeInsert(wfd.cFileName, IMAGE_SAMPLES, selectedItem);
 						}
 					} else if(std::find(modExts.begin(), modExts.end(), ext) != modExts.end() || std::find(modExts.begin(), modExts.end(), prefixExt) != modExts.end())
 					{
 						// Songs
 						if(showDirs)
 						{
-							ModTreeInsert(wfd.cFileName, IMAGE_FOLDERSONG);
+							ModTreeInsert(wfd.cFileName, IMAGE_FOLDERSONG, selectedItem);
 						}
 					} else if((!extPS.empty() && std::find(m_MediaFoundationExtensions.begin(), m_MediaFoundationExtensions.end(), extPS) != m_MediaFoundationExtensions.end())
 						|| (m_bShowAllFiles && std::find(allExtsBlacklist.begin(), allExtsBlacklist.end(), ext) == allExtsBlacklist.end()))
@@ -1919,7 +1926,7 @@ void CModTree::FillInstrumentLibrary()
 						// MediaFoundation samples / other files
 						if(showInstrs)
 						{
-							ModTreeInsert(wfd.cFileName, IMAGE_SAMPLES);
+							ModTreeInsert(wfd.cFileName, IMAGE_SAMPLES, selectedItem);
 						}
 					}
 				}
@@ -2021,8 +2028,8 @@ void CModTree::MonitorInstrumentLibrary()
 
 
 // Insert sample browser item.
-void CModTree::ModTreeInsert(const WCHAR *name, int image)
-//--------------------------------------------------------
+void CModTree::ModTreeInsert(const WCHAR *name, int image, const WCHAR *selectIfMatch)
+//------------------------------------------------------------------------------------
 {
 	DWORD dwId = 0;
 	switch(image)
@@ -2042,13 +2049,17 @@ void CModTree::ModTreeInsert(const WCHAR *name, int image)
 		dwId = 4;
 		break;
 	}
-	InsertItem(TVIF_IMAGE | TVIF_PARAM | TVIF_SELECTEDIMAGE | TVIF_TEXT,
+	HTREEITEM item = InsertItem(TVIF_IMAGE | TVIF_PARAM | TVIF_SELECTEDIMAGE | TVIF_TEXT,
 		name,
 		image, image,
 		0, 0,
 		(LPARAM)dwId,
 		(!IsSampleBrowser()) ? m_hInsLib : TVI_ROOT,
 		TVI_LAST);
+	if(selectIfMatch != nullptr && !wcscmp(name, selectIfMatch))
+	{
+		SelectItem(item);
+	}
 }
 
 

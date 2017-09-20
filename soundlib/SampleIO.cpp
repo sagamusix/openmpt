@@ -36,7 +36,7 @@ uintptr_t DMFUnpack(uint8 *psample, const uint8 *ibuf, const uint8 *ibufmax, uin
 size_t SampleIO::ReadSample(ModSample &sample, FileReader &file) const
 //--------------------------------------------------------------------
 {
-	if(sample.nLength < 1 || !file.IsValid())
+	if(!file.IsValid())
 	{
 		return 0;
 	}
@@ -68,6 +68,38 @@ size_t SampleIO::ReadSample(ModSample &sample, FileReader &file) const
 		restrictedSampleDataView = file.GetPinnedRawDataView();
 		sourceBuf = restrictedSampleDataView.data();
 		fileSize = restrictedSampleDataView.size();
+	}
+	if(!IsVariableLengthEncoded() && sample.nLength > 0x40000)
+	{
+		// Limit sample length to available bytes in file to avoid excessive memory allocation.
+		// However, for ProTracker MODs we need to support samples exceeding the end of file
+		// (see the comment about MOD.shorttune2 in Load_mod.cpp), so as a semi-arbitrary threshold,
+		// we do not apply this limit to samples shorter than 256K.
+		size_t maxLength = fileSize - std::min(GetEncodedHeaderSize(), fileSize);
+		uint8 bps = GetEncodedBitsPerSample();
+		if(bps % 8u != 0)
+		{
+			MPT_ASSERT(GetEncoding() == ADPCM && bps == 4);
+			if(Util::MaxValueOfType(maxLength) / 2u >= maxLength)
+				maxLength *= 2;
+			else
+				maxLength = Util::MaxValueOfType(maxLength);
+		} else
+		{
+			size_t encodedBytesPerSample = GetNumChannels() * GetEncodedBitsPerSample() / 8u;
+			// Check if we can round up without overflowing
+			if(Util::MaxValueOfType(maxLength) - maxLength >= (encodedBytesPerSample - 1u))
+				maxLength += encodedBytesPerSample - 1u;
+			else
+				maxLength = Util::MaxValueOfType(maxLength);
+			maxLength /= encodedBytesPerSample;
+		}
+		LimitMax(sample.nLength, mpt::saturate_cast<SmpLength>(maxLength));
+	}
+
+	if(sample.nLength < 1)
+	{
+		return 0;
 	}
 
 	sample.uFlags.set(CHN_16BIT, GetBitDepth() >= 16);

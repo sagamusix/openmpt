@@ -211,7 +211,7 @@ void CSoundFile::InitializeChannels()
 }
 
 
-const std::size_t CSoundFile::ProbeRecommendedSize = 2048;
+const std::size_t CSoundFile::ProbeRecommendedSize = PROBE_RECOMMENDED_SIZE;
 
 
 CSoundFile::ProbeResult CSoundFile::Probe(ProbeFlags flags, mpt::span<const mpt::byte> data, const uint64 *pfilesize)
@@ -247,7 +247,7 @@ CSoundFile::ProbeResult CSoundFile::Probe(ProbeFlags flags, mpt::span<const mpt:
 		}
 	} else if(flags & ProbeContainers)
 	{
-		if(!sndFile->Create(file, CSoundFile::onlyVerifyHeader))
+		if(!sndFile->Create(file, static_cast<CSoundFile::ModLoadingFlags>(CSoundFile::onlyVerifyHeader | CSoundFile::skipModules)))
 		{
 			return ProbeFailure;
 		}
@@ -307,14 +307,22 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackPP20(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_PP20;
 				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackMMCMP(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_MMCMP;
 				if(packedContainerType == MOD_CONTAINERTYPE_NONE && UnpackUMX(containerItems, file, containerLoadFlags)) packedContainerType = MOD_CONTAINERTYPE_UMX;
-				if(packedContainerType != MOD_CONTAINERTYPE_NONE && !containerItems.empty())
+				if(packedContainerType != MOD_CONTAINERTYPE_NONE)
 				{
 					if(loadFlags == onlyVerifyHeader)
 					{
 						return true;
 					}
-					file = containerItems[0].file;
+					if(!containerItems.empty())
+					{
+						file = containerItems[0].file;
+					}
 				}
+			}
+
+			if(loadFlags & skipModules)
+			{
+				return false;
 			}
 
 			if(!ReadXM(file, loadFlags)

@@ -823,12 +823,11 @@ public:
 	// Wine support
 
 	Setting<bool> WineSupportEnabled;
-	Setting<bool> WineSupportInitialQuestionAsked;
 	Setting<bool> WineSupportAlwaysRecompile;
 	Setting<bool> WineSupportAskCompile;
 	Setting<int32> WineSupportCompileVerbosity;
 	Setting<bool> WineSupportForeignOpenMPT;
-	Setting<bool> WineSupportAllowNonLinux;
+	Setting<bool> WineSupportAllowUnknownHost;
 	Setting<int32> WineSupportEnablePulseAudio; // 0==off 1==auto 2==on
 	Setting<int32> WineSupportEnablePortAudio; // 0==off 1==auto 2==on
 

@@ -302,21 +302,23 @@ bool CSoundFile::ReadDTM(FileReader &file, ModLoadingFlags loadFlags)
 		m_nSamples = numSamples;
 		for(SAMPLEINDEX smp = 1; smp <= numSamples; smp++)
 		{
-			ModSample &mptSmp = Samples[smp];
+			SAMPLEINDEX realSample = newSamples ? (chunk.ReadUint16BE() + 1u) : smp;
 			DTMSample dtmSample;
-			if(newSamples)
-			{
-				chunk.Skip(2);
-			}
 			chunk.ReadStruct(dtmSample);
+			if(realSample < 1 || realSample >= MAX_SAMPLES)
+			{
+				continue;
+			}
+			m_nSamples = std::max(m_nSamples, realSample);
+			ModSample &mptSmp = Samples[realSample];
 			dtmSample.ConvertToMPT(mptSmp, fileHeader.forcedSampleRate, patternFormat);
-			mpt::String::Read<mpt::String::maybeNullTerminated>(m_szNames[smp], dtmSample.name);
+			mpt::String::Read<mpt::String::maybeNullTerminated>(m_szNames[realSample], dtmSample.name);
 		}
 	
 		if(chunk.ReadUint16BE() == 0x0004)
 		{
 			// Digital Home Studio instruments
-			m_nInstruments = std::max<INSTRUMENTINDEX>(m_nSamples, MAX_INSTRUMENTS - 1);
+			m_nInstruments = std::min<INSTRUMENTINDEX>(m_nSamples, MAX_INSTRUMENTS - 1);
 
 			FileReader envChunk = chunks.GetChunk(DTMChunk::idIENV);
 			while(chunk.CanRead(sizeof(DTMInstrument)))
@@ -371,6 +373,7 @@ bool CSoundFile::ReadDTM(FileReader &file, ModLoadingFlags loadFlags)
 		ROWINDEX numRows = chunk.ReadUint16BE();
 		if(patternFormat == DTM_206_PATTERN_FORMAT)
 		{
+			// The stored data is actually not row-based, but tick-based.
 			numRows /= m_nDefaultSpeed;
 		}
 		if(!(loadFlags & loadPatternData) || patNum > 255 || !Patterns.Insert(patNum, numRows))
@@ -404,6 +407,7 @@ bool CSoundFile::ReadDTM(FileReader &file, ModLoadingFlags loadFlags)
 						}
 					} else if(data[0] & 0x80)
 					{
+						// Lower 7 bits contain note, probably intended for MIDI-like note-on/note-off events
 						if(position.rem)
 						{
 							m->command = CMD_MODCMDEX;
@@ -416,9 +420,12 @@ bool CSoundFile::ReadDTM(FileReader &file, ModLoadingFlags loadFlags)
 					if(data[1])
 					{
 						m->volcmd = VOLCMD_VOLUME;
-						m->vol = static_cast<ModCommand::VOL>(Util::muldivr(data[1], 64, 255));
+						m->vol = std::min(data[1], uint8(64)); // Volume can go up to 255, but we do not support over-amplification at the moment.
 					}
-					m->instr = data[2];
+					if(data[2])
+					{
+						m->instr = data[2];
+					}
 					if(data[3] || data[4])
 					{
 						m->command = data[3];
@@ -428,7 +435,10 @@ bool CSoundFile::ReadDTM(FileReader &file, ModLoadingFlags loadFlags)
 						m->Convert(MOD_TYPE_MOD, MOD_TYPE_IT, *this);
 #endif
 					}
-					tick += data[5];
+					if(data[5] & 0x80)
+						tick += (data[5] & 0x7F) * 0x100 + rowChunk.ReadUint8();
+					else
+						tick += data[5];
 					position = std::div(tick, m_nDefaultSpeed);
 				}
 			}

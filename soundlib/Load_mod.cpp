@@ -494,16 +494,17 @@ static uint32 ReadSample(FileReader &file, MODSampleHeader &sampleHeader, ModSam
 
 	mpt::String::Read<mpt::String::spacePadded>(sampleName, sampleHeader.name);
 	// Get rid of weird characters in sample names.
-	uint32 invalidChars = 0;
 	for(auto &c : sampleName)
 	{
 		if(c > 0 && c < ' ')
 		{
 			c = ' ';
-			invalidChars++;
 		}
 	}
-	return invalidChars;
+	// Check for invalid values
+	return ((sampleHeader.volume > 64) ? 1 : 0)
+		+ ((sampleHeader.finetune > 15) ? 1 : 0)
+		+ ((sampleHeader.loopStart > sampleHeader.length * 2) ? 1 : 0);
 }
 
 
@@ -749,11 +750,11 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 	// Load Sample Headers
 	SmpLength totalSampleLen = 0;
 	m_nSamples = 31;
-	uint32 invalidChars = 0;
+	uint32 invalidBytes = 0;
 	for(SAMPLEINDEX smp = 1; smp <= 31; smp++)
 	{
 		MODSampleHeader sampleHeader;
-		invalidChars += ReadSample(file, sampleHeader, Samples[smp], m_szNames[smp], m_nChannels == 4);
+		invalidBytes += ReadSample(file, sampleHeader, Samples[smp], m_szNames[smp], m_nChannels == 4);
 		totalSampleLen += Samples[smp].nLength;
 
 		if(isHMNT)
@@ -764,8 +765,8 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 			isNoiseTracker = false;
 		}
 	}
-	// If there is too much binary garbage in the sample texts, reject the file.
-	if(invalidChars > 256)
+	// If there is too much binary garbage in the sample headers, reject the file.
+	if(invalidBytes > 40)
 	{
 		return false;
 	}
@@ -1055,7 +1056,7 @@ bool CSoundFile::ReadMod(FileReader &file, ModLoadingFlags loadFlags)
 				// ProTracker reads beyond the end of the sample when playing. Normally samples are
 				// adjacent in PT's memory, so we simply read into the next sample in the file.
 				FileReader::off_t nextSample = file.GetPosition() + sampleIO.CalculateEncodedSize(sample.nLength);
-				if(isMdKd)
+				if(isMdKd && onlyAmigaNotes)
 					sample.nLength = std::max(sample.nLength, sample.nLoopEnd);
 
 				sampleIO.ReadSample(sample, file);
@@ -1608,13 +1609,13 @@ bool CSoundFile::ReadICE(FileReader &file, ModLoadingFlags loadFlags)
 
 	// Load Samples
 	m_nSamples = 31;
-	uint32 invalidChars = 0;
+	uint32 invalidBytes = 0;
 	for(SAMPLEINDEX smp = 1; smp <= 31; smp++)
 	{
 		MODSampleHeader sampleHeader;
-		invalidChars += ReadSample(file, sampleHeader, Samples[smp], m_szNames[smp], true);
+		invalidBytes += ReadSample(file, sampleHeader, Samples[smp], m_szNames[smp], true);
 	}
-	if(invalidChars > 256)
+	if(invalidBytes > 40)
 	{
 		return false;
 	}
