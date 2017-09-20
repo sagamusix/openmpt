@@ -16,6 +16,7 @@
 #include "Notification.h"
 #include "UpdateHints.h"
 #include <time.h>
+#include <map>
 #include "NetworkListener.h"
 
 OPENMPT_NAMESPACE_BEGIN
@@ -141,6 +142,11 @@ public:
 		const CModDoc *operator->() const { return &m_modDoc; }
 	};
 	std::shared_ptr<Listener> m_listener;
+	struct NetworkCursorPos
+	{
+		uint32 sequence, order, pattern, row, channel, column;
+	};
+	std::map<uint32, NetworkCursorPos> m_collabEditPositions;
 
 protected: // create from serialization only
 	CModDoc();

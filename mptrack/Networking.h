@@ -27,6 +27,7 @@ namespace Networking
 {
 
 const int DEFAULT_PORT = 44100;
+const int MAX_CLIENTS = 64;
 
 class IOService
 {

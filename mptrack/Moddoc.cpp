@@ -3319,7 +3319,21 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SequenceHint(msg.seq).Names().Data();
 	} else if(type == Networking::EditPosMsg)
 	{
+		uint32 id;
 		Networking::SetCursorPosMsg msg;
+		inArchive >> id;
+		inArchive >> msg;
+		ROWINDEX oldRow = MAX_PATTERN_ROWS;
+		if(m_collabEditPositions.count(id))
+		{
+			oldRow = m_collabEditPositions[id].row;
+		}
+		m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
+		if(msg.row != oldRow && oldRow != MAX_PATTERN_ROWS)
+		{
+			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), RowHint(oldRow).AsLPARAM());
+		}
+		hint = RowHint(msg.row);
 	} else if(type == Networking::InsertPatternMsg)
 	{
 		PATTERNINDEX pat;

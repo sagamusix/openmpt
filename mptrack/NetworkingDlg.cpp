@@ -228,8 +228,8 @@ void SharingDlg::DoDataExchange(CDataExchange* pDX)
 BOOL SharingDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	m_CollaboratorsSpin.SetRange(0, 99);
-	m_SpectatorsSpin.SetRange(0, 99);
+	m_CollaboratorsSpin.SetRange(0, MAX_CLIENTS);
+	m_SpectatorsSpin.SetRange(0, MAX_CLIENTS);
 	NetworkedDocument doc;
 	if(collabServer)
 	{

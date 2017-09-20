@@ -116,6 +116,20 @@ void CViewPattern::UpdateColors()
 					GetBValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
 	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, RGB(r,g,b));
 
+	// Collaborator colours
+	STATIC_ASSERT(MAX_MODPALETTECOLORS + Networking::MAX_CLIENTS <= 128);
+	for(int i = 0; i < Networking::MAX_CLIENTS; i++)
+	{
+		double hue = i * (1.5 * M_PI) / (Networking::MAX_CLIENTS - 1);	// Three quarters of the colour wheel, red to purple
+		double rc = 1.2 * (1 + 0.3 * (std::cos(hue) - 1));
+		double gc = 1.2 * (1 + 0.3 * (std::cos(hue - 2.09439) - 1));
+		double bc = 1.2 * (1 + 0.3 * (std::cos(hue + 2.09439) - 1));
+		Limit(rc, 0.0, 1.0);
+		Limit(gc, 0.0, 1.0);
+		Limit(bc, 0.0, 1.0);
+		m_Dib.SetColor(MAX_MODPALETTECOLORS + i, RGB(Util::Round<uint8>(rc * 255), Util::Round<uint8>(gc * 255), Util::Round<uint8>(bc * 255)));
+	}
+
 	m_Dib.SetBlendColor(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BLENDCOLOR]);
 }
 
@@ -754,6 +768,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 //-------------------------------------------------------------------------------------------------------------
 {
 	uint8 selectedCols[MAX_BASECHANNELS];	// Bit mask of selected channel components
+	uint8 selectedColsCollab[MAX_BASECHANNELS];	// Bit mask of selected channel components
+	uint8 selectedColsCollabColor[MAX_BASECHANNELS][PatternCursor::lastColumn + 1];
 	static_assert(PatternCursor::lastColumn <= 7, "Columns are used as bitmasks here.");
 
 	const CSoundFile &sndFile = GetDocument()->GetrSoundFile();
@@ -793,10 +809,24 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		} while (ibmp + nColumnWidth <= maxndx);
 	}
 	
-	bool bRowSel = false;
+	bool bRowSel = false, hasCollabCursors = false, prevRowHadCollabCursors = false;
 	int row_col = -1, row_bkcol = -1;
 	for (ROWINDEX row=startRow; row<numRows; row++)
 	{
+		MemsetZero(selectedColsCollab);
+		for(const auto &sel : GetDocument()->m_collabEditPositions)
+		{
+			const auto &pos = sel.second;
+			if(pos.sequence == GetDocument()->GetrSoundFile().Order.GetCurrentSequenceIndex()
+				&& pos.pattern == GetCurrentPattern()
+				&& pos.row == row)
+			{
+				selectedColsCollab[pos.channel] |= (1 << pos.column);
+				selectedColsCollabColor[pos.channel][pos.column] = MAX_MODPALETTECOLORS + sel.first;
+				hasCollabCursors = true;
+			}
+		}
+
 		UINT col, xbmp, nbmp, oldrowcolor;
 		const int compRow = row + TrackerSettings::Instance().rowDisplayOffset;
 
@@ -886,11 +916,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 			xpaint += nColumnWidth;
 		}
 		// Optimization: same row color ?
-		bool useSpeedUpMask = (oldrowcolor == (UINT)((row_bkcol << 16) | (row_col << 8) | (bRowSel ? 1 : 0))) && !blendModeChanged;
+		bool useSpeedUpMask = (oldrowcolor == (UINT)((row_bkcol << 16) | (row_col << 8) | (bRowSel ? 1 : 0))) && !blendModeChanged && !prevRowHadCollabCursors;
 		xbmp = nbmp = 0;
 		do
 		{
-			int x, bk_col, tx_col, col_sel, fx_col;
+			int x, bk_col, tx_col, col_sel, collab_sel, fx_col;
 
 			const ModCommand *m = pattern.GetpModCommand(row, static_cast<CHANNELINDEX>(col));
 
@@ -920,9 +950,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 				}
 				if (dwSpeedUpMask == COLUMN_BITS_ALLCOLUMNS) goto DoBlit;
 			}
+
 			selectedCols[col] |= COLUMN_BITS_SKIP;
 			col_sel = 0;
 			if (bRowSel) col_sel = selectedCols[col] & COLUMN_BITS_ALL;
+			collab_sel = selectedColsCollab[col] & COLUMN_BITS_ALL;
 			tx_col = row_col;
 			bk_col = row_bkcol;
 			if (col_sel)
@@ -931,7 +963,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 				bk_col = MODCOLOR_BACKSELECTED;
 			}
 			// Speedup: Empty command which is either not or fully selected
-			if (m->IsEmpty() && ((!col_sel) || (col_sel == COLUMN_BITS_ALLCOLUMNS)))
+			if (m->IsEmpty() && ((!col_sel) || (col_sel == COLUMN_BITS_ALLCOLUMNS)) && !collab_sel)
 			{
 				m_Dib.SetTextColor(tx_col, bk_col);
 				m_Dib.TextBlt(xbmp, 0, nColumnWidth-4, m_szCell.cy, pfnt->nClrX, pfnt->nClrY, pfnt->dib);
@@ -967,6 +999,10 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 				{
 					tx_col = MODCOLOR_TEXTSELECTED;
 					bk_col = MODCOLOR_BACKSELECTED;
+				} else if(collab_sel & COLUMN_BITS_NOTE)
+				{
+					tx_col = MODCOLOR_TEXTSELECTED;
+					bk_col = selectedColsCollabColor[col][0];
 				}
 				// Drawing note
 				m_Dib.SetTextColor(tx_col, bk_col);
@@ -991,6 +1027,10 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					{
 						tx_col = MODCOLOR_TEXTSELECTED;
 						bk_col = MODCOLOR_BACKSELECTED;
+					} else if(collab_sel & COLUMN_BITS_INSTRUMENT)
+					{
+						tx_col = MODCOLOR_TEXTSELECTED;
+						bk_col = selectedColsCollabColor[col][1];
 					}
 					// Drawing instrument
 					m_Dib.SetTextColor(tx_col, bk_col);
@@ -1009,7 +1049,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					{
 						tx_col = MODCOLOR_TEXTSELECTED;
 						bk_col = MODCOLOR_BACKSELECTED;
-					} else if (!m->IsPcNote() && (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_EFFECTHILIGHT))
+					} else if(collab_sel & COLUMN_BITS_VOLUME)
+					{
+						tx_col = MODCOLOR_TEXTSELECTED;
+						bk_col = selectedColsCollabColor[col][2];
+					} else if(!m->IsPcNote() && (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_EFFECTHILIGHT))
 					{
 						if(m->volcmd != VOLCMD_NONE && m->volcmd < MAX_VOLCMDS && effectColors[m->GetVolumeEffectType()] != 0)
 						{
@@ -1045,6 +1089,10 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					{
 						tx_col = MODCOLOR_TEXTSELECTED;
 						bk_col = MODCOLOR_BACKSELECTED;
+					} else if(collab_sel & COLUMN_BITS_FXCMD)
+					{
+						tx_col = MODCOLOR_TEXTSELECTED;
+						bk_col = selectedColsCollabColor[col][3];
 					}
 
 					// Drawing Command
@@ -1077,6 +1125,10 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					{
 						tx_col = MODCOLOR_TEXTSELECTED;
 						bk_col = MODCOLOR_BACKSELECTED;
+					} else if(collab_sel & COLUMN_BITS_FXPARAM)
+					{
+						tx_col = MODCOLOR_TEXTSELECTED;
+						bk_col = selectedColsCollabColor[col][4];
 					}
 
 					// Drawing param
@@ -1109,6 +1161,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		m_Dib.Blit(hdc, xpaint-xbmp, ypaint, xbmp, m_szCell.cy);
 	SkipRow:
 		ypaint += m_szCell.cy;
+		prevRowHadCollabCursors = hasCollabCursors;
 		if (ypaint >= rcClient.bottom) break;
 	}
 	*pypaint = ypaint;
