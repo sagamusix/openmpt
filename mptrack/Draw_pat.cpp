@@ -117,6 +117,7 @@ void CViewPattern::UpdateColors()
 	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, RGB(r,g,b));
 
 	// Collaborator colours
+	// TODO: Mix with background color?
 	STATIC_ASSERT(MAX_MODPALETTECOLORS + Networking::MAX_CLIENTS <= 128);
 	for(int i = 0; i < Networking::MAX_CLIENTS; i++)
 	{

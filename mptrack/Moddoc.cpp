@@ -3324,14 +3324,22 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> id;
 		inArchive >> msg;
 		ROWINDEX oldRow = MAX_PATTERN_ROWS;
+		PATTERNINDEX oldPat = PATTERNINDEX_INVALID;
+		ORDERINDEX oldOrd = ORDERINDEX_INVALID;
 		if(m_collabEditPositions.count(id))
 		{
 			oldRow = m_collabEditPositions[id].row;
+			oldPat = static_cast<PATTERNINDEX>(m_collabEditPositions[id].pattern);
+			oldOrd = static_cast<ORDERINDEX>(m_collabEditPositions[id].order);
 		}
 		m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
-		if(msg.row != oldRow && oldRow != MAX_PATTERN_ROWS)
+		if((msg.row != oldRow && oldRow != MAX_PATTERN_ROWS) || (msg.pattern != oldPat && oldPat != PATTERNINDEX_INVALID))
 		{
 			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), RowHint(oldRow).AsLPARAM());
+		}
+		if(msg.order != oldOrd && oldOrd != ORDERINDEX_INVALID)
+		{
+			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), SequenceHint().Data().AsLPARAM());
 		}
 		hint = RowHint(msg.row);
 	} else if(type == Networking::InsertPatternMsg)

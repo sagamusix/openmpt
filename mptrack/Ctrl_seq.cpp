@@ -780,10 +780,30 @@ void COrderList::OnPaint()
 			if ((rect.right = rect.left + m_cxFont) > rcClient.right) rect.right = rcClient.right;
 			rect.right--;
 
+			uint32 user = uint32_max;
+			for(const auto &pos : m_pModDoc.m_collabEditPositions)
+			{
+				if(pos.second.sequence == sndFile.Order.GetCurrentSequenceIndex()
+					&& pos.second.order == nIndex)
+				{
+					user = pos.first;
+				}
+			}
+
 			if(bHighLight)
 			{
 				// Currently selected order item
 				FillRect(dc.m_hDC, &rect, CMainFrame::brushHighLight);
+			} else if(user != uint32_max)
+			{
+				double hue = user * (1.5 * M_PI) / (64 - 1);	// Three quarters of the colour wheel, red to purple
+				double rc = 1.2 * (1 + 0.3 * (std::cos(hue) - 1));
+				double gc = 1.2 * (1 + 0.3 * (std::cos(hue - 2.09439) - 1));
+				double bc = 1.2 * (1 + 0.3 * (std::cos(hue + 2.09439) - 1));
+				Limit(rc, 0.0, 1.0);
+				Limit(gc, 0.0, 1.0);
+				Limit(bc, 0.0, 1.0);
+				dc.FillSolidRect(&rect, RGB(Util::Round<uint8>(rc * 255), Util::Round<uint8>(gc * 255), Util::Round<uint8>(bc * 255)));
 			} else if(sndFile.Order().IsPositionLocked(nIndex))
 			{
 				// "Playback lock" indicator - grey out all order items which aren't played.
