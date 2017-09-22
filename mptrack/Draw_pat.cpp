@@ -121,14 +121,7 @@ void CViewPattern::UpdateColors()
 	STATIC_ASSERT(MAX_MODPALETTECOLORS + Networking::MAX_CLIENTS <= 128);
 	for(int i = 0; i < Networking::MAX_CLIENTS; i++)
 	{
-		double hue = i * (1.5 * M_PI) / (Networking::MAX_CLIENTS - 1);	// Three quarters of the colour wheel, red to purple
-		double rc = 1.2 * (1 + 0.3 * (std::cos(hue) - 1));
-		double gc = 1.2 * (1 + 0.3 * (std::cos(hue - 2.09439) - 1));
-		double bc = 1.2 * (1 + 0.3 * (std::cos(hue + 2.09439) - 1));
-		Limit(rc, 0.0, 1.0);
-		Limit(gc, 0.0, 1.0);
-		Limit(bc, 0.0, 1.0);
-		m_Dib.SetColor(MAX_MODPALETTECOLORS + i, RGB(Util::Round<uint8>(rc * 255), Util::Round<uint8>(gc * 255), Util::Round<uint8>(bc * 255)));
+		m_Dib.SetColor(MAX_MODPALETTECOLORS + i, GetDocument()->GetUserColor(i));
 	}
 
 	m_Dib.SetBlendColor(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BLENDCOLOR]);
@@ -823,7 +816,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 				&& pos.row == row)
 			{
 				selectedColsCollab[pos.channel] |= (1 << pos.column);
-				selectedColsCollabColor[pos.channel][pos.column] = MAX_MODPALETTECOLORS + sel.first;
+				selectedColsCollabColor[pos.channel][pos.column] = static_cast<uint8>(MAX_MODPALETTECOLORS + sel.first);
 				hasCollabCursors = true;
 			}
 		}
@@ -1540,22 +1533,7 @@ void CViewPattern::SetCurSel(PatternCursor beginSel, PatternCursor endSel)
 		CMainFrame::GetMainFrame()->SetInfoText(s);
 	}
 
-	if(GetDocument()->m_collabClient)
-	{
-		Networking::SetCursorPosMsg msg;
-		msg.sequence = pSndFile->Order.GetCurrentSequenceIndex();
-		msg.order = GetCurrentOrder();
-		msg.pattern = GetCurrentPattern();
-		msg.row = m_Cursor.GetRow();
-		msg.channel = m_Cursor.GetChannel();
-		msg.column = m_Cursor.GetColumnType();
-
-		std::ostringstream ss;
-		cereal::BinaryOutputArchive ar(ss);
-		ar(Networking::EditPosMsg);
-		ar(msg);
-		GetDocument()->m_collabClient->Write(ss.str());
-	}
+	GetDocument()->SetCollabEditPos(pSndFile->Order.GetCurrentSequenceIndex(), GetCurrentOrder(), GetCurrentPattern(), m_Cursor.GetRow(), m_Cursor.GetChannel(), m_Cursor.GetColumnType());
 
 	pt = GetPointFromPosition(m_Selection.GetUpperLeft());
 	rect2.left = pt.x;

@@ -3323,7 +3323,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		Networking::SetCursorPosMsg msg;
 		inArchive >> id;
 		inArchive >> msg;
-		ROWINDEX oldRow = MAX_PATTERN_ROWS;
+		ROWINDEX oldRow = ROWINDEX_INVALID;
 		PATTERNINDEX oldPat = PATTERNINDEX_INVALID;
 		ORDERINDEX oldOrd = ORDERINDEX_INVALID;
 		if(m_collabEditPositions.count(id))
@@ -3333,7 +3333,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			oldOrd = static_cast<ORDERINDEX>(m_collabEditPositions[id].order);
 		}
 		m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
-		if((msg.row != oldRow && oldRow != MAX_PATTERN_ROWS) || (msg.pattern != oldPat && oldPat != PATTERNINDEX_INVALID))
+		if((msg.row != oldRow && oldRow != ROWINDEX_INVALID) || (msg.pattern != oldPat && oldPat != PATTERNINDEX_INVALID))
 		{
 			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), RowHint(oldRow).AsLPARAM());
 		}
@@ -3369,6 +3369,34 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), hint.AsLPARAM());
 	}
+}
+
+
+void CModDoc::SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, uint32 chn, uint32 col)
+{
+	if(m_collabClient)
+	{
+		Networking::SetCursorPosMsg msg = { seq, ord, pat, row, chn, col };
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::EditPosMsg);
+		ar(msg);
+		m_collabClient->Write(ss.str());
+	}
+
+}
+
+
+COLORREF CModDoc::GetUserColor(uint32 user) const
+{
+	double hue = user * (1.5 * M_PI) / (Networking::MAX_CLIENTS - 1);	// Three quarters of the colour wheel, red to purple
+	double rc = 1.2 * (1 + 0.3 * (std::cos(hue) - 1));
+	double gc = 1.2 * (1 + 0.3 * (std::cos(hue - 2.09439) - 1));
+	double bc = 1.2 * (1 + 0.3 * (std::cos(hue + 2.09439) - 1));
+	Limit(rc, 0.0, 1.0);
+	Limit(gc, 0.0, 1.0);
+	Limit(bc, 0.0, 1.0);
+	return RGB(Util::Round<uint8>(rc * 255), Util::Round<uint8>(gc * 255), Util::Round<uint8>(bc * 255));
 }
 
 

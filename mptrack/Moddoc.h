@@ -147,6 +147,8 @@ public:
 		uint32 sequence, order, pattern, row, channel, column;
 	};
 	std::map<uint32, NetworkCursorPos> m_collabEditPositions;
+	void SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, uint32 chn, uint32 col);
+	COLORREF GetUserColor(uint32 user) const;
 
 protected: // create from serialization only
 	CModDoc();

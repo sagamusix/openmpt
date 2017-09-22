@@ -165,6 +165,7 @@ CViewPattern::CViewPattern()
 CViewPattern::~CViewPattern()
 //---------------------------
 {
+	GetDocument()->SetCollabEditPos(SEQUENCEINDEX_INVALID, ORDERINDEX_INVALID, PATTERNINDEX_INVALID, MAX_PATTERN_ROWS, CHANNELINDEX_INVALID, 0);
 	m_offScreenBitmap.DeleteObject();
 	m_offScreenDC.DeleteDC();
 }
