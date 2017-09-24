@@ -81,7 +81,6 @@ STATIC_ASSERT(CountOf(effectColors) == MAX_EFFECT_TYPE);
 // CViewPattern Drawing Implementation
 
 static BYTE hilightcolor(int c0, int c1)
-//--------------------------------------
 {
 	int cf0, cf1;
 
@@ -94,7 +93,6 @@ static BYTE hilightcolor(int c0, int c1)
 
 
 void CViewPattern::UpdateColors()
-//-------------------------------
 {
 	BYTE r,g,b;
 
@@ -129,7 +127,6 @@ void CViewPattern::UpdateColors()
 
 
 bool CViewPattern::UpdateSizes()
-//------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	int oldx = m_szCell.cx, oldy = m_szCell.cy;
@@ -158,7 +155,6 @@ bool CViewPattern::UpdateSizes()
 
 
 UINT CViewPattern::GetColumnOffset(PatternCursor::Columns column) const
-//---------------------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	LimitMax(column, PatternCursor::lastColumn);
@@ -169,7 +165,6 @@ UINT CViewPattern::GetColumnOffset(PatternCursor::Columns column) const
 
 
 int CViewPattern::GetSmoothScrollOffset() const
-//---------------------------------------------
 {
 	if((TrackerSettings::Instance().m_dwPatternSetup & PATTERN_SMOOTHSCROLL) != 0	// Actually using the smooth scroll feature
 		&& (m_Status & (psFollowSong | psDragActive)) == psFollowSong	// Not drawing a selection during playback
@@ -187,7 +182,6 @@ int CViewPattern::GetSmoothScrollOffset() const
 
 
 void CViewPattern::UpdateView(UpdateHint hint, CObject *pObj)
-//-----------------------------------------------------------
 {
 	if(pObj == this)
 	{
@@ -229,7 +223,6 @@ void CViewPattern::UpdateView(UpdateHint hint, CObject *pObj)
 
 
 POINT CViewPattern::GetPointFromPosition(PatternCursor cursor)
-//------------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	POINT pt;
@@ -264,7 +257,6 @@ POINT CViewPattern::GetPointFromPosition(PatternCursor cursor)
 
 
 PatternCursor CViewPattern::GetPositionFromPoint(POINT pt)
-//--------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	int xofs = GetXScrollPos();
@@ -288,7 +280,6 @@ PatternCursor CViewPattern::GetPositionFromPoint(POINT pt)
 
 
 void CViewPattern::DrawLetter(int x, int y, char letter, int sizex, int ofsx)
-//---------------------------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	int srcx = pfnt->nSpaceX, srcy = pfnt->nSpaceY;
@@ -358,7 +349,6 @@ static MPT_FORCEINLINE void DrawPadding(CFastBitmap &dib, const PATTERNFONT *pfn
 }
 
 void CViewPattern::DrawNote(int x, int y, UINT note, CTuning* pTuning)
-//--------------------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 
@@ -426,7 +416,6 @@ void CViewPattern::DrawNote(int x, int y, UINT note, CTuning* pTuning)
 
 
 void CViewPattern::DrawInstrument(int x, int y, UINT instr)
-//---------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 	if (instr)
@@ -449,7 +438,6 @@ void CViewPattern::DrawInstrument(int x, int y, UINT instr)
 
 
 void CViewPattern::DrawVolumeCommand(int x, int y, const ModCommand &mc, bool drawDefaultVolume)
-//----------------------------------------------------------------------------------------------
 {
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
 
@@ -495,7 +483,6 @@ void CViewPattern::DrawVolumeCommand(int x, int y, const ModCommand &mc, bool dr
 
 
 void CViewPattern::OnDraw(CDC *pDC)
-//---------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CHAR s[256];
@@ -759,7 +746,6 @@ void CViewPattern::OnDraw(CDC *pDC)
 
 void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnable,
 	bool isPlaying, ROWINDEX startRow, ROWINDEX numRows, CHANNELINDEX startChan, CRect &rcClient, int *pypaint)
-//-------------------------------------------------------------------------------------------------------------
 {
 	uint8 selectedCols[MAX_BASECHANNELS];	// Bit mask of selected channel components
 	uint8 selectedColsCollab[MAX_BASECHANNELS];	// Bit mask of selected channel components
@@ -1164,7 +1150,6 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 
 
 void CViewPattern::DrawChannelVUMeter(HDC hdc, int x, int y, UINT nChn)
-//---------------------------------------------------------------------
 {
 	if (ChnVUMeters[nChn] != OldVUMeters[nChn])
 	{
@@ -1205,7 +1190,6 @@ void CViewPattern::DrawChannelVUMeter(HDC hdc, int x, int y, UINT nChn)
 
 // Draw an inverted border around the dragged selection.
 void CViewPattern::DrawDragSel(HDC hdc)
-//-------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	CRect rect;
@@ -1315,7 +1299,6 @@ void CViewPattern::DrawDragSel(HDC hdc)
 
 
 void CViewPattern::OnDrawDragSel()
-//--------------------------------
 {
 	HDC hdc = ::GetDC(m_hWnd);
 	if (hdc != NULL)
@@ -1331,7 +1314,6 @@ void CViewPattern::OnDrawDragSel()
 
 
 void CViewPattern::UpdateScrollSize()
-//-----------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1363,7 +1345,6 @@ void CViewPattern::UpdateScrollSize()
 
 
 void CViewPattern::UpdateScrollPos()
-//----------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -1379,7 +1360,6 @@ void CViewPattern::UpdateScrollPos()
 
 
 BOOL CViewPattern::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
-//-------------------------------------------------------------
 {
 	int xOrig, xNew, x;
 	int yOrig, yNew, y;
@@ -1473,7 +1453,6 @@ BOOL CViewPattern::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 
 
 void CViewPattern::OnSize(UINT nType, int cx, int cy)
-//---------------------------------------------------
 {
 	// Note: Switching between modules (when MDI childs are maximized) first calls this with the windowed size, then with the maximized size.
 	// Watch out for this odd behaviour when debugging this function.
@@ -1490,7 +1469,6 @@ void CViewPattern::OnSize(UINT nType, int cx, int cy)
 
 
 void CViewPattern::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-//---------------------------------------------------------------------------
 {
 	if (nSBCode == (SB_THUMBTRACK|SB_THUMBPOSITION)) m_Status.set(psDragVScroll);
 	CModScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
@@ -1499,7 +1477,6 @@ void CViewPattern::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 
 void CViewPattern::SetCurSel(PatternCursor beginSel, PatternCursor endSel)
-//------------------------------------------------------------------------
 {
 	RECT rect1, rect2, rect, rcInt, rcUni;
 	POINT pt;
@@ -1563,7 +1540,6 @@ void CViewPattern::SetCurSel(PatternCursor beginSel, PatternCursor endSel)
 
 
 void CViewPattern::InvalidatePattern(bool invalidateChannelHeaders, bool invalidateRowHeaders)
-//--------------------------------------------------------------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -1581,7 +1557,6 @@ void CViewPattern::InvalidatePattern(bool invalidateChannelHeaders, bool invalid
 
 
 void CViewPattern::InvalidateRow(ROWINDEX n)
-//------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1602,7 +1577,6 @@ void CViewPattern::InvalidateRow(ROWINDEX n)
 
 
 void CViewPattern::InvalidateArea(PatternCursor begin, PatternCursor end)
-//-----------------------------------------------------------------------
 {
 	RECT rect;
 	POINT pt;
@@ -1618,7 +1592,6 @@ void CViewPattern::InvalidateArea(PatternCursor begin, PatternCursor end)
 
 
 void CViewPattern::InvalidateCell(PatternCursor cursor)
-//-----------------------------------------------------
 {
 	cursor.RemoveColType();
 	InvalidateArea(cursor, PatternCursor(cursor.GetRow(), cursor.GetChannel(), PatternCursor::lastColumn));
@@ -1626,7 +1599,6 @@ void CViewPattern::InvalidateCell(PatternCursor cursor)
 
 
 void CViewPattern::InvalidateChannelsHeaders()
-//--------------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -1636,7 +1608,6 @@ void CViewPattern::InvalidateChannelsHeaders()
 
 
 void CViewPattern::UpdateIndicator()
-//----------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
@@ -1662,7 +1633,6 @@ void CViewPattern::UpdateIndicator()
 
 
 CString CViewPattern::GetCursorDescription() const
-//------------------------------------------------
 {
 	const CSoundFile &sndFile = *GetSoundFile();
 	CString s;
@@ -1781,7 +1751,6 @@ CString CViewPattern::GetCursorDescription() const
 
 
 void CViewPattern::UpdateXInfoText()
-//----------------------------------
 {
 	CHANNELINDEX nChn = GetCurrentChannel();
 	CString xtraInfo;
@@ -1808,7 +1777,6 @@ void CViewPattern::UpdateXInfoText()
 
 
 void CViewPattern::UpdateAllVUMeters(Notification *pnotify)
-//---------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	const CModDoc *pModDoc = GetDocument();

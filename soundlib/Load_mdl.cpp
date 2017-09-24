@@ -201,7 +201,6 @@ static const ModCommand::COMMAND MDLEffTrans[] =
 
 // receive an MDL effect, give back a 'normal' one.
 static void ConvertMDLCommand(uint8_t &cmd, uint8_t &param)
-//---------------------------------------------------------
 {
 	if(cmd >= CountOf(MDLEffTrans))
 		return;
@@ -315,7 +314,6 @@ static void ConvertMDLCommand(uint8_t &cmd, uint8_t &param)
 
 // Returns true if command was lost
 static bool ImportMDLCommands(ModCommand &m, uint8 vol, uint8 e1, uint8 e2, uint8 p1, uint8 p2)
-//---------------------------------------------------------------------------------------------
 {
 	// Map second effect values 1-6 to effects G-L
 	if(e2 >= 1 && e2 <= 6)
@@ -395,7 +393,6 @@ static bool ImportMDLCommands(ModCommand &m, uint8 vol, uint8 e1, uint8 e2, uint
 
 
 static void MDLReadEnvelopes(FileReader file, std::vector<MDLEnvelope> &envelopes)
-//--------------------------------------------------------------------------------
 {
 	if(!file.CanRead(1))
 		return;
@@ -413,7 +410,6 @@ static void MDLReadEnvelopes(FileReader file, std::vector<MDLEnvelope> &envelope
 
 
 static void CopyEnvelope(InstrumentEnvelope &mptEnv, uint8 flags, std::vector<MDLEnvelope> &envelopes)
-//----------------------------------------------------------------------------------------------------
 {
 	uint8 envNum = flags & 0x3F;
 	if(envNum < envelopes.size())
@@ -422,17 +418,46 @@ static void CopyEnvelope(InstrumentEnvelope &mptEnv, uint8 flags, std::vector<MD
 }
 
 
-bool CSoundFile::ReadMDL(FileReader &file, ModLoadingFlags loadFlags)
-//-------------------------------------------------------------------
+static bool ValidateHeader(const MDLFileHeader &fileHeader)
 {
-	file.Rewind();
-	MDLFileHeader fileHeader;
-	if(!file.ReadStruct(fileHeader)
-		|| memcmp(fileHeader.id, "DMDL", 4)
+	if(std::memcmp(fileHeader.id, "DMDL", 4)
 		|| fileHeader.version >= 0x20)
 	{
 		return false;
-	} else if(loadFlags == onlyVerifyHeader)
+	}
+	return true;
+}
+
+
+CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderMDL(MemoryFileReader file, const uint64 *pfilesize)
+{
+	MDLFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return ProbeWantMoreData;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return ProbeFailure;
+	}
+	MPT_UNREFERENCED_PARAMETER(pfilesize);
+	return ProbeSuccess;
+}
+
+
+bool CSoundFile::ReadMDL(FileReader &file, ModLoadingFlags loadFlags)
+{
+	file.Rewind();
+	MDLFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return false;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return false;
+	}
+	if(loadFlags == onlyVerifyHeader)
 	{
 		return true;
 	}
@@ -804,7 +829,6 @@ bool CSoundFile::ReadMDL(FileReader &file, ModLoadingFlags loadFlags)
 
 // MDL Huffman ReadBits compression
 uint8 MDLReadBits(uint32 &bitbuf, int32 &bitnum, const uint8 *(&ibuf), size_t &bytesLeft, int8 n)
-//-----------------------------------------------------------------------------------------------
 {
 	if(bitnum < n)
 	{

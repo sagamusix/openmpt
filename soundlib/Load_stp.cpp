@@ -23,6 +23,7 @@ OPENMPT_NAMESPACE_BEGIN
 // File header (except for "STP3" magic)
 struct STPFileHeader
 {
+	char     magic[4];
 	uint16be version;
 	uint8be  numOrders;
 	uint8be  patternLength;
@@ -38,7 +39,7 @@ struct STPFileHeader
 	uint16be sampleStructSize;
 };
 
-MPT_BINARY_STRUCT(STPFileHeader, 200);
+MPT_BINARY_STRUCT(STPFileHeader, 204);
 
 
 // Sample header (common part between all versions)
@@ -99,7 +100,6 @@ typedef std::vector<STPLoopInfo> STPLoopList;
 
 
 static TEMPO ConvertTempo(uint16 ciaSpeed)
-//----------------------------------------
 {
 	// 3546 is the resulting CIA timer value when using 4F7D (tempo 125 bpm) command in STProII
 	return TEMPO((125.0 * 3546.0) / ciaSpeed);
@@ -107,7 +107,6 @@ static TEMPO ConvertTempo(uint16 ciaSpeed)
 
 
 static void ConvertLoopSlice(ModSample &src, ModSample &dest, SmpLength start, SmpLength len, bool loop)
-//------------------------------------------------------------------------------------------------------
 {
 	if(!src.HasSampleData()) return;
 
@@ -140,7 +139,6 @@ static void ConvertLoopSlice(ModSample &src, ModSample &dest, SmpLength start, S
 }
 
 static void ConvertLoopSequence(ModSample &smp, STPLoopList &loopList)
-//--------------------------------------------------------------------
 {
 	// This should only modify a sample if it has more than one loop
 	// (otherwise, it behaves like a normal sample loop)
@@ -203,24 +201,54 @@ static void ConvertLoopSequence(ModSample &smp, STPLoopList &loopList)
 }
 
 
-bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
-//-------------------------------------------------------------------
+static bool ValidateHeader(const STPFileHeader &fileHeader)
 {
-	file.Rewind();
-	if(!file.ReadMagic("STP3"))
-		return false;
-
-	STPFileHeader fileHeader;
-	if(!file.ReadStruct(fileHeader)
+	if(std::memcmp(fileHeader.magic, "STP3", 4)
 		|| fileHeader.version > 2
 		|| fileHeader.numOrders > 128
 		|| fileHeader.numSamples >= MAX_SAMPLES
 		|| fileHeader.timerCount == 0
 		|| fileHeader.midiCount != 50)
+	{
 		return false;
+	}
+	return true;
+}
 
+
+CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderSTP(MemoryFileReader file, const uint64 *pfilesize)
+{
+	STPFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return ProbeWantMoreData;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return ProbeFailure;
+	}
+	MPT_UNREFERENCED_PARAMETER(pfilesize);
+	return ProbeSuccess;
+}
+
+
+bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
+{
+	file.Rewind();
+
+	STPFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return false;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return false;
+	}
 	if(loadFlags == onlyVerifyHeader)
+	{
 		return true;
+	}
 
 	InitializeGlobals(MOD_TYPE_STP);
 

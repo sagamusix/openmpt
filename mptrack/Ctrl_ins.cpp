@@ -64,7 +64,6 @@ END_MESSAGE_MAP()
 
 
 BOOL CNoteMapWnd::PreTranslateMessage(MSG* pMsg)
-//----------------------------------------------
 {
 	UINT wParam;
 	if (!pMsg) return TRUE;
@@ -126,14 +125,12 @@ BOOL CNoteMapWnd::PreTranslateMessage(MSG* pMsg)
 
 
 void CNoteMapWnd::PrepareUndo(const char *description)
-//----------------------------------------------------
 {
 	m_modDoc.GetInstrumentUndo().PrepareUndo(m_nInstrument, description);
 }
 
 
 void CNoteMapWnd::SetCurrentInstrument(INSTRUMENTINDEX nIns)
-//----------------------------------------------------------
 {
 	if (nIns != m_nInstrument)
 	{
@@ -156,7 +153,6 @@ void CNoteMapWnd::SetCurrentInstrument(INSTRUMENTINDEX nIns)
 
 
 void CNoteMapWnd::SetCurrentNote(UINT nNote)
-//------------------------------------------
 {
 	if(nNote != m_nNote && ModCommand::IsNote(static_cast<ModCommand::NOTE>(nNote + NOTE_MIN)))
 	{
@@ -167,7 +163,6 @@ void CNoteMapWnd::SetCurrentNote(UINT nNote)
 
 
 void CNoteMapWnd::OnPaint()
-//-------------------------
 {
 	CPaintDC dc(this);
 
@@ -274,7 +269,6 @@ void CNoteMapWnd::OnPaint()
 
 
 void CNoteMapWnd::OnSetFocus(CWnd *pOldWnd)
-//-----------------------------------------
 {
 	CWnd::OnSetFocus(pOldWnd);
 	InvalidateRect(NULL, FALSE);
@@ -284,7 +278,6 @@ void CNoteMapWnd::OnSetFocus(CWnd *pOldWnd)
 
 
 void CNoteMapWnd::OnKillFocus(CWnd *pNewWnd)
-//------------------------------------------
 {
 	CWnd::OnKillFocus(pNewWnd);
 	InvalidateRect(NULL, FALSE);
@@ -293,7 +286,6 @@ void CNoteMapWnd::OnKillFocus(CWnd *pNewWnd)
 
 
 void CNoteMapWnd::OnLButtonDown(UINT, CPoint pt)
-//----------------------------------------------
 {
 	if ((pt.x >= m_cxFont) && (pt.x < m_cxFont*2) && (m_bIns))
 	{
@@ -321,7 +313,6 @@ void CNoteMapWnd::OnLButtonDown(UINT, CPoint pt)
 
 
 void CNoteMapWnd::OnLButtonDblClk(UINT, CPoint)
-//---------------------------------------------
 {
 	// Double-click edits sample map
 	OnEditSampleMap();
@@ -329,7 +320,6 @@ void CNoteMapWnd::OnLButtonDblClk(UINT, CPoint)
 
 
 void CNoteMapWnd::OnRButtonDown(UINT, CPoint pt)
-//----------------------------------------------
 {
 	TCHAR s[64];
 	CInputHandler* ih = CMainFrame::GetInputHandler();
@@ -390,7 +380,6 @@ void CNoteMapWnd::OnRButtonDown(UINT, CPoint pt)
 
 
 BOOL CNoteMapWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
-//------------------------------------------------------------------
 {
 	SetCurrentNote(m_nNote - sgn(zDelta));
 	return CStatic::OnMouseWheel(nFlags, zDelta, pt);
@@ -398,7 +387,6 @@ BOOL CNoteMapWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 
 void CNoteMapWnd::OnMapCopyNote()
-//-------------------------------
 {
 	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
 	if (pIns)
@@ -425,7 +413,6 @@ void CNoteMapWnd::OnMapCopyNote()
 }
 
 void CNoteMapWnd::OnMapCopySample()
-//---------------------------------
 {
 	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
 	if (pIns)
@@ -453,7 +440,6 @@ void CNoteMapWnd::OnMapCopySample()
 
 
 void CNoteMapWnd::OnMapReset()
-//----------------------------
 {
 	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
 	if (pIns)
@@ -480,7 +466,6 @@ void CNoteMapWnd::OnMapReset()
 
 
 void CNoteMapWnd::OnMapRemove()
-//-----------------------------
 {
 	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
 	if (pIns)
@@ -507,21 +492,18 @@ void CNoteMapWnd::OnMapRemove()
 
 
 void CNoteMapWnd::OnMapTransposeUp()
-//----------------------------------
 {
 	MapTranspose(1);
 }
 
 
 void CNoteMapWnd::OnMapTransposeDown()
-//------------------------------------
 {
 	MapTranspose(-1);
 }
 
 
 void CNoteMapWnd::MapTranspose(int nAmount)
-//-----------------------------------------
 {
 	if(nAmount == 0 || m_modDoc.GetModType() == MOD_TYPE_XM) return;
 
@@ -564,7 +546,6 @@ void CNoteMapWnd::MapTranspose(int nAmount)
 
 
 void CNoteMapWnd::OnEditSample(UINT nID)
-//--------------------------------------
 {
 	UINT nSample = nID - ID_NOTEMAP_EDITSAMPLE;
 	m_pParent.EditSample(nSample);
@@ -572,7 +553,6 @@ void CNoteMapWnd::OnEditSample(UINT nID)
 
 
 void CNoteMapWnd::OnEditSampleMap()
-//---------------------------------
 {
 	m_undo = true;
 	m_pParent.PostMessage(WM_COMMAND, ID_INSTRUMENT_SAMPLEMAP);
@@ -580,7 +560,6 @@ void CNoteMapWnd::OnEditSampleMap()
 
 
 void CNoteMapWnd::OnInstrumentDuplicate()
-//---------------------------------------
 {
 	m_undo = true;
 	m_pParent.PostMessage(WM_COMMAND, ID_INSTRUMENT_DUPLICATE);
@@ -588,7 +567,6 @@ void CNoteMapWnd::OnInstrumentDuplicate()
 
 
 LRESULT CNoteMapWnd::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
-//---------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -642,7 +620,6 @@ LRESULT CNoteMapWnd::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 }
 
 void CNoteMapWnd::EnterNote(UINT note)
-//------------------------------------
 {
 	CSoundFile &sndFile = m_modDoc.GetrSoundFile();
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
@@ -674,7 +651,6 @@ void CNoteMapWnd::EnterNote(UINT note)
 }
 
 bool CNoteMapWnd::HandleChar(WPARAM c)
-//------------------------------------
 {
 	CSoundFile &sndFile = m_modDoc.GetrSoundFile();
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
@@ -758,7 +734,6 @@ bool CNoteMapWnd::HandleChar(WPARAM c)
 }
 
 bool CNoteMapWnd::HandleNav(WPARAM k)
-//------------------------------------
 {
 	bool bRedraw = false;
 
@@ -824,7 +799,6 @@ bool CNoteMapWnd::HandleNav(WPARAM k)
 
 
 void CNoteMapWnd::PlayNote(int note)
-//----------------------------------
 {
 	if(m_nPlayingNote >= 0) return; //no polyphony in notemap window
 	m_modDoc.PlayNote(note + NOTE_MIN, m_nInstrument, 0);
@@ -833,7 +807,6 @@ void CNoteMapWnd::PlayNote(int note)
 
 
 void CNoteMapWnd::StopNote(int note = -1)
-//----------------------------------
 {
 	if(note < 0) note = m_nPlayingNote;
 	if(note < 0) return;
@@ -912,7 +885,6 @@ BEGIN_MESSAGE_MAP(CCtrlInstruments, CModControlDlg)
 END_MESSAGE_MAP()
 
 void CCtrlInstruments::DoDataExchange(CDataExchange* pDX)
-//-------------------------------------------------------
 {
 	CModControlDlg::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CCtrlInstruments)
@@ -965,34 +937,29 @@ CCtrlInstruments::CCtrlInstruments(CModControlView &parent, CModDoc &document)
 	, m_openendPluginListWithMouse(false)
 	, m_startedHScroll(false)
 	, m_startedEdit(false)
-//----------------------------------------------------------------------------
 {
 	m_nLockCount = 1;
 }
 
 
 CCtrlInstruments::~CCtrlInstruments()
-//-----------------------------------
 {
 }
 
 
 CRuntimeClass *CCtrlInstruments::GetAssociatedViewClass()
-//-------------------------------------------------------
 {
 	return RUNTIME_CLASS(CViewInstrument);
 }
 
 
 void CCtrlInstruments::OnEditFocus()
-//----------------------------------
 {
 	m_startedEdit = false;
 }
 
 
 BOOL CCtrlInstruments::OnInitDialog()
-//-----------------------------------
 {
 	CModControlDlg::OnInitDialog();
 	m_bInitialized = FALSE;
@@ -1087,13 +1054,11 @@ BOOL CCtrlInstruments::OnInitDialog()
 
 
 void CCtrlInstruments::RecalcLayout()
-//-----------------------------------
 {
 }
 
 
 void CCtrlInstruments::OnTbnDropDownToolBar(NMHDR* pNMHDR, LRESULT* pResult)
-//--------------------------------------------------------------------------
 {
 	CInputHandler *ih = CMainFrame::GetInputHandler();
 	LPNMTOOLBAR pToolBar = reinterpret_cast<LPNMTOOLBAR>(pNMHDR);
@@ -1116,7 +1081,6 @@ void CCtrlInstruments::OnTbnDropDownToolBar(NMHDR* pNMHDR, LRESULT* pResult)
 
 
 void CCtrlInstruments::PrepareUndo(const char *description)
-//---------------------------------------------------------
 {
 	m_startedEdit = true;
 	m_modDoc.GetInstrumentUndo().PrepareUndo(m_nInstrument, description);
@@ -1126,7 +1090,6 @@ void CCtrlInstruments::PrepareUndo(const char *description)
 // Set document as modified and update other views.
 // updateAll: Update all views including this one. Otherwise, only update update other views.
 void CCtrlInstruments::SetModified(InstrumentHint hint, bool updateAll)
-//---------------------------------------------------------------------
 {
 	m_modDoc.SetModified();
 	m_modDoc.UpdateAllViews(nullptr, hint.SetData(m_nInstrument), updateAll ? nullptr : this);
@@ -1134,7 +1097,6 @@ void CCtrlInstruments::SetModified(InstrumentHint hint, bool updateAll)
 
 
 BOOL CCtrlInstruments::SetCurrentInstrument(UINT nIns, BOOL bUpdNum)
-//------------------------------------------------------------------
 {
 	if (m_sndFile.m_nInstruments < 1) return FALSE;
 	if ((nIns < 1) || (nIns > m_sndFile.m_nInstruments)) return FALSE;
@@ -1168,7 +1130,6 @@ BOOL CCtrlInstruments::SetCurrentInstrument(UINT nIns, BOOL bUpdNum)
 
 
 void CCtrlInstruments::OnActivatePage(LPARAM lParam)
-//--------------------------------------------------
 {
 	CModControlDlg::OnActivatePage(lParam);
 	if (lParam < 0)
@@ -1206,7 +1167,6 @@ void CCtrlInstruments::OnActivatePage(LPARAM lParam)
 
 
 void CCtrlInstruments::OnDeactivatePage()
-//---------------------------------------
 {
 	m_modDoc.NoteOff(0, true);
 	CChildFrame *pFrame = (CChildFrame *)GetParentFrame();
@@ -1216,7 +1176,6 @@ void CCtrlInstruments::OnDeactivatePage()
 
 
 LRESULT CCtrlInstruments::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
-//------------------------------------------------------------------
 {
 	switch(wParam)
 	{
@@ -1280,7 +1239,6 @@ LRESULT CCtrlInstruments::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
 
 
 void CCtrlInstruments::UpdateView(UpdateHint hint, CObject *pObj)
-//---------------------------------------------------------------
 {
 	if(pObj == this) return;
 	if (hint.GetType()[HINT_MPTOPTIONS])
@@ -1548,7 +1506,6 @@ void CCtrlInstruments::UpdateView(UpdateHint hint, CObject *pObj)
 
 
 void CCtrlInstruments::UpdateFilterText()
-//---------------------------------------
 {
 	if(m_nInstrument)
 	{
@@ -1578,7 +1535,6 @@ void CCtrlInstruments::UpdateFilterText()
 
 
 bool CCtrlInstruments::OpenInstrument(const mpt::PathString &fileName)
-//--------------------------------------------------------------------
 {
 	BeginWaitCursor();
 	InputFile f(fileName);
@@ -1662,7 +1618,6 @@ bool CCtrlInstruments::OpenInstrument(const mpt::PathString &fileName)
 
 
 bool CCtrlInstruments::OpenInstrument(CSoundFile &sndFile, INSTRUMENTINDEX nInstr)
-//--------------------------------------------------------------------------------
 {
 	if((!nInstr) || (nInstr > sndFile.GetNumInstruments())) return false;
 	BeginWaitCursor();
@@ -1704,7 +1659,6 @@ bool CCtrlInstruments::OpenInstrument(CSoundFile &sndFile, INSTRUMENTINDEX nInst
 
 
 BOOL CCtrlInstruments::EditSample(UINT nSample)
-//---------------------------------------------
 {
 	if ((nSample > 0) && (nSample < MAX_SAMPLES))
 	{
@@ -1716,7 +1670,6 @@ BOOL CCtrlInstruments::EditSample(UINT nSample)
 
 
 BOOL CCtrlInstruments::GetToolTipText(UINT uId, LPTSTR pszText)
-//-------------------------------------------------------------
 {
 	//Note: pszText seems to point to char array of length 256 (Noverber 2006).
 	//Note2: If there's problems in getting tooltips showing for certain tools,
@@ -1901,7 +1854,6 @@ BOOL CCtrlInstruments::GetToolTipText(UINT uId, LPTSTR pszText)
 // CCtrlInstruments Messages
 
 void CCtrlInstruments::OnInstrumentChanged()
-//------------------------------------------
 {
 	if(!IsLocked())
 	{
@@ -1916,7 +1868,6 @@ void CCtrlInstruments::OnInstrumentChanged()
 
 
 void CCtrlInstruments::OnPrevInstrument()
-//---------------------------------------
 {
 	if(m_nInstrument > 1)
 		SetCurrentInstrument(m_nInstrument - 1);
@@ -1927,7 +1878,6 @@ void CCtrlInstruments::OnPrevInstrument()
 
 
 void CCtrlInstruments::OnNextInstrument()
-//---------------------------------------
 {
 	if(m_nInstrument < m_sndFile.GetNumInstruments())
 		SetCurrentInstrument(m_nInstrument + 1);
@@ -1938,7 +1888,6 @@ void CCtrlInstruments::OnNextInstrument()
 
 
 void CCtrlInstruments::OnInstrumentNew()
-//--------------------------------------
 {
 	InsertInstrument(m_sndFile.GetNumInstruments() > 0 && CMainFrame::GetInputHandler()->ShiftPressed());
 	SwitchToView();
@@ -1946,7 +1895,6 @@ void CCtrlInstruments::OnInstrumentNew()
 
 
 bool CCtrlInstruments::InsertInstrument(bool duplicate)
-//-----------------------------------------------------
 {
 	const bool hasInstruments = m_sndFile.GetNumInstruments() > 0;
 
@@ -1964,7 +1912,6 @@ bool CCtrlInstruments::InsertInstrument(bool duplicate)
 
 
 void CCtrlInstruments::OnInstrumentOpen()
-//---------------------------------------
 {
 	static int nLastIndex = 0;
 
@@ -2013,7 +1960,6 @@ void CCtrlInstruments::OnInstrumentOpen()
 
 
 void CCtrlInstruments::OnInstrumentSave()
-//---------------------------------------
 {
 	bool doBatchSave = CMainFrame::GetInputHandler()->ShiftPressed();
 
@@ -2115,7 +2061,6 @@ void CCtrlInstruments::OnInstrumentSave()
 
 
 void CCtrlInstruments::OnInstrumentPlay()
-//---------------------------------------
 {
 	if (m_modDoc.IsNotePlaying(NOTE_MIDDLEC, 0, m_nInstrument))
 	{
@@ -2129,7 +2074,6 @@ void CCtrlInstruments::OnInstrumentPlay()
 
 
 void CCtrlInstruments::OnNameChanged()
-//------------------------------------
 {
 	if (!IsLocked())
 	{
@@ -2149,7 +2093,6 @@ void CCtrlInstruments::OnNameChanged()
 
 
 void CCtrlInstruments::OnFileNameChanged()
-//----------------------------------------
 {
 	if (!IsLocked())
 	{
@@ -2169,7 +2112,6 @@ void CCtrlInstruments::OnFileNameChanged()
 
 
 void CCtrlInstruments::OnFadeOutVolChanged()
-//------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2191,7 +2133,6 @@ void CCtrlInstruments::OnFadeOutVolChanged()
 
 
 void CCtrlInstruments::OnGlobalVolChanged()
-//-----------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2218,7 +2159,6 @@ void CCtrlInstruments::OnGlobalVolChanged()
 
 
 void CCtrlInstruments::OnSetPanningChanged()
-//------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2266,7 +2206,6 @@ void CCtrlInstruments::OnSetPanningChanged()
 
 
 void CCtrlInstruments::OnPanningChanged()
-//---------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2288,7 +2227,6 @@ void CCtrlInstruments::OnPanningChanged()
 
 
 void CCtrlInstruments::OnNNAChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2305,7 +2243,6 @@ void CCtrlInstruments::OnNNAChanged()
 
 
 void CCtrlInstruments::OnDCTChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2322,7 +2259,6 @@ void CCtrlInstruments::OnDCTChanged()
 
 
 void CCtrlInstruments::OnDCAChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2339,7 +2275,6 @@ void CCtrlInstruments::OnDCAChanged()
 
 
 void CCtrlInstruments::OnMPRChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2367,7 +2302,6 @@ void CCtrlInstruments::OnMPRChanged()
 
 
 void CCtrlInstruments::OnMPRKillFocus()
-//-------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2390,7 +2324,6 @@ void CCtrlInstruments::OnMPRKillFocus()
 
 
 void CCtrlInstruments::OnMBKChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2415,7 +2348,6 @@ void CCtrlInstruments::OnMBKChanged()
 
 
 void CCtrlInstruments::OnMCHChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if(!IsLocked() && pIns)
@@ -2432,7 +2364,6 @@ void CCtrlInstruments::OnMCHChanged()
 }
 
 void CCtrlInstruments::OnResamplingChanged()
-//------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2450,7 +2381,6 @@ void CCtrlInstruments::OnResamplingChanged()
 
 
 void CCtrlInstruments::OnMixPlugChanged()
-//---------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	PLUGINDEX nPlug = static_cast<PLUGINDEX>(m_CbnMixPlug.GetItemData(m_CbnMixPlug.GetCurSel()));
@@ -2548,7 +2478,6 @@ void CCtrlInstruments::OnMixPlugChanged()
 
 
 void CCtrlInstruments::OnPPSChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2569,7 +2498,6 @@ void CCtrlInstruments::OnPPSChanged()
 
 
 void CCtrlInstruments::OnPPCChanged()
-//-----------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2590,7 +2518,6 @@ void CCtrlInstruments::OnPPCChanged()
 
 
 void CCtrlInstruments::OnAttackChanged()
-//--------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if(!IsLocked() && pIns)
@@ -2618,7 +2545,6 @@ void CCtrlInstruments::OnAttackChanged()
 
 
 void CCtrlInstruments::OnEnableCutOff()
-//-------------------------------------
 {
 	const bool bCutOff = IsDlgButtonChecked(IDC_CHECK2) != BST_UNCHECKED;
 
@@ -2646,7 +2572,6 @@ void CCtrlInstruments::OnEnableCutOff()
 
 
 void CCtrlInstruments::OnEnableResonance()
-//----------------------------------------
 {
 	const bool bReso = IsDlgButtonChecked(IDC_CHECK3) != BST_UNCHECKED;
 
@@ -2673,7 +2598,6 @@ void CCtrlInstruments::OnEnableResonance()
 }
 
 void CCtrlInstruments::OnFilterModeChanged()
-//------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if ((!IsLocked()) && (pIns))
@@ -2703,7 +2627,6 @@ void CCtrlInstruments::OnFilterModeChanged()
 
 
 void CCtrlInstruments::OnVScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
-//----------------------------------------------------------------------
 {
 	// Give focus back to envelope editor when stopping to scroll spin buttons (for instrument preview keyboard focus)
 	CModControlDlg::OnVScroll(nCode, nPos, pSB);
@@ -2712,7 +2635,6 @@ void CCtrlInstruments::OnVScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 
 
 void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
-//----------------------------------------------------------------------
 {
 	CModControlDlg::OnHScroll(nCode, nPos, pSB);
 	if ((m_nInstrument) && (!IsLocked()) && (nCode != SB_ENDSCROLL))
@@ -2869,7 +2791,6 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 
 
 void CCtrlInstruments::OnEditSampleMap()
-//--------------------------------------
 {
 	if(m_nInstrument)
 	{
@@ -2892,7 +2813,6 @@ void CCtrlInstruments::OnEditSampleMap()
 
 
 void CCtrlInstruments::TogglePluginEditor()
-//-----------------------------------------
 {
 	if(m_nInstrument)
 	{
@@ -2902,7 +2822,6 @@ void CCtrlInstruments::TogglePluginEditor()
 
 
 BOOL CCtrlInstruments::PreTranslateMessage(MSG *pMsg)
-//---------------------------------------------------
 {
 	if (pMsg)
 	{
@@ -2929,7 +2848,6 @@ BOOL CCtrlInstruments::PreTranslateMessage(MSG *pMsg)
 }
 
 LRESULT CCtrlInstruments::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
-//------------------------------------------------------------------------
 {
 	switch(wParam)
 	{
@@ -2944,7 +2862,6 @@ LRESULT CCtrlInstruments::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 
 
 void CCtrlInstruments::OnCbnSelchangeCombotuning()
-//------------------------------------------------
 {
 	if (IsLocked()) return;
 
@@ -3001,7 +2918,6 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 
 
 void CCtrlInstruments::UpdateTuningComboBox()
-//-------------------------------------------
 {
 	if(m_nInstrument > m_sndFile.GetNumInstruments()
 		|| m_sndFile.Instruments[m_nInstrument] == nullptr) return;
@@ -3032,7 +2948,6 @@ void CCtrlInstruments::UpdateTuningComboBox()
 
 
 void CCtrlInstruments::OnPluginVelocityHandlingChanged()
-//------------------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if(!IsLocked() && pIns != nullptr)
@@ -3056,7 +2971,6 @@ void CCtrlInstruments::OnPluginVelocityHandlingChanged()
 
 
 void CCtrlInstruments::OnPluginVolumeHandlingChanged()
-//----------------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if(!IsLocked() && pIns != nullptr)
@@ -3081,7 +2995,6 @@ void CCtrlInstruments::OnPluginVolumeHandlingChanged()
 
 
 void CCtrlInstruments::OnPitchWheelDepthChanged()
-//-----------------------------------------------
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
 	if(!IsLocked() && pIns != nullptr)
@@ -3102,7 +3015,6 @@ void CCtrlInstruments::OnPitchWheelDepthChanged()
 
 
 void CCtrlInstruments::OnBnClickedCheckPitchtempolock()
-//-----------------------------------------------------
 {
 	if(IsLocked() || !m_nInstrument) return;
 
@@ -3147,7 +3059,6 @@ void CCtrlInstruments::OnBnClickedCheckPitchtempolock()
 
 
 void CCtrlInstruments::OnEnChangeEditPitchTempoLock()
-//---------------------------------------------------
 {
 	if(IsLocked() || !m_nInstrument || !m_sndFile.Instruments[m_nInstrument]) return;
 
@@ -3165,7 +3076,6 @@ void CCtrlInstruments::OnEnChangeEditPitchTempoLock()
 
 
 void CCtrlInstruments::OnEnKillFocusEditPitchTempoLock()
-//------------------------------------------------------
 {
 	//Checking that tempo value is in correct range.
 	if(IsLocked()) return;
@@ -3193,7 +3103,6 @@ void CCtrlInstruments::OnEnKillFocusEditPitchTempoLock()
 
 
 void CCtrlInstruments::OnEnKillFocusEditFadeOut()
-//-----------------------------------------------
 {
 	if(IsLocked() || !m_nInstrument || !m_sndFile.Instruments[m_nInstrument]) return;
 
@@ -3211,7 +3120,6 @@ void CCtrlInstruments::OnEnKillFocusEditFadeOut()
 
 
 void CCtrlInstruments::BuildTuningComboBox()
-//------------------------------------------
 {
 	m_ComboTuning.ResetContent();
 
@@ -3226,7 +3134,6 @@ void CCtrlInstruments::BuildTuningComboBox()
 
 
 void CCtrlInstruments::UpdatePluginList()
-//---------------------------------------
 {
 	m_CbnMixPlug.SetRedraw(FALSE);
 	m_CbnMixPlug.Clear();
@@ -3242,7 +3149,6 @@ void CCtrlInstruments::UpdatePluginList()
 
 
 void CCtrlInstruments::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
-//-------------------------------------------------------------------------
 {
 	if(nButton == XBUTTON1) OnPrevInstrument();
 	else if(nButton == XBUTTON2) OnNextInstrument();

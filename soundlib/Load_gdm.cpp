@@ -90,27 +90,57 @@ struct GDMSampleHeader
 MPT_BINARY_STRUCT(GDMSampleHeader, 62)
 
 
-bool CSoundFile::ReadGDM(FileReader &file, ModLoadingFlags loadFlags)
-//-------------------------------------------------------------------
+static const MODTYPE gdmFormatOrigin[] =
 {
-	file.Rewind();
+	MOD_TYPE_NONE, MOD_TYPE_MOD, MOD_TYPE_MTM, MOD_TYPE_S3M, MOD_TYPE_669, MOD_TYPE_FAR, MOD_TYPE_ULT, MOD_TYPE_STM, MOD_TYPE_MED, MOD_TYPE_PSM
+};
 
-	const MODTYPE gdmFormatOrigin[] =
-	{
-		MOD_TYPE_NONE, MOD_TYPE_MOD, MOD_TYPE_MTM, MOD_TYPE_S3M, MOD_TYPE_669, MOD_TYPE_FAR, MOD_TYPE_ULT, MOD_TYPE_STM, MOD_TYPE_MED, MOD_TYPE_PSM
-	};
 
-	GDMFileHeader fileHeader;
-	if(!file.ReadStruct(fileHeader)
-		|| memcmp(fileHeader.magic, "GDM\xFE", 4)
+static bool ValidateHeader(const GDMFileHeader &fileHeader)
+{
+	if(std::memcmp(fileHeader.magic, "GDM\xFE", 4)
 		|| fileHeader.dosEOF[0] != 13 || fileHeader.dosEOF[1] != 10 || fileHeader.dosEOF[2] != 26
-		|| memcmp(fileHeader.magic2, "GMFS", 4)
+		|| std::memcmp(fileHeader.magic2, "GMFS", 4)
 		|| fileHeader.formatMajorVer != 1 || fileHeader.formatMinorVer != 0
-		|| fileHeader.originalFormat >= CountOf(gdmFormatOrigin)
+		|| fileHeader.originalFormat >= mpt::size(gdmFormatOrigin)
 		|| fileHeader.originalFormat == 0)
 	{
 		return false;
-	} else if(loadFlags == onlyVerifyHeader)
+	}
+	return true;
+}
+
+
+CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderGDM(MemoryFileReader file, const uint64 *pfilesize)
+{
+	GDMFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return ProbeWantMoreData;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return ProbeFailure;
+	}
+	MPT_UNREFERENCED_PARAMETER(pfilesize);
+	return ProbeSuccess;
+}
+
+
+bool CSoundFile::ReadGDM(FileReader &file, ModLoadingFlags loadFlags)
+{
+	file.Rewind();
+
+	GDMFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return false;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return false;
+	}
+	if(loadFlags == onlyVerifyHeader)
 	{
 		return true;
 	}

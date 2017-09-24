@@ -29,9 +29,7 @@ class CChildFrame;
 /////////////////////////////////////////////////////////////////////////
 // Split Keyboard Settings (pattern editor)
 
-//==========================
 struct SplitKeyboardSettings
-//==========================
 {
 	enum
 	{
@@ -47,7 +45,6 @@ struct SplitKeyboardSettings
 	bool octaveLink;	// apply octaveModifier
 
 	SplitKeyboardSettings()
-	//---------------------
 	{
 		splitInstrument = 0;
 		splitNote = NOTE_MIDDLEC - 1;
@@ -93,9 +90,7 @@ public:
 };
 
 
-//==========================================================
 class CModDoc: public CDocument, public Networking::Listener
-//==========================================================
 {
 protected:
 	friend ScopedLogCapturer;

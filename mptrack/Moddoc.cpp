@@ -64,7 +64,6 @@ const TCHAR FileFilterMPT[] = _T("OpenMPT Modules (*.mptm)|*.mptm||");
 const TCHAR FileFilterNone[] = _T("");
 
 const CString ModTypeToFilter(const CSoundFile& sndFile)
-//------------------------------------------------------
 {
 	const MODTYPE modtype = sndFile.GetType();
 	switch(modtype)
@@ -136,7 +135,6 @@ CModDoc::CModDoc()
 	, m_InstrumentUndo(*this)
 	, bModifiedAutosave(false)
 	, m_listener(std::make_shared<Listener>(*this))
-//-------------------------------------------------
 {
 	// Set the creation date of this file (or the load time if we're loading an existing file)
 	time(&m_creationTime);
@@ -151,7 +149,6 @@ CModDoc::CModDoc()
 
 
 CModDoc::~CModDoc()
-//-----------------
 {
 	ClearLog();
 	if(Networking::collabServer != nullptr)
@@ -162,7 +159,6 @@ CModDoc::~CModDoc()
 
 
 void CModDoc::SetModifiedFlag(BOOL bModified)
-//-------------------------------------------
 {
 	bool changed = (!!bModified != IsModified());
 	CDocument::SetModifiedFlag(bModified);
@@ -171,7 +167,6 @@ void CModDoc::SetModifiedFlag(BOOL bModified)
 
 
 BOOL CModDoc::OnNewDocument()
-//---------------------------
 {
 	if (!CDocument::OnNewDocument()) return FALSE;
 
@@ -189,7 +184,6 @@ BOOL CModDoc::OnNewDocument()
 
 
 BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
-//-----------------------------------------------------------
 {
 	ScopedLogCapturer logcapturer(*this);
 
@@ -277,7 +271,6 @@ BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
 
 
 BOOL CModDoc::OnSaveDocument(const mpt::PathString &filename, const bool bTemplateFile)
-//-------------------------------------------------------------------------------------
 {
 	ScopedLogCapturer logcapturer(*this);
 	BOOL bOk = FALSE;
@@ -322,7 +315,6 @@ BOOL CModDoc::OnSaveDocument(const mpt::PathString &filename, const bool bTempla
 
 
 BOOL CModDoc::SaveModified()
-//--------------------------
 {
 	BOOL result = CDocument::SaveModified();
 	if(result && m_SndFile.GetType() == MOD_TYPE_MPT)
@@ -335,7 +327,6 @@ BOOL CModDoc::SaveModified()
 
 
 bool CModDoc::SaveAllSamples()
-//----------------------------
 {
 	mpt::ustring prompt = MPT_USTRING("The following external samples have been modified:\n");
 	bool modified = false;
@@ -371,7 +362,6 @@ bool CModDoc::SaveAllSamples()
 
 
 bool CModDoc::SaveSample(SAMPLEINDEX smp)
-//---------------------------------------
 {
 	bool success = false;
 	if(smp > 0 && smp <= GetNumSamples())
@@ -399,7 +389,6 @@ bool CModDoc::SaveSample(SAMPLEINDEX smp)
 
 
 void CModDoc::OnCloseDocument()
-//-----------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if(pMainFrm) pMainFrm->OnDocumentClosed(this);
@@ -408,7 +397,6 @@ void CModDoc::OnCloseDocument()
 
 
 void CModDoc::DeleteContents()
-//----------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm) pMainFrm->StopMod(this);
@@ -419,7 +407,6 @@ void CModDoc::DeleteContents()
 
 #ifndef UNICODE
 BOOL CModDoc::DoFileSave()
-//------------------------
 {
 	// Completely replaces MFC implementation.
 	DWORD dwAttrib = GetFileAttributesW(mpt::PathString::TunnelOutofCString(m_strPathName).AsNative().c_str());
@@ -442,7 +429,6 @@ BOOL CModDoc::DoFileSave()
 
 
 BOOL CModDoc::DoSave(const mpt::PathString &filename, BOOL)
-//---------------------------------------------------------
 {
 	const mpt::PathString docFileName = GetPathNameMpt();
 	const std::string defaultExtension = m_SndFile.GetModSpecifications().fileExtension;
@@ -526,7 +512,6 @@ BOOL CModDoc::DoSave(const mpt::PathString &filename, BOOL)
 
 
 void CModDoc::OnAppendModule()
-//----------------------------
 {
 	FileDialog::PathList files;
 	CTrackApp::OpenModulesDialog(files);
@@ -560,7 +545,6 @@ void CModDoc::OnAppendModule()
 
 
 BOOL CModDoc::InitializeMod()
-//---------------------------
 {
 	// New module ?
 	if (!m_SndFile.m_nChannels)
@@ -644,7 +628,6 @@ BOOL CModDoc::InitializeMod()
 
 
 void CModDoc::PostMessageToAllViews(UINT uMsg, WPARAM wParam, LPARAM lParam)
-//--------------------------------------------------------------------------
 {
 	POSITION pos = GetFirstViewPosition();
 	while (pos != NULL)
@@ -656,7 +639,6 @@ void CModDoc::PostMessageToAllViews(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 void CModDoc::SendMessageToActiveViews(UINT uMsg, WPARAM wParam, LPARAM lParam)
-//-----------------------------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm)
@@ -668,21 +650,18 @@ void CModDoc::SendMessageToActiveViews(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 void CModDoc::ViewPattern(UINT nPat, UINT nOrd)
-//---------------------------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_PATTERNS, ((nPat+1) << 16) | nOrd);
 }
 
 
 void CModDoc::ViewSample(UINT nSmp)
-//---------------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_SAMPLES, nSmp);
 }
 
 
 void CModDoc::ViewInstrument(UINT nIns)
-//-------------------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_INSTRUMENTS, nIns);
 }
@@ -690,14 +669,12 @@ void CModDoc::ViewInstrument(UINT nIns)
 
 ScopedLogCapturer::ScopedLogCapturer(CModDoc &modDoc, const std::string &title, CWnd *parent, bool showLog) :
 m_modDoc(modDoc), m_oldLogMode(m_modDoc.GetLogMode()), m_title(title), m_pParent(parent), m_showLog(showLog)
-//-----------------------------------------------------------------------------------------------------------
 {
 	m_modDoc.SetLogMode(LogModeGather);
 }
 
 
 void ScopedLogCapturer::ShowLog(bool force)
-//----------------------------------------
 {
 	if(force || m_oldLogMode == LogModeInstantReporting)
 	{
@@ -708,7 +685,6 @@ void ScopedLogCapturer::ShowLog(bool force)
 
 
 void ScopedLogCapturer::ShowLog(const std::string &preamble, bool force)
-//----------------------------------------------------------------------
 {
 	if(force || m_oldLogMode == LogModeInstantReporting)
 	{
@@ -719,7 +695,6 @@ void ScopedLogCapturer::ShowLog(const std::string &preamble, bool force)
 
 
 void ScopedLogCapturer::ShowLog(const std::wstring &preamble, bool force)
-//-----------------------------------------------------------------------
 {
 	if(force || m_oldLogMode == LogModeInstantReporting)
 	{
@@ -730,7 +705,6 @@ void ScopedLogCapturer::ShowLog(const std::wstring &preamble, bool force)
 
 
 ScopedLogCapturer::~ScopedLogCapturer()
-//-------------------------------------
 {
 	if(m_showLog)
 		ShowLog();
@@ -741,7 +715,6 @@ ScopedLogCapturer::~ScopedLogCapturer()
 
 
 void CModDoc::AddToLog(LogLevel level, const mpt::ustring &text) const
-//--------------------------------------------------------------------
 {
 	if(m_LogMode == LogModeGather)
 	{
@@ -757,7 +730,6 @@ void CModDoc::AddToLog(LogLevel level, const mpt::ustring &text) const
 
 
 mpt::ustring CModDoc::GetLogString() const
-//---------------------------------------
 {
 	mpt::ustring ret;
 	for(const auto &i : m_Log)
@@ -770,7 +742,6 @@ mpt::ustring CModDoc::GetLogString() const
 
 
 LogLevel CModDoc::GetMaxLogLevel() const
-//--------------------------------------
 {
 	LogLevel retval = LogInformation;
 	// find the most severe loglevel
@@ -783,21 +754,18 @@ LogLevel CModDoc::GetMaxLogLevel() const
 
 
 void CModDoc::ClearLog()
-//----------------------
 {
 	m_Log.clear();
 }
 
 
 UINT CModDoc::ShowLog(const std::string &preamble, const std::string &title, CWnd *parent)
-//----------------------------------------------------------------------------------------
 {
 	return ShowLog(mpt::ToWide(mpt::CharsetLocale, preamble), mpt::ToWide(mpt::CharsetLocale, title), parent);
 }
 
 
 UINT CModDoc::ShowLog(const std::wstring &preamble, const std::wstring &title, CWnd *parent)
-//------------------------------------------------------------------------------------------
 {
 	if(!parent) parent = CMainFrame::GetMainFrame();
 	if(GetLog().size() > 0)
@@ -816,7 +784,6 @@ UINT CModDoc::ShowLog(const std::wstring &preamble, const std::wstring &title, C
 
 
 uint8 CModDoc::GetPlaybackMidiChannel(const ModInstrument *pIns, CHANNELINDEX nChn) const
-//---------------------------------------------------------------------------------------
 {
 	if(pIns->nMidiChannel == MidiMappedChannel)
 	{
@@ -833,7 +800,6 @@ uint8 CModDoc::GetPlaybackMidiChannel(const ModInstrument *pIns, CHANNELINDEX nC
 
 
 void CModDoc::ProcessMIDI(uint32 midiData, INSTRUMENTINDEX ins, IMixPlugin *plugin, InputTargetContext ctx)
-//---------------------------------------------------------------------------------------------------------
 {
 	static uint8 midiVolume = 127;
 
@@ -911,7 +877,6 @@ void CModDoc::ProcessMIDI(uint32 midiData, INSTRUMENTINDEX ins, IMixPlugin *plug
 
 
 CHANNELINDEX CModDoc::PlayNote(UINT note, INSTRUMENTINDEX nins, SAMPLEINDEX nsmp, int32 nVol, SmpLength loopStart, SmpLength loopEnd, CHANNELINDEX nCurrentChn, const SmpLength sampleOffset)
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CHANNELINDEX nChn = GetNumChannels();
@@ -1033,7 +998,6 @@ CHANNELINDEX CModDoc::PlayNote(UINT note, INSTRUMENTINDEX nins, SAMPLEINDEX nsmp
 
 
 bool CModDoc::NoteOff(UINT note, bool fade, INSTRUMENTINDEX ins, CHANNELINDEX currentChn, CHANNELINDEX stopChn)
-//-------------------------------------------------------------------------------------------------------------
 {
 	CriticalSection cs;
 
@@ -1085,7 +1049,6 @@ bool CModDoc::NoteOff(UINT note, bool fade, INSTRUMENTINDEX ins, CHANNELINDEX cu
 
 // Apply DNA/NNA settings for note preview. It will also set the specified note to be playing in the playingNotes set.
 void CModDoc::CheckNNA(ModCommand::NOTE note, INSTRUMENTINDEX ins, std::bitset<128> &playingNotes)
-//------------------------------------------------------------------------------------------------
 {
 	if(ins > GetNumInstruments() || m_SndFile.Instruments[ins] == nullptr || note >= playingNotes.size())
 	{
@@ -1130,7 +1093,6 @@ void CModDoc::CheckNNA(ModCommand::NOTE note, INSTRUMENTINDEX ins, std::bitset<1
 // Check if a given note of an instrument or sample is playing.
 // If note == 0, just check if an instrument or sample is playing.
 bool CModDoc::IsNotePlaying(UINT note, SAMPLEINDEX nsmp, INSTRUMENTINDEX nins)
-//----------------------------------------------------------------------------
 {
 	ModChannel *pChn = &m_SndFile.m_PlayState.Chn[m_SndFile.GetNumChannels()];
 	for (CHANNELINDEX i = m_SndFile.GetNumChannels(); i < MAX_CHANNELS; i++, pChn++) if (!pChn->nMasterChn)
@@ -1145,14 +1107,12 @@ bool CModDoc::IsNotePlaying(UINT note, SAMPLEINDEX nsmp, INSTRUMENTINDEX nins)
 
 
 bool CModDoc::MuteToggleModifiesDocument() const
-//----------------------------------------------
 {
 	return (m_SndFile.GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT | MOD_TYPE_S3M)) && TrackerSettings::Instance().MiscSaveChannelMuteStatus;
 }
 
 
 bool CModDoc::MuteChannel(CHANNELINDEX nChn, bool doMute)
-//-------------------------------------------------------
 {
 	if (nChn >= m_SndFile.GetNumChannels())
 	{
@@ -1173,7 +1133,6 @@ bool CModDoc::MuteChannel(CHANNELINDEX nChn, bool doMute)
 
 
 bool CModDoc::UpdateChannelMuteStatus(CHANNELINDEX nChn)
-//------------------------------------------------------
 {
 	const ChannelFlags muteType = (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_SYNCMUTE) ? CHN_SYNCMUTE : CHN_MUTE;
 
@@ -1226,14 +1185,12 @@ bool CModDoc::UpdateChannelMuteStatus(CHANNELINDEX nChn)
 
 
 bool CModDoc::IsChannelSolo(CHANNELINDEX nChn) const
-//--------------------------------------------------
 {
 	if (nChn >= m_SndFile.m_nChannels) return true;
 	return m_SndFile.ChnSettings[nChn].dwFlags[CHN_SOLO];
 }
 
 bool CModDoc::SoloChannel(CHANNELINDEX nChn, bool bSolo)
-//------------------------------------------------------
 {
 	if (nChn >= m_SndFile.m_nChannels) return false;
 	if (MuteToggleModifiesDocument()) SetModified();
@@ -1243,7 +1200,6 @@ bool CModDoc::SoloChannel(CHANNELINDEX nChn, bool bSolo)
 
 
 bool CModDoc::IsChannelNoFx(CHANNELINDEX nChn) const
-//--------------------------------------------------
 {
 	if (nChn >= m_SndFile.m_nChannels) return true;
 	return m_SndFile.ChnSettings[nChn].dwFlags[CHN_NOFX];
@@ -1251,7 +1207,6 @@ bool CModDoc::IsChannelNoFx(CHANNELINDEX nChn) const
 
 
 bool CModDoc::NoFxChannel(CHANNELINDEX nChn, bool bNoFx, bool updateMix)
-//----------------------------------------------------------------------
 {
 	if (nChn >= m_SndFile.m_nChannels) return false;
 	m_SndFile.ChnSettings[nChn].dwFlags.set(CHN_NOFX, bNoFx);
@@ -1261,20 +1216,17 @@ bool CModDoc::NoFxChannel(CHANNELINDEX nChn, bool bNoFx, bool updateMix)
 
 
 bool CModDoc::IsChannelRecord1(CHANNELINDEX channel) const
-//--------------------------------------------------------
 {
 	return m_bsMultiRecordMask[channel];
 }
 
 
 bool CModDoc::IsChannelRecord2(CHANNELINDEX channel) const
-//--------------------------------------------------------
 {
 	return m_bsMultiSplitRecordMask[channel];
 }
 
 BYTE CModDoc::IsChannelRecord(CHANNELINDEX channel) const
-//-------------------------------------------------------
 {
 	if(IsChannelRecord1(channel)) return 1;
 	if(IsChannelRecord2(channel)) return 2;
@@ -1282,7 +1234,6 @@ BYTE CModDoc::IsChannelRecord(CHANNELINDEX channel) const
 }
 
 void CModDoc::Record1Channel(CHANNELINDEX channel, bool select)
-//-------------------------------------------------------------
 {
 	if (!select)
 	{
@@ -1296,7 +1247,6 @@ void CModDoc::Record1Channel(CHANNELINDEX channel, bool select)
 }
 
 void CModDoc::Record2Channel(CHANNELINDEX channel, bool select)
-//-------------------------------------------------------------
 {
 	if (!select)
 	{
@@ -1310,7 +1260,6 @@ void CModDoc::Record2Channel(CHANNELINDEX channel, bool select)
 }
 
 void CModDoc::ReinitRecordState(bool unselect)
-//--------------------------------------------
 {
 	if (unselect)
 	{
@@ -1325,7 +1274,6 @@ void CModDoc::ReinitRecordState(bool unselect)
 
 
 bool CModDoc::MuteSample(SAMPLEINDEX nSample, bool bMute)
-//-------------------------------------------------------
 {
 	if ((nSample < 1) || (nSample > m_SndFile.GetNumSamples())) return false;
 	m_SndFile.GetSample(nSample).uFlags.set(CHN_MUTE, bMute);
@@ -1334,7 +1282,6 @@ bool CModDoc::MuteSample(SAMPLEINDEX nSample, bool bMute)
 
 
 bool CModDoc::MuteInstrument(INSTRUMENTINDEX nInstr, bool bMute)
-//--------------------------------------------------------------
 {
 	if ((nInstr < 1) || (nInstr > m_SndFile.GetNumInstruments()) || (!m_SndFile.Instruments[nInstr])) return false;
 	m_SndFile.Instruments[nInstr]->dwFlags.set(INS_MUTE, bMute);
@@ -1343,7 +1290,6 @@ bool CModDoc::MuteInstrument(INSTRUMENTINDEX nInstr, bool bMute)
 
 
 bool CModDoc::SurroundChannel(CHANNELINDEX nChn, bool surround)
-//--------------------------------------------------------------
 {
 	if(nChn >= m_SndFile.GetNumChannels()) return false;
 
@@ -1372,7 +1318,6 @@ bool CModDoc::SurroundChannel(CHANNELINDEX nChn, bool surround)
 
 
 bool CModDoc::SetChannelGlobalVolume(CHANNELINDEX nChn, uint16 nVolume)
-//---------------------------------------------------------------------
 {
 	bool ok = false;
 	if(nChn >= m_SndFile.GetNumChannels() || nVolume > 64) return false;
@@ -1388,7 +1333,6 @@ bool CModDoc::SetChannelGlobalVolume(CHANNELINDEX nChn, uint16 nVolume)
 
 
 bool CModDoc::SetChannelDefaultPan(CHANNELINDEX nChn, uint16 nPan)
-//----------------------------------------------------------------
 {
 	bool ok = false;
 	if(nChn >= m_SndFile.GetNumChannels() || nPan > 256) return false;
@@ -1406,7 +1350,6 @@ bool CModDoc::SetChannelDefaultPan(CHANNELINDEX nChn, uint16 nPan)
 
 
 bool CModDoc::IsChannelMuted(CHANNELINDEX nChn) const
-//---------------------------------------------------
 {
 	if(nChn >= m_SndFile.GetNumChannels()) return true;
 	return m_SndFile.ChnSettings[nChn].dwFlags[CHN_MUTE];
@@ -1414,7 +1357,6 @@ bool CModDoc::IsChannelMuted(CHANNELINDEX nChn) const
 
 
 bool CModDoc::IsSampleMuted(SAMPLEINDEX nSample) const
-//----------------------------------------------------
 {
 	if(!nSample || nSample > m_SndFile.GetNumSamples()) return false;
 	return m_SndFile.GetSample(nSample).uFlags[CHN_MUTE];
@@ -1422,7 +1364,6 @@ bool CModDoc::IsSampleMuted(SAMPLEINDEX nSample) const
 
 
 bool CModDoc::IsInstrumentMuted(INSTRUMENTINDEX nInstr) const
-//-----------------------------------------------------------
 {
 	if(!nInstr || nInstr > m_SndFile.GetNumInstruments() || !m_SndFile.Instruments[nInstr]) return false;
 	return m_SndFile.Instruments[nInstr]->dwFlags[INS_MUTE];
@@ -1430,7 +1371,6 @@ bool CModDoc::IsInstrumentMuted(INSTRUMENTINDEX nInstr) const
 
 
 UINT CModDoc::GetPatternSize(PATTERNINDEX nPat) const
-//---------------------------------------------------
 {
 	if(m_SndFile.Patterns.IsValidIndex(nPat)) return m_SndFile.Patterns[nPat].GetNumRows();
 	return 0;
@@ -1438,14 +1378,12 @@ UINT CModDoc::GetPatternSize(PATTERNINDEX nPat) const
 
 
 void CModDoc::SetFollowWnd(HWND hwnd)
-//-----------------------------------
 {
 	m_hWndFollow = hwnd;
 }
 
 
 bool CModDoc::IsChildSample(INSTRUMENTINDEX nIns, SAMPLEINDEX nSmp) const
-//-----------------------------------------------------------------------
 {
 	return m_SndFile.IsSampleReferencedByInstrument(nSmp, nIns);
 }
@@ -1454,7 +1392,6 @@ bool CModDoc::IsChildSample(INSTRUMENTINDEX nIns, SAMPLEINDEX nSmp) const
 // Find an instrument that references the given sample.
 // If no such instrument is found, INSTRUMENTINDEX_INVALID is returned.
 INSTRUMENTINDEX CModDoc::FindSampleParent(SAMPLEINDEX sample) const
-//-----------------------------------------------------------------
 {
 	if(sample == 0)
 	{
@@ -1479,7 +1416,6 @@ INSTRUMENTINDEX CModDoc::FindSampleParent(SAMPLEINDEX sample) const
 
 
 SAMPLEINDEX CModDoc::FindInstrumentChild(INSTRUMENTINDEX nIns) const
-//------------------------------------------------------------------
 {
 	if ((!nIns) || (nIns > m_SndFile.GetNumInstruments())) return 0;
 	const ModInstrument *pIns = m_SndFile.Instruments[nIns];
@@ -1495,7 +1431,6 @@ SAMPLEINDEX CModDoc::FindInstrumentChild(INSTRUMENTINDEX nIns) const
 
 
 LRESULT CModDoc::ActivateView(UINT nIdView, DWORD dwParam)
-//--------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (!pMainFrm) return 0;
@@ -1525,7 +1460,6 @@ LRESULT CModDoc::ActivateView(UINT nIdView, DWORD dwParam)
 
 // Activate document's window.
 void CModDoc::ActivateWindow()
-//----------------------------
 {
 
 	CChildFrame *pChildFrm = GetChildFrame();
@@ -1534,7 +1468,6 @@ void CModDoc::ActivateWindow()
 
 
 void CModDoc::UpdateAllViews(CView *pSender, UpdateHint hint, CObject *pHint)
-//---------------------------------------------------------------------------
 {
 	// Tunnel our UpdateHint into an LPARAM
 	CDocument::UpdateAllViews(pSender, hint.AsLPARAM(), pHint);
@@ -1567,13 +1500,11 @@ void CModDoc::UpdateAllViews(CView *pSender, UpdateHint hint, CObject *pHint)
 // CModDoc commands
 
 void CModDoc::OnFileWaveConvert()
-//-------------------------------
 {
 	OnFileWaveConvert(ORDERINDEX_INVALID, ORDERINDEX_INVALID);
 }
 
 void CModDoc::OnFileWaveConvert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
-//-------------------------------------------------------------------------
 {
 	WAVEncoder wavencoder;
 	FLACEncoder flacencoder;
@@ -1586,7 +1517,6 @@ void CModDoc::OnFileWaveConvert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
 }
 
 void CModDoc::OnFileWaveConvert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder, const std::vector<EncoderFactoryBase*> &encFactories)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
 	ASSERT(!encFactories.empty());
 
@@ -1858,13 +1788,11 @@ void CModDoc::OnFileWaveConvert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder, cons
 
 
 void CModDoc::OnFileMP3Convert()
-//------------------------------
 {
 	OnFileMP3Convert(ORDERINDEX_INVALID, ORDERINDEX_INVALID);
 }
 
 void CModDoc::OnFileMP3Convert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
-//------------------------------------------------------------------------
 {
 	WAVEncoder wavencoder;
 	FLACEncoder flacencoder;
@@ -1893,7 +1821,6 @@ void CModDoc::OnFileMP3Convert(ORDERINDEX nMinOrder, ORDERINDEX nMaxOrder)
 
 
 void CModDoc::OnFileMidiConvert()
-//-------------------------------
 {
 #ifndef NO_PLUGINS
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
@@ -1922,7 +1849,6 @@ void CModDoc::OnFileMidiConvert()
 
 //HACK: This is a quick fix. Needs to be better integrated into player and GUI.
 void CModDoc::OnFileCompatibilitySave()
-//-------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (!pMainFrm) return;
@@ -1988,7 +1914,6 @@ void CModDoc::OnFileCompatibilitySave()
 
 
 void CModDoc::OnPlayerPlay()
-//--------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm)
@@ -2031,7 +1956,6 @@ void CModDoc::OnPlayerPlay()
 
 
 void CModDoc::OnPlayerPause()
-//---------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm)
@@ -2078,7 +2002,6 @@ void CModDoc::OnPlayerPause()
 
 
 void CModDoc::OnPlayerStop()
-//--------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm) pMainFrm->StopMod();
@@ -2086,7 +2009,6 @@ void CModDoc::OnPlayerStop()
 
 
 void CModDoc::OnPlayerPlayFromStart()
-//-----------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm)
@@ -2114,28 +2036,24 @@ void CModDoc::OnPlayerPlayFromStart()
 
 
 void CModDoc::OnEditGlobals()
-//---------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW,	IDD_CONTROL_GLOBALS);
 }
 
 
 void CModDoc::OnEditPatterns()
-//----------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_PATTERNS, -1);
 }
 
 
 void CModDoc::OnEditSamples()
-//---------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_SAMPLES);
 }
 
 
 void CModDoc::OnEditInstruments()
-//-------------------------------
 {
 	//if (m_SndFile.m_nInstruments) rewbs.cosmetic: allow keyboard access to instruments even with no instruments
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_INSTRUMENTS);
@@ -2143,14 +2061,12 @@ void CModDoc::OnEditInstruments()
 
 
 void CModDoc::OnEditComments()
-//----------------------------
 {
 	SendMessageToActiveViews(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_COMMENTS);
 }
 
 
 void CModDoc::OnShowCleanup()
-//---------------------------
 {
 	CModCleanupDlg dlg(*this, CMainFrame::GetMainFrame());
 	dlg.DoModal();
@@ -2158,7 +2074,6 @@ void CModDoc::OnShowCleanup()
 
 
 void CModDoc::OnSetupZxxMacros()
-//------------------------------
 {
 	CMidiMacroSetup dlg(m_SndFile);
 	if(dlg.DoModal() == IDOK)
@@ -2174,7 +2089,6 @@ void CModDoc::OnSetupZxxMacros()
 
 // Enable menu item only module types that support MIDI Mappings
 void CModDoc::OnUpdateHasMIDIMappings(CCmdUI *p)
-//----------------------------------------------
 {
 	if(p)
 		p->Enable((m_SndFile.GetModSpecifications().MIDIMappingDirectivesMax > 0) ? TRUE : FALSE);
@@ -2183,7 +2097,6 @@ void CModDoc::OnUpdateHasMIDIMappings(CCmdUI *p)
 
 // Enable menu item only for IT / MPTM / XM files
 void CModDoc::OnUpdateXMITMPTOnly(CCmdUI *p)
-//---------------------------------------
 {
 	if (p)
 		p->Enable((m_SndFile.GetType() & (MOD_TYPE_XM | MOD_TYPE_IT | MOD_TYPE_MPT)) ? TRUE : FALSE);
@@ -2192,7 +2105,6 @@ void CModDoc::OnUpdateXMITMPTOnly(CCmdUI *p)
 
 // Enable menu item only for IT / MPTM files
 void CModDoc::OnUpdateITMPTOnly(CCmdUI *p)
-//---------------------------------------
 {
 	if (p)
 		p->Enable((m_SndFile.GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT)) ? TRUE : FALSE);
@@ -2201,7 +2113,6 @@ void CModDoc::OnUpdateITMPTOnly(CCmdUI *p)
 
 // Enable menu item if current module type supports compatibility export
 void CModDoc::OnUpdateCompatExportableOnly(CCmdUI *p)
-//---------------------------------------------------
 {
 	if(p)
 		p->Enable((m_SndFile.GetType() & (MOD_TYPE_XM | MOD_TYPE_IT)) ? TRUE : FALSE);
@@ -2209,7 +2120,6 @@ void CModDoc::OnUpdateCompatExportableOnly(CCmdUI *p)
 
 
 void CModDoc::OnEstimateSongLength()
-//----------------------------------
 {
 	CString s = _T("Approximate song length: ");
 	std::vector<GetLengthType> lengths = m_SndFile.GetLength(eNoAdjust, GetLengthTarget(true));
@@ -2241,7 +2151,6 @@ void CModDoc::OnEstimateSongLength()
 
 
 void CModDoc::OnApproximateBPM()
-//------------------------------
 {
 	if(CMainFrame::GetMainFrame()->GetModPlaying() != this)
 	{
@@ -2275,7 +2184,6 @@ void CModDoc::OnApproximateBPM()
 
 
 CChildFrame *CModDoc::GetChildFrame()
-//-----------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (!pMainFrm) return nullptr;
@@ -2300,7 +2208,6 @@ CChildFrame *CModDoc::GetChildFrame()
 
 // Get the currently edited pattern position. Note that ord might be ORDERINDEX_INVALID when editing a pattern that is not present in the order list.
 HWND CModDoc::GetEditPosition(ROWINDEX &row, PATTERNINDEX &pat, ORDERINDEX &ord)
-//------------------------------------------------------------------------------
 {
 	HWND followSonghWnd;
 	CChildFrame *pChildFrm = GetChildFrame();
@@ -2360,7 +2267,6 @@ HWND CModDoc::GetEditPosition(ROWINDEX &row, PATTERNINDEX &pat, ORDERINDEX &ord)
 
 
 void CModDoc::OnPatternRestart(bool loop)
-//---------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CChildFrame *pChildFrm = GetChildFrame();
@@ -2420,7 +2326,6 @@ void CModDoc::OnPatternRestart(bool loop)
 }
 
 void CModDoc::OnPatternPlay()
-//---------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CChildFrame *pChildFrm = GetChildFrame();
@@ -2475,7 +2380,6 @@ void CModDoc::OnPatternPlay()
 }
 
 void CModDoc::OnPatternPlayNoLoop()
-//---------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CChildFrame *pChildFrm = GetChildFrame();
@@ -2532,7 +2436,6 @@ void CModDoc::OnPatternPlayNoLoop()
 
 
 void CModDoc::OnViewEditHistory()
-//-------------------------------
 {
 	CEditHistoryDlg dlg(CMainFrame::GetMainFrame(), this);
 	dlg.DoModal();
@@ -2540,7 +2443,6 @@ void CModDoc::OnViewEditHistory()
 
 
 void CModDoc::OnViewMPTHacks()
-//----------------------------
 {
 	ScopedLogCapturer logcapturer(*this);
 	if(!HasMPTHacks())
@@ -2551,7 +2453,6 @@ void CModDoc::OnViewMPTHacks()
 
 
 void CModDoc::OnViewTempoSwingSettings()
-//--------------------------------------
 {
 	if(m_SndFile.m_nDefaultRowsPerBeat > 0 && m_SndFile.m_nTempoMode == tempoModeModern)
 	{
@@ -2572,7 +2473,6 @@ void CModDoc::OnViewTempoSwingSettings()
 
 
 LRESULT CModDoc::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
-//---------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -2618,7 +2518,6 @@ LRESULT CModDoc::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 
 
 void CModDoc::TogglePluginEditor(UINT plugin, bool onlyThisEditor)
-//----------------------------------------------------------------
 {
 	if(plugin < MAX_MIXPLUGINS)
 	{
@@ -2655,7 +2554,6 @@ void CModDoc::TogglePluginEditor(UINT plugin, bool onlyThisEditor)
 
 
 void CModDoc::ChangeFileExtension(MODTYPE nNewType)
-//-------------------------------------------------
 {
 	//Not making path if path is empty(case only(?) for new file)
 	if(!GetPathNameMpt().empty())
@@ -2691,7 +2589,6 @@ void CModDoc::ChangeFileExtension(MODTYPE nNewType)
 
 
 CHANNELINDEX CModDoc::FindAvailableChannel() const
-//------------------------------------------------
 {
 	CHANNELINDEX stoppedChannel = m_SndFile.GetNumChannels();
 	// Search for available channel
@@ -2710,14 +2607,12 @@ CHANNELINDEX CModDoc::FindAvailableChannel() const
 
 
 void CModDoc::RecordParamChange(PLUGINDEX plugSlot, PlugParamIndex paramIndex)
-//----------------------------------------------------------------------------
 {
 	SendMessageToActiveViews(WM_MOD_RECORDPARAM, plugSlot, paramIndex);
 }
 
 
 void CModDoc::LearnMacro(int macroToSet, PlugParamIndex paramToUse)
-//-----------------------------------------------------------------
 {
 	if (macroToSet < 0 || macroToSet > NUM_MACROS)
 	{
@@ -2758,7 +2653,6 @@ void CModDoc::LearnMacro(int macroToSet, PlugParamIndex paramToUse)
 
 
 void CModDoc::OnSongProperties()
-//------------------------------
 {
 	CModTypeDlg dlg(m_SndFile, CMainFrame::GetMainFrame());
 	if (dlg.DoModal() == IDOK)
@@ -2789,7 +2683,6 @@ void CModDoc::OnSongProperties()
 
 
 void CModDoc::ViewMIDIMapping(PLUGINDEX plugin, PlugParamIndex param)
-//-------------------------------------------------------------------
 {
 	CMIDIMappingDialog dlg(CWnd::GetActiveWindow(), m_SndFile);
 	if(plugin != PLUGINDEX_INVALID)
@@ -2802,7 +2695,6 @@ void CModDoc::ViewMIDIMapping(PLUGINDEX plugin, PlugParamIndex param)
 
 
 void CModDoc::OnChannelManager()
-//------------------------------
 {
 	CChannelManagerDlg *instance = CChannelManagerDlg::sharedInstanceCreate();
 	if(instance != nullptr)
@@ -2822,7 +2714,6 @@ void CModDoc::OnChannelManager()
 // At the same time, the playback parameters (global volume, channel volume and stuff like that) are calculated for this position.
 // Sample channels positions are only updated if setSamplePos is true *and* the user has chosen to update sample play positions on seek.
 void CModDoc::SetElapsedTime(ORDERINDEX nOrd, ROWINDEX nRow, bool setSamplePos)
-//-----------------------------------------------------------------------------
 {
 	if(nOrd == ORDERINDEX_INVALID) return;
 
@@ -2842,7 +2733,6 @@ void CModDoc::SetElapsedTime(ORDERINDEX nOrd, ROWINDEX nRow, bool setSamplePos)
 CString CModDoc::GetPatternViewInstrumentName(INSTRUMENTINDEX nInstr,
 											  bool bEmptyInsteadOfNoName /* = false*/,
 											  bool bIncludeIndex /* = true*/) const
-//-----------------------------------------------------------------------------------
 {
 	if(nInstr >= MAX_INSTRUMENTS || m_SndFile.GetNumInstruments() == 0 || m_SndFile.Instruments[nInstr] == nullptr)
 		return CString();
@@ -2887,7 +2777,6 @@ CString CModDoc::GetPatternViewInstrumentName(INSTRUMENTINDEX nInstr,
 
 
 void CModDoc::SafeFileClose()
-//---------------------------
 {
 	// Verify that the main window has the focus. This saves us a lot of trouble because active modal dialogs cannot know if their pSndFile pointers are still valid.
 	if(GetActiveWindow() == CMainFrame::GetMainFrame()->m_hWnd)
@@ -2897,7 +2786,6 @@ void CModDoc::SafeFileClose()
 
 // "Panic button". At the moment, it just resets all VSTi and sample notes.
 void CModDoc::OnPanic()
-//---------------------
 {
 	CriticalSection cs;
 	m_SndFile.ResetChannels();
@@ -2908,7 +2796,6 @@ void CModDoc::OnPanic()
 // Before saving, make sure that every char after the terminating null char is also null.
 // Else, garbage might end up in various text strings that wasn't supposed to be there.
 void CModDoc::FixNullStrings()
-//----------------------------
 {
 	// Song title
 	// std::string, doesn't need to be fixed.
@@ -2948,7 +2835,6 @@ void CModDoc::FixNullStrings()
 
 
 void CModDoc::OnSaveTemplateModule()
-//----------------------------------
 {
 	// Create template folder if doesn't exist already.
 	const mpt::PathString templateFolder = TrackerSettings::Instance().PathUserTemplates.GetDefaultDir();
@@ -2988,7 +2874,6 @@ void CModDoc::OnSaveTemplateModule()
 
 // Create an undo point that stores undo data for all existing patterns
 void CModDoc::PrepareUndoForAllPatterns(bool storeChannelInfo, const char *description)
-//-------------------------------------------------------------------------------------
 {
 	bool linkUndo = false;
 
@@ -3010,7 +2895,6 @@ void CModDoc::PrepareUndoForAllPatterns(bool storeChannelInfo, const char *descr
 
 
 CString CModDoc::LinearToDecibels(double value, double valueAtZeroDB)
-//-------------------------------------------------------------------
 {
 	if (value == 0) return _T("-inf");
 
@@ -3024,7 +2908,6 @@ CString CModDoc::LinearToDecibels(double value, double valueAtZeroDB)
 
 
 CString CModDoc::PanningToString(int32 value, int32 valueAtCenter)
-//----------------------------------------------------------------
 {
 	if(value == valueAtCenter)
 		return _T("Center");
@@ -3037,7 +2920,6 @@ CString CModDoc::PanningToString(int32 value, int32 valueAtCenter)
 
 // Store all view positions t settings file
 void CModDoc::SerializeViews() const
-//----------------------------------
 {
 	const mpt::PathString pathName = theApp.IsPortableMode() ? GetPathNameMpt().AbsolutePathToRelative(theApp.GetAppDirPath()) : GetPathNameMpt();
 	if(pathName.empty())
@@ -3108,7 +2990,6 @@ void CModDoc::SerializeViews() const
 
 // Restore all view positions from settings file
 void CModDoc::DeserializeViews()
-//------------------------------
 {
 	mpt::PathString pathName = GetPathNameMpt();
 	if(pathName.empty()) return;

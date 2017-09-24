@@ -223,9 +223,7 @@ class CModDoc;
 
 #define HISTORY_TIMER_PRECISION	18.2f
 
-//================
 struct FileHistory
-//================
 {
 	// Date when the file was loaded in the the tracker or created.
 	tm loadDate;
@@ -267,9 +265,7 @@ public:
 typedef char NoteName[4];
 
 
-//==============
 class CSoundFile
-//==============
 {
 	friend class GetLengthMemory;
 
@@ -581,6 +577,8 @@ public:
 		ProbeWantMoreData = -1
 	};
 
+	static ProbeResult ProbeAdditionalSize(MemoryFileReader &file, const uint64 *pfilesize, uint64 minimumAdditionalSize);
+
 	static ProbeResult Probe(ProbeFlags flags, mpt::span<const mpt::byte> data, const uint64 *pfilesize);
 
 public:
@@ -672,6 +670,49 @@ public:
 	bool InitChannel(CHANNELINDEX nChn);
 	void InitAmigaResampler();
 
+	static ProbeResult ProbeFileHeaderMMCMP(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPP20(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderUMX(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderXPK(MemoryFileReader file, const uint64 *pfilesize);
+
+	static ProbeResult ProbeFileHeader669(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderAM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderAMF_Asylum(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderAMF_DSMI(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderAMS(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderAMS2(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderDBM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderDTM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderDIGI(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderDMF(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderDSM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderFAR(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderGDM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderICE(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderIMF(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderIT(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderITP(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderJ2B(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderM15(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMDL(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMED(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMO3(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMOD(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMT2(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderMTM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderOKT(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPLM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPSM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPSM16(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPT36(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderPTM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderS3M(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderSFX(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderSTM(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderSTP(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderULT(MemoryFileReader file, const uint64 *pfilesize);
+	static ProbeResult ProbeFileHeaderXM(MemoryFileReader file, const uint64 *pfilesize);
+
 	// Module Loaders
 	bool Read669(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadAM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
@@ -694,7 +735,6 @@ public:
 	bool ReadM15(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMDL(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMed(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadMID(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMO3(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMod(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMT2(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
@@ -710,9 +750,11 @@ public:
 	bool ReadSTM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadSTP(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadUlt(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadXM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+
+	bool ReadMID(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadUAX(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadWav(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadXM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 
 	static std::vector<const char *> GetSupportedExtensions(bool otherFormats);
 	static bool IsExtensionSupported(const char *ext); // UTF8, casing of ext is ignored
@@ -1034,7 +1076,6 @@ public:
 
 #ifndef NO_PLUGINS
 inline IMixPlugin* CSoundFile::GetInstrumentPlugin(INSTRUMENTINDEX instr)
-//-----------------------------------------------------------------------
 {
 	if(instr > 0 && instr <= GetNumInstruments() && Instruments[instr] && Instruments[instr]->nMixPlug && Instruments[instr]->nMixPlug <= MAX_MIXPLUGINS)
 		return m_MixPlugins[Instruments[instr]->nMixPlug - 1].pMixPlugin;

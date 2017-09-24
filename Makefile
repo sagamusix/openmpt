@@ -620,7 +620,11 @@ MPT_SVNURL := $(shell svn info --xml | grep '^<url>' | sed 's/<url>//g' | sed 's
 MPT_SVNDATE := $(shell svn info --xml | grep '^<date>' | sed 's/<date>//g' | sed 's/<\/date>//g' )
 CPPFLAGS += -D MPT_SVNURL=\"$(MPT_SVNURL)\" -D MPT_SVNVERSION=\"$(MPT_SVNVERSION)\" -D MPT_SVNDATE=\"$(MPT_SVNDATE)\"
 DIST_OPENMPT_VERSION:=r$(MPT_SVNVERSION)
+ifeq ($(LIBOPENMPT_VERSION_PREREL),)
+DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+release
+else
 DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+r$(MPT_SVNVERSION)
+endif
 else
 GIT_STATUS:=$(shell git status > /dev/null 2>&1 ; echo $$? )
 ifeq ($(GIT_STATUS),0)
@@ -630,17 +634,29 @@ MPT_SVNURL := $(shell git log --grep=git-svn-id -n 1 | grep git-svn-id | tail -n
 MPT_SVNDATE := $(shell git log -n 1 --date=iso --format=format:'%cd' | sed 's/ +0000/Z/g' | tr ' ' 'T' )
 CPPFLAGS += -D MPT_SVNURL=\"$(MPT_SVNURL)\" -D MPT_SVNVERSION=\"$(MPT_SVNVERSION)\" -D MPT_SVNDATE=\"$(MPT_SVNDATE)\"
 DIST_OPENMPT_VERSION:=r$(MPT_SVNVERSION)
+ifeq ($(LIBOPENMPT_VERSION_PREREL),)
+DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+release
+else
 DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+r$(MPT_SVNVERSION)
+endif
 else
 # not in svn checkout
 DIST_OPENMPT_VERSION:=rUNKNOWN
+ifeq ($(LIBOPENMPT_VERSION_PREREL),)
+DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+release
+else
 DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+rUNKNOWN
+endif
 endif
 endif
 else
 # in dist package
 DIST_OPENMPT_VERSION:=r$(MPT_SVNVERSION)
+ifeq ($(LIBOPENMPT_VERSION_PREREL),)
+DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+release
+else
 DIST_LIBOPENMPT_VERSION:=$(LIBOPENMPT_VERSION_MAJOR).$(LIBOPENMPT_VERSION_MINOR).$(LIBOPENMPT_VERSION_PATCH)$(LIBOPENMPT_VERSION_PREREL)+r$(MPT_SVNVERSION)
+endif
 endif
 DIST_LIBOPENMPT_TARBALL_VERSION:=$(DIST_LIBOPENMPT_VERSION_PURE)
 
@@ -1099,12 +1115,15 @@ bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION).makefile.tar: bin/dist.mk bin
 	mkdir -p bin/dist-tar
 	rm -rf bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)
 	mkdir -p bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)
+	mkdir -p bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build
 	mkdir -p bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/include
 	svn export ./LICENSE            bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/LICENSE
 	svn export ./README.md          bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/README.md
 	svn export ./Makefile           bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/Makefile
 	svn export ./bin                bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/bin
-	svn export ./build              bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build
+	svn export ./build/android_ndk  bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/android_ndk
+	svn export ./build/make         bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/make
+	svn export ./build/svn_version  bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/svn_version
 	svn export ./common             bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/common
 	svn export ./soundbase          bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/soundbase
 	svn export ./soundlib           bin/dist-tar/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/soundlib
@@ -1127,12 +1146,21 @@ bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION).msvc.zip: bin/dist.mk bin/svn
 	mkdir -p bin/dist-zip
 	rm -rf bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)
 	mkdir -p bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)
+	mkdir -p bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build
 	mkdir -p bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/include
 	svn export ./LICENSE               bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/LICENSE               --native-eol CRLF
 	svn export ./README.md             bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/README.md             --native-eol CRLF
 	svn export ./Makefile              bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/Makefile              --native-eol CRLF
 	svn export ./bin                   bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/bin                   --native-eol CRLF
-	svn export ./build                 bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build                 --native-eol CRLF
+	svn export ./build/svn_version            bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/svn_version            --native-eol CRLF
+	svn export ./build/vs                     bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/vs                     --native-eol CRLF
+	svn export ./build/vs2015                 bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/vs2015                 --native-eol CRLF
+	svn export ./build/vs2015xp               bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/vs2015xp               --native-eol CRLF
+	svn export ./build/vs2017                 bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/vs2017                 --native-eol CRLF
+	svn export ./build/vs2017xp               bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/vs2017xp               --native-eol CRLF
+	svn export ./build/windesktop81           bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/windesktop81           --native-eol CRLF
+	svn export ./build/winstore82             bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/winstore82             --native-eol CRLF
+	svn export ./build/download_externals.cmd bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/build/download_externals.cmd --native-eol CRLF
 	svn export ./common                bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/common                --native-eol CRLF
 	svn export ./soundbase             bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/soundbase             --native-eol CRLF
 	svn export ./soundlib              bin/dist-zip/libopenmpt-$(DIST_LIBOPENMPT_VERSION)/soundlib              --native-eol CRLF

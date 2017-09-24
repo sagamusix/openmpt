@@ -24,7 +24,6 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 void CSoundFile::S3MConvert(ModCommand &m, bool fromIT)
-//-----------------------------------------------------
 {
 	switch(m.command | 0x40)
 	{
@@ -64,7 +63,6 @@ void CSoundFile::S3MConvert(ModCommand &m, bool fromIT)
 
 
 void CSoundFile::S3MSaveConvert(uint8 &command, uint8 &param, bool toIT, bool compatibilityExport) const
-//------------------------------------------------------------------------------------------------------
 {
 	switch(command)
 	{
@@ -172,21 +170,59 @@ enum S3MPattern
 };
 
 
+static bool ValidateHeader(const S3MFileHeader &fileHeader)
+{
+	if(std::memcmp(fileHeader.magic, "SCRM", 4)
+		|| fileHeader.fileType != S3MFileHeader::idS3MType
+		|| (fileHeader.formatVersion != S3MFileHeader::oldVersion && fileHeader.formatVersion != S3MFileHeader::newVersion)
+		)
+	{
+		return false;
+	}
+	return true;
+}
+
+
+static uint64 GetHeaderMinimumAdditionalSize(const S3MFileHeader &fileHeader)
+{
+	return fileHeader.ordNum + (fileHeader.smpNum + fileHeader.patNum) * 2;
+}
+
+
+CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderS3M(MemoryFileReader file, const uint64 *pfilesize)
+{
+	S3MFileHeader fileHeader;
+	if(!file.ReadStruct(fileHeader))
+	{
+		return ProbeWantMoreData;
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return ProbeFailure;
+	}
+	return ProbeAdditionalSize(file, pfilesize, GetHeaderMinimumAdditionalSize(fileHeader));
+}
+
+
 bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
-//-------------------------------------------------------------------
 {
 	file.Rewind();
 
 	// Is it a valid S3M file?
 	S3MFileHeader fileHeader;
-	if(!file.ReadStruct(fileHeader)
-		|| !file.CanRead(fileHeader.ordNum + (fileHeader.smpNum + fileHeader.patNum) * 2)
-		|| memcmp(fileHeader.magic, "SCRM", 4)
-		|| fileHeader.fileType != S3MFileHeader::idS3MType
-		|| (fileHeader.formatVersion != S3MFileHeader::oldVersion && fileHeader.formatVersion != S3MFileHeader::newVersion))
+	if(!file.ReadStruct(fileHeader))
 	{
 		return false;
-	} else if(loadFlags == onlyVerifyHeader)
+	}
+	if(!ValidateHeader(fileHeader))
+	{
+		return false;
+	}
+	if(!file.CanRead(mpt::saturate_cast<FileReader::off_t>(GetHeaderMinimumAdditionalSize(fileHeader))))
+	{
+		return false;
+	}
+	if(loadFlags == onlyVerifyHeader)
 	{
 		return true;
 	}
@@ -552,7 +588,6 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 #ifndef MODPLUG_NO_FILESAVE
 
 bool CSoundFile::SaveS3M(const mpt::PathString &filename) const
-//-------------------------------------------------------------
 {
 	static const uint8 filler[16] =
 	{

@@ -41,7 +41,6 @@ OPENMPT_NAMESPACE_BEGIN
 PatternClipboard PatternClipboard::instance;
 
 std::string PatternClipboard::GetFileExtension(const char *ext, bool addPadding)
-//------------------------------------------------------------------------------
 {
 	std::string format(ext);
 	if(format.size() > 3)
@@ -59,7 +58,6 @@ std::string PatternClipboard::GetFileExtension(const char *ext, bool addPadding)
 
 // Copy a range of patterns to both the system clipboard and the internal clipboard.
 bool PatternClipboard::Copy(const CSoundFile &sndFile, ORDERINDEX first, ORDERINDEX last, bool onlyOrders)
-//--------------------------------------------------------------------------------------------------------
 {
 	const ModSequence &order = sndFile.Order();
 	LimitMax(first, order.GetLength());
@@ -143,7 +141,6 @@ bool PatternClipboard::Copy(const CSoundFile &sndFile, ORDERINDEX first, ORDERIN
 
 // Copy a pattern selection to both the system clipboard and the internal clipboard.
 bool PatternClipboard::Copy(const CSoundFile &sndFile, PATTERNINDEX pattern, PatternRect selection)
-//-------------------------------------------------------------------------------------------------
 {
 	std::string data = CreateClipboardString(sndFile, pattern, selection);
 	if(data.empty())
@@ -166,7 +163,6 @@ bool PatternClipboard::Copy(const CSoundFile &sndFile, PATTERNINDEX pattern, Pat
 
 // Create the clipboard text for a pattern selection
 std::string PatternClipboard::CreateClipboardString(const CSoundFile &sndFile, PATTERNINDEX pattern, PatternRect selection)
-//-------------------------------------------------------------------------------------------------------------------------
 {
 	if(!sndFile.Patterns.IsValidPat(pattern))
 		return "";
@@ -298,7 +294,6 @@ std::string PatternClipboard::CreateClipboardString(const CSoundFile &sndFile, P
 
 // Try pasting a pattern selection from the system clipboard.
 bool PatternClipboard::Paste(CSoundFile &sndFile, ModCommandPos &pastePos, PasteModes mode, ORDERINDEX curOrder, PatternRect &pasteRect, bool &orderChanged)
-//----------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	std::string data;
 	if(!FromSystemClipboard(data) || !HandlePaste(sndFile, pastePos, mode, data, curOrder, pasteRect, orderChanged))
@@ -312,7 +307,6 @@ bool PatternClipboard::Paste(CSoundFile &sndFile, ModCommandPos &pastePos, Paste
 
 // Try pasting a pattern selection from an internal clipboard.
 bool PatternClipboard::Paste(CSoundFile &sndFile, ModCommandPos &pastePos, PasteModes mode, ORDERINDEX curOrder, PatternRect &pasteRect, clipindex_t internalClipboard, bool &orderChanged)
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	if(internalClipboard >= instance.clipboards.size())
 		return false;
@@ -323,7 +317,6 @@ bool PatternClipboard::Paste(CSoundFile &sndFile, ModCommandPos &pastePos, Paste
 
 // Parse clipboard string and perform the pasting operation.
 bool PatternClipboard::HandlePaste(CSoundFile &sndFile, ModCommandPos &pastePos, PasteModes mode, const std::string &data, ORDERINDEX curOrder, PatternRect &pasteRect, bool &orderChanged)
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	const std::string whitespace(" \n\r\t");
 	PATTERNINDEX pattern = pastePos.pattern;
@@ -916,7 +909,6 @@ bool PatternClipboard::HandlePaste(CSoundFile &sndFile, ModCommandPos &pastePos,
 
 // Copy one of the internal clipboards to the system clipboard.
 bool PatternClipboard::SelectClipboard(clipindex_t which)
-//-------------------------------------------------------
 {
 	instance.activeClipboard = which;
 	return ToSystemClipboard(instance.clipboards[instance.activeClipboard]);
@@ -925,7 +917,6 @@ bool PatternClipboard::SelectClipboard(clipindex_t which)
 
 // Switch to the next internal clipboard.
 bool PatternClipboard::CycleForward()
-//-----------------------------------
 {
 	instance.activeClipboard++;
 	if(instance.activeClipboard >= instance.clipboards.size())
@@ -939,7 +930,6 @@ bool PatternClipboard::CycleForward()
 
 // Switch to the previous internal clipboard.
 bool PatternClipboard::CycleBackward()
-//------------------------------------
 {
 	if(instance.activeClipboard == 0)
 	{
@@ -955,7 +945,6 @@ bool PatternClipboard::CycleBackward()
 
 // Set the maximum number of internal clipboards.
 void PatternClipboard::SetClipboardSize(clipindex_t maxEntries)
-//-------------------------------------------------------------
 {
 	instance.clipboards.resize(maxEntries, PatternClipboardElement("", _T("unused")));
 	LimitMax(instance.activeClipboard, maxEntries - 1);
@@ -964,7 +953,6 @@ void PatternClipboard::SetClipboardSize(clipindex_t maxEntries)
 
 // Check whether patterns can be pasted from clipboard
 bool PatternClipboard::CanPaste()
-//-------------------------------
 {
 	return !!IsClipboardFormatAvailable(CF_TEXT);
 }
@@ -973,7 +961,6 @@ bool PatternClipboard::CanPaste()
 
 // System-specific clipboard functions
 bool PatternClipboard::ToSystemClipboard(const std::string &data)
-//---------------------------------------------------------------
 {
 	CMainFrame *mainFrame = CMainFrame::GetMainFrame();
 	if(mainFrame == nullptr || !mainFrame->OpenClipboard())
@@ -1006,7 +993,6 @@ bool PatternClipboard::ToSystemClipboard(const std::string &data)
 
 // System-specific clipboard functions
 bool PatternClipboard::FromSystemClipboard(std::string &data)
-//-----------------------------------------------------------
 {
 	CMainFrame *mainFrame = CMainFrame::GetMainFrame();
 	if(mainFrame == nullptr || !mainFrame->OpenClipboard())
@@ -1039,7 +1025,6 @@ END_MESSAGE_MAP()
 PatternClipboardDialog PatternClipboardDialog::instance;
 
 void PatternClipboardDialog::DoDataExchange(CDataExchange *pDX)
-//-------------------------------------------------------------
 {
 	DDX_Control(pDX, IDC_SPIN1,	numClipboardsSpin);
 	DDX_Control(pDX, IDC_LIST1,	clipList);
@@ -1047,13 +1032,11 @@ void PatternClipboardDialog::DoDataExchange(CDataExchange *pDX)
 
 
 PatternClipboardDialog::PatternClipboardDialog() : isLocked(true), isCreated(false), posX(-1), editNameBox(*this)
-//---------------------------------------------------------------------------------------------------------------
 {
 }
 
 
 void PatternClipboardDialog::Show()
-//---------------------------------
 {
 	instance.isLocked = true;
 	if(!instance.isCreated)
@@ -1071,7 +1054,6 @@ void PatternClipboardDialog::Show()
 
 
 void PatternClipboardDialog::OnNumClipboardsChanged()
-//---------------------------------------------------
 {
 	if(isLocked)
 	{
@@ -1084,7 +1066,6 @@ void PatternClipboardDialog::OnNumClipboardsChanged()
 
 
 void PatternClipboardDialog::UpdateList()
-//---------------------------------------
 {
 	if(instance.isLocked)
 	{
@@ -1106,7 +1087,6 @@ void PatternClipboardDialog::UpdateList()
 
 
 void PatternClipboardDialog::OnSelectClipboard()
-//----------------------------------------------
 {
 	if(isLocked)
 	{
@@ -1119,7 +1099,6 @@ void PatternClipboardDialog::OnSelectClipboard()
 
 
 void PatternClipboardDialog::OnOK()
-//---------------------------------
 {
 	const CWnd *focus = GetFocus();
 	if(focus == &editNameBox)
@@ -1138,7 +1117,6 @@ void PatternClipboardDialog::OnOK()
 
 
 void PatternClipboardDialog::OnCancel()
-//-------------------------------------
 {
 	if(GetFocus() == &editNameBox)
 	{
@@ -1162,7 +1140,6 @@ void PatternClipboardDialog::OnCancel()
 
 
 void PatternClipboardDialog::OnEditName()
-//---------------------------------------
 {
 	OnEndEdit();
 
@@ -1187,7 +1164,6 @@ void PatternClipboardDialog::OnEditName()
 
 
 void PatternClipboardDialog::OnEndEdit(bool apply)
-//------------------------------------------------
 {
 	if(editNameBox.GetSafeHwnd() == NULL)
 	{
@@ -1222,14 +1198,12 @@ END_MESSAGE_MAP()
 
 
 PatternClipboardDialog::CInlineEdit::CInlineEdit(PatternClipboardDialog &dlg) : parent(dlg)
-//-----------------------------------------------------------------------------------------
 {
 	CEdit::CEdit();
 }
 
 
 void PatternClipboardDialog::CInlineEdit::OnKillFocus(CWnd *newWnd)
-//-----------------------------------------------------------------
 {
 	parent.OnEndEdit(true);
 	CEdit::OnKillFocus(newWnd);

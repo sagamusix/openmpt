@@ -141,7 +141,6 @@ CSoundFile *CViewPattern::GetSoundFile() { return (GetDocument() != nullptr) ? G
 
 
 CViewPattern::CViewPattern()
-//--------------------------
 {
 	EnableActiveAccessibility();
 	m_pEffectVis = nullptr;
@@ -163,7 +162,6 @@ CViewPattern::CViewPattern()
 
 
 CViewPattern::~CViewPattern()
-//---------------------------
 {
 	GetDocument()->SetCollabEditPos(SEQUENCEINDEX_INVALID, ORDERINDEX_INVALID, PATTERNINDEX_INVALID, MAX_PATTERN_ROWS, CHANNELINDEX_INVALID, 0);
 	m_offScreenBitmap.DeleteObject();
@@ -172,7 +170,6 @@ CViewPattern::~CViewPattern()
 
 
 void CViewPattern::OnInitialUpdate()
-//----------------------------------
 {
 	CModScrollView::OnInitialUpdate();
 	MemsetZero(ChnVUMeters);
@@ -205,7 +202,6 @@ void CViewPattern::OnInitialUpdate()
 
 
 bool CViewPattern::SetCurrentPattern(PATTERNINDEX pat, ROWINDEX row)
-//------------------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	
@@ -258,7 +254,6 @@ bool CViewPattern::SetCurrentPattern(PATTERNINDEX pat, ROWINDEX row)
 
 // This should be used instead of consecutive calls to SetCurrentRow() then SetCurrentColumn().
 bool CViewPattern::SetCursorPosition(const PatternCursor &cursor, bool wrap)
-//--------------------------------------------------------------------------
 {
 	// Set row, but do not update scroll position yet
 	// as there is another position update on the way:
@@ -270,7 +265,6 @@ bool CViewPattern::SetCursorPosition(const PatternCursor &cursor, bool wrap)
 
 
 ROWINDEX CViewPattern::SetCurrentRow(ROWINDEX row, bool wrap, bool updateHorizontalScrollbar)
-//-------------------------------------------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidIndex(m_nPattern))
@@ -368,7 +362,6 @@ ROWINDEX CViewPattern::SetCurrentRow(ROWINDEX row, bool wrap, bool updateHorizon
 
 
 bool CViewPattern::SetCurrentColumn(CHANNELINDEX channel, PatternCursor::Columns column)
-//--------------------------------------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -395,7 +388,6 @@ bool CViewPattern::SetCurrentColumn(CHANNELINDEX channel, PatternCursor::Columns
 
 // Set document as modified and optionally update all pattern views.
 void CViewPattern::SetModified(bool updateAllViews)
-//-------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc != nullptr)
@@ -412,7 +404,6 @@ void CViewPattern::SetModified(bool updateAllViews)
 // When we switching to other tab the CViewPattern object is deleted
 // and when switching back new one is created
 bool CViewPattern::UpdateScrollbarPositions(bool updateHorizontalScrollbar)
-//-------------------------------------------------------------------------
 {
 // HACK - after new CViewPattern object created SetCurrentRow() and SetCurrentColumn() are called -
 // just skip first two calls of UpdateScrollbarPositions() if pModDoc->GetOldPatternScrollbarsPos() is valid
@@ -485,7 +476,6 @@ bool CViewPattern::UpdateScrollbarPositions(bool updateHorizontalScrollbar)
 }
 
 DWORD CViewPattern::GetDragItem(CPoint point, RECT &outRect)
-//----------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -547,7 +537,6 @@ DWORD CViewPattern::GetDragItem(CPoint point, RECT &outRect)
 // Likewise, if scrollVertical is true, the point's row is ensured to be visible.
 // If noMode if specified, the original selection points are not altered.
 bool CViewPattern::DragToSel(const PatternCursor &cursor, bool scrollHorizontal, bool scrollVertical, bool noMove)
-//----------------------------------------------------------------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -614,7 +603,6 @@ bool CViewPattern::DragToSel(const PatternCursor &cursor, bool scrollHorizontal,
 
 
 bool CViewPattern::SetPlayCursor(PATTERNINDEX pat, ROWINDEX row, uint32 tick)
-//---------------------------------------------------------------------------
 {
 	PATTERNINDEX oldPat = m_nPlayPat;
 	ROWINDEX oldRow = m_nPlayRow;
@@ -636,14 +624,12 @@ bool CViewPattern::SetPlayCursor(PATTERNINDEX pat, ROWINDEX row, uint32 tick)
 
 
 UINT CViewPattern::GetCurrentInstrument() const
-//---------------------------------------------
 {
 	return SendCtrlMessage(CTRLMSG_GETCURRENTINSTRUMENT);
 }
 
 
 bool CViewPattern::ShowEditWindow()
-//---------------------------------
 {
 	if (!m_pEditWnd)
 	{
@@ -659,7 +645,6 @@ bool CViewPattern::ShowEditWindow()
 
 
 bool CViewPattern::PrepareUndo(const PatternCursor &beginSel, const PatternCursor &endSel, const char *description)
-//-----------------------------------------------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	const CHANNELINDEX nChnBeg = beginSel.GetChannel(), nChnEnd = endSel.GetChannel();
@@ -671,7 +656,6 @@ bool CViewPattern::PrepareUndo(const PatternCursor &beginSel, const PatternCurso
 
 
 BOOL CViewPattern::PreTranslateMessage(MSG *pMsg)
-//-----------------------------------------------
 {
 	if (pMsg)
 	{
@@ -749,7 +733,6 @@ BOOL CViewPattern::PreTranslateMessage(MSG *pMsg)
 // CViewPattern message handlers
 
 void CViewPattern::OnDestroy()
-//----------------------------
 {
 // Fix: save pattern scrollbar position when switching to other tab
 // When we switching to other tab the CViewPattern object is deleted
@@ -777,7 +760,6 @@ void CViewPattern::OnDestroy()
 
 
 void CViewPattern::OnSetFocus(CWnd *pOldWnd)
-//------------------------------------------
 {
 	CScrollView::OnSetFocus(pOldWnd);
 	m_Status.set(psFocussed);
@@ -793,7 +775,6 @@ void CViewPattern::OnSetFocus(CWnd *pOldWnd)
 
 
 void CViewPattern::OnKillFocus(CWnd *pNewWnd)
-//-------------------------------------------
 {
 	CScrollView::OnKillFocus(pNewWnd);
 
@@ -804,7 +785,6 @@ void CViewPattern::OnKillFocus(CWnd *pNewWnd)
 
 //rewbs.customKeys
 void CViewPattern::OnGrowSelection()
-//----------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -888,7 +868,6 @@ void CViewPattern::OnGrowSelection()
 
 
 void CViewPattern::OnShrinkSelection()
-//-----------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -989,13 +968,11 @@ void CViewPattern::OnShrinkSelection()
 //rewbs.customKeys
 
 void CViewPattern::OnClearSelectionFromMenu()
-//-------------------------------------------
 {
 	OnClearSelection();
 }
 
 void CViewPattern::OnClearSelection(bool ITStyle, RowMask rm) //Default RowMask: all elements enabled
-//-----------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern) || !IsEditingEnabled_bmsg())
@@ -1108,7 +1085,6 @@ void CViewPattern::OnClearSelection(bool ITStyle, RowMask rm) //Default RowMask:
 
 
 void CViewPattern::OnEditCut()
-//----------------------------
 {
 	OnEditCopy();
 	OnClearSelection(false);
@@ -1116,7 +1092,6 @@ void CViewPattern::OnEditCut()
 
 
 void CViewPattern::OnEditCopy()
-//-----------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -1129,7 +1104,6 @@ void CViewPattern::OnEditCopy()
 
 
 void CViewPattern::OnLButtonDown(UINT nFlags, CPoint point)
-//---------------------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -1222,7 +1196,6 @@ void CViewPattern::OnLButtonDown(UINT nFlags, CPoint point)
 
 
 void CViewPattern::OnLButtonDblClk(UINT uFlags, CPoint point)
-//-----------------------------------------------------------
 {
 	PatternCursor cursor = GetPositionFromPoint(point);
 	if(cursor == m_Cursor && point.y >= m_szHeader.cy)
@@ -1244,7 +1217,6 @@ void CViewPattern::OnLButtonDblClk(UINT uFlags, CPoint point)
 
 
 void CViewPattern::OnLButtonUp(UINT nFlags, CPoint point)
-//-------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -1367,7 +1339,6 @@ void CViewPattern::OnLButtonUp(UINT nFlags, CPoint point)
 
 
 void CViewPattern::OnPatternProperties()
-//--------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	PATTERNINDEX pat = m_nPattern;
@@ -1386,7 +1357,6 @@ void CViewPattern::OnPatternProperties()
 
 
 void CViewPattern::OnRButtonDown(UINT flags, CPoint pt)
-//-----------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	HMENU hMenu;
@@ -1518,7 +1488,6 @@ void CViewPattern::OnRButtonDown(UINT flags, CPoint pt)
 }
 
 void CViewPattern::OnRButtonUp(UINT nFlags, CPoint point)
-//-------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (!pModDoc) return;
@@ -1544,7 +1513,6 @@ void CViewPattern::OnRButtonUp(UINT nFlags, CPoint point)
 
 
 BOOL CViewPattern::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
-//-------------------------------------------------------------------
 {
 	if(nFlags & MK_CONTROL)
 	{
@@ -1563,7 +1531,6 @@ BOOL CViewPattern::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 
 void CViewPattern::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
-//---------------------------------------------------------------------
 {
 	if(nButton == XBUTTON1) OnPrevOrder();
 	else if(nButton == XBUTTON2) OnNextOrder();
@@ -1572,7 +1539,6 @@ void CViewPattern::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
 
 
 void CViewPattern::OnMouseMove(UINT nFlags, CPoint point)
-//-------------------------------------------------------
 {
 	if(!m_Status[psDragging])
 	{
@@ -1675,7 +1641,6 @@ void CViewPattern::OnMouseMove(UINT nFlags, CPoint point)
 
 
 void CViewPattern::OnEditSelectAll()
-//----------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1686,7 +1651,6 @@ void CViewPattern::OnEditSelectAll()
 
 
 void CViewPattern::OnEditSelectChannel()
-//--------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1697,7 +1661,6 @@ void CViewPattern::OnEditSelectChannel()
 
 
 void CViewPattern::OnSelectCurrentChannel()
-//-----------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1716,7 +1679,6 @@ void CViewPattern::OnSelectCurrentChannel()
 
 
 void CViewPattern::OnSelectCurrentColumn()
-//----------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -1727,7 +1689,6 @@ void CViewPattern::OnSelectCurrentColumn()
 
 
 void CViewPattern::OnChannelReset()
-//---------------------------------
 {
 	ResetChannel(m_MenuCursor.GetChannel());
 }
@@ -1735,7 +1696,6 @@ void CViewPattern::OnChannelReset()
 
 // Reset all channel variables
 void CViewPattern::ResetChannel(CHANNELINDEX chn)
-//-----------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -1749,14 +1709,12 @@ void CViewPattern::ResetChannel(CHANNELINDEX chn)
 
 
 void CViewPattern::OnMuteFromClick()
-//----------------------------------
 {
 	OnMuteChannel(m_MenuCursor.GetChannel());
 }
 
 
 void CViewPattern::OnMuteChannel(CHANNELINDEX chn)
-//------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -1780,7 +1738,6 @@ void CViewPattern::OnMuteChannel(CHANNELINDEX chn)
 
 
 void CViewPattern::OnSoloFromClick()
-//----------------------------------
 {
 	OnSoloChannel(m_MenuCursor.GetChannel());
 }
@@ -1790,7 +1747,6 @@ void CViewPattern::OnSoloFromClick()
 // this will result in unmuting all channels, in order to satisfy user habits.
 // In all other cases, soloing a channel unsoloes all and mutes all except this channel
 void CViewPattern::OnSoloChannel(CHANNELINDEX chn)
-//------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc == nullptr) return;
@@ -1828,7 +1784,6 @@ void CViewPattern::OnSoloChannel(CHANNELINDEX chn)
 
 
 void CViewPattern::OnRecordSelect()
-//---------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -1844,7 +1799,6 @@ void CViewPattern::OnRecordSelect()
 
 
 void CViewPattern::OnSplitRecordSelect()
-//--------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -1860,7 +1814,6 @@ void CViewPattern::OnSplitRecordSelect()
 
 
 void CViewPattern::OnUnmuteAll()
-//------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -1877,7 +1830,6 @@ void CViewPattern::OnUnmuteAll()
 
 
 void CViewPattern::DeleteRows(CHANNELINDEX colmin, CHANNELINDEX colmax, ROWINDEX nrows)
-//-------------------------------------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern) || !IsEditingEnabled_bmsg())
@@ -1919,14 +1871,12 @@ void CViewPattern::DeleteRows(CHANNELINDEX colmin, CHANNELINDEX colmax, ROWINDEX
 
 
 void CViewPattern::OnDeleteRows()
-//-------------------------------
 {
 	DeleteRows(m_Selection.GetStartChannel(), m_Selection.GetEndChannel(), m_Selection.GetNumRows());
 }
 
 
 void CViewPattern::OnDeleteRowsEx()
-//---------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -1939,7 +1889,6 @@ void CViewPattern::OnDeleteRowsEx()
 
 
 void CViewPattern::InsertRows(CHANNELINDEX colmin, CHANNELINDEX colmax)
-//---------------------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern) || !IsEditingEnabled_bmsg())
@@ -1976,14 +1925,12 @@ void CViewPattern::InsertRows(CHANNELINDEX colmin, CHANNELINDEX colmax)
 
 
 void CViewPattern::OnInsertRows()
-//-------------------------------
 {
 	InsertRows(m_Selection.GetStartChannel(), m_Selection.GetEndChannel());
 }
 
 
 void CViewPattern::OnEditGoto()
-//-----------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (!pModDoc)
@@ -2010,14 +1957,12 @@ void CViewPattern::OnEditGoto()
 
 
 void CViewPattern::OnPatternStep()
-//--------------------------------
 {
 	PatternStep();
 }
 
 
 void CViewPattern::PatternStep(ROWINDEX row)
-//------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CModDoc *pModDoc = GetDocument();
@@ -2066,7 +2011,6 @@ void CViewPattern::PatternStep(ROWINDEX row)
 
 // Copy cursor to internal clipboard
 void CViewPattern::OnCursorCopy()
-//-------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -2100,7 +2044,6 @@ void CViewPattern::OnCursorCopy()
 
 // Paste cursor from internal clipboard
 void CViewPattern::OnCursorPaste()
-//--------------------------------
 {
 	if(!IsEditingEnabled_bmsg())
 	{
@@ -2150,7 +2093,6 @@ void CViewPattern::OnCursorPaste()
 
 
 void CViewPattern::OnVisualizeEffect()
-//------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc != nullptr && pModDoc->GetrSoundFile().Patterns.IsValidPat(m_nPattern))
@@ -2182,7 +2124,6 @@ void CViewPattern::OnVisualizeEffect()
 
 
 void CViewPattern::Interpolate(PatternCursor::Columns type)
-//---------------------------------------------------------
 {
 	CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
@@ -2451,7 +2392,6 @@ void CViewPattern::Interpolate(PatternCursor::Columns type)
 
 
 void CViewPattern::OnTransposeChannel()
-//-------------------------------------
 {
 	CInputDlg dlg(this, _T("Enter transpose amount (affects all patterns):"), -(NOTE_MAX - NOTE_MIN), (NOTE_MAX - NOTE_MIN), m_nTransposeAmount);
 	if(dlg.DoModal() == IDOK)
@@ -2499,7 +2439,6 @@ void CViewPattern::OnTransposeChannel()
 
 
 void CViewPattern::OnTransposeCustom()
-//------------------------------------
 {
 	CInputDlg dlg(this, _T("Enter transpose amount:"), -(NOTE_MAX - NOTE_MIN), (NOTE_MAX - NOTE_MIN), m_nTransposeAmount);
 	if(dlg.DoModal() == IDOK)
@@ -2511,7 +2450,6 @@ void CViewPattern::OnTransposeCustom()
 
 
 void CViewPattern::OnTransposeCustomQuick()
-//-----------------------------------------
 {
 	if(m_nTransposeAmount != 0)
 		TransposeSelection(m_nTransposeAmount);
@@ -2521,7 +2459,6 @@ void CViewPattern::OnTransposeCustomQuick()
 
 
 bool CViewPattern::TransposeSelection(int transp)
-//-----------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -2584,7 +2521,6 @@ bool CViewPattern::TransposeSelection(int transp)
 
 
 bool CViewPattern::DataEntry(bool up, bool coarse)
-//------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -2716,7 +2652,6 @@ bool CViewPattern::DataEntry(bool up, bool coarse)
 
 // Get the velocity at which a given note would be played
 int CViewPattern::GetDefaultVolume(const ModCommand &m, ModCommand::INSTR lastInstr) const
-//----------------------------------------------------------------------------------------
 {
 	const CSoundFile &sndFile = *GetSoundFile();
 	SAMPLEINDEX sample = GetDocument()->GetSampleIndex(m, lastInstr);
@@ -2730,7 +2665,6 @@ int CViewPattern::GetDefaultVolume(const ModCommand &m, ModCommand::INSTR lastIn
 
 
 void CViewPattern::OnDropSelection()
-//----------------------------------
 {
 	CModDoc *pModDoc;
 	if((pModDoc = GetDocument()) == nullptr || !IsEditingEnabled_bmsg())
@@ -2839,14 +2773,12 @@ void CViewPattern::OnDropSelection()
 
 
 void CViewPattern::OnSetSelInstrument()
-//-------------------------------------
 {
 	SetSelectionInstrument(static_cast<INSTRUMENTINDEX>(GetCurrentInstrument()), false);
 }
 
 
 void CViewPattern::OnRemoveChannelDialog()
-//----------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -2856,7 +2788,6 @@ void CViewPattern::OnRemoveChannelDialog()
 
 
 void CViewPattern::OnRemoveChannel()
-//----------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	CSoundFile *pSndFile;
@@ -2885,7 +2816,6 @@ void CViewPattern::OnRemoveChannel()
 
 
 void CViewPattern::AddChannelBefore(CHANNELINDEX nBefore)
-//-------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -2913,7 +2843,6 @@ void CViewPattern::AddChannelBefore(CHANNELINDEX nBefore)
 
 
 void CViewPattern::OnDuplicateChannel()
-//------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc == nullptr) return;
@@ -2948,7 +2877,6 @@ void CViewPattern::OnDuplicateChannel()
 
 
 void CViewPattern::OnRunScript()
-//------------------------------
 {
 	;
 }
@@ -2956,28 +2884,24 @@ void CViewPattern::OnRunScript()
 
 
 void CViewPattern::OnSwitchToOrderList()
-//--------------------------------------
 {
 	PostCtrlMessage(CTRLMSG_SETFOCUS);
 }
 
 
 void CViewPattern::OnPrevOrder()
-//------------------------------
 {
 	PostCtrlMessage(CTRLMSG_PREVORDER);
 }
 
 
 void CViewPattern::OnNextOrder()
-//------------------------------
 {
 	PostCtrlMessage(CTRLMSG_NEXTORDER);
 }
 
 
 void CViewPattern::OnUpdateUndo(CCmdUI *pCmdUI)
-//---------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((pCmdUI) && (pModDoc))
@@ -2989,7 +2913,6 @@ void CViewPattern::OnUpdateUndo(CCmdUI *pCmdUI)
 
 
 void CViewPattern::OnUpdateRedo(CCmdUI *pCmdUI)
-//---------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((pCmdUI) && (pModDoc))
@@ -3001,21 +2924,18 @@ void CViewPattern::OnUpdateRedo(CCmdUI *pCmdUI)
 
 
 void CViewPattern::OnEditUndo()
-//-----------------------------
 {
 	UndoRedo(true);
 }
 
 
 void CViewPattern::OnEditRedo()
-//-----------------------------
 {
 	UndoRedo(false);
 }
 
 
 void CViewPattern::UndoRedo(bool undo)
-//------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc && IsEditingEnabled_bmsg())
@@ -3046,7 +2966,6 @@ void CViewPattern::UndoRedo(bool undo)
 
 // Apply amplification and fade function to volume
 static void AmplifyFade(int &vol, int amp, ROWINDEX row, ROWINDEX numRows, int fadeIn, int fadeOut, Fade::Func &fadeFunc)
-//-----------------------------------------------------------------------------------------------------------------------
 {
 	const bool doFadeIn = fadeIn != amp, doFadeOut = fadeOut != amp;
 	const double fadeStart = fadeIn / 100.0, fadeStartDiff = (amp - fadeIn) / 100.0;
@@ -3076,7 +2995,6 @@ static void AmplifyFade(int &vol, int amp, ROWINDEX row, ROWINDEX numRows, int f
 
 
 void CViewPattern::OnPatternAmplify()
-//-----------------------------------
 {
 	static CAmpDlg::AmpSettings settings { Fade::kLinear, 0, 0, 100, false, false };
 
@@ -3201,7 +3119,6 @@ void CViewPattern::OnPatternAmplify()
 
 
 LRESULT CViewPattern::OnPlayerNotify(Notification *pnotify)
-//---------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || pnotify == nullptr)
@@ -3311,7 +3228,6 @@ LRESULT CViewPattern::OnPlayerNotify(Notification *pnotify)
 
 // record plugin parameter changes into current pattern
 LRESULT CViewPattern::OnRecordPlugParamChange(WPARAM plugSlot, LPARAM paramIndex)
-//-------------------------------------------------------------------------------
 {	
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr || !IsEditingEnabled())
@@ -3404,7 +3320,6 @@ LRESULT CViewPattern::OnRecordPlugParamChange(WPARAM plugSlot, LPARAM paramIndex
 
 
 ModCommandPos CViewPattern::GetEditPos(CSoundFile& rSf, const bool bLiveRecord) const
-//-----------------------------------------------------------------------------------
 {
 	ModCommandPos editpos;
 	if(bLiveRecord)
@@ -3427,7 +3342,6 @@ ModCommandPos CViewPattern::GetEditPos(CSoundFile& rSf, const bool bLiveRecord) 
 // Return ModCommand at the given cursor position of the current pattern.
 // If the position is not valid, a pointer to a dummy command is returned.
 ModCommand &CViewPattern::GetModCommand(PatternCursor cursor)
-//-----------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(GetCurrentPattern()) && pSndFile->Patterns[GetCurrentPattern()].IsValidRow(cursor.GetRow()))
@@ -3442,7 +3356,6 @@ ModCommand &CViewPattern::GetModCommand(PatternCursor cursor)
 
 // Sanitize cursor so that it can't point to an invalid position in the current pattern.
 void CViewPattern::SanitizeCursor()
-//---------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr && pSndFile->Patterns.IsValidPat(GetCurrentPattern()))
@@ -3455,7 +3368,6 @@ void CViewPattern::SanitizeCursor()
 // Returns pointer to modcommand at given position.
 // If the position is not valid, a pointer to a dummy command is returned.
 ModCommand &CViewPattern::GetModCommand(CSoundFile &sndFile, const ModCommandPos &pos)
-//------------------------------------------------------------------------------------
 {
 	static ModCommand dummy;
 	if(sndFile.Patterns.IsValidPat(pos.pattern) && pos.row < sndFile.Patterns[pos.pattern].GetNumRows() && pos.channel < sndFile.GetNumChannels())
@@ -3466,7 +3378,6 @@ ModCommand &CViewPattern::GetModCommand(CSoundFile &sndFile, const ModCommandPos
 
 
 LRESULT CViewPattern::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
-//-------------------------------------------------------------
 {
 	const DWORD dwMidiData = dwMidiDataParam;
 	static BYTE midivolume = 127;
@@ -3678,7 +3589,6 @@ LRESULT CViewPattern::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 
 
 LRESULT CViewPattern::OnModViewMsg(WPARAM wParam, LPARAM lParam)
-//--------------------------------------------------------------
 {
 	switch(wParam)
 	{
@@ -3866,7 +3776,6 @@ LRESULT CViewPattern::OnModViewMsg(WPARAM wParam, LPARAM lParam)
 
 
 void CViewPattern::CursorJump(int distance, bool snap)
-//----------------------------------------------------
 {
 	ROWINDEX row = GetCurrentRow();
 	const bool upwards = distance < 0;
@@ -3904,7 +3813,6 @@ void CViewPattern::CursorJump(int distance, bool snap)
 
 
 LRESULT CViewPattern::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
-//--------------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -4260,7 +4168,6 @@ LRESULT CViewPattern::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 
 // Move pattern cursor to left or right, respecting invisible columns.
 void CViewPattern::MoveCursor(bool moveRight)
-//-------------------------------------------
 {
 	if(!moveRight)
 	{
@@ -4316,7 +4223,6 @@ void CViewPattern::MoveCursor(bool moveRight)
 
 // Enter volume effect / number in the pattern.
 void CViewPattern::TempEnterVol(int v)
-//------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 
@@ -4399,7 +4305,6 @@ void CViewPattern::TempEnterVol(int v)
 
 
 void CViewPattern::SetSpacing(int n)
-//----------------------------------
 {
 	if (static_cast<UINT>(n) != m_nSpacing)
 	{
@@ -4411,7 +4316,6 @@ void CViewPattern::SetSpacing(int n)
 
 // Enter an effect letter in the pattern
 void CViewPattern::TempEnterFX(ModCommand::COMMAND c, int v)
-//----------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 
@@ -4477,7 +4381,6 @@ void CViewPattern::TempEnterFX(ModCommand::COMMAND c, int v)
 
 // Enter an effect param in the pattenr
 void CViewPattern::TempEnterFXparam(int v)
-//----------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 
@@ -4524,7 +4427,6 @@ void CViewPattern::TempEnterFXparam(int v)
 
 // Stop a note that has been entered
 void CViewPattern::TempStopNote(ModCommand::NOTE note, bool fromMidi, const bool bChordMode)
-//------------------------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
@@ -4712,7 +4614,6 @@ void CViewPattern::TempStopNote(ModCommand::NOTE note, bool fromMidi, const bool
 
 // Enter an octave number in the pattern
 void CViewPattern::TempEnterOctave(int val)
-//-----------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -4738,7 +4639,6 @@ void CViewPattern::TempEnterOctave(int val)
 
 // Stop note that has been triggered by entering an octave in the pattern.
 void CViewPattern::TempStopOctave(int val)
-//----------------------------------------
 {
 	ASSERT(size_t(val) < CountOf(octaveKeyMemory));
 	if(octaveKeyMemory[val] != NOTE_NONE)
@@ -4751,7 +4651,6 @@ void CViewPattern::TempStopOctave(int val)
 
 // Enter an instrument number in the pattern
 void CViewPattern::TempEnterIns(int val)
-//--------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !IsEditingEnabled_bmsg())
@@ -4804,7 +4703,6 @@ void CViewPattern::TempEnterIns(int val)
 
 // Enter a note in the pattern
 void CViewPattern::TempEnterNote(ModCommand::NOTE note, int vol, bool fromMidi)
-//-----------------------------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CModDoc *pModDoc = GetDocument();
@@ -5098,7 +4996,6 @@ void CViewPattern::TempEnterNote(ModCommand::NOTE note, int vol, bool fromMidi)
 
 
 void CViewPattern::PlayNote(ModCommand::NOTE note, ModCommand::INSTR instr, int volume, CHANNELINDEX channel)
-//-----------------------------------------------------------------------------------------------------------
 {
 	CModDoc *modDoc = GetDocument();
 	modDoc->CheckNNA(note, instr, m_baPlayingNote);
@@ -5108,7 +5005,6 @@ void CViewPattern::PlayNote(ModCommand::NOTE note, ModCommand::INSTR instr, int 
 
 // Construct a chord from the chord presets. Returns number of notes in chord.
 int CViewPattern::ConstructChord(int note, ModCommand::NOTE (&outNotes)[MPTChord::notesPerChord], ModCommand::NOTE baseNote)
-//--------------------------------------------------------------------------------------------------------------------------
 {
 	const MPTChords &chords = TrackerSettings::GetChords();
 	UINT baseOctave = CMainFrame::GetMainFrame()->GetBaseOctave();
@@ -5167,7 +5063,6 @@ int CViewPattern::ConstructChord(int note, ModCommand::NOTE (&outNotes)[MPTChord
 
 // Enter a chord in the pattern
 void CViewPattern::TempEnterChord(ModCommand::NOTE note)
-//------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CModDoc *pModDoc = GetDocument();
@@ -5328,7 +5223,6 @@ void CViewPattern::TempEnterChord(ModCommand::NOTE note)
 
 // Translate incoming MIDI aftertouch messages to pattern commands
 void CViewPattern::EnterAftertouch(ModCommand::NOTE note, int atValue)
-//--------------------------------------------------------------------
 {
 	if(TrackerSettings::Instance().aftertouchBehaviour == atDoNotRecord || !IsEditingEnabled())
 	{
@@ -5418,7 +5312,6 @@ void CViewPattern::EnterAftertouch(ModCommand::NOTE note, int atValue)
 
 // Apply quantization factor to given row.
 void CViewPattern::QuantizeRow(PATTERNINDEX &pat, ROWINDEX &row) const
-//--------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || TrackerSettings::Instance().recordQuantizeRows == 0)
@@ -5460,7 +5353,6 @@ void CViewPattern::QuantizeRow(PATTERNINDEX &pat, ROWINDEX &row) const
 
 // Get previous pattern in order list
 PATTERNINDEX CViewPattern::GetPrevPattern() const
-//-----------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile != nullptr)
@@ -5482,7 +5374,6 @@ PATTERNINDEX CViewPattern::GetPrevPattern() const
 
 // Get follow-up pattern in order list
 PATTERNINDEX CViewPattern::GetNextPattern() const
-//-----------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile != nullptr)
@@ -5503,7 +5394,6 @@ PATTERNINDEX CViewPattern::GetNextPattern() const
 
 
 void CViewPattern::OnSetQuantize()
-//--------------------------------
 {
 	CInputDlg dlg(this, _T("Quantize amount in rows for live recording (0 to disable):"), 0, MAX_PATTERN_ROWS, TrackerSettings::Instance().recordQuantizeRows);
 	if(dlg.DoModal())
@@ -5514,7 +5404,6 @@ void CViewPattern::OnSetQuantize()
 
 
 void CViewPattern::OnLockPatternRows()
-//------------------------------------
 {
 	CSoundFile &sndFile = *GetSoundFile();
 	if(m_Selection.GetUpperLeft() != m_Selection.GetLowerRight())
@@ -5532,7 +5421,6 @@ void CViewPattern::OnLockPatternRows()
 // Find a free channel for a record group, starting search from a given channel.
 // If forceFreeChannel is true and all channels in the specified record group are active, some channel is picked from the specified record group.
 CHANNELINDEX CViewPattern::FindGroupRecordChannel(BYTE recordGroup, bool forceFreeChannel, CHANNELINDEX startChannel) const
-//-------------------------------------------------------------------------------------------------------------------------
 {
 	const CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr)
@@ -5581,7 +5469,6 @@ CHANNELINDEX CViewPattern::FindGroupRecordChannel(BYTE recordGroup, bool forceFr
 
 
 void CViewPattern::OnClearField(const RowMask &mask, bool step, bool ITStyle)
-//---------------------------------------------------------------------------
 {
  	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !IsEditingEnabled_bmsg())
@@ -5672,13 +5559,11 @@ void CViewPattern::OnClearField(const RowMask &mask, bool step, bool ITStyle)
 
 
 void CViewPattern::OnInitMenu(CMenu* pMenu)
-//-----------------------------------------
 {
 	CModScrollView::OnInitMenu(pMenu);
 }
 
 void CViewPattern::TogglePluginEditor(int chan)
-//---------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(!pModDoc) return;
@@ -5694,14 +5579,12 @@ void CViewPattern::TogglePluginEditor(int chan)
 
 
 void CViewPattern::OnSelectInstrument(UINT nID)
-//---------------------------------------------
 {
 	SetSelectionInstrument(static_cast<INSTRUMENTINDEX>(nID - ID_CHANGE_INSTRUMENT), true);
 }
 
 
 void CViewPattern::OnSelectPCNoteParam(UINT nID)
-//----------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -5728,7 +5611,6 @@ void CViewPattern::OnSelectPCNoteParam(UINT nID)
 
 
 void CViewPattern::OnSelectPlugin(UINT nID)
-//-----------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -5754,7 +5636,6 @@ void CViewPattern::OnSelectPlugin(UINT nID)
 
 
 bool CViewPattern::HandleSplit(ModCommand &m, int note)
-//-----------------------------------------------------
 {
 	ModCommand::INSTR ins = static_cast<ModCommand::INSTR>(GetCurrentInstrument());
 	const bool isSplit = IsNoteSplit(note);
@@ -5787,7 +5668,6 @@ bool CViewPattern::HandleSplit(ModCommand &m, int note)
 
 
 bool CViewPattern::IsNoteSplit(int note) const
-//--------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	return(pModDoc != nullptr
@@ -5797,7 +5677,6 @@ bool CViewPattern::IsNoteSplit(int note) const
 
 
 bool CViewPattern::BuildPluginCtxMenu(HMENU hMenu, UINT nChn, const CSoundFile &sndFile) const
-//--------------------------------------------------------------------------------------------
 {
 	for(PLUGINDEX plug = 0; plug <= MAX_MIXPLUGINS; plug++)
 	{
@@ -5831,7 +5710,6 @@ bool CViewPattern::BuildPluginCtxMenu(HMENU hMenu, UINT nChn, const CSoundFile &
 
 
 bool CViewPattern::BuildSoloMuteCtxMenu(HMENU hMenu, CInputHandler *ih, UINT nChn, const CSoundFile &sndFile) const
-//-----------------------------------------------------------------------------------------------------------------
 {
 	AppendMenu(hMenu, sndFile.ChnSettings[nChn].dwFlags[CHN_MUTE] ? (MF_STRING | MF_CHECKED) : MF_STRING,
 		ID_PATTERN_MUTE, ih->GetKeyTextFromCommand(kcChannelMute, _T("&Mute Channel")));
@@ -5868,7 +5746,6 @@ bool CViewPattern::BuildSoloMuteCtxMenu(HMENU hMenu, CInputHandler *ih, UINT nCh
 }
 
 bool CViewPattern::BuildRecordCtxMenu(HMENU hMenu, CInputHandler *ih, CHANNELINDEX nChn) const
-//--------------------------------------------------------------------------------------------
 {
 	const CModDoc *pModDoc = GetDocument();
 	AppendMenu(hMenu, pModDoc->IsChannelRecord1(nChn) ? (MF_STRING | MF_CHECKED) : MF_STRING, ID_EDIT_RECSELECT, ih->GetKeyTextFromCommand(kcChannelRecordSelect, _T("R&ecord select")));
@@ -5879,7 +5756,6 @@ bool CViewPattern::BuildRecordCtxMenu(HMENU hMenu, CInputHandler *ih, CHANNELIND
 
 
 bool CViewPattern::BuildRowInsDelCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//----------------------------------------------------------------------------
 {
 	const CString label = (m_Selection.GetStartRow() != m_Selection.GetEndRow() ? _T("Rows") : _T("Row"));
 
@@ -5889,7 +5765,6 @@ bool CViewPattern::BuildRowInsDelCtxMenu(HMENU hMenu, CInputHandler *ih) const
 }
 
 bool CViewPattern::BuildMiscCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//-----------------------------------------------------------------------
 {
 	AppendMenu(hMenu, MF_STRING, ID_SHOWTIMEATROW, ih->GetKeyTextFromCommand(kcTimeAtRow, _T("Show Row Play Time")));
 
@@ -5915,7 +5790,6 @@ bool CViewPattern::BuildMiscCtxMenu(HMENU hMenu, CInputHandler *ih) const
 }
 
 bool CViewPattern::BuildSelectionCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//----------------------------------------------------------------------------
 {
 	AppendMenu(hMenu, MF_STRING, ID_EDIT_SELECTCOLUMN, ih->GetKeyTextFromCommand(kcSelectChannel, _T("Select &Channel")));
 	AppendMenu(hMenu, MF_STRING, ID_EDIT_SELECT_ALL, ih->GetKeyTextFromCommand(kcEditSelectAll, _T("Select &Pattern")));
@@ -5923,7 +5797,6 @@ bool CViewPattern::BuildSelectionCtxMenu(HMENU hMenu, CInputHandler *ih) const
 }
 
 bool CViewPattern::BuildGrowShrinkCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//-----------------------------------------------------------------------------
 {
 	AppendMenu(hMenu, MF_STRING, ID_GROW_SELECTION, ih->GetKeyTextFromCommand(kcPatternGrowSelection, _T("&Grow selection")));
 	AppendMenu(hMenu, MF_STRING, ID_SHRINK_SELECTION, ih->GetKeyTextFromCommand(kcPatternShrinkSelection, _T("&Shrink selection")));
@@ -5932,7 +5805,6 @@ bool CViewPattern::BuildGrowShrinkCtxMenu(HMENU hMenu, CInputHandler *ih) const
 
 
 bool CViewPattern::BuildInterpolationCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//--------------------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	const bool isPCNote = sndFile->Patterns.IsValidPat(m_nPattern) && sndFile->Patterns[m_nPattern].GetpModCommand(m_Selection.GetStartRow(), m_Selection.GetStartChannel())->IsPcNote();
@@ -5952,7 +5824,6 @@ bool CViewPattern::BuildInterpolationCtxMenu(HMENU hMenu, CInputHandler *ih) con
 
 
 bool CViewPattern::BuildInterpolationCtxMenu(HMENU hMenu, PatternCursor::Columns colType, CString label, UINT command) const
-//--------------------------------------------------------------------------------------------------------------------------
 {
 	bool possible = IsInterpolationPossible(colType);
 	if(!possible && colType == PatternCursor::effectColumn)
@@ -5971,7 +5842,6 @@ bool CViewPattern::BuildInterpolationCtxMenu(HMENU hMenu, PatternCursor::Columns
 
 
 bool CViewPattern::BuildEditCtxMenu(HMENU hMenu, CInputHandler *ih, CModDoc* pModDoc) const
-//-----------------------------------------------------------------------------------------
 {
 	HMENU pasteSpecialMenu = ::CreatePopupMenu();
 	AppendMenu(hMenu, MF_STRING, ID_EDIT_CUT, ih->GetKeyTextFromCommand(kcEditCut, _T("Cu&t")));
@@ -6000,7 +5870,6 @@ bool CViewPattern::BuildEditCtxMenu(HMENU hMenu, CInputHandler *ih, CModDoc* pMo
 }
 
 bool CViewPattern::BuildVisFXCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//------------------------------------------------------------------------
 {
 	DWORD greyed = (IsColumnSelected(PatternCursor::effectColumn) || IsColumnSelected(PatternCursor::paramColumn)) ? FALSE : MF_GRAYED;
 
@@ -6013,7 +5882,6 @@ bool CViewPattern::BuildVisFXCtxMenu(HMENU hMenu, CInputHandler *ih) const
 }
 
 bool CViewPattern::BuildTransposeCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//----------------------------------------------------------------------------
 {
 	HMENU transMenu = CreatePopupMenu();
 
@@ -6034,7 +5902,6 @@ bool CViewPattern::BuildTransposeCtxMenu(HMENU hMenu, CInputHandler *ih) const
 }
 
 bool CViewPattern::BuildAmplifyCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//--------------------------------------------------------------------------
 {
 	std::vector<CHANNELINDEX> validChans;
 	DWORD greyed = IsColumnSelected(PatternCursor::volumeColumn) ? 0 : MF_GRAYED;
@@ -6049,7 +5916,6 @@ bool CViewPattern::BuildAmplifyCtxMenu(HMENU hMenu, CInputHandler *ih) const
 
 
 bool CViewPattern::BuildChannelControlCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//---------------------------------------------------------------------------------
 {
 	const CModSpecifications &specs = GetDocument()->GetrSoundFile().GetModSpecifications();
 	CHANNELINDEX numChannels = GetDocument()->GetNumChannels();
@@ -6077,7 +5943,6 @@ bool CViewPattern::BuildChannelControlCtxMenu(HMENU hMenu, CInputHandler *ih) co
 
 
 bool CViewPattern::BuildSetInstCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//--------------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	const CModDoc *modDoc;
@@ -6151,7 +6016,6 @@ bool CViewPattern::BuildSetInstCtxMenu(HMENU hMenu, CInputHandler *ih) const
 
 // Context menu for Param Control notes
 bool CViewPattern::BuildPCNoteCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//-------------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
@@ -6204,7 +6068,6 @@ bool CViewPattern::BuildPCNoteCtxMenu(HMENU hMenu, CInputHandler *ih) const
 
 
 bool CViewPattern::BuildTogglePlugEditorCtxMenu(HMENU hMenu, CInputHandler *ih) const
-//-----------------------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
@@ -6236,7 +6099,6 @@ bool CViewPattern::BuildTogglePlugEditorCtxMenu(HMENU hMenu, CInputHandler *ih) 
 
 // Returns an ordered list of all channels in which a given column type is selected.
 CHANNELINDEX CViewPattern::ListChansWhereColSelected(PatternCursor::Columns colType, std::vector<CHANNELINDEX> &chans) const
-//--------------------------------------------------------------------------------------------------------------------------
 {
 	CHANNELINDEX startChan = m_Selection.GetStartChannel();
 	CHANNELINDEX endChan   = m_Selection.GetEndChannel();
@@ -6259,7 +6121,6 @@ CHANNELINDEX CViewPattern::ListChansWhereColSelected(PatternCursor::Columns colT
 
 // Check if a column type is selected on any channel in the current selection.
 bool CViewPattern::IsColumnSelected(PatternCursor::Columns colType) const
-//-----------------------------------------------------------------------
 {
 	return m_Selection.ContainsHorizontal(PatternCursor(0, m_Selection.GetStartChannel(), colType))
 		|| m_Selection.ContainsHorizontal(PatternCursor(0, m_Selection.GetEndChannel(), colType));
@@ -6268,7 +6129,6 @@ bool CViewPattern::IsColumnSelected(PatternCursor::Columns colType) const
 
 // Check if the given interpolation type is actually possible in the current selection.
 bool CViewPattern::IsInterpolationPossible(PatternCursor::Columns colType) const
-//------------------------------------------------------------------------------
 {
 	std::vector<CHANNELINDEX> validChans;
 	ListChansWhereColSelected(colType, validChans);
@@ -6288,7 +6148,6 @@ bool CViewPattern::IsInterpolationPossible(PatternCursor::Columns colType) const
 
 // Check if the given interpolation type is actually possible in a given channel.
 bool CViewPattern::IsInterpolationPossible(ROWINDEX startRow, ROWINDEX endRow, CHANNELINDEX chan, PatternCursor::Columns colType) const
-//-------------------------------------------------------------------------------------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(startRow == endRow || sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
@@ -6344,7 +6203,6 @@ bool CViewPattern::IsInterpolationPossible(ROWINDEX startRow, ROWINDEX endRow, C
 
 
 void CViewPattern::OnRButtonDblClk(UINT nFlags, CPoint point)
-//-----------------------------------------------------------
 {
 	OnRButtonDown(nFlags, point);
 	CModScrollView::OnRButtonDblClk(nFlags, point);
@@ -6353,7 +6211,6 @@ void CViewPattern::OnRButtonDblClk(UINT nFlags, CPoint point)
 
 // Toggle pending mute status for channel from context menu.
 void CViewPattern::OnTogglePendingMuteFromClick()
-//-----------------------------------------------
 {
 	TogglePendingMute(m_MenuCursor.GetChannel());
 }
@@ -6361,7 +6218,6 @@ void CViewPattern::OnTogglePendingMuteFromClick()
 
 // Toggle pending solo status for channel from context menu.
 void CViewPattern::OnPendingSoloChnFromClick()
-//--------------------------------------------
 {
 	PendingSoloChn(m_MenuCursor.GetChannel());
 }
@@ -6369,7 +6225,6 @@ void CViewPattern::OnPendingSoloChnFromClick()
 
 // Set pending unmute status for all channels.
 void CViewPattern::OnPendingUnmuteAllChnFromClick()
-//----------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr)
@@ -6382,7 +6237,6 @@ void CViewPattern::OnPendingUnmuteAllChnFromClick()
 
 // Toggle pending solo status for a channel.
 void CViewPattern::PendingSoloChn(CHANNELINDEX nChn)
-//--------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr)
@@ -6395,7 +6249,6 @@ void CViewPattern::PendingSoloChn(CHANNELINDEX nChn)
 
 // Toggle pending mute status for a channel.
 void CViewPattern::TogglePendingMute(CHANNELINDEX nChn)
-//-----------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile != nullptr)
@@ -6408,7 +6261,6 @@ void CViewPattern::TogglePendingMute(CHANNELINDEX nChn)
 
 // Check if editing is enabled, and if it's not, prompt the user to enable editing.
 bool CViewPattern::IsEditingEnabled_bmsg()
-//----------------------------------------
 {
 	if(IsEditingEnabled()) return true;
 	if(TrackerSettings::Instance().patternNoEditPopup) return false;
@@ -6432,7 +6284,6 @@ bool CViewPattern::IsEditingEnabled_bmsg()
 
 // Show playback time at a given pattern position.
 void CViewPattern::OnShowTimeAtRow()
-//----------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr)
@@ -6466,7 +6317,6 @@ void CViewPattern::OnShowTimeAtRow()
 void CViewPattern::SetEditPos(const CSoundFile& rSndFile,
 							  ROWINDEX& iRow, PATTERNINDEX& iPat,
 							  const ROWINDEX iRowCandidate, const PATTERNINDEX iPatCandidate) const
-//-------------------------------------------------------------------------------------------
 {
 	if(rSndFile.Patterns.IsValidPat(iPatCandidate) && rSndFile.Patterns[iPatCandidate].IsValidRow(iRowCandidate))
 	{ // Case: Edit position candidates are valid -- use them.
@@ -6483,7 +6333,6 @@ void CViewPattern::SetEditPos(const CSoundFile& rSndFile,
 
 // Set up split keyboard
 void CViewPattern::SetSplitKeyboardSettings()
-//-------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -6499,7 +6348,6 @@ void CViewPattern::SetSplitKeyboardSettings()
 
 // Paste pattern data using the given paste mode.
 void CViewPattern::ExecutePaste(PatternClipboard::PasteModes mode)
-//----------------------------------------------------------------
 {
 	if(IsEditingEnabled_bmsg() && PastePattern(m_nPattern, m_Selection.GetUpperLeft(), mode))
 	{
@@ -6511,7 +6359,6 @@ void CViewPattern::ExecutePaste(PatternClipboard::PasteModes mode)
 
 // Show plugin editor for plugin assigned to PC Event at the cursor position.
 void CViewPattern::OnTogglePCNotePluginEditor()
-//---------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr)
@@ -6540,7 +6387,6 @@ void CViewPattern::OnTogglePCNotePluginEditor()
 
 // Get the active pattern's rows per beat, or, if they are not overriden, the song's default rows per beat.
 ROWINDEX CViewPattern::GetRowsPerBeat() const
-//-------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -6554,7 +6400,6 @@ ROWINDEX CViewPattern::GetRowsPerBeat() const
 
 // Get the active pattern's rows per measure, or, if they are not overriden, the song's default rows per measure.
 ROWINDEX CViewPattern::GetRowsPerMeasure() const
-//----------------------------------------------
 {
 	const CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -6568,7 +6413,6 @@ ROWINDEX CViewPattern::GetRowsPerMeasure() const
 
 // Set instrument
 void CViewPattern::SetSelectionInstrument(const INSTRUMENTINDEX instr, bool setEmptyInstrument)
-//---------------------------------------------------------------------------------------------
 {
 	CSoundFile *pSndFile = GetSoundFile();
 	if(pSndFile == nullptr || !pSndFile->Patterns.IsValidPat(m_nPattern))
@@ -6604,7 +6448,6 @@ void CViewPattern::SetSelectionInstrument(const INSTRUMENTINDEX instr, bool setE
 
 // Select a whole beat (selectBeat = true) or measure.
 void CViewPattern::SelectBeatOrMeasure(bool selectBeat)
-//-----------------------------------------------------
 {
 	const ROWINDEX adjust = selectBeat ? GetRowsPerBeat() : GetRowsPerMeasure();
 
@@ -6648,7 +6491,6 @@ void CViewPattern::SelectBeatOrMeasure(bool selectBeat)
 
 // Sweep pattern channel to find instrument number to use
 void CViewPattern::FindInstrument()
-//---------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr)
@@ -6691,7 +6533,6 @@ void CViewPattern::FindInstrument()
 
 // Find previous or next column entry (note, instrument, ...) on this channel
 void CViewPattern::JumpToPrevOrNextEntry(bool nextEntry)
-//------------------------------------------------------
 {
 	const CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || GetCurrentOrder() >= sndFile->Order().size())
@@ -6753,7 +6594,6 @@ void CViewPattern::JumpToPrevOrNextEntry(bool nextEntry)
 
 // Copy to clipboard
 bool CViewPattern::CopyPattern(PATTERNINDEX nPattern, const PatternRect &selection)
-//---------------------------------------------------------------------------------
 {
 	BeginWaitCursor();
 	bool result = PatternClipboard::Copy(*GetSoundFile(), nPattern, selection);
@@ -6765,7 +6605,6 @@ bool CViewPattern::CopyPattern(PATTERNINDEX nPattern, const PatternRect &selecti
 
 // Paste from clipboard
 bool CViewPattern::PastePattern(PATTERNINDEX nPattern, const PatternCursor &pastePos, PatternClipboard::PasteModes mode)
-//----------------------------------------------------------------------------------------------------------------------
 {
 	BeginWaitCursor();
 	ModCommandPos pos;
@@ -6805,7 +6644,6 @@ bool CViewPattern::PastePattern(PATTERNINDEX nPattern, const PatternCursor &past
 
 template<typename Func>
 void CViewPattern::ApplyToSelection(Func func)
-//--------------------------------------------
 {
 	CSoundFile *sndFile = GetSoundFile();
 	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
@@ -6827,7 +6665,6 @@ void CViewPattern::ApplyToSelection(Func func)
 
 // Accessible description for screen readers
 HRESULT CViewPattern::get_accName(VARIANT varChild, BSTR *pszName)
-//----------------------------------------------------------------
 {
 	const ModCommand &m = GetCursorCommand();
 	size_t columnIndex = m_Cursor.GetColumnType();

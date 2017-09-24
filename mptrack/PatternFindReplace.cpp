@@ -40,7 +40,6 @@ FindReplace::FindReplace()
 
 
 void CViewPattern::OnEditFind()
-//-----------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -70,7 +69,6 @@ void CViewPattern::OnEditFind()
 
 
 void CViewPattern::OnEditFindNext()
-//---------------------------------
 {
 	CSoundFile &sndFile = *GetSoundFile();
 	const CModSpecifications &specs = sndFile.GetModSpecifications();

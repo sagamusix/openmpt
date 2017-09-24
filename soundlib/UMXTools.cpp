@@ -17,8 +17,8 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 // Read compressed unreal integers - similar to MIDI integers, but signed values are possible.
-int32 ReadUMXIndex(FileReader &chunk)
-//-----------------------------------
+template <typename Tfile>
+static int32 ReadUMXIndexImpl(Tfile &chunk)
 {
 	enum
 	{
@@ -55,10 +55,15 @@ int32 ReadUMXIndex(FileReader &chunk)
 	return result;
 }
 
+int32 ReadUMXIndex(FileReader &chunk)
+{
+	return ReadUMXIndexImpl(chunk);
+}
+
 
 // Returns true if the given nme exists in the name table.
-bool FindUMXNameTableEntry(FileReader &file, const UMXFileHeader &fileHeader, const char *name)
-//---------------------------------------------------------------------------------------------
+template <typename TFile>
+static bool FindUMXNameTableEntryImpl(TFile &file, const UMXFileHeader &fileHeader, const char *name)
 {
 	if(!name)
 	{
@@ -77,7 +82,7 @@ bool FindUMXNameTableEntry(FileReader &file, const UMXFileHeader &fileHeader, co
 		{
 			if(fileHeader.packageVersion >= 64)
 			{
-				int32 length = ReadUMXIndex(file);
+				int32 length = ReadUMXIndexImpl(file);
 				if(length <= 0)
 				{
 					continue;
@@ -110,10 +115,19 @@ bool FindUMXNameTableEntry(FileReader &file, const UMXFileHeader &fileHeader, co
 	return result;
 }
 
+bool FindUMXNameTableEntry(FileReader &file, const UMXFileHeader &fileHeader, const char *name)
+{
+	return FindUMXNameTableEntryImpl(file, fileHeader, name);
+}
+
+bool FindUMXNameTableEntryMemory(MemoryFileReader &file, const UMXFileHeader &fileHeader, const char *name)
+{
+	return FindUMXNameTableEntryImpl(file, fileHeader, name);
+}
+
 
 // Read an entry from the name table.
 std::string ReadUMXNameTableEntry(FileReader &chunk, uint16 packageVersion)
-//-------------------------------------------------------------------------
 {
 	std::string name;
 	if(packageVersion >= 64)
@@ -146,7 +160,6 @@ std::string ReadUMXNameTableEntry(FileReader &chunk, uint16 packageVersion)
 
 // Read complete name table.
 std::vector<std::string> ReadUMXNameTable(FileReader &file, const UMXFileHeader &fileHeader)
-//------------------------------------------------------------------------------------------
 {
 	std::vector<std::string> names;
 	if(!file.Seek(fileHeader.nameOffset))
@@ -164,7 +177,6 @@ std::vector<std::string> ReadUMXNameTable(FileReader &file, const UMXFileHeader 
 
 // Read an entry from the import table.
 int32 ReadUMXImportTableEntry(FileReader &chunk, uint16 packageVersion)
-//---------------------------------------------------------------------
 {
 	ReadUMXIndex(chunk);		// Class package
 	ReadUMXIndex(chunk);		// Class name
@@ -181,7 +193,6 @@ int32 ReadUMXImportTableEntry(FileReader &chunk, uint16 packageVersion)
 
 // Read an entry from the export table.
 void ReadUMXExportTableEntry(FileReader &chunk, int32 &objClass, int32 &objOffset, int32 &objSize, int32 &objName, uint16 packageVersion)
-//---------------------------------------------------------------------------------------------------------------------------------------
 {
 	objClass = ReadUMXIndex(chunk);	// Object class
 	ReadUMXIndex(chunk);			// Object parent

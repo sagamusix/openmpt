@@ -139,7 +139,6 @@ void CEffectVis::SetParamFromY(ROWINDEX row, int y)
 
 
 EffectCommand CEffectVis::GetCommand(ROWINDEX row) const
-//------------------------------------------------------
 {
 	if(m_pSndFile->Patterns.IsValidPat(m_nPattern))
 		return static_cast<EffectCommand>(m_pSndFile->Patterns[m_nPattern].GetpModCommand(row, m_nChan)->command);
@@ -148,7 +147,6 @@ EffectCommand CEffectVis::GetCommand(ROWINDEX row) const
 }
 
 void CEffectVis::SetCommand(ROWINDEX row, EffectCommand command)
-//--------------------------------------------------------------
 {
 	if(m_pSndFile->Patterns.IsValidPat(m_nPattern))
 	{
@@ -166,7 +164,6 @@ void CEffectVis::SetCommand(ROWINDEX row, EffectCommand command)
 }
 
 int CEffectVis::RowToScreenX(ROWINDEX row) const
-//----------------------------------------------
 {
 	if ((row >= m_startRow) || (row <= m_endRow))
 		return Util::Round<int>(m_rcDraw.left + m_innerBorder + (row - m_startRow) * m_pixelsPerRow);
@@ -175,7 +172,6 @@ int CEffectVis::RowToScreenX(ROWINDEX row) const
 
 
 int CEffectVis::RowToScreenY(ROWINDEX row) const
-//----------------------------------------------
 {
 	int screenY = -1;
 
@@ -197,7 +193,6 @@ int CEffectVis::RowToScreenY(ROWINDEX row) const
 }
 
 int CEffectVis::FXParamToScreenY(uint16 param) const
-//--------------------------------------------------
 {
 	if ((param >= 0x00) || (param <= 0xFF))
 		return Util::Round<int>(m_rcDraw.bottom - param * m_pixelsPerFXParam);
@@ -205,7 +200,6 @@ int CEffectVis::FXParamToScreenY(uint16 param) const
 }
 
 int CEffectVis::PCParamToScreenY(uint16 param) const
-//--------------------------------------------------
 {
 	if ((param >= 0x00) || (param <= ModCommand::maxColumnValue))
 		return Util::Round<int>(m_rcDraw.bottom - param*m_pixelsPerPCParam);
@@ -213,7 +207,6 @@ int CEffectVis::PCParamToScreenY(uint16 param) const
 }
 
 ModCommand::PARAM CEffectVis::ScreenYToFXParam(int y) const
-//---------------------------------------------------------
 {
 	if (y<=FXParamToScreenY(0xFF))
 		return 0xFF;
@@ -225,7 +218,6 @@ ModCommand::PARAM CEffectVis::ScreenYToFXParam(int y) const
 }
 
 uint16 CEffectVis::ScreenYToPCParam(int y) const
-//----------------------------------------------
 {
 	if (y<=PCParamToScreenY(ModCommand::maxColumnValue))
 		return ModCommand::maxColumnValue;
@@ -237,7 +229,6 @@ uint16 CEffectVis::ScreenYToPCParam(int y) const
 }
 
 ROWINDEX CEffectVis::ScreenXToRow(int x) const
-//--------------------------------------------
 {
 	if (x <= RowToScreenX(m_startRow))
 		return m_startRow;
@@ -249,7 +240,6 @@ ROWINDEX CEffectVis::ScreenXToRow(int x) const
 }
 
 CEffectVis::~CEffectVis()
-//-----------------------
 {
 	if (m_pViewPattern)
 	{
@@ -259,7 +249,6 @@ CEffectVis::~CEffectVis()
 }
 
 void CEffectVis::DrawGrid()
-//-------------------------
 {
 	// Lots of room for optimisation here.
 	// Draw vertical grid lines
@@ -308,7 +297,6 @@ void CEffectVis::DrawGrid()
 
 
 void CEffectVis::SetPlayCursor(PATTERNINDEX nPat, ROWINDEX nRow)
-//--------------------------------------------------------------
 {
 	if(nPat == m_nPattern && nRow == m_nOldPlayPos)
 		return;
@@ -337,7 +325,6 @@ void CEffectVis::SetPlayCursor(PATTERNINDEX nPat, ROWINDEX nRow)
 
 
 void CEffectVis::ShowVis(CDC * pDC, CRect rectBorder)
-//---------------------------------------------------
 {
 	MPT_UNREFERENCED_PARAMETER(rectBorder);
 	if (m_forceRedraw)
@@ -388,7 +375,6 @@ void CEffectVis::ShowVis(CDC * pDC, CRect rectBorder)
 
 
 void CEffectVis::ShowVisImage(CDC *pDC)
-//-------------------------------------
 {
 	CDC memDC;
 	CBitmap memBitmap;
@@ -430,7 +416,6 @@ void CEffectVis::ShowVisImage(CDC *pDC)
 
 
 void CEffectVis::DrawNodes()
-//--------------------------
 {
 	if(m_rcDraw.IsRectEmpty())
 		return;
@@ -481,7 +466,6 @@ void CEffectVis::InvalidateRow(int row)
 
 
 BOOL CEffectVis::OpenEditor(CWnd *parent)
-//---------------------------------------
 {
 	Create(IDD_EFFECTVISUALIZER, parent);
 	m_forceRedraw = true;
@@ -500,28 +484,24 @@ BOOL CEffectVis::OpenEditor(CWnd *parent)
 
 
 void CEffectVis::OnClose()
-//------------------------
 {
 	DoClose();
 }
 
 
 void CEffectVis::OnOK()
-//---------------------
 {
 	OnClose();
 }
 
 
 void CEffectVis::OnCancel()
-//-------------------------
 {
 	OnClose();
 }
 
 
 void CEffectVis::DoClose()
-//------------------------
 {
 	CRect rect;
 	GetWindowRect(rect);
@@ -759,7 +739,6 @@ void CEffectVis::OnLButtonUp(UINT nFlags, CPoint point)
 
 
 BOOL CEffectVis::OnInitDialog()
-//-----------------------------
 {
 	CDialog::OnInitDialog();
 
@@ -821,7 +800,6 @@ BOOL CEffectVis::OnInitDialog()
 }
 
 void CEffectVis::MakeChange(ROWINDEX row, int y)
-//-----------------------------------------------
 {
 	if(!m_pSndFile->Patterns.IsValidPat(m_nPattern))
 		return;
@@ -879,7 +857,6 @@ void CEffectVis::MakeChange(ROWINDEX row, int y)
 }
 
 void CEffectVis::SetPcNote(ROWINDEX row)
-//--------------------------------------
 {
 	if(!m_pSndFile->Patterns.IsValidPat(m_nPattern))
 		return;
@@ -889,7 +866,6 @@ void CEffectVis::SetPcNote(ROWINDEX row)
 }
 
 bool CEffectVis::IsPcNote(ROWINDEX row) const
-//-------------------------------------------
 {
 	if(m_pSndFile->Patterns.IsValidPat(m_nPattern))
 		return m_pSndFile->Patterns[m_nPattern].GetpModCommand(row, m_nChan)->IsPcNote();

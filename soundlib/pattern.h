@@ -25,9 +25,7 @@ class EffectWriter;
 typedef ModCommand* PatternRow;
 
 
-//============
 class CPattern
-//============
 {
 	friend class CPatternContainer;
 	
@@ -174,9 +172,7 @@ void WriteModPattern(std::ostream& oStrm, const CPattern& patc);
 
 // Class for conveniently writing an effect to the pattern.
 
-//================
 class EffectWriter
-//================
 {
 	friend class CPattern;
 	

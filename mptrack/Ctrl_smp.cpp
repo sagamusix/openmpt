@@ -127,7 +127,6 @@ END_MESSAGE_MAP()
 
 
 void CCtrlSamples::DoDataExchange(CDataExchange* pDX)
-//---------------------------------------------------
 {
 	CModControlDlg::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CCtrlSamples)
@@ -176,7 +175,6 @@ void CCtrlSamples::DoDataExchange(CDataExchange* pDX)
 
 
 CCtrlSamples::CCtrlSamples(CModControlView &parent, CModDoc &document)
-//--------------------------------------------------------------------
 	: CModControlDlg(parent, document)
 	, m_nSequenceMs(0)
 	, m_nSeekWindowMs(0)
@@ -193,28 +191,24 @@ CCtrlSamples::CCtrlSamples(CModControlView &parent, CModDoc &document)
 
 
 CCtrlSamples::~CCtrlSamples()
-//---------------------------
 {
 }
 
 
 
 CRuntimeClass *CCtrlSamples::GetAssociatedViewClass()
-//---------------------------------------------------
 {
 	return RUNTIME_CLASS(CViewSample);
 }
 
 
 void CCtrlSamples::OnEditFocus()
-//------------------------------
 {
 	m_startedEdit = false;
 }
 
 
 BOOL CCtrlSamples::OnInitDialog()
-//-------------------------------
 {
 	CModControlDlg::OnInitDialog();
 	m_bInitialized = FALSE;
@@ -339,13 +333,11 @@ BOOL CCtrlSamples::OnInitDialog()
 
 
 void CCtrlSamples::RecalcLayout()
-//-------------------------------
 {
 }
 
 
 bool CCtrlSamples::SetCurrentSample(SAMPLEINDEX nSmp, LONG lZoom, bool bUpdNum)
-//-----------------------------------------------------------------------------
 {
 	if (m_sndFile.GetNumSamples() < 1) m_sndFile.m_nSamples = 1;
 	if ((nSmp < 1) || (nSmp > m_sndFile.GetNumSamples())) return FALSE;
@@ -382,7 +374,6 @@ bool CCtrlSamples::SetCurrentSample(SAMPLEINDEX nSmp, LONG lZoom, bool bUpdNum)
 
 
 void CCtrlSamples::OnActivatePage(LPARAM lParam)
-//----------------------------------------------
 {
 	if (lParam < 0)
 	{
@@ -439,7 +430,6 @@ void CCtrlSamples::OnActivatePage(LPARAM lParam)
 
 
 void CCtrlSamples::OnDeactivatePage()
-//-----------------------------------
 {
 	CChildFrame *pFrame = (CChildFrame *)GetParentFrame();
 	if ((pFrame) && (m_hWndView)) SendViewMessage(VIEWMSG_SAVESTATE, (LPARAM)&pFrame->GetSampleViewState());
@@ -448,7 +438,6 @@ void CCtrlSamples::OnDeactivatePage()
 
 
 LRESULT CCtrlSamples::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
-//---------------------------------------------------------------
 {
 	switch(wParam)
 	{
@@ -556,7 +545,6 @@ LRESULT CCtrlSamples::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
 
 
 BOOL CCtrlSamples::GetToolTipText(UINT uId, LPTSTR pszText)
-//---------------------------------------------------------
 {
 	if ((pszText) && (uId))
 	{
@@ -644,7 +632,6 @@ BOOL CCtrlSamples::GetToolTipText(UINT uId, LPTSTR pszText)
 
 
 void CCtrlSamples::UpdateView(UpdateHint hint, CObject *pObj)
-//-----------------------------------------------------------
 {
 	if(pObj == this) return;
 	if (hint.GetType()[HINT_MPTOPTIONS])
@@ -878,7 +865,6 @@ void CCtrlSamples::UpdateView(UpdateHint hint, CObject *pObj)
 
 // updateAll: Update all views including this one. Otherwise, only update update other views.
 void CCtrlSamples::SetModified(SampleHint hint, bool updateAll, bool waveformModified)
-//------------------------------------------------------------------------------------
 {
 	m_modDoc.SetModified();
 
@@ -894,7 +880,6 @@ void CCtrlSamples::SetModified(SampleHint hint, bool updateAll, bool waveformMod
 
 
 void CCtrlSamples::PrepareUndo(const char *description, sampleUndoTypes type, SmpLength start, SmpLength end)
-//-----------------------------------------------------------------------------------------------------------
 {
 	m_startedEdit = true;
 	m_modDoc.GetSampleUndo().PrepareUndo(m_nSample, type, description, start, end);
@@ -902,7 +887,6 @@ void CCtrlSamples::PrepareUndo(const char *description, sampleUndoTypes type, Sm
 
 
 bool CCtrlSamples::OpenSample(const mpt::PathString &fileName, FlagSet<OpenSampleTypes> types)
-//--------------------------------------------------------------------------------------------
 {
 	BeginWaitCursor();
 	InputFile f(fileName);
@@ -1030,7 +1014,6 @@ bool CCtrlSamples::OpenSample(const mpt::PathString &fileName, FlagSet<OpenSampl
 
 
 bool CCtrlSamples::OpenSample(const CSoundFile &sndFile, SAMPLEINDEX nSample)
-//---------------------------------------------------------------------------
 {
 	if(!nSample || nSample > sndFile.GetNumSamples()) return false;
 
@@ -1056,7 +1039,6 @@ bool CCtrlSamples::OpenSample(const CSoundFile &sndFile, SAMPLEINDEX nSample)
 // CCtrlSamples messages
 
 void CCtrlSamples::OnSampleChanged()
-//----------------------------------
 {
 	if(!IsLocked())
 	{
@@ -1085,7 +1067,6 @@ void CCtrlSamples::OnSampleChanged()
 
 
 void CCtrlSamples::OnZoomChanged()
-//--------------------------------
 {
 	if (!IsLocked()) SetCurrentSample(m_nSample);
 	SwitchToView();
@@ -1093,7 +1074,6 @@ void CCtrlSamples::OnZoomChanged()
 
 
 void CCtrlSamples::OnTbnDropDownToolBar(NMHDR* pNMHDR, LRESULT* pResult)
-//----------------------------------------------------------------------
 {
 	LPNMTOOLBAR pToolBar = reinterpret_cast<LPNMTOOLBAR>(pNMHDR);
 	ClientToScreen(&(pToolBar->rcButton)); // TrackPopupMenu uses screen coords
@@ -1125,7 +1105,6 @@ void CCtrlSamples::OnTbnDropDownToolBar(NMHDR* pNMHDR, LRESULT* pResult)
 
 
 void CCtrlSamples::OnSampleNew()
-//------------------------------
 {
 	InsertSample(CMainFrame::GetInputHandler()->ShiftPressed());
 	SwitchToView();
@@ -1133,7 +1112,6 @@ void CCtrlSamples::OnSampleNew()
 
 
 bool CCtrlSamples::InsertSample(bool duplicate, int8 *confirm)
-//------------------------------------------------------------
 {
 	SAMPLEINDEX smp = m_modDoc.InsertSample();
 	if(smp != SAMPLEINDEX_INVALID)
@@ -1205,7 +1183,6 @@ static constexpr struct
 
 
 static mpt::ustring ConstructFileFilter(bool includeRaw)
-//------------------------------------------------------
 {
 	mpt::ustring s = MPT_USTRING("All Samples|");
 	bool first = true;
@@ -1244,7 +1221,6 @@ static mpt::ustring ConstructFileFilter(bool includeRaw)
 
 
 void CCtrlSamples::OnSampleOpen()
-//-------------------------------
 {
 	static int nLastIndex = 0;
 	std::vector<FileType> mediaFoundationTypes = CSoundFile::GetMediaFoundationFileTypes();
@@ -1264,7 +1240,6 @@ void CCtrlSamples::OnSampleOpen()
 
 
 void CCtrlSamples::OnSampleOpenKnown()
-//------------------------------------
 {
 	static int nLastIndex = 0;
 	std::vector<FileType> mediaFoundationTypes = CSoundFile::GetMediaFoundationFileTypes();
@@ -1283,7 +1258,6 @@ void CCtrlSamples::OnSampleOpenKnown()
 
 
 void CCtrlSamples::OnSampleOpenRaw()
-//----------------------------------
 {
 	static int nLastIndex = 0;
 	FileDialog dlg = OpenFileDialog()
@@ -1302,7 +1276,6 @@ void CCtrlSamples::OnSampleOpenRaw()
 
 
 void CCtrlSamples::OpenSamples(const std::vector<mpt::PathString> &files, FlagSet<OpenSampleTypes> types)
-//-------------------------------------------------------------------------------------------------------
 {
 	int8 confirm = -1;
 	bool first = true;
@@ -1325,7 +1298,6 @@ void CCtrlSamples::OpenSamples(const std::vector<mpt::PathString> &files, FlagSe
 
 
 void CCtrlSamples::OnSampleSave()
-//-------------------------------
 {
 	mpt::PathString fileName, defaultPath = TrackerSettings::Instance().PathSamples.GetWorkingDir();
 	bool doBatchSave = CMainFrame::GetInputHandler()->ShiftPressed();
@@ -1468,7 +1440,6 @@ void CCtrlSamples::OnSampleSave()
 
 
 void CCtrlSamples::OnSamplePlay()
-//-------------------------------
 {
 	if (m_modDoc.IsNotePlaying(NOTE_NONE, m_nSample, 0))
 	{
@@ -1482,7 +1453,6 @@ void CCtrlSamples::OnSamplePlay()
 
 
 void CCtrlSamples::OnNormalize()
-//------------------------------
 {
 	//Default case: Normalize current sample
 	SAMPLEINDEX minSample = m_nSample, maxSample = m_nSample;
@@ -1595,7 +1565,6 @@ void CCtrlSamples::OnNormalize()
 
 
 void CCtrlSamples::OnRemoveDCOffset()
-//-----------------------------------
 {
 	SAMPLEINDEX minSample = m_nSample, maxSample = m_nSample;
 
@@ -1674,7 +1643,6 @@ void CCtrlSamples::OnRemoveDCOffset()
 
 template<typename T>
 static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, SmpLength start, SmpLength end, int32 amp, int32 fadeIn, int32 fadeOut, Fade::Law fadeLaw)
-//-----------------------------------------------------------------------------------------------------------------------------------------------
 {
 	pSample += start;
 	SmpLength len = end - start, len2 = len / 2;
@@ -1711,7 +1679,6 @@ static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, SmpLength start, SmpLengt
 
 
 void CCtrlSamples::ApplyAmplify(int32 lAmp, int32 fadeIn, int32 fadeOut, Fade::Law fadeLaw)
-//-----------------------------------------------------------------------------------------
 {
 	if((!m_sndFile.GetSample(m_nSample).pSample)) return;
 
@@ -1740,7 +1707,6 @@ void CCtrlSamples::ApplyAmplify(int32 lAmp, int32 fadeIn, int32 fadeOut, Fade::L
 
 
 void CCtrlSamples::OnAmplify()
-//----------------------------
 {
 	static CAmpDlg::AmpSettings settings { Fade::kLinear, 0, 0, 100, false, false };
 
@@ -1754,7 +1720,6 @@ void CCtrlSamples::OnAmplify()
 // Fade-In is applied if the selection starts at the beginning of the sample.
 // Fade-Out is applied if the selection ends and the end of the sample.
 void CCtrlSamples::OnQuickFade()
-//------------------------------
 {
 	if((m_sndFile.GetSample(m_nSample).pSample == nullptr)) return;
 
@@ -1771,7 +1736,6 @@ void CCtrlSamples::OnQuickFade()
 
 
 void CCtrlSamples::OnResample()
-//-----------------------------
 {
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	if(sample.pSample == nullptr) return;
@@ -1788,7 +1752,6 @@ void CCtrlSamples::OnResample()
 
 
 void CCtrlSamples::ApplyResample(uint32_t newRate, ResamplingMode mode)
-//---------------------------------------------------------------------
 {
 	BeginWaitCursor();
 
@@ -2002,7 +1965,6 @@ void CCtrlSamples::ApplyResample(uint32_t newRate, ResamplingMode mode)
 #define MAX_BUFFER_LENGTH	8192
 
 void CCtrlSamples::ReadTimeStretchParameters()
-//--------------------------------------------
 {
 	CString str;
 	GetDlgItemText(IDC_EDIT_STRETCHPARAMS, str);
@@ -2012,7 +1974,6 @@ void CCtrlSamples::ReadTimeStretchParameters()
 
 
 void CCtrlSamples::UpdateTimeStretchParameterString()
-//---------------------------------------------------
 {
 	CString str;
 	str.Format(_T("%u %u %u"),
@@ -2023,7 +1984,6 @@ void CCtrlSamples::UpdateTimeStretchParameterString()
 }
 
 void CCtrlSamples::OnEnableStretchToSize()
-//----------------------------------------
 {
 	// Enable time-stretching / disable unused pitch-shifting UI elements
 	bool timeStretch = IsDlgButtonChecked(IDC_CHECK3) != BST_UNCHECKED;
@@ -2044,7 +2004,6 @@ void CCtrlSamples::OnEnableStretchToSize()
 }
 
 void CCtrlSamples::OnEstimateSampleSize()
-//---------------------------------------
 {
 	if((m_sndFile.GetSample(m_nSample).pSample == nullptr)) return;
 
@@ -2065,9 +2024,7 @@ void CCtrlSamples::OnEstimateSampleSize()
 
 #ifdef MPT_BUILD_MSVC_SHARED
 
-//=======================
 class ComponentSoundTouch
-//=======================
 	: public ComponentBuiltin
 {
 	MPT_DECLARE_COMPONENT_MEMBERS
@@ -2082,9 +2039,7 @@ MPT_REGISTERED_COMPONENT(ComponentSoundTouch, "SoundTouch")
 
 #else
 
-//=======================
 class ComponentSoundTouch
-//=======================
 	: public ComponentBundledDLL
 {
 	MPT_DECLARE_COMPONENT_MEMBERS
@@ -2112,9 +2067,7 @@ enum TimeStretchPitchShiftResult
 	kSampleTooShort,
 };
 
-//=====================================================
 class CDoPitchShiftTimeStretch : public CProgressDialog
-//=====================================================
 {
 public:
 	CCtrlSamples &m_parent;
@@ -2139,7 +2092,6 @@ public:
 	}
 
 	void Run()
-	//--------
 	{
 		SetTitle(m_pitchShift ? _T("Pitch Shift") : _T("Time Stretch"));
 		SetRange(0, 100);
@@ -2151,7 +2103,6 @@ public:
 	}
 
 	TimeStretchPitchShiftResult TimeStretch()
-	//---------------------------------------
 	{
 		ModSample &sample = m_modDoc.GetrSoundFile().GetSample(m_sample);
 		const uint32 nSampleRate = sample.GetSampleRate(m_modDoc.GetModType());
@@ -2372,7 +2323,6 @@ public:
 	}
 
 	TimeStretchPitchShiftResult PitchShift()
-	//--------------------------------------
 	{
 		ModSample &sample = m_modDoc.GetrSoundFile().GetSample(m_sample);
 
@@ -2526,7 +2476,6 @@ public:
 
 
 void CCtrlSamples::OnPitchShiftTimeStretch()
-//------------------------------------------
 {
 	TimeStretchPitchShiftResult errorcode = kAbort;
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
@@ -2596,7 +2545,6 @@ error:
 
 
 void CCtrlSamples::OnReverse()
-//----------------------------
 {
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -2617,7 +2565,6 @@ void CCtrlSamples::OnReverse()
 
 
 void CCtrlSamples::OnInvert()
-//---------------------------
 {
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -2638,7 +2585,6 @@ void CCtrlSamples::OnInvert()
 
 
 void CCtrlSamples::OnSignUnSign()
-//-------------------------------
 {
 	if((m_sndFile.GetSample(m_nSample).pSample == nullptr)) return;
 
@@ -2664,7 +2610,6 @@ void CCtrlSamples::OnSignUnSign()
 
 
 void CCtrlSamples::OnSilence()
-//----------------------------
 {
 	if((m_sndFile.GetSample(m_nSample).pSample == nullptr)) return;
 	BeginWaitCursor();
@@ -2688,7 +2633,6 @@ void CCtrlSamples::OnSilence()
 
 
 void CCtrlSamples::OnPrevInstrument()
-//-----------------------------------
 {
 	if (m_nSample > 1)
 		SetCurrentSample(m_nSample - 1);
@@ -2698,7 +2642,6 @@ void CCtrlSamples::OnPrevInstrument()
 
 
 void CCtrlSamples::OnNextInstrument()
-//-----------------------------------
 {
 	if (m_nSample < m_sndFile.GetNumSamples())
 		SetCurrentSample(m_nSample + 1);
@@ -2708,7 +2651,6 @@ void CCtrlSamples::OnNextInstrument()
 
 
 void CCtrlSamples::OnNameChanged()
-//--------------------------------
 {
 	if(IsLocked() || !m_nSample) return;
 	CString tmp;
@@ -2725,7 +2667,6 @@ void CCtrlSamples::OnNameChanged()
 
 
 void CCtrlSamples::OnFileNameChanged()
-//------------------------------------
 {
 	if(IsLocked()) return;
 	CString tmp;
@@ -2742,7 +2683,6 @@ void CCtrlSamples::OnFileNameChanged()
 
 
 void CCtrlSamples::OnVolumeChanged()
-//----------------------------------
 {
 	if (IsLocked()) return;
 	int nVol = GetDlgItemInt(IDC_EDIT7);
@@ -2761,7 +2701,6 @@ void CCtrlSamples::OnVolumeChanged()
 
 
 void CCtrlSamples::OnGlobalVolChanged()
-//-------------------------------------
 {
 	if (IsLocked()) return;
 	int nVol = GetDlgItemInt(IDC_EDIT8);
@@ -2786,7 +2725,6 @@ void CCtrlSamples::OnGlobalVolChanged()
 
 
 void CCtrlSamples::OnSetPanningChanged()
-//--------------------------------------
 {
 	if (IsLocked()) return;
 	bool b = false;
@@ -2808,7 +2746,6 @@ void CCtrlSamples::OnSetPanningChanged()
 
 
 void CCtrlSamples::OnPanningChanged()
-//-----------------------------------
 {
 	if (IsLocked()) return;
 	int nPan = GetDlgItemInt(IDC_EDIT9);
@@ -2834,7 +2771,6 @@ void CCtrlSamples::OnPanningChanged()
 
 
 void CCtrlSamples::OnFineTuneChanged()
-//------------------------------------
 {
 	if (IsLocked()) return;
 	int n = GetDlgItemInt(IDC_EDIT5);
@@ -2872,7 +2808,6 @@ void CCtrlSamples::OnFineTuneChanged()
 
 
 void CCtrlSamples::OnFineTuneChangedDone()
-//----------------------------------------
 {
 	// Update all playing channels
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
@@ -2897,7 +2832,6 @@ void CCtrlSamples::OnFineTuneChangedDone()
 
 
 void CCtrlSamples::OnBaseNoteChanged()
-//------------------------------------
 {
 	if (IsLocked()) return;
 	int n = static_cast<int>(m_CbnBaseNote.GetItemData(m_CbnBaseNote.GetCurSel()));
@@ -2932,7 +2866,6 @@ void CCtrlSamples::OnBaseNoteChanged()
 
 
 void CCtrlSamples::OnVibTypeChanged()
-//-----------------------------------
 {
 	if (IsLocked()) return;
 	int n = m_ComboAutoVib.GetCurSel();
@@ -2948,7 +2881,6 @@ void CCtrlSamples::OnVibTypeChanged()
 
 
 void CCtrlSamples::OnVibDepthChanged()
-//------------------------------------
 {
 	if (IsLocked()) return;
 	int lmin = 0, lmax = 0;
@@ -2966,7 +2898,6 @@ void CCtrlSamples::OnVibDepthChanged()
 
 
 void CCtrlSamples::OnVibSweepChanged()
-//------------------------------------
 {
 	if (IsLocked()) return;
 	int lmin = 0, lmax = 0;
@@ -2984,7 +2915,6 @@ void CCtrlSamples::OnVibSweepChanged()
 
 
 void CCtrlSamples::OnVibRateChanged()
-//-----------------------------------
 {
 	if (IsLocked()) return;
 	int lmin = 0, lmax = 0;
@@ -3002,7 +2932,6 @@ void CCtrlSamples::OnVibRateChanged()
 
 
 void CCtrlSamples::OnLoopTypeChanged()
-//------------------------------------
 {
 	if(IsLocked()) return;
 	const int n = m_ComboLoopType.GetCurSel();
@@ -3037,7 +2966,6 @@ void CCtrlSamples::OnLoopTypeChanged()
 
 
 void CCtrlSamples::OnLoopPointsChanged()
-//--------------------------------------
 {
 	if(IsLocked()) return;
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
@@ -3053,7 +2981,6 @@ void CCtrlSamples::OnLoopPointsChanged()
 
 
 void CCtrlSamples::OnSustainTypeChanged()
-//---------------------------------------
 {
 	if(IsLocked()) return;
 	const int n = m_ComboSustainType.GetCurSel();
@@ -3088,7 +3015,6 @@ void CCtrlSamples::OnSustainTypeChanged()
 
 
 void CCtrlSamples::OnSustainPointsChanged()
-//-----------------------------------------
 {
 	if(IsLocked()) return;
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
@@ -3108,7 +3034,6 @@ void CCtrlSamples::OnSustainPointsChanged()
 
 
 bool MPT_LoopCheck(int sstart0, int sstart1, int send0, int send1)
-//----------------------------------------------------------------
 {
 	int dse0 = send0 - sstart0;
 	if ((dse0 < -SMPLOOP_ACCURACY) || (dse0 > SMPLOOP_ACCURACY)) return false;
@@ -3125,7 +3050,6 @@ bool MPT_LoopCheck(int sstart0, int sstart1, int send0, int send1)
 
 
 bool MPT_BidiEndCheck(int spos0, int spos1, int spos2)
-//----------------------------------------------------
 {
 	int delta0 = spos1 - spos0;
 	int delta1 = spos2 - spos1;
@@ -3138,7 +3062,6 @@ bool MPT_BidiEndCheck(int spos0, int spos1, int spos2)
 
 
 bool MPT_BidiStartCheck(int spos0, int spos1, int spos2)
-//------------------------------------------------------
 {
 	int delta1 = spos1 - spos0;
 	int delta0 = spos2 - spos1;
@@ -3152,7 +3075,6 @@ bool MPT_BidiStartCheck(int spos0, int spos1, int spos2)
 
 
 void CCtrlSamples::OnVScroll(UINT nCode, UINT, CScrollBar *scrollBar)
-//-------------------------------------------------------------------
 {
 	TCHAR s[256];
 	if(IsLocked()) return;
@@ -3373,7 +3295,6 @@ NoSample:
 
 //rewbs.customKeys
 BOOL CCtrlSamples::PreTranslateMessage(MSG *pMsg)
-//-----------------------------------------------
 {
 	if (pMsg)
 	{
@@ -3400,7 +3321,6 @@ BOOL CCtrlSamples::PreTranslateMessage(MSG *pMsg)
 }
 
 LRESULT CCtrlSamples::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
-//--------------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -3456,7 +3376,6 @@ LRESULT CCtrlSamples::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 // The whole sample size will be returned if no part of the sample is selected.
 // However, point.bSelected indicates whether a sample selection exists or not.
 CCtrlSamples::SampleSelectionPoints CCtrlSamples::GetSelectionPoints()
-//--------------------------------------------------------------------
 {
 	SampleSelectionPoints points;
 	SAMPLEVIEWSTATE viewstate;
@@ -3481,7 +3400,6 @@ CCtrlSamples::SampleSelectionPoints CCtrlSamples::GetSelectionPoints()
 // Set the currently selected part of the sample.
 // To reset the selection, use nStart = nEnd = 0.
 void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd)
-//---------------------------------------------------------------------
 {
 	const ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -3500,7 +3418,6 @@ void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd)
 
 // Crossfade loop to create smooth loop transitions
 void CCtrlSamples::OnXFade()
-//--------------------------
 {
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -3552,7 +3469,6 @@ void CCtrlSamples::OnXFade()
 
 
 void CCtrlSamples::OnStereoSeparation()
-//-------------------------------------
 {
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -3589,7 +3505,6 @@ void CCtrlSamples::OnStereoSeparation()
 
 
 void CCtrlSamples::OnAutotune()
-//-----------------------------
 {
 	SampleSelectionPoints selection = GetSelectionPoints();
 	if(!selection.selectionActive)
@@ -3616,7 +3531,6 @@ void CCtrlSamples::OnAutotune()
 
 
 void CCtrlSamples::OnKeepSampleOnDisk()
-//-------------------------------------
 {
 	SAMPLEINDEX first = m_nSample, last = m_nSample;
 	if(CMainFrame::GetInputHandler()->ShiftPressed())
@@ -3637,7 +3551,6 @@ void CCtrlSamples::OnKeepSampleOnDisk()
 
 // When changing auto vibrato properties, propagate them to other samples of the same instrument in XM edit mode.
 void CCtrlSamples::PropagateAutoVibratoChanges()
-//----------------------------------------------
 {
 	if(!(m_sndFile.GetType() & MOD_TYPE_XM))
 	{
@@ -3663,7 +3576,6 @@ void CCtrlSamples::PropagateAutoVibratoChanges()
 
 
 void CCtrlSamples::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
-//---------------------------------------------------------------------
 {
 	if(nButton == XBUTTON1) OnPrevInstrument();
 	else if(nButton == XBUTTON2) OnNextInstrument();

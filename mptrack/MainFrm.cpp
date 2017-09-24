@@ -185,7 +185,6 @@ static UINT indicators[] =
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame construction/destruction
 CMainFrame::CMainFrame()
-//----------------------
 	: m_SoundDeviceFillBufferCriticalSection(CriticalSection::InitialUnlocked)
 	, m_Dither(theApp.BestPRNG())
 {
@@ -220,7 +219,6 @@ CMainFrame::CMainFrame()
 
 
 void CMainFrame::Initialize()
-//---------------------------
 {
 	//Adding version number to the frame title
 	CString title = GetTitle();
@@ -271,7 +269,6 @@ void CMainFrame::Initialize()
 
 
 CMainFrame::~CMainFrame()
-//-----------------------
 {
 	delete m_InputHandler;
 	CChannelManagerDlg::DestroySharedInstance();
@@ -279,7 +276,6 @@ CMainFrame::~CMainFrame()
 
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
-//-----------------------------------------------------
 {
 	if (CMDIFrameWnd::OnCreate(lpCreateStruct) == -1) return -1;
 	// Load resources
@@ -357,14 +353,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
-//------------------------------------------------
 {
 	return CMDIFrameWnd::PreCreateWindow(cs);
 }
 
 
 BOOL CMainFrame::DestroyWindow()
-//------------------------------
 {
 	::HtmlHelpW(m_hWnd, nullptr, HH_UNINITIALIZE, reinterpret_cast<DWORD_PTR>(&helpCookie));
 
@@ -425,7 +419,6 @@ BOOL CMainFrame::DestroyWindow()
 
 
 void CMainFrame::OnClose()
-//------------------------
 {
 	MPT_TRACE();
 	if(!(TrackerSettings::Instance().m_dwPatternSetup & PATTERN_NOCLOSEDIALOG))
@@ -470,7 +463,6 @@ void CMainFrame::OnClose()
 
 // Drop files from Windows
 void CMainFrame::OnDropFiles(HDROP hDropInfo)
-//-------------------------------------------
 {
 	const UINT nFiles = ::DragQueryFileW(hDropInfo, (UINT)-1, NULL, 0);
 	CMainFrame::GetMainFrame()->SetForegroundWindow();
@@ -489,7 +481,6 @@ void CMainFrame::OnDropFiles(HDROP hDropInfo)
 
 
 LRESULT CALLBACK CMainFrame::KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
-//-------------------------------------------------------------------------------
 {
 
 	static bool s_KeyboardHookReentryFlag = false; // work-around for https://bugs.openmpt.org/view.php?id=713
@@ -565,7 +556,6 @@ LRESULT CALLBACK CMainFrame::KeyboardProc(int code, WPARAM wParam, LPARAM lParam
 
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
-//---------------------------------------------
 {
 	if((pMsg->message == WM_RBUTTONDOWN) || (pMsg->message == WM_NCRBUTTONDOWN))
 	{
@@ -592,7 +582,6 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 
 
 void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
-//---------------------------------------------------
 {
 	if ((GetStyle() & FWS_ADDTOTITLE) == 0)	return;     // leave it alone!
 
@@ -629,7 +618,6 @@ void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
 
 
 void CMainFrame::OnTimerNotify()
-//------------------------------
 {
 	MPT_TRACE();
 	ASSERT(InGuiThread());
@@ -676,7 +664,6 @@ void CMainFrame::OnTimerNotify()
 
 
 void CMainFrame::SoundDeviceMessage(LogLevel level, const mpt::ustring &str)
-//--------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	Reporting::Message(level, str);
@@ -684,7 +671,6 @@ void CMainFrame::SoundDeviceMessage(LogLevel level, const mpt::ustring &str)
 
 
 void CMainFrame::SoundSourcePreStartCallback()
-//--------------------------------------------
 {
 	MPT_TRACE();
 	m_SoundDeviceClock.SetResolution(1);
@@ -692,7 +678,6 @@ void CMainFrame::SoundSourcePreStartCallback()
 
 
 void CMainFrame::SoundSourcePostStopCallback()
-//--------------------------------------------
 {
 	MPT_TRACE();
 	m_SoundDeviceClock.SetResolution(0);
@@ -700,7 +685,6 @@ void CMainFrame::SoundSourcePostStopCallback()
 
 
 uint64 CMainFrame::SoundSourceGetReferenceClockNowNanoseconds() const
-//-------------------------------------------------------------------
 {
 	MPT_TRACE();
 	MPT_ASSERT(!InAudioThread());
@@ -709,7 +693,6 @@ uint64 CMainFrame::SoundSourceGetReferenceClockNowNanoseconds() const
 
 
 uint64 CMainFrame::SoundSourceLockedGetReferenceClockNowNanoseconds() const
-//-------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	MPT_ASSERT(InAudioThread());
@@ -718,7 +701,6 @@ uint64 CMainFrame::SoundSourceLockedGetReferenceClockNowNanoseconds() const
 
 
 bool CMainFrame::SoundSourceIsLockedByCurrentThread() const
-//---------------------------------------------------------
 {
 	MPT_TRACE();
 	return theApp.GetGlobalMutexRef().IsLockedByCurrentThread();
@@ -726,7 +708,6 @@ bool CMainFrame::SoundSourceIsLockedByCurrentThread() const
 
 
 void CMainFrame::SoundSourceLock()
-//--------------------------------
 {
 	MPT_TRACE();
 	m_SoundDeviceFillBufferCriticalSection.Enter();
@@ -737,7 +718,6 @@ void CMainFrame::SoundSourceLock()
 
 
 void CMainFrame::SoundSourceUnlock()
-//----------------------------------
 {
 	MPT_TRACE();
 	MPT_ASSERT_ALWAYS(m_pSndFile != nullptr);
@@ -746,9 +726,7 @@ void CMainFrame::SoundSourceUnlock()
 }
 
 
-//==============================
 class StereoVuMeterTargetWrapper
-//==============================
 	: public AudioReadTargetBufferInterleavedDynamic
 {
 private:
@@ -769,7 +747,6 @@ public:
 
 
 void CMainFrame::SoundSourceLockedRead(SoundDevice::BufferFormat bufferFormat, SoundDevice::BufferAttributes bufferAttributes, SoundDevice::TimeInfo timeInfo, std::size_t numFrames, void *buffer, const void *inputBuffer)
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	MPT_UNREFERENCED_PARAMETER(inputBuffer);
@@ -803,7 +780,6 @@ void CMainFrame::SoundSourceLockedRead(SoundDevice::BufferFormat bufferFormat, S
 
 
 void CMainFrame::SoundSourceLockedDone(SoundDevice::BufferFormat bufferFormat, SoundDevice::BufferAttributes bufferAttributes, SoundDevice::TimeInfo timeInfo)
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	MPT_UNREFERENCED_PARAMETER(bufferFormat);
@@ -818,7 +794,6 @@ void CMainFrame::SoundSourceLockedDone(SoundDevice::BufferFormat bufferFormat, S
 
 
 bool CMainFrame::IsAudioDeviceOpen() const
-//----------------------------------------
 {
 	MPT_TRACE();
 	return gpSoundDevice && gpSoundDevice->IsOpen();
@@ -826,7 +801,6 @@ bool CMainFrame::IsAudioDeviceOpen() const
 
 
 bool CMainFrame::audioOpenDevice()
-//--------------------------------
 {
 	MPT_TRACE();
 	if(!TrackerSettings::Instance().GetMixerSettings().IsValid())
@@ -883,7 +857,6 @@ bool CMainFrame::audioOpenDevice()
 
 
 void CMainFrame::audioCloseDevice()
-//---------------------------------
 {
 	MPT_TRACE();
 	if(gpSoundDevice)
@@ -900,7 +873,6 @@ void CMainFrame::audioCloseDevice()
 
 
 void VUMeter::Process(const int *mixbuffer, std::size_t numChannels, std::size_t numFrames)
-//-----------------------------------------------------------------------------------------
 {
 	for(std::size_t frame = 0; frame < numFrames; ++frame)
 	{
@@ -926,7 +898,6 @@ const float VUMeter::dynamicRange = 48.0f; // corresponds to the current impleme
 
 
 void VUMeter::SetDecaySpeedDecibelPerSecond(float decibelPerSecond)
-//-----------------------------------------------------------------
 {
 	float linearDecayRate = decibelPerSecond / dynamicRange;
 	decayParam = Util::Round<int32>(linearDecayRate * MIXING_CLIPMAX);
@@ -934,7 +905,6 @@ void VUMeter::SetDecaySpeedDecibelPerSecond(float decibelPerSecond)
 
 
 void VUMeter::Decay(int32 secondsNum, int32 secondsDen)
-//-----------------------------------------------------
 {
 	int32 decay = Util::muldivr(decayParam, secondsNum, secondsDen);
 	for(std::size_t channel = 0; channel < maxChannels; ++channel)
@@ -945,7 +915,6 @@ void VUMeter::Decay(int32 secondsNum, int32 secondsDen)
 
 
 void VUMeter::ResetClipped()
-//--------------------------
 {
 	for(std::size_t channel = 0; channel < maxChannels; ++channel)
 	{
@@ -955,7 +924,6 @@ void VUMeter::ResetClipped()
 
 
 static void SetVUMeter(uint32 *masterVU, const VUMeter &vumeter)
-//--------------------------------------------------------------
 {
 	for(std::size_t channel = 0; channel < VUMeter::maxChannels; ++channel)
 	{
@@ -969,7 +937,6 @@ static void SetVUMeter(uint32 *masterVU, const VUMeter &vumeter)
 
 
 bool CMainFrame::DoNotification(DWORD dwSamplesRead, int64 streamPosition)
-//------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	ASSERT(InAudioThread());
@@ -1091,7 +1058,6 @@ bool CMainFrame::DoNotification(DWORD dwSamplesRead, int64 streamPosition)
 
 
 void CMainFrame::UpdateDspEffects(CSoundFile &sndFile, bool reset)
-//----------------------------------------------------------------
 {
 	CriticalSection cs;
 #ifndef NO_REVERB
@@ -1112,7 +1078,6 @@ void CMainFrame::UpdateDspEffects(CSoundFile &sndFile, bool reset)
 
 
 void CMainFrame::UpdateAudioParameters(CSoundFile &sndFile, bool reset)
-//---------------------------------------------------------------------
 {
 	CriticalSection cs;
 	if (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_MUTECHNMODE)
@@ -1147,7 +1112,6 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 
 void CMainFrame::UpdateColors()
-//-----------------------------
 {
 	auto &colors = TrackerSettings::Instance().rgbCustomColors;
 	const struct { MODPLUGDIB *bitmap; uint32 lo, med, hi; } meters[] =
@@ -1240,14 +1204,12 @@ void CMainFrame::UpdateColors()
 
 
 UINT CMainFrame::GetBaseOctave() const
-//------------------------------------
 {
 	return m_wndToolBar.GetBaseOctave();
 }
 
 
 void CMainFrame::ResetNotificationBuffer()
-//----------------------------------------
 {
 	MPT_TRACE();
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_NotificationBufferMutex);
@@ -1256,7 +1218,6 @@ void CMainFrame::ResetNotificationBuffer()
 
 
 bool CMainFrame::PreparePlayback()
-//--------------------------------
 {
 	MPT_TRACE();
 	// open the audio device to update needed TrackerSettings mixer parameters
@@ -1266,7 +1227,6 @@ bool CMainFrame::PreparePlayback()
 
 
 bool CMainFrame::StartPlayback()
-//------------------------------
 {
 	MPT_TRACE();
 	if(!m_pSndFile) return false; // nothing to play
@@ -1287,7 +1247,6 @@ bool CMainFrame::StartPlayback()
 
 
 void CMainFrame::StopPlayback()
-//-----------------------------
 {
 	MPT_TRACE();
 	if(!IsAudioDeviceOpen()) return;
@@ -1306,7 +1265,6 @@ void CMainFrame::StopPlayback()
 
 
 bool CMainFrame::RestartPlayback()
-//--------------------------------
 {
 	MPT_TRACE();
 	if(!m_pSndFile) return false; // nothing to play
@@ -1324,7 +1282,6 @@ bool CMainFrame::RestartPlayback()
 
 
 bool CMainFrame::PausePlayback()
-//------------------------------
 {
 	MPT_TRACE();
 	if(!IsAudioDeviceOpen()) return false;
@@ -1340,7 +1297,6 @@ bool CMainFrame::PausePlayback()
 
 
 void CMainFrame::GenerateStopNotification()
-//-----------------------------------------
 {
 	Notification mn(Notification::Stop);
 	SendMessage(WM_MOD_UPDATEPOSITION, 0, (LPARAM)&mn);
@@ -1348,7 +1304,6 @@ void CMainFrame::GenerateStopNotification()
 
 
 void CMainFrame::UnsetPlaybackSoundFile()
-//---------------------------------------
 {
 	if(m_pSndFile)
 	{
@@ -1382,14 +1337,12 @@ void CMainFrame::UnsetPlaybackSoundFile()
 
 
 void CMainFrame::SetPlaybackSoundFile(CSoundFile *pSndFile)
-//---------------------------------------------------------
 {
 	m_pSndFile = pSndFile;
 }
 
 
 bool CMainFrame::PlayMod(CModDoc *pModDoc)
-//----------------------------------------
 {
 	MPT_ASSERT_ALWAYS(!theApp.GetGlobalMutexRef().IsLockedByCurrentThread());
 	if(!pModDoc) return false;
@@ -1436,7 +1389,6 @@ bool CMainFrame::PlayMod(CModDoc *pModDoc)
 
 
 bool CMainFrame::PauseMod(CModDoc *pModDoc)
-//-----------------------------------------
 {
 	MPT_ASSERT_ALWAYS(!theApp.GetGlobalMutexRef().IsLockedByCurrentThread());
 	if(pModDoc && (pModDoc != GetModPlaying())) return false;
@@ -1454,7 +1406,6 @@ bool CMainFrame::PauseMod(CModDoc *pModDoc)
 
 
 bool CMainFrame::StopMod(CModDoc *pModDoc)
-//----------------------------------------
 {
 	MPT_ASSERT_ALWAYS(!theApp.GetGlobalMutexRef().IsLockedByCurrentThread());
 	if(pModDoc && (pModDoc != GetModPlaying())) return false;
@@ -1475,7 +1426,6 @@ bool CMainFrame::StopMod(CModDoc *pModDoc)
 
 
 bool CMainFrame::StopSoundFile(CSoundFile *pSndFile)
-//--------------------------------------------------
 {
 	MPT_ASSERT_ALWAYS(!theApp.GetGlobalMutexRef().IsLockedByCurrentThread());
 	if(!IsValidSoundFile(pSndFile)) return false;
@@ -1494,7 +1444,6 @@ bool CMainFrame::StopSoundFile(CSoundFile *pSndFile)
 
 
 bool CMainFrame::PlaySoundFile(CSoundFile *pSndFile)
-//--------------------------------------------------
 {
 	MPT_ASSERT_ALWAYS(!theApp.GetGlobalMutexRef().IsLockedByCurrentThread());
 	if(!IsValidSoundFile(pSndFile)) return false;
@@ -1530,7 +1479,6 @@ bool CMainFrame::PlaySoundFile(CSoundFile *pSndFile)
 
 
 bool CMainFrame::PlayDLSInstrument(UINT nDLSBank, UINT nIns, UINT nRgn, ModCommand::NOTE note, int volume)
-//--------------------------------------------------------------------------------------------------------
 {
 	if(nDLSBank >= CTrackApp::gpDLSBanks.size() || !CTrackApp::gpDLSBanks[nDLSBank]) return FALSE;
 	bool ok = false;
@@ -1557,7 +1505,6 @@ bool CMainFrame::PlayDLSInstrument(UINT nDLSBank, UINT nIns, UINT nRgn, ModComma
 
 
 bool CMainFrame::PlaySoundFile(const mpt::PathString &filename, ModCommand::NOTE note, int volume)
-//------------------------------------------------------------------------------------------------
 {
 	bool ok = false;
 	BeginWaitCursor();
@@ -1611,7 +1558,6 @@ bool CMainFrame::PlaySoundFile(const mpt::PathString &filename, ModCommand::NOTE
 
 
 bool CMainFrame::PlaySoundFile(CSoundFile &sndFile, INSTRUMENTINDEX nInstrument, SAMPLEINDEX nSample, ModCommand::NOTE note, int volume)
-//--------------------------------------------------------------------------------------------------------------------------------------
 {
 	bool ok = false;
 	BeginWaitCursor();
@@ -1651,7 +1597,6 @@ bool CMainFrame::PlaySoundFile(CSoundFile &sndFile, INSTRUMENTINDEX nInstrument,
 
 
 void CMainFrame::InitPreview()
-//----------------------------
 {
 	m_WaveFile.Destroy();
 	m_WaveFile.Create(FileReader());
@@ -1668,7 +1613,6 @@ void CMainFrame::InitPreview()
 
 
 void CMainFrame::PreparePreview(ModCommand::NOTE note, int volume)
-//----------------------------------------------------------------
 {
 	m_WaveFile.m_SongFlags.reset(SONG_PAUSED);
 	m_WaveFile.SetRepeatCount(-1);
@@ -1706,14 +1650,12 @@ void CMainFrame::PreparePreview(ModCommand::NOTE note, int volume)
 
 
 HWND CMainFrame::GetFollowSong() const
-//------------------------------------
 {
 	return GetModPlaying() ? GetModPlaying()->GetFollowWnd() : NULL;
 }
 
 
 void CMainFrame::IdleHandlerSounddevice()
-//---------------------------------------
 {
 	MPT_TRACE();
 	if(gpSoundDevice)
@@ -1738,7 +1680,6 @@ void CMainFrame::IdleHandlerSounddevice()
 
 
 BOOL CMainFrame::ResetSoundCard()
-//-------------------------------
 {
 	MPT_TRACE();
 	return CMainFrame::SetupSoundCard(TrackerSettings::Instance().GetSoundDeviceSettings(TrackerSettings::Instance().GetSoundDeviceIdentifier()), TrackerSettings::Instance().GetSoundDeviceIdentifier(), TrackerSettings::Instance().m_SoundSettingsStopMode, true);
@@ -1746,7 +1687,6 @@ BOOL CMainFrame::ResetSoundCard()
 
 
 BOOL CMainFrame::SetupSoundCard(SoundDevice::Settings deviceSettings, SoundDevice::Identifier deviceIdentifier, SoundDeviceStopMode stoppedMode, bool forceReset)
-//---------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	MPT_TRACE();
 	if(forceReset
@@ -1798,7 +1738,6 @@ BOOL CMainFrame::SetupSoundCard(SoundDevice::Settings deviceSettings, SoundDevic
 
 
 BOOL CMainFrame::SetupPlayer()
-//----------------------------
 {
 	CriticalSection cs;
 	if(GetSoundFilePlaying()) UpdateAudioParameters(*GetSoundFilePlaying(), FALSE);
@@ -1807,7 +1746,6 @@ BOOL CMainFrame::SetupPlayer()
 
 
 BOOL CMainFrame::SetupMiscOptions()
-//---------------------------------
 {
 	if (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_MUTECHNMODE)
 		TrackerSettings::Instance().MixerFlags |= SNDMIX_MUTECHNMODE;
@@ -1827,7 +1765,6 @@ BOOL CMainFrame::SetupMiscOptions()
 
 
 void CMainFrame::SetupMidi(DWORD d, UINT_PTR n)
-//---------------------------------------------
 {
 	bool deviceChanged = (TrackerSettings::Instance().m_nMidiDevice != n);
 	TrackerSettings::Instance().m_dwMidiSetup = d;
@@ -1842,7 +1779,6 @@ void CMainFrame::SetupMidi(DWORD d, UINT_PTR n)
 
 
 void CMainFrame::UpdateAllViews(UpdateHint hint, CObject *pHint)
-//--------------------------------------------------------------
 {
 	CDocTemplate *pDocTmpl = theApp.GetModDocTemplate();
 	if (pDocTmpl)
@@ -1858,7 +1794,6 @@ void CMainFrame::UpdateAllViews(UpdateHint hint, CObject *pHint)
 
 
 void CMainFrame::SetUserText(LPCTSTR lpszText)
-//--------------------------------------------
 {
 	if (lpszText[0] | m_szUserText[0])
 	{
@@ -1869,7 +1804,6 @@ void CMainFrame::SetUserText(LPCTSTR lpszText)
 
 
 void CMainFrame::SetInfoText(LPCTSTR lpszText)
-//--------------------------------------------
 {
 	if (lpszText[0] | m_szInfoText[0])
 	{
@@ -1880,7 +1814,6 @@ void CMainFrame::SetInfoText(LPCTSTR lpszText)
 
 
 void CMainFrame::SetXInfoText(LPCTSTR lpszText)
-//---------------------------------------------
 {
 	if (lpszText[0] | m_szXInfoText[0])
 	{
@@ -1891,14 +1824,12 @@ void CMainFrame::SetXInfoText(LPCTSTR lpszText)
 
 
 void CMainFrame::SetHelpText(LPCTSTR lpszText)
-//--------------------------------------------
 {
 	m_wndStatusBar.SetPaneText(0, lpszText);
 }
 
 
 void CMainFrame::OnDocumentCreated(CModDoc *pModDoc)
-//--------------------------------------------------
 {
 	m_wndTree.OnDocumentCreated(pModDoc);
 	UpdateMRUList();
@@ -1906,7 +1837,6 @@ void CMainFrame::OnDocumentCreated(CModDoc *pModDoc)
 
 
 void CMainFrame::OnDocumentClosed(CModDoc *pModDoc)
-//-------------------------------------------------
 {
 	if (pModDoc == GetModPlaying()) PauseMod();
 
@@ -1918,7 +1848,6 @@ void CMainFrame::OnDocumentClosed(CModDoc *pModDoc)
 
 
 void CMainFrame::UpdateTree(CModDoc *pModDoc, UpdateHint hint, CObject *pHint)
-//----------------------------------------------------------------------------
 {
 	m_wndTree.OnUpdate(pModDoc, hint, pHint);
 }
@@ -1929,7 +1858,6 @@ void CMainFrame::UpdateTree(CModDoc *pModDoc, UpdateHint hint, CObject *pHint)
 
 
 void CMainFrame::OnViewOptions()
-//------------------------------
 {
 	if (m_bOptionsLocked)
 		return;
@@ -1971,7 +1899,6 @@ void CMainFrame::OnViewOptions()
 
 
 void CMainFrame::OnPluginManager()
-//--------------------------------
 {
 #ifndef NO_PLUGINS
 	PLUGINDEX nPlugslot = PLUGINDEX_INVALID;
@@ -2006,14 +1933,12 @@ void CMainFrame::OnPluginManager()
 
 
 void CMainFrame::OnClipboardManager()
-//-----------------------------------
 {
 	PatternClipboardDialog::Show();
 }
 
 
 void CMainFrame::OnAddDlsBank()
-//-----------------------------
 {
 	FileDialog dlg = OpenFileDialog()
 		.AllowMultiSelect()
@@ -2035,7 +1960,6 @@ void CMainFrame::OnAddDlsBank()
 
 
 void CMainFrame::OnImportMidiLib()
-//--------------------------------
 {
 	FileDialog dlg = OpenFileDialog()
 		.ExtensionFilter("Text and INI files (*.txt,*.ini)|*.txt;*.ini;*.dls;*.sf2;*.sbk|"
@@ -2053,7 +1977,6 @@ void CMainFrame::OnImportMidiLib()
 
 
 void CMainFrame::OnTimer(UINT_PTR timerID)
-//----------------------------------------
 {
 	switch(timerID)
 	{
@@ -2068,7 +1991,6 @@ void CMainFrame::OnTimer(UINT_PTR timerID)
 
 
 void CMainFrame::OnTimerGUI()
-//---------------------------
 {
 
 	IdleHandlerSounddevice();
@@ -2152,7 +2074,6 @@ void CMainFrame::OnTimerGUI()
 
 
 CModDoc *CMainFrame::GetActiveDoc()
-//---------------------------------
 {
 	CMDIChildWnd *pMDIActive = MDIGetActive();
 	if (pMDIActive)
@@ -2164,7 +2085,6 @@ CModDoc *CMainFrame::GetActiveDoc()
 
 
 CView *CMainFrame::GetActiveView()
-//---------------------------------
 {
 	CMDIChildWnd *pMDIActive = MDIGetActive();
 	if (pMDIActive)
@@ -2177,7 +2097,6 @@ CView *CMainFrame::GetActiveView()
 
 
 void CMainFrame::SwitchToActiveView()
-//-----------------------------------
 {
 	CWnd *wnd = GetActiveView();
 	if (wnd)
@@ -2193,7 +2112,6 @@ void CMainFrame::SwitchToActiveView()
 
 
 void CMainFrame::OnUpdateTime(CCmdUI *)
-//-------------------------------------
 {
 	TCHAR s[64];
 	wsprintf(s, _T("%u:%02u:%02u"),
@@ -2215,27 +2133,23 @@ void CMainFrame::OnUpdateTime(CCmdUI *)
 
 
 void CMainFrame::OnUpdateUser(CCmdUI *)
-//-------------------------------------
 {
 	m_wndStatusBar.SetPaneText(m_wndStatusBar.CommandToIndex(ID_INDICATOR_USER), m_szUserText, TRUE);
 }
 
 
 void CMainFrame::OnUpdateInfo(CCmdUI *)
-//-------------------------------------
 {
 	m_wndStatusBar.SetPaneText(m_wndStatusBar.CommandToIndex(ID_INDICATOR_INFO), m_szInfoText, TRUE);
 }
 
 
 void CMainFrame::OnUpdateXInfo(CCmdUI *)
-//-------------------------------------
 {
 	m_wndStatusBar.SetPaneText(m_wndStatusBar.CommandToIndex(ID_INDICATOR_XINFO), m_szXInfoText, TRUE);
 }
 
 void CMainFrame::OnPlayerPause()
-//------------------------------
 {
 	if (GetModPlaying())
 	{
@@ -2248,7 +2162,6 @@ void CMainFrame::OnPlayerPause()
 
 
 void CMainFrame::OpenMenuItemFile(const UINT nId, const bool isTemplateFile)
-//--------------------------------------------------------------------------
 {
 	const UINT nIdBegin = (isTemplateFile) ? ID_FILE_OPENTEMPLATE : ID_EXAMPLE_MODULES;
 	const std::vector<mpt::PathString>& vecFilePaths = (isTemplateFile) ? s_TemplateModulePaths : s_ExampleModulePaths;
@@ -2281,21 +2194,18 @@ void CMainFrame::OpenMenuItemFile(const UINT nId, const bool isTemplateFile)
 
 
 void CMainFrame::OnOpenTemplateModule(UINT nId)
-//---------------------------------------------
 {
 	OpenMenuItemFile(nId, true/*open template menu file*/);
 }
 
 
 void CMainFrame::OnExampleSong(UINT nId)
-//--------------------------------------
 {
 	OpenMenuItemFile(nId, false/*open example menu file*/);
 }
 
 
 void CMainFrame::OnOpenMRUItem(UINT nId)
-//--------------------------------------
 {
 	mpt::PathString file = TrackerSettings::Instance().mruFiles[nId - ID_MRU_LIST_FIRST];
 	theApp.OpenDocumentFile(file);
@@ -2303,14 +2213,12 @@ void CMainFrame::OnOpenMRUItem(UINT nId)
 
 
 void CMainFrame::OnUpdateMRUItem(CCmdUI *cmd)
-//-------------------------------------------
 {
 	cmd->Enable(!TrackerSettings::Instance().mruFiles.empty());
 }
 
 
 LRESULT CMainFrame::OnInvalidatePatterns(WPARAM, LPARAM)
-//------------------------------------------------------
 {
 	UpdateAllViews(UpdateHint().MPTOptions());
 	return TRUE;
@@ -2318,7 +2226,6 @@ LRESULT CMainFrame::OnInvalidatePatterns(WPARAM, LPARAM)
 
 
 LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
-//---------------------------------------------------------
 {
 	OPENMPT_PROFILE_FUNCTION(Profiler::GUI);
 	m_VUMeter.SetDecaySpeedDecibelPerSecond(TrackerSettings::Instance().VuMeterDecaySpeedDecibelPerSecond); // update in notification update in order to avoid querying the settings framework from inside audio thread
@@ -2345,7 +2252,6 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 
 
 LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
-//-----------------------------------------------------------
 {
 	if(modDoc)
 	{
@@ -2363,7 +2269,6 @@ void CMainFrame::OnNetworking()
 
 
 void CMainFrame::OnPanic()
-//------------------------
 {
 	// "Panic button." At the moment, it just resets all VSTi and sample notes.
 	if(GetModPlaying())
@@ -2372,7 +2277,6 @@ void CMainFrame::OnPanic()
 
 
 void CMainFrame::OnPrevOctave()
-//-----------------------------
 {
 	UINT n = GetBaseOctave();
 	if (n > MIN_BASEOCTAVE) m_wndToolBar.SetBaseOctave(n-1);
@@ -2380,7 +2284,6 @@ void CMainFrame::OnPrevOctave()
 
 
 void CMainFrame::OnNextOctave()
-//-----------------------------
 {
 	UINT n = GetBaseOctave();
 	if (n < MAX_BASEOCTAVE) m_wndToolBar.SetBaseOctave(n+1);
@@ -2388,14 +2291,12 @@ void CMainFrame::OnNextOctave()
 
 
 void CMainFrame::OnReportBug()
-//----------------------------
 {
 	CTrackApp::OpenURL(MptVersion::GetURL("bugtracker"));
 }
 
 
 BOOL CMainFrame::OnInternetLink(UINT nID)
-//---------------------------------------
 {
 	mpt::ustring url;
 	switch(nID)
@@ -2412,7 +2313,6 @@ BOOL CMainFrame::OnInternetLink(UINT nID)
 
 
 void CMainFrame::OnRButtonDown(UINT, CPoint pt)
-//---------------------------------------------
 {
 	CMenu Menu;
 
@@ -2426,7 +2326,6 @@ void CMainFrame::OnRButtonDown(UINT, CPoint pt)
 
 
 LRESULT CMainFrame::OnSpecialKey(WPARAM /*vKey*/, LPARAM)
-//---------------------------------------------------
 {
 /*	CMDIChildWnd *pMDIActive = MDIGetActive();
 	CView *pView = NULL;
@@ -2446,7 +2345,6 @@ LRESULT CMainFrame::OnSpecialKey(WPARAM /*vKey*/, LPARAM)
 
 
 LRESULT CMainFrame::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
-//---------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -2545,7 +2443,6 @@ LRESULT CMainFrame::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 
 
 void CMainFrame::OnInitMenu(CMenu* pMenu)
-//---------------------------------------
 {
 	m_InputHandler->SetModifierMask(ModNone);
 	// This used to not be called to prevent Alt key from activating the menu... but that never worked as imagined, I guess.
@@ -2555,7 +2452,6 @@ void CMainFrame::OnInitMenu(CMenu* pMenu)
 
 
 BOOL CMainFrame::InitRenderer(CSoundFile* pSndFile)
-//-------------------------------------------------
 {
 	CriticalSection cs;
 	pSndFile->m_bIsRendering = true;
@@ -2566,7 +2462,6 @@ BOOL CMainFrame::InitRenderer(CSoundFile* pSndFile)
 
 
 BOOL CMainFrame::StopRenderer(CSoundFile* pSndFile)
-//-------------------------------------------------
 {
 	CriticalSection cs;
 	pSndFile->SuspendPlugins();
@@ -2577,7 +2472,6 @@ BOOL CMainFrame::StopRenderer(CSoundFile* pSndFile)
 
 // We have swicthed focus to a new module - might need to update effect keys to reflect module type
 bool CMainFrame::UpdateEffectKeys(const CModDoc *modDoc)
-//------------------------------------------------------
 {
 	if(modDoc != nullptr)
 	{
@@ -2588,7 +2482,6 @@ bool CMainFrame::UpdateEffectKeys(const CModDoc *modDoc)
 
 
 void CMainFrame::OnKillFocus(CWnd* pNewWnd)
-//-----------------------------------------
 {
 	CMDIFrameWnd::OnKillFocus(pNewWnd);
 
@@ -2598,7 +2491,6 @@ void CMainFrame::OnKillFocus(CWnd* pNewWnd)
 
 
 void CMainFrame::OnShowWindow(BOOL bShow, UINT /*nStatus*/)
-//---------------------------------------------------------
 {
 	static bool firstShow = true;
 	if (bShow && !IsWindowVisible() && firstShow)
@@ -2613,21 +2505,18 @@ void CMainFrame::OnShowWindow(BOOL bShow, UINT /*nStatus*/)
 
 
 void CMainFrame::OnInternetUpdate()
-//---------------------------------
 {
 	CUpdateCheck::DoManualUpdateCheck();
 }
 
 
 void CMainFrame::OnShowSettingsFolder()
-//-------------------------------------
 {
 	theApp.OpenDirectory(theApp.GetConfigPath());
 }
 
 
 LRESULT CMainFrame::OnUpdateCheckProgress(WPARAM wparam, LPARAM lparam)
-//---------------------------------------------------------------------
 {
 	MPT_UNREFERENCED_PARAMETER(wparam);
 	MPT_UNREFERENCED_PARAMETER(lparam);
@@ -2636,7 +2525,6 @@ LRESULT CMainFrame::OnUpdateCheckProgress(WPARAM wparam, LPARAM lparam)
 
 
 LRESULT CMainFrame::OnUpdateCheckSuccess(WPARAM wparam, LPARAM lparam)
-//--------------------------------------------------------------------
 {
 	TrackerSettings::Instance().UpdateLastUpdateCheck = mpt::Date::Unix(CUpdateCheck::ResultFromMessage(wparam, lparam).CheckTime);
 	CUpdateCheck::ShowSuccessGUI(wparam, lparam);
@@ -2645,7 +2533,6 @@ LRESULT CMainFrame::OnUpdateCheckSuccess(WPARAM wparam, LPARAM lparam)
 
 
 LRESULT CMainFrame::OnUpdateCheckFailure(WPARAM wparam, LPARAM lparam)
-//--------------------------------------------------------------------
 {
 	CUpdateCheck::ShowFailureGUI(wparam, lparam);
 	return TRUE;
@@ -2653,7 +2540,6 @@ LRESULT CMainFrame::OnUpdateCheckFailure(WPARAM wparam, LPARAM lparam)
 
 
 void CMainFrame::OnHelp()
-//-----------------------
 {
 	CView *view = GetActiveView();
 	const char *page = "";
@@ -2695,7 +2581,6 @@ void CMainFrame::OnHelp()
 
 
 LRESULT CMainFrame::OnViewMIDIMapping(WPARAM wParam, LPARAM lParam)
-//-----------------------------------------------------------------
 {
 	CModDoc *doc = GetActiveDoc();
 	if(doc != nullptr)
@@ -2705,7 +2590,6 @@ LRESULT CMainFrame::OnViewMIDIMapping(WPARAM wParam, LPARAM lParam)
 
 
 HMENU CMainFrame::CreateFileMenu(const size_t nMaxCount, std::vector<mpt::PathString>& vPaths, const mpt::PathString &pszFolderName, const uint16 nIdRangeBegin)
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 {
 	vPaths.clear();
 	HMENU hMenu = ::CreatePopupMenu();
@@ -2766,7 +2650,6 @@ HMENU CMainFrame::CreateFileMenu(const size_t nMaxCount, std::vector<mpt::PathSt
 
 
 void CMainFrame::CreateExampleModulesMenu()
-//-----------------------------------------
 {
 	static_assert(nMaxItemsInExampleModulesMenu == ID_EXAMPLE_MODULES_LASTINRANGE - ID_EXAMPLE_MODULES,
 				  "Make sure that there's a proper range for menu commands in resources.");
@@ -2781,7 +2664,6 @@ void CMainFrame::CreateExampleModulesMenu()
 
 // Hack-ish way to get the file menu (this is necessary because the MDI document icon next to the File menu is a sub menu, too).
 CMenu *CMainFrame::GetFileMenu() const
-//------------------------------------
 {
 	CMenu *mainMenu = GetMenu();
 	CMenu *fileMenu = mainMenu ? mainMenu->GetSubMenu(0) : nullptr;
@@ -2797,7 +2679,6 @@ CMenu *CMainFrame::GetFileMenu() const
 
 
 void CMainFrame::CreateTemplateModulesMenu()
-//------------------------------------------
 {
 	static_assert(nMaxItemsInTemplateModulesMenu == ID_FILE_OPENTEMPLATE_LASTINRANGE - ID_FILE_OPENTEMPLATE,
 				  "Make sure that there's a proper range for menu commands in resources.");
@@ -2814,7 +2695,6 @@ void CMainFrame::CreateTemplateModulesMenu()
 
 
 void CMainFrame::UpdateMRUList()
-//------------------------------
 {
 	CMenu *pMenu = GetFileMenu();
 	static int firstMenu = -1;
@@ -2893,7 +2773,6 @@ LRESULT CMainFrame::OnUpdateAllViews(WPARAM wParam, LPARAM lParam)
 // ITfLanguageProfileNotifySink implementation
 
 TfLanguageProfileNotifySink::TfLanguageProfileNotifySink()
-//--------------------------------------------------------
 	: m_pProfiles(nullptr)
 	, m_pSource(nullptr)
 	, m_dwCookie(TF_INVALID_COOKIE)
@@ -2915,7 +2794,6 @@ TfLanguageProfileNotifySink::TfLanguageProfileNotifySink()
 
 
 TfLanguageProfileNotifySink::~TfLanguageProfileNotifySink()
-//---------------------------------------------------------
 {
 	if(mpt::Windows::IsWine())
 	{
@@ -2939,7 +2817,6 @@ TfLanguageProfileNotifySink::~TfLanguageProfileNotifySink()
 
 
 HRESULT TfLanguageProfileNotifySink::OnLanguageChange(LANGID /*langid*/, BOOL *pfAccept)
-//--------------------------------------------------------------------------------------
 {
 	*pfAccept = TRUE;
 	return ResultFromScode(S_OK);
@@ -2947,7 +2824,6 @@ HRESULT TfLanguageProfileNotifySink::OnLanguageChange(LANGID /*langid*/, BOOL *p
 
 
 HRESULT TfLanguageProfileNotifySink::OnLanguageChanged()
-//------------------------------------------------------
 {
 	// Input language has changed, so key positions might have changed too.
 	CMainFrame *mainFrm = CMainFrame::GetMainFrame();
@@ -2961,7 +2837,6 @@ HRESULT TfLanguageProfileNotifySink::OnLanguageChanged()
 
 
 HRESULT TfLanguageProfileNotifySink::QueryInterface(REFIID riid, void **ppvObject)
-//--------------------------------------------------------------------------------
 {
 	if(riid == IID_ITfLanguageProfileNotifySink || riid == IID_IUnknown)
 	{
@@ -2975,14 +2850,12 @@ HRESULT TfLanguageProfileNotifySink::QueryInterface(REFIID riid, void **ppvObjec
 
 
 ULONG TfLanguageProfileNotifySink::AddRef()
-//-----------------------------------------
 {
 	// Don't let COM do anything to this object
 	return 1;
 }
 
 ULONG TfLanguageProfileNotifySink::Release()
-//------------------------------------------
 {
 	// Don't let COM do anything to this object
 	return 1;
@@ -2994,7 +2867,6 @@ ULONG TfLanguageProfileNotifySink::Release()
 /////////////////////////////////////////////
 
 void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, const bool librarynames)
-//----------------------------------------------------------------------------------------------------
 {
 #ifndef NO_PLUGINS
 	mpt::ustring str;
@@ -3021,7 +2893,6 @@ void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, co
 
 
 void AddPluginParameternamesToCombobox(CComboBox& CBox, SNDMIXPLUGIN& plug)
-//-------------------------------------------------------------------------
 {
 #ifndef NO_PLUGINS
 	if(plug.pMixPlugin)
@@ -3031,7 +2902,6 @@ void AddPluginParameternamesToCombobox(CComboBox& CBox, SNDMIXPLUGIN& plug)
 
 
 void AddPluginParameternamesToCombobox(CComboBox& CBox, IMixPlugin& plug)
-//-----------------------------------------------------------------------
 {
 #ifndef NO_PLUGINS
 	const PlugParamIndex numParams = plug.GetNumParameters();

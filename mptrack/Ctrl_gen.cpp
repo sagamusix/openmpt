@@ -48,7 +48,6 @@ BEGIN_MESSAGE_MAP(CCtrlGeneral, CModControlDlg)
 END_MESSAGE_MAP()
 
 void CCtrlGeneral::DoDataExchange(CDataExchange* pDX)
-//---------------------------------------------------
 {
 	CModControlDlg::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CCtrlGeneral)
@@ -83,13 +82,11 @@ void CCtrlGeneral::DoDataExchange(CDataExchange* pDX)
 
 
 CCtrlGeneral::CCtrlGeneral(CModControlView &parent, CModDoc &document) : CModControlDlg(parent, document)
-//-------------------------------------------------------------------------------------------------------
 {
 }
 
 
 BOOL CCtrlGeneral::OnInitDialog()
-//-------------------------------
 {
 	const CModSpecifications specs = m_sndFile.GetModSpecifications();
 	CModControlDlg::OnInitDialog();
@@ -121,20 +118,17 @@ BOOL CCtrlGeneral::OnInitDialog()
 
 
 CRuntimeClass *CCtrlGeneral::GetAssociatedViewClass()
-//---------------------------------------------------
 {
 	return RUNTIME_CLASS(CViewGlobals);
 }
 
 
 void CCtrlGeneral::RecalcLayout()
-//-------------------------------
 {
 }
 
 
 void CCtrlGeneral::OnActivatePage(LPARAM)
-//---------------------------------------
 {
 	m_modDoc.SetNotifications(Notification::Default);
 	m_modDoc.SetFollowWnd(m_hWnd);
@@ -147,7 +141,6 @@ void CCtrlGeneral::OnActivatePage(LPARAM)
 
 
 void CCtrlGeneral::OnDeactivatePage()
-//-----------------------------------
 {
 	m_modDoc.SetFollowWnd(NULL);
 	m_VuMeterLeft.SetVuMeter(0, true);
@@ -156,7 +149,6 @@ void CCtrlGeneral::OnDeactivatePage()
 
 
 void CCtrlGeneral::OnTapTempo()
-//-----------------------------
 {
 	static uint32 tapLength[16], lastTap = 0;
 	// Shift back the previously recorded tap history
@@ -200,7 +192,6 @@ void CCtrlGeneral::OnTapTempo()
 
 
 void CCtrlGeneral::UpdateView(UpdateHint hint, CObject *pHint)
-//------------------------------------------------------------
 {
 	if (pHint == this) return;
 	FlagSet<HintType> hintType = hint.GetType();
@@ -334,7 +325,6 @@ void CCtrlGeneral::UpdateView(UpdateHint hint, CObject *pHint)
 
 
 void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
-//--------------------------------------------------------------------
 {
 	CDialog::OnVScroll(code, pos, pscroll);
 
@@ -428,7 +418,6 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 
 
 void CCtrlGeneral::OnTitleChanged()
-//---------------------------------
 {
 	if (!m_EditTitle.m_hWnd || !m_EditTitle.GetModify()) return;
 
@@ -444,7 +433,6 @@ void CCtrlGeneral::OnTitleChanged()
 
 
 void CCtrlGeneral::OnArtistChanged()
-//----------------------------------
 {
 	if (!m_EditArtist.m_hWnd || !m_EditArtist.GetModify()) return;
 
@@ -460,7 +448,6 @@ void CCtrlGeneral::OnArtistChanged()
 
 
 void CCtrlGeneral::OnTempoChanged()
-//---------------------------------
 {
 	if (m_bInitialized && m_EditTempo.GetWindowTextLength() > 0)
 	{
@@ -482,7 +469,6 @@ void CCtrlGeneral::OnTempoChanged()
 
 
 void CCtrlGeneral::OnSpeedChanged()
-//---------------------------------
 {
 	TCHAR s[16];
 	if(m_bInitialized)
@@ -510,7 +496,6 @@ void CCtrlGeneral::OnSpeedChanged()
 
 
 void CCtrlGeneral::OnVSTiVolChanged()
-//-----------------------------------
 {
 	TCHAR s[16];
 	if (m_bInitialized)
@@ -535,7 +520,6 @@ void CCtrlGeneral::OnVSTiVolChanged()
 }
 
 void CCtrlGeneral::OnSamplePAChanged()
-//------------------------------------
 {
 	TCHAR s[16];
 	if(m_bInitialized)
@@ -559,7 +543,6 @@ void CCtrlGeneral::OnSamplePAChanged()
 }
 
 void CCtrlGeneral::OnGlobalVolChanged()
-//-------------------------------------
 {
 	TCHAR s[16];
 	if(m_bInitialized)
@@ -586,7 +569,6 @@ void CCtrlGeneral::OnGlobalVolChanged()
 
 
 void CCtrlGeneral::OnRestartPosChanged()
-//--------------------------------------
 {
 	TCHAR s[32];
 	if(m_bInitialized)
@@ -612,14 +594,12 @@ void CCtrlGeneral::OnRestartPosChanged()
 
 
 void CCtrlGeneral::OnSongProperties()
-//-----------------------------------
 {
 	m_modDoc.OnSongProperties();
 }
 
 
 void CCtrlGeneral::OnLoopSongChanged()
-//------------------------------------
 {
 	TrackerSettings::Instance().gbLoopSong = (IsDlgButtonChecked(IDC_CHECK_LOOPSONG) != 0);
 	m_sndFile.SetRepeatCount((TrackerSettings::Instance().gbLoopSong) ? -1 : 0);
@@ -627,7 +607,6 @@ void CCtrlGeneral::OnLoopSongChanged()
 
 
 LRESULT CCtrlGeneral::OnUpdatePosition(WPARAM, LPARAM lParam)
-//-----------------------------------------------------------
 {
 	Notification *pnotify = (Notification *)lParam;
 	if (pnotify)
@@ -640,7 +619,6 @@ LRESULT CCtrlGeneral::OnUpdatePosition(WPARAM, LPARAM lParam)
 
 
 BOOL CCtrlGeneral::GetToolTipText(UINT uId, LPTSTR pszText)
-//---------------------------------------------------------
 {
 	const TCHAR moreRecentMixModeNote[] = _T("Use a more recent mixmode to see dB offsets.");
 	if ((pszText) && (uId))
@@ -671,7 +649,6 @@ BOOL CCtrlGeneral::GetToolTipText(UINT uId, LPTSTR pszText)
 }
 
 void CCtrlGeneral::setAsDecibels(LPSTR stringToSet, double value, double valueAtZeroDB)
-//-------------------------------------------------------------------------------------
 {
 	if (value == 0)
 	{
@@ -690,14 +667,12 @@ void CCtrlGeneral::setAsDecibels(LPSTR stringToSet, double value, double valueAt
 
 
 void CCtrlGeneral::OnEnSetfocusEditSongtitle()
-//--------------------------------------------
 {
 	m_EditTitle.SetLimitText(m_sndFile.GetModSpecifications().modNameLengthMax);
 }
 
 
 void CCtrlGeneral::OnResamplingChanged()
-//--------------------------------------
 {
 	int sel = m_CbnResampling.GetCurSel();
 	if(sel >= 0)
@@ -731,7 +706,6 @@ END_MESSAGE_MAP()
 
 
 void CVuMeter::OnPaint()
-//----------------------
 {
 	CRect rect;
 	CPaintDC dc(this);
@@ -743,7 +717,6 @@ void CVuMeter::OnPaint()
 
 
 void CVuMeter::SetVuMeter(LONG lVuMeter, bool force)
-//--------------------------------------------------
 {
 	lVuMeter >>= 8;
 	if (lVuMeter != m_nVuMeter)
@@ -761,7 +734,6 @@ void CVuMeter::SetVuMeter(LONG lVuMeter, bool force)
 
 
 void CVuMeter::DrawVuMeter(CDC &dc, bool /*redraw*/)
-//--------------------------------------------------
 {
 	LONG vu;
 	LONG lastvu;

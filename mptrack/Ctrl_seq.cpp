@@ -34,7 +34,6 @@ static bool IsCtrlKeyPressed() { return CMainFrame::GetInputHandler()->CtrlPress
 // CPatEdit
 
 BOOL CPatEdit::PreTranslateMessage(MSG *pMsg)
-//-------------------------------------------
 {
 	if (((pMsg->message == WM_KEYDOWN) || (pMsg->message == WM_KEYUP)) && (pMsg->wParam == VK_TAB))
 	{
@@ -96,7 +95,6 @@ END_MESSAGE_MAP()
 
 
 bool COrderList::EnsureEditable(ORDERINDEX ord)
-//---------------------------------------------
 {
 	auto &sndFile = m_pModDoc.GetrSoundFile();
 	if(ord >= sndFile.Order().size())
@@ -121,7 +119,6 @@ bool COrderList::EnsureEditable(ORDERINDEX ord)
 
 
 void COrderList::SetScrollPos(int pos)
-//------------------------------------
 {
 	// Work around 16-bit limitations of WM_HSCROLL
 	SCROLLINFO si;
@@ -135,7 +132,6 @@ void COrderList::SetScrollPos(int pos)
 
 
 int COrderList::GetScrollPos(bool getTrackPos)
-//--------------------------------------------
 {
 	// Work around 16-bit limitations of WM_HSCROLL
 	SCROLLINFO si;
@@ -148,7 +144,6 @@ int COrderList::GetScrollPos(bool getTrackPos)
 
 
 bool COrderList::IsOrderInMargins(int order, int startOrder)
-//----------------------------------------------------------
 {
 	const ORDERINDEX nMargins = GetMargins();
 	return ((startOrder != 0 && order - startOrder < nMargins) ||
@@ -157,7 +152,6 @@ bool COrderList::IsOrderInMargins(int order, int startOrder)
 
 
 void COrderList::EnsureVisible(ORDERINDEX order)
-//----------------------------------------------
 {
 	// nothing needs to be done
 	if(!IsOrderInMargins(order, m_nXScroll) || order == ORDERINDEX_INVALID) return;
@@ -180,7 +174,6 @@ void COrderList::EnsureVisible(ORDERINDEX order)
 
 
 bool COrderList::IsPlaying() const
-//--------------------------------
 {
 	return (CMainFrame::GetMainFrame()->GetModPlaying() == &m_pModDoc);
 }
@@ -199,13 +192,11 @@ COrderList::COrderList(CCtrlPatterns &parent, CModDoc &document)
 	, m_nOrderlistMargins(TrackerSettings::Instance().orderlistMargins)
 	, m_bScrolling(false)
 	, m_bDragging(false)
-//---------------------------------------------------------------------
 {
 }
 
 
 ORDERINDEX COrderList::GetOrderFromPoint(const CRect& rect, const CPoint& pt) const
-//---------------------------------------------------------------------------------
 {
 	if(m_cxFont)
 		return static_cast<ORDERINDEX>(m_nXScroll + (pt.x - rect.left) / m_cxFont);
@@ -214,7 +205,6 @@ ORDERINDEX COrderList::GetOrderFromPoint(const CRect& rect, const CPoint& pt) co
 
 
 BOOL COrderList::Init(const CRect &rect, HFONT hFont)
-//---------------------------------------------------
 {
 	CreateEx(WS_EX_STATICEDGE, NULL, _T(""), WS_CHILD|WS_VISIBLE, rect, &m_pParent, IDC_ORDERLIST);
 	m_hFont = hFont;
@@ -230,7 +220,6 @@ BOOL COrderList::Init(const CRect &rect, HFONT hFont)
 
 
 BOOL COrderList::UpdateScrollInfo()
-//---------------------------------
 {
 	CRect rcClient;
 
@@ -261,7 +250,6 @@ BOOL COrderList::UpdateScrollInfo()
 
 
 int COrderList::GetFontWidth()
-//----------------------------
 {
 	if ((m_cxFont <= 0) && (m_hWnd) && (m_hFont))
 	{
@@ -276,7 +264,6 @@ int COrderList::GetFontWidth()
 
 
 void COrderList::InvalidateSelection()
-//------------------------------------
 {
 	ORDERINDEX nOrdLo = m_nScrollPos, nCount = 1;
 	static ORDERINDEX m_nScrollPos2Old = m_nScrollPos2nd;
@@ -315,7 +302,6 @@ void COrderList::InvalidateSelection()
 
 
 ORDERINDEX COrderList::GetLength()
-//--------------------------------
 {
 	CRect rcClient;
 	GetClientRect(&rcClient);
@@ -330,7 +316,6 @@ ORDERINDEX COrderList::GetLength()
 
 
 OrdSelection COrderList::GetCurSel(bool bIgnoreSelection) const
-//-------------------------------------------------------------
 {
 	// returns the currently selected order(s)
 	OrdSelection result;
@@ -352,7 +337,6 @@ OrdSelection COrderList::GetCurSel(bool bIgnoreSelection) const
 
 
 bool COrderList::SetCurSel(ORDERINDEX sel, bool bEdit, bool bShiftClick, bool bIgnoreCurSel, bool setPlayPos)
-//-----------------------------------------------------------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
@@ -439,7 +423,6 @@ bool COrderList::SetCurSel(ORDERINDEX sel, bool bEdit, bool bShiftClick, bool bI
 
 
 PATTERNINDEX COrderList::GetCurrentPattern() const
-//------------------------------------------------
 {
 	const ModSequence &order = m_pModDoc.GetrSoundFile().Order();
 	if(m_nScrollPos < order.size())
@@ -451,7 +434,6 @@ PATTERNINDEX COrderList::GetCurrentPattern() const
 
 
 BOOL COrderList::PreTranslateMessage(MSG *pMsg)
-//---------------------------------------------
 {
 	//handle Patterns View context keys that we want to take effect in the orderlist.
 	if ((pMsg->message == WM_SYSKEYUP)   || (pMsg->message == WM_KEYUP) || 
@@ -481,7 +463,6 @@ BOOL COrderList::PreTranslateMessage(MSG *pMsg)
 
 
 LRESULT COrderList::OnCustomKeyMsg(WPARAM wParam, LPARAM)
-//-------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return 0;
@@ -583,7 +564,6 @@ LRESULT COrderList::OnCustomKeyMsg(WPARAM wParam, LPARAM)
 // Helper function to enter pattern index into the orderlist.
 // Call with param 0...9 (enter digit), 10 (decrease) or 11 (increase).
 void COrderList::EnterPatternNum(int enterNum)
-//--------------------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 
@@ -656,7 +636,6 @@ void COrderList::EnterPatternNum(int enterNum)
 
 
 void COrderList::OnEditCut()
-//--------------------------
 {
 	OnEditCopy();
 	OnDeleteOrder();
@@ -664,7 +643,6 @@ void COrderList::OnEditCut()
 
 
 void COrderList::OnCopy(bool onlyOrders)
-//--------------------------------------
 {
 	const OrdSelection ordsel = GetCurSel(false);
 	BeginWaitCursor();
@@ -675,7 +653,6 @@ void COrderList::OnCopy(bool onlyOrders)
 
 
 void COrderList::UpdateView(UpdateHint hint, CObject *pObj)
-//---------------------------------------------------------
 {
 	if(pObj != this && hint.ToType<SequenceHint>().GetType()[HINT_MODTYPE | HINT_MODSEQUENCE])
 	{
@@ -690,14 +667,12 @@ void COrderList::UpdateView(UpdateHint hint, CObject *pObj)
 
 
 void COrderList::OnSwitchToView()
-//-------------------------------
 {
 	m_pParent.PostViewMessage(VIEWMSG_SETFOCUS);
 }
 
 
 void COrderList::UpdateInfoText()
-//-------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if(pMainFrm != nullptr && ::GetFocus() == m_hWnd)
@@ -737,7 +712,6 @@ void COrderList::UpdateInfoText()
 // COrderList messages
 
 void COrderList::OnPaint()
-//------------------------
 {
 	TCHAR s[64];
 	CPaintDC dc(this);
@@ -858,7 +832,6 @@ void COrderList::OnPaint()
 
 
 void COrderList::OnSetFocus(CWnd *pWnd)
-//-------------------------------------
 {
 	CWnd::OnSetFocus(pWnd);
 	InvalidateSelection();
@@ -868,7 +841,6 @@ void COrderList::OnSetFocus(CWnd *pWnd)
 
 
 void COrderList::OnKillFocus(CWnd *pWnd)
-//--------------------------------------
 {
 	CWnd::OnKillFocus(pWnd);
 	InvalidateSelection();
@@ -877,7 +849,6 @@ void COrderList::OnKillFocus(CWnd *pWnd)
 
 
 void COrderList::OnLButtonDown(UINT nFlags, CPoint pt)
-//----------------------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -920,7 +891,6 @@ void COrderList::OnLButtonDown(UINT nFlags, CPoint pt)
 
 
 void COrderList::OnLButtonUp(UINT nFlags, CPoint pt)
-//--------------------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -999,7 +969,6 @@ void COrderList::OnLButtonUp(UINT nFlags, CPoint pt)
 
 
 void COrderList::OnMouseMove(UINT nFlags, CPoint pt)
-//--------------------------------------------------
 {
 	if ((m_bDragging) && (m_cxFont))
 	{
@@ -1035,14 +1004,12 @@ void COrderList::OnMouseMove(UINT nFlags, CPoint pt)
 
 
 void COrderList::OnSelectSequence(UINT nid)
-//-----------------------------------------
 {
 	SelectSequence(static_cast<SEQUENCEINDEX>(nid - ID_SEQUENCE_ITEM));
 }
 
 
 void COrderList::OnRButtonDown(UINT nFlags, CPoint pt)
-//----------------------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -1151,7 +1118,6 @@ void COrderList::OnRButtonDown(UINT nFlags, CPoint pt)
 
 
 void COrderList::OnLButtonDblClk(UINT, CPoint)
-//--------------------------------------------
 {
 	auto &sndFile = m_pModDoc.GetrSoundFile();
 	m_nScrollPos2nd = ORDERINDEX_INVALID;
@@ -1167,7 +1133,6 @@ void COrderList::OnLButtonDblClk(UINT, CPoint)
 
 
 void COrderList::OnMButtonDown(UINT nFlags, CPoint pt)
-//----------------------------------------------------
 {
 	MPT_UNREFERENCED_PARAMETER(nFlags);
 	QueuePattern(pt);
@@ -1175,7 +1140,6 @@ void COrderList::OnMButtonDown(UINT nFlags, CPoint pt)
 
 
 void COrderList::OnHScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar *)
-//-------------------------------------------------------------------
 {
 	UINT nNewPos = m_nXScroll;
 	UINT smin, smax;
@@ -1205,7 +1169,6 @@ void COrderList::OnHScroll(UINT nSBCode, UINT /*nPos*/, CScrollBar *)
 
 
 void COrderList::OnSize(UINT nType, int cx, int cy)
-//-------------------------------------------------
 {
 	int nPos;
 	int smin, smax;
@@ -1225,7 +1188,6 @@ void COrderList::OnSize(UINT nType, int cx, int cy)
 
 
 void COrderList::OnInsertOrder()
-//------------------------------
 {
 	// insert the same order(s) after the currently selected order(s)
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
@@ -1259,7 +1221,6 @@ void COrderList::OnInsertOrder()
 
 
 void COrderList::OnInsertSeparatorPattern()
-//-----------------------------------------
 {
 	// Insert a separator pattern after the current pattern, don't move order list cursor
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
@@ -1290,7 +1251,6 @@ void COrderList::OnInsertSeparatorPattern()
 
 
 void COrderList::OnRenderOrder()
-//------------------------------
 {
 	OrdSelection selection = GetCurSel(false);
 	m_pModDoc.OnFileMP3Convert(selection.firstOrd, selection.lastOrd);
@@ -1298,7 +1258,6 @@ void COrderList::OnRenderOrder()
 
 
 void COrderList::OnDeleteOrder()
-//------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 	SequenceTransaction tr(sndFile);
@@ -1320,70 +1279,60 @@ void COrderList::OnDeleteOrder()
 
 
 void COrderList::OnPatternProperties()
-//------------------------------------
 {
 	m_pParent.PostViewMessage(VIEWMSG_PATTERNPROPERTIES);
 }
 
 
 void COrderList::OnPlayerPlay()
-//-----------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_PLAYER_PLAY);
 }
 
 
 void COrderList::OnPlayerPause()
-//------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_PLAYER_PAUSE);
 }
 
 
 void COrderList::OnPlayerPlayFromStart()
-//--------------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_PLAYER_PLAYFROMSTART);
 }
 
 
 void COrderList::OnPatternPlayFromStart()
-//---------------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, IDC_PATTERN_PLAYFROMSTART);
 }
 
 
 void COrderList::OnCreateNewPattern()
-//-----------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_ORDERLIST_NEW);
 }
 
 
 void COrderList::OnDuplicatePattern()
-//-----------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_ORDERLIST_COPY);
 }
 
 
 void COrderList::OnPatternCopy()
-//------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_PATTERNCOPY);
 }
 
 
 void COrderList::OnPatternPaste()
-//-------------------------------
 {
 	m_pParent.PostMessage(WM_COMMAND, ID_PATTERNPASTE);
 }
 
 
 void COrderList::OnSetRestartPos()
-//--------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 	SequenceTransaction tr(sndFile);
@@ -1408,14 +1357,12 @@ void COrderList::OnSetRestartPos()
 
 
 LRESULT COrderList::OnHelpHitTest(WPARAM, LPARAM)
-//-----------------------------------------------
 {
 	return HID_BASE_COMMAND + IDC_ORDERLIST;
 }
 
 
 LRESULT COrderList::OnDragonDropping(WPARAM doDrop, LPARAM lParam)
-//-----------------------------------------------------------------
 {
 	const DRAGONDROP *pDropInfo = (const DRAGONDROP *)lParam;
 	ORDERINDEX posdest;
@@ -1462,14 +1409,12 @@ LRESULT COrderList::OnDragonDropping(WPARAM doDrop, LPARAM lParam)
 
 
 ORDERINDEX COrderList::SetMargins(int i)
-//--------------------------------------
 {
 	m_nOrderlistMargins = i;
 	return GetMargins();
 }
 
 void COrderList::SelectSequence(const SEQUENCEINDEX nSeq)
-//-------------------------------------------------------
 {
 	CriticalSection cs;
 
@@ -1510,7 +1455,6 @@ void COrderList::SelectSequence(const SEQUENCEINDEX nSeq)
 
 
 void COrderList::QueuePattern(CPoint pt)
-//--------------------------------------
 {
 	CRect rect;
 	GetClientRect(&rect);
@@ -1551,7 +1495,6 @@ void COrderList::QueuePattern(CPoint pt)
 
 
 void COrderList::OnLockPlayback()
-//-------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 
@@ -1569,7 +1512,6 @@ void COrderList::OnLockPlayback()
 
 
 void COrderList::OnUnlockPlayback()
-//----------------------------------
 {
 	CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 	sndFile.m_lockOrderStart = sndFile.m_lockOrderEnd = ORDERINDEX_INVALID;
@@ -1578,7 +1520,6 @@ void COrderList::OnUnlockPlayback()
 
 
 void COrderList::InsertUpdatePlaystate(ORDERINDEX first, ORDERINDEX last)
-//-----------------------------------------------------------------------
 {
 	auto &sndFile = m_pModDoc.GetrSoundFile();
 	Util::InsertItem(first, last, sndFile.m_PlayState.m_nNextOrder);
@@ -1591,7 +1532,6 @@ void COrderList::InsertUpdatePlaystate(ORDERINDEX first, ORDERINDEX last)
 
 
 void COrderList::DeleteUpdatePlaystate(ORDERINDEX first, ORDERINDEX last)
-//-----------------------------------------------------------------------
 {
 	auto &sndFile = m_pModDoc.GetrSoundFile();
 	Util::DeleteItem(first, last, sndFile.m_PlayState.m_nNextOrder);

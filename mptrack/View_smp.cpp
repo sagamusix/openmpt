@@ -136,7 +136,6 @@ CViewSample::CViewSample()
 	, m_nZoom(0)
 	, m_nBtnMouseOver(0xFFFF)
 	, noteChannel(NOTE_MAX - NOTE_MIN + 1, CHANNELINDEX_INVALID)
-//------------------------
 {
 	for(auto &pos : m_dwNotifyPos)
 	{
@@ -148,7 +147,6 @@ CViewSample::CViewSample()
 
 
 CViewSample::~CViewSample()
-//-------------------------
 {
 	offScreenBitmap.DeleteObject();
 	offScreenDC.DeleteDC();
@@ -156,7 +154,6 @@ CViewSample::~CViewSample()
 
 
 void CViewSample::OnInitialUpdate()
-//---------------------------------
 {
 	CModScrollView::OnInitialUpdate();
 	m_dwBeginSel = m_dwEndSel = 0;
@@ -175,7 +172,6 @@ void CViewSample::OnInitialUpdate()
 
 // updateAll: Update all views including this one. Otherwise, only update update other views.
 void CViewSample::SetModified(SampleHint hint, bool updateAll, bool waveformModified)
-//-----------------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	pModDoc->SetModified();
@@ -192,7 +188,6 @@ void CViewSample::SetModified(SampleHint hint, bool updateAll, bool waveformModi
 
 
 void CViewSample::UpdateScrollSize(int newZoom, bool forceRefresh, SmpLength centeredSample)
-//------------------------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr || (newZoom == m_nZoom && !forceRefresh))
@@ -250,7 +245,6 @@ void CViewSample::UpdateScrollSize(int newZoom, bool forceRefresh, SmpLength cen
 
 // Center given sample in the view
 void CViewSample::ScrollToSample(SmpLength centeredSample, bool refresh)
-//----------------------------------------------------------------------
 {
 	int scrollToSample = centeredSample >> (std::max(1, m_nZoom) - 1);
 	scrollToSample -= (m_rcClient.Width() / 2) >> (-std::min(-1, m_nZoom) - 1);
@@ -263,7 +257,6 @@ void CViewSample::ScrollToSample(SmpLength centeredSample, bool refresh)
 
 
 BOOL CViewSample::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
-//------------------------------------------------------------
 {
 	int xOrig, x;
 
@@ -310,7 +303,6 @@ BOOL CViewSample::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 
 
 BOOL CViewSample::SetCurrentSample(SAMPLEINDEX nSmp)
-//--------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -336,7 +328,6 @@ BOOL CViewSample::SetCurrentSample(SAMPLEINDEX nSmp)
 
 
 void CViewSample::OnSetFocus(CWnd *pOldWnd)
-//-----------------------------------------
 {
 	CScrollView::OnSetFocus(pOldWnd);
 	SetCurrentSample(m_nSample);
@@ -345,7 +336,6 @@ void CViewSample::OnSetFocus(CWnd *pOldWnd)
 
 
 BOOL CViewSample::SetZoom(int nZoom, SmpLength centeredSample)
-//------------------------------------------------------------
 {
 
 	if (nZoom == m_nZoom)
@@ -360,7 +350,6 @@ BOOL CViewSample::SetZoom(int nZoom, SmpLength centeredSample)
 
 
 void CViewSample::SetCurSel(SmpLength nBegin, SmpLength nEnd)
-//-----------------------------------------------------------
 {
 	if(GetDocument() == nullptr)
 		return;
@@ -455,7 +444,6 @@ void CViewSample::SetCurSel(SmpLength nBegin, SmpLength nEnd)
 
 
 int32 CViewSample::SampleToScreen(SmpLength pos) const
-//----------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
@@ -475,7 +463,6 @@ int32 CViewSample::SampleToScreen(SmpLength pos) const
 
 
 SmpLength CViewSample::ScreenToSample(int32 x) const
-//--------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	SmpLength n = 0;
@@ -502,14 +489,12 @@ SmpLength CViewSample::ScreenToSample(int32 x) const
 
 
 void CViewSample::InvalidateSample()
-//----------------------------------
 {
 	InvalidateRect(NULL, FALSE);
 }
 
 
 LRESULT CViewSample::OnModViewMsg(WPARAM wParam, LPARAM lParam)
-//-------------------------------------------------------------
 {
 	switch(wParam)
 	{
@@ -554,7 +539,6 @@ LRESULT CViewSample::OnModViewMsg(WPARAM wParam, LPARAM lParam)
 // CViewSample drawing
 
 void CViewSample::UpdateView(UpdateHint hint, CObject *pObj)
-//----------------------------------------------------------
 {
 	if(pObj == this)
 	{
@@ -586,7 +570,6 @@ void CViewSample::UpdateView(UpdateHint hint, CObject *pObj)
 
 // Draw one channel of sample data, 1:1 ratio or higher (zoomed in)
 void CViewSample::DrawSampleData1(HDC hdc, int ymed, int cx, int cy, SmpLength len, SampleFlags uFlags, const void *pSampleData)
-//------------------------------------------------------------------------------------------------------------------------------
 {
 	int smplsize;
 	int yrange = cy/2;
@@ -656,7 +639,6 @@ void CViewSample::DrawSampleData1(HDC hdc, int ymed, int cx, int cy, SmpLength l
 // AMD MMX/SSE implementation for min/max finder, packs 4*int16 in a 64-bit MMX register.
 // scanlen = How many samples to process on this channel
 static void amdmmxext_or_sse_findminmax16(const void *p, SmpLength scanlen, int channels, int &smin, int &smax)
-//-------------------------------------------------------------------------------------------------------------
 {
 	scanlen *= channels;
 	__m64 minVal = _mm_cvtsi32_si64(smin);
@@ -720,7 +702,6 @@ static void amdmmxext_or_sse_findminmax16(const void *p, SmpLength scanlen, int 
 // AMD MMX/SSE implementation for min/max finder, packs 8*int8 in a 64-bit MMX register.
 // scanlen = How many samples to process on this channel
 static void amdmmxext_or_sse_findminmax8(const void *p, SmpLength scanlen, int channels, int &smin, int &smax)
-//------------------------------------------------------------------------------------------------------------
 {
 	scanlen *= channels;
 
@@ -805,7 +786,6 @@ static void amdmmxext_or_sse_findminmax8(const void *p, SmpLength scanlen, int c
 // SSE2 implementation for min/max finder, packs 8*int16 in a 128-bit XMM register.
 // scanlen = How many samples to process on this channel
 static void sse2_findminmax16(const void *p, SmpLength scanlen, int channels, int &smin, int &smax)
-//-------------------------------------------------------------------------------------------------
 {
 	scanlen *= channels;
 
@@ -868,7 +848,6 @@ static void sse2_findminmax16(const void *p, SmpLength scanlen, int channels, in
 // SSE2 implementation for min/max finder, packs 16*int8 in a 128-bit XMM register.
 // scanlen = How many samples to process on this channel
 static void sse2_findminmax8(const void *p, SmpLength scanlen, int channels, int &smin, int &smax)
-//------------------------------------------------------------------------------------------------
 {
 	scanlen *= channels;
 
@@ -944,7 +923,6 @@ static void sse2_findminmax8(const void *p, SmpLength scanlen, int channels, int
 
 // Draw one channel of zoomed-out sample data
 void CViewSample::DrawSampleData2(HDC hdc, int ymed, int cx, int cy, SmpLength len, SampleFlags uFlags, const void *pSampleData)
-//------------------------------------------------------------------------------------------------------------------------------
 {
 	int oldsmin, oldsmax;
 	int yrange = cy/2;
@@ -1069,7 +1047,6 @@ void CViewSample::DrawSampleData2(HDC hdc, int ymed, int cx, int cy, SmpLength l
 
 
 void CViewSample::OnDraw(CDC *pDC)
-//--------------------------------
 {
 	CRect rcClient = m_rcClient, rect, rc;
 	const CModDoc *pModDoc = GetDocument();
@@ -1232,7 +1209,6 @@ void CViewSample::OnDraw(CDC *pDC)
 
 
 void CViewSample::DrawPositionMarks()
-//-----------------------------------
 {
 	if(GetDocument()->GetrSoundFile().GetSample(m_nSample).pSample == nullptr)
 	{
@@ -1251,7 +1227,6 @@ void CViewSample::DrawPositionMarks()
 
 
 LRESULT CViewSample::OnPlayerNotify(Notification *pnotify)
-//--------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((!pnotify) || (!pModDoc)) return 0;
@@ -1299,7 +1274,6 @@ LRESULT CViewSample::OnPlayerNotify(Notification *pnotify)
 
 
 BOOL CViewSample::GetNcButtonRect(UINT nBtn, LPRECT lpRect)
-//---------------------------------------------------------
 {
 	lpRect->left = 4;
 	lpRect->top = 3;
@@ -1329,7 +1303,6 @@ BOOL CViewSample::GetNcButtonRect(UINT nBtn, LPRECT lpRect)
 
 
 void CViewSample::DrawNcButton(CDC *pDC, UINT nBtn)
-//-------------------------------------------------
 {
 	CRect rect;
 	COLORREF crHi = GetSysColor(COLOR_3DHILIGHT);
@@ -1396,7 +1369,6 @@ void CViewSample::DrawNcButton(CDC *pDC, UINT nBtn)
 
 
 void CViewSample::OnNcPaint()
-//---------------------------
 {
 	RECT rect;
 
@@ -1430,7 +1402,6 @@ void CViewSample::OnNcPaint()
 
 
 void CViewSample::UpdateNcButtonState()
-//-------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	CDC *pDC = NULL;
@@ -1472,7 +1443,6 @@ void CViewSample::UpdateNcButtonState()
 // CViewSample messages
 
 void CViewSample::OnSize(UINT nType, int cx, int cy)
-//--------------------------------------------------
 {
 	CModScrollView::OnSize(nType, cx, cy);
 
@@ -1487,7 +1457,6 @@ void CViewSample::OnSize(UINT nType, int cx, int cy)
 
 
 void CViewSample::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
-//-----------------------------------------------------------------------------
 {
 	CModScrollView::OnNcCalcSize(bCalcValidRects, lpncsp);
 	if (lpncsp)
@@ -1499,7 +1468,6 @@ void CViewSample::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 
 
 void CViewSample::ScrollToPosition(int x)    // logical coordinates
-//---------------------------------------
 {
 	CPoint pt;
 	// now in device coordinates - limit if out of range
@@ -1516,7 +1484,6 @@ void CViewSample::ScrollToPosition(int x)    // logical coordinates
 
 template<class T, class uT>
 T CViewSample::GetSampleValueFromPoint(const ModSample &smp, const CPoint &point) const
-//-------------------------------------------------------------------------------------
 {
 	STATIC_ASSERT(sizeof(T) == sizeof(uT) && sizeof(T) <= 2);
 	const int channelHeight = m_rcClient.Height() / smp.GetNumChannels();
@@ -1530,7 +1497,6 @@ T CViewSample::GetSampleValueFromPoint(const ModSample &smp, const CPoint &point
 
 template<class T, class uT>
 void CViewSample::SetInitialDrawPoint(ModSample &smp, const CPoint &point)
-//------------------------------------------------------------------------
 {
 	m_drawChannel = (point.y - m_rcClient.top) * smp.GetNumChannels() / m_rcClient.Height();
 	Limit(m_drawChannel, 0, (int)smp.GetNumChannels() - 1);
@@ -1542,7 +1508,6 @@ void CViewSample::SetInitialDrawPoint(ModSample &smp, const CPoint &point)
 
 template<class T, class uT>
 void CViewSample::SetSampleData(ModSample &smp, const CPoint &point, const SmpLength old)
-//---------------------------------------------------------------------------------------
 {
 	T *data = static_cast<T *>(smp.pSample) + m_drawChannel + old * smp.GetNumChannels();
 	const int oldvalue = *data;
@@ -1559,7 +1524,6 @@ void CViewSample::SetSampleData(ModSample &smp, const CPoint &point, const SmpLe
 
 
 void CViewSample::OnMouseMove(UINT, CPoint point)
-//-----------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -1676,7 +1640,6 @@ void CViewSample::OnMouseMove(UINT, CPoint point)
 
 
 void CViewSample::OnLButtonDown(UINT, CPoint point)
-//-------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -1730,7 +1693,6 @@ void CViewSample::OnLButtonDown(UINT, CPoint point)
 
 
 void CViewSample::OnLButtonUp(UINT, CPoint)
-//-----------------------------------------
 {
 	if(m_dwStatus[SMPSTATUS_MOUSEDRAG])
 	{
@@ -1742,7 +1704,6 @@ void CViewSample::OnLButtonUp(UINT, CPoint)
 
 
 void CViewSample::OnLButtonDblClk(UINT, CPoint)
-//---------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 
@@ -1755,7 +1716,6 @@ void CViewSample::OnLButtonDblClk(UINT, CPoint)
 
 
 void CViewSample::OnRButtonDown(UINT, CPoint pt)
-//----------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -1876,7 +1836,6 @@ void CViewSample::OnRButtonDown(UINT, CPoint pt)
 
 
 void CViewSample::OnNcMouseMove(UINT nHitTest, CPoint point)
-//----------------------------------------------------------
 {
 	CRect rect, rcWnd;
 	UINT nBtnSel = 0xFFFF;
@@ -1914,7 +1873,6 @@ void CViewSample::OnNcMouseMove(UINT nHitTest, CPoint point)
 
 
 void CViewSample::OnNcLButtonDown(UINT uFlags, CPoint point)
-//----------------------------------------------------------
 {
 	if (m_nBtnMouseOver < SMP_LEFTBAR_BUTTONS)
 	{
@@ -1930,7 +1888,6 @@ void CViewSample::OnNcLButtonDown(UINT uFlags, CPoint point)
 
 
 void CViewSample::OnNcLButtonUp(UINT uFlags, CPoint point)
-//--------------------------------------------------------
 {
 	if(m_dwStatus[SMPSTATUS_NCLBTNDOWN])
 	{
@@ -1942,7 +1899,6 @@ void CViewSample::OnNcLButtonUp(UINT uFlags, CPoint point)
 
 
 void CViewSample::OnNcLButtonDblClk(UINT uFlags, CPoint point)
-//------------------------------------------------------------
 {
 	OnNcLButtonDown(uFlags, point);
 }
@@ -1953,7 +1909,6 @@ LRESULT CViewSample::OnNcHitTest(CPoint point)
 #else
 UINT CViewSample::OnNcHitTest(CPoint point)
 #endif
-//-----------------------------------------
 {
 	CRect rect;
 	GetWindowRect(&rect);
@@ -1967,21 +1922,18 @@ UINT CViewSample::OnNcHitTest(CPoint point)
 
 
 void CViewSample::OnPrevInstrument()
-//----------------------------------
 {
 	SendCtrlMessage(CTRLMSG_SMP_PREVINSTRUMENT);
 }
 
 
 void CViewSample::OnNextInstrument()
-//----------------------------------
 {
 	SendCtrlMessage(CTRLMSG_SMP_NEXTINSTRUMENT);
 }
 
 
 void CViewSample::OnSetLoop()
-//---------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2001,7 +1953,6 @@ void CViewSample::OnSetLoop()
 
 
 void CViewSample::OnSetSustainLoop()
-//----------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2021,7 +1972,6 @@ void CViewSample::OnSetSustainLoop()
 
 
 void CViewSample::OnEditSelectAll()
-//---------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2033,7 +1983,6 @@ void CViewSample::OnEditSelectAll()
 
 
 void CViewSample::OnEditDelete()
-//------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	SampleHint updateHint;
@@ -2068,7 +2017,6 @@ void CViewSample::OnEditDelete()
 
 
 void CViewSample::OnEditCut()
-//---------------------------
 {
 	OnEditCopy();
 	OnEditDelete();
@@ -2076,7 +2024,6 @@ void CViewSample::OnEditCut()
 
 
 void CViewSample::OnEditCopy()
-//----------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if(pMainFrm == nullptr || GetDocument() == nullptr)
@@ -2169,14 +2116,12 @@ void CViewSample::OnEditCopy()
 
 
 void CViewSample::OnEditPaste()
-//-----------------------------
 {
 	DoPaste(kReplace);
 }
 
 
 void CViewSample::OnEditMixPaste()
-//--------------------------------
 {
 	CMixSampleDlg::sampleOffset = m_dwMenuParam;
 	DoPaste(kMixPaste);
@@ -2184,7 +2129,6 @@ void CViewSample::OnEditMixPaste()
 
 
 void CViewSample::OnEditInsertPaste()
-//-----------------------------------
 {
 	if(m_dwBeginSel <= m_dwEndSel)
 		m_dwBeginSel = m_dwEndSel = m_dwBeginDrag = m_dwEndDrag = m_dwMenuParam;
@@ -2194,7 +2138,6 @@ void CViewSample::OnEditInsertPaste()
 
 template<typename Tdst, typename Tsrc>
 static void MixSampleLoop(SmpLength numSamples, const Tsrc *src, uint8 srcInc, int srcFact, Tdst *dst, uint8 dstInc)
-//------------------------------------------------------------------------------------------------------------------
 {
 	SC::Convert<Tdst, Tsrc> conv;
 	while(numSamples--)
@@ -2207,7 +2150,6 @@ static void MixSampleLoop(SmpLength numSamples, const Tsrc *src, uint8 srcInc, i
 
 
 static void MixSample(const ModSample &sample, SmpLength offset, int amplify, uint8 chn, uint8 newNumChannels, int16 *pNewSample)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
 	uint8 numChannels = sample.GetNumChannels();
 	switch(sample.GetElementarySampleSize())
@@ -2225,7 +2167,6 @@ static void MixSample(const ModSample &sample, SmpLength offset, int amplify, ui
 
 
 void CViewSample::DoPaste(PasteMode pasteMode)
-//--------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	BeginWaitCursor();
@@ -2386,7 +2327,6 @@ void CViewSample::DoPaste(PasteMode pasteMode)
 
 
 void CViewSample::OnEditUndo()
-//----------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -2398,7 +2338,6 @@ void CViewSample::OnEditUndo()
 
 
 void CViewSample::OnEditRedo()
-//----------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -2410,7 +2349,6 @@ void CViewSample::OnEditRedo()
 
 
 void CViewSample::On8BitConvert()
-//-------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	BeginWaitCursor();
@@ -2436,7 +2374,6 @@ void CViewSample::On8BitConvert()
 
 
 void CViewSample::On16BitConvert()
-//--------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	BeginWaitCursor();
@@ -2463,7 +2400,6 @@ void CViewSample::On16BitConvert()
 
 
 void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
-//----------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	BeginWaitCursor();
@@ -2537,7 +2473,6 @@ void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
 
 
 void CViewSample::TrimSample(bool trimToLoopEnd)
-//----------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	//nothing loaded or invalid sample slot.
@@ -2591,13 +2526,11 @@ void CViewSample::TrimSample(bool trimToLoopEnd)
 
 
 void CViewSample::OnChar(UINT /*nChar*/, UINT, UINT /*nFlags*/)
-//-------------------------------------------------------------
 {
 }
 
 
 void CViewSample::PlayNote(ModCommand::NOTE note, const SmpLength nStartPos, int volume)
-//--------------------------------------------------------------------------------------
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	CModDoc *pModDoc = GetDocument();
@@ -2639,7 +2572,6 @@ void CViewSample::PlayNote(ModCommand::NOTE note, const SmpLength nStartPos, int
 
 
 void CViewSample::NoteOff(ModCommand::NOTE note)
-//----------------------------------------------
 {
 	CSoundFile &sndFile = GetDocument()->GetrSoundFile();
 	ModChannel &chn = sndFile.m_PlayState.Chn[noteChannel[note - NOTE_MIN]];
@@ -2651,7 +2583,6 @@ void CViewSample::NoteOff(ModCommand::NOTE note)
 
 // Drop files from Windows
 void CViewSample::OnDropFiles(HDROP hDropInfo)
-//--------------------------------------------
 {
 	const UINT nFiles = ::DragQueryFileW(hDropInfo, (UINT)-1, NULL, 0);
 	CMainFrame::GetMainFrame()->SetForegroundWindow();
@@ -2674,7 +2605,6 @@ void CViewSample::OnDropFiles(HDROP hDropInfo)
 
 
 BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
-//------------------------------------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	BOOL bCanDrop = FALSE, bUpdate;
@@ -2800,7 +2730,6 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 
 
 void CViewSample::OnZoomOnSel()
-//-----------------------------
 {
 	int zoom = 0;
 	SmpLength selLength = (m_dwEndSel - m_dwBeginSel);
@@ -2829,7 +2758,6 @@ void CViewSample::OnZoomOnSel()
 
 
 SmpLength CViewSample::ScrollPosToSamplePos(int nZoom) const
-//----------------------------------------------------------
 {
 	if(nZoom < 0)
 		return m_nScrollPosX;
@@ -2841,7 +2769,6 @@ SmpLength CViewSample::ScrollPosToSamplePos(int nZoom) const
 
 
 void CViewSample::OnSetLoopStart()
-//--------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2861,7 +2788,6 @@ void CViewSample::OnSetLoopStart()
 
 
 void CViewSample::OnSetLoopEnd()
-//------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2880,7 +2806,6 @@ void CViewSample::OnSetLoopEnd()
 
 
 void CViewSample::OnSetSustainStart()
-//-----------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2900,7 +2825,6 @@ void CViewSample::OnSetSustainStart()
 
 
 void CViewSample::OnSetSustainEnd()
-//---------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
@@ -2919,7 +2843,6 @@ void CViewSample::OnSetSustainEnd()
 
 
 void CViewSample::OnSetCuePoint(UINT nID)
-//---------------------------------------
 {
 	nID -= ID_SAMPLE_CUE_1;
 	CModDoc *pModDoc = GetDocument();
@@ -2937,21 +2860,18 @@ void CViewSample::OnSetCuePoint(UINT nID)
 
 
 void CViewSample::OnZoomUp()
-//--------------------------
 {
 	DoZoom(1);
 }
 
 
 void CViewSample::OnZoomDown()
-//----------------------------
 {
 	DoZoom(-1);
 }
 
 
 void CViewSample::OnDrawingToggle()
-//---------------------------------
 {
 	const CModDoc *pModDoc = GetDocument();
 	if(!pModDoc) return;
@@ -2973,7 +2893,6 @@ void CViewSample::OnDrawingToggle()
 
 
 void CViewSample::OnAddSilence()
-//------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if (!pModDoc) return;
@@ -3043,7 +2962,6 @@ void CViewSample::OnAddSilence()
 }
 
 LRESULT CViewSample::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
-//------------------------------------------------------------
 {
 	const DWORD dwMidiData = dwMidiDataParam;
 	static BYTE midivolume = 127;
@@ -3101,7 +3019,6 @@ LRESULT CViewSample::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 }
 
 BOOL CViewSample::PreTranslateMessage(MSG *pMsg)
-//-----------------------------------------------
 {
 	if (pMsg)
 	{
@@ -3135,7 +3052,6 @@ BOOL CViewSample::PreTranslateMessage(MSG *pMsg)
 }
 
 LRESULT CViewSample::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
-//---------------------------------------------------------------
 {
 	if (wParam == kcNull)
 		return NULL;
@@ -3276,7 +3192,6 @@ LRESULT CViewSample::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 
 
 void CViewSample::OnSampleSlice()
-//-------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
@@ -3344,7 +3259,6 @@ void CViewSample::OnSampleSlice()
 
 
 bool CViewSample::CanZoomSelection() const
-//----------------------------------------
 {
 	return GetZoomLevel(m_dwEndSel - m_dwBeginSel) <= MAX_ZOOM;
 }
@@ -3353,7 +3267,6 @@ bool CViewSample::CanZoomSelection() const
 // Returns auto-zoom level compared to other zoom levels.
 // Result is not limited to MIN_ZOOM...MAX_ZOOM range.
 int CViewSample::GetZoomLevel(SmpLength length) const
-//---------------------------------------------------
 {
 	if (m_rcClient.Width() == 0 || length == 0)
 		return MAX_ZOOM + 1;
@@ -3371,7 +3284,6 @@ int CViewSample::GetZoomLevel(SmpLength length) const
 
 
 void CViewSample::DoZoom(int direction, const CPoint &zoomPoint)
-//--------------------------------------------------------------
 {
 	const CSoundFile &sndFile = GetDocument()->GetrSoundFile();
 	// zoomOrder: Biggest to smallest zoom order.
@@ -3421,7 +3333,6 @@ void CViewSample::DoZoom(int direction, const CPoint &zoomPoint)
 
 
 BOOL CViewSample::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
-//------------------------------------------------------------------
 {
 	// Ctrl + mouse wheel: zoom control.
 	// One scroll direction zooms in and the other zooms out.
@@ -3438,7 +3349,6 @@ BOOL CViewSample::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 
 void CViewSample::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
-//--------------------------------------------------------------------
 {
 	if(nButton == XBUTTON1) OnPrevInstrument();
 	else if(nButton == XBUTTON2) OnNextInstrument();
@@ -3447,7 +3357,6 @@ void CViewSample::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
 
 
 void CViewSample::OnChangeGridSize()
-//----------------------------------
 {
 	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetrSoundFile().GetSample(m_nSample).nLength);
 	if(dlg.DoModal() == IDOK)
@@ -3459,7 +3368,6 @@ void CViewSample::OnChangeGridSize()
 
 
 void CViewSample::OnUpdateUndo(CCmdUI *pCmdUI)
-//--------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((pCmdUI) && (pModDoc))
@@ -3471,7 +3379,6 @@ void CViewSample::OnUpdateUndo(CCmdUI *pCmdUI)
 
 
 void CViewSample::OnUpdateRedo(CCmdUI *pCmdUI)
-//--------------------------------------------
 {
 	CModDoc *pModDoc = GetDocument();
 	if ((pCmdUI) && (pModDoc))
