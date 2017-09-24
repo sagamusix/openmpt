@@ -3389,7 +3389,7 @@ void CModDoc::SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, u
 
 COLORREF CModDoc::GetUserColor(uint32 user) const
 {
-	double hue = user * (1.5 * M_PI) / (Networking::MAX_CLIENTS - 1);	// Three quarters of the colour wheel, red to purple
+	double hue = ((user * 23) % 64) * (1.5 * M_PI) / (Networking::MAX_CLIENTS - 1);	// Three quarters of the colour wheel, red to purple
 	double rc = 1.2 * (1 + 0.3 * (std::cos(hue) - 1));
 	double gc = 1.2 * (1 + 0.3 * (std::cos(hue - 2.09439) - 1));
 	double bc = 1.2 * (1 + 0.3 * (std::cos(hue + 2.09439) - 1));

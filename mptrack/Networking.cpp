@@ -396,7 +396,15 @@ NetworkedDocument CollabServer::GetDocument(CModDoc &modDoc) const
 void CollabServer::CloseDocument(CModDoc &modDoc)
 {
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	// TODO: Close connections for all clients that belong to this document
+	auto doc = m_documents.find(&modDoc);
+	if(doc == m_documents.end())
+	{
+		// TODO: Close connections for all clients that belong to this document
+		for(auto &conn : doc->second.m_connections)
+		{
+			//conn->Write();
+		}
+	}
 	m_documents.erase(&modDoc);
 }
 
@@ -627,6 +635,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Update edit pos of this client
 				Networking::SetCursorPosMsg msg;
 				inArchive >> msg;
+				//source->m_editPos = msg;
 				// Send back to clients
 				ar(source->m_id);
 				ar(msg);

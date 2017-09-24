@@ -51,6 +51,7 @@ public:
 	mpt::ustring m_userName;
 	uint32 m_origSize;
 	std::promise<std::string> m_promise;
+	//SetCursorPosMsg m_editPos;
 	const uint32 m_id;
 	static uint32 m_nextId;
 
