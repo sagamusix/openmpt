@@ -29,6 +29,8 @@ namespace Networking
 const int DEFAULT_PORT = 44100;
 const int MAX_CLIENTS = 64;
 
+typedef uint32 ClientID;
+
 class IOService
 {
 public:
@@ -51,9 +53,8 @@ public:
 	mpt::ustring m_userName;
 	uint32 m_origSize;
 	std::promise<std::string> m_promise;
-	//SetCursorPosMsg m_editPos;
-	const uint32 m_id;
-	static uint32 m_nextId;
+	const ClientID m_id;
+	static ClientID m_nextId;
 
 public:
 	CollabConnection(std::shared_ptr<Listener> listener);

@@ -2262,7 +2262,6 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 
 
 void CMainFrame::OnNetworking()
-//-----------------------------
 {
 	Networking::NetworkingDlg::Show(this);
 }
@@ -2762,7 +2761,6 @@ void CMainFrame::UpdateMRUList()
 
 
 LRESULT CMainFrame::OnUpdateAllViews(WPARAM wParam, LPARAM lParam)
-//----------------------------------------------------------------
 {
 	// TODO: As this is called from PostMessage, verify that CModDoc is still valid?
 	reinterpret_cast<CModDoc *>(wParam)->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(lParam));

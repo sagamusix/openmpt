@@ -3097,7 +3097,6 @@ void CModDoc::DeserializeViews()
 
 
 void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &inMsg)
-//--------------------------------------------------------------------------------------------
 {
 	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
@@ -3200,7 +3199,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SequenceHint(msg.seq).Names().Data();
 	} else if(type == Networking::EditPosMsg)
 	{
-		uint32 id;
+		Networking::ClientID id;
 		Networking::SetCursorPosMsg msg;
 		inArchive >> id;
 		inArchive >> msg;

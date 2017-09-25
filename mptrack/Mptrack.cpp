@@ -1908,7 +1908,7 @@ void CFastBitmap::SetColor(UINT nIndex, COLORREF cr)
 }
 
 
-void CFastBitmap::SetAllColors(UINT nBaseIndex, UINT nColors, COLORREF *pcr)
+void CFastBitmap::SetAllColors(UINT nBaseIndex, UINT nColors, const COLORREF *pcr)
 {
 	for (UINT i=0; i<nColors; i++)
 	{

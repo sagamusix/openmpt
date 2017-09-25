@@ -91,35 +91,30 @@ static BYTE hilightcolor(int c0, int c1)
 	return (BYTE)((c0*cf0+c1*cf1)>>8);
 }
 
+static COLORREF mixcolor(COLORREF c0, COLORREF c1)
+{
+	return RGB(
+		hilightcolor(GetRValue(c0), GetRValue(c1)),
+		hilightcolor(GetGValue(c0), GetGValue(c1)),
+		hilightcolor(GetBValue(c0), GetBValue(c1)));
+}
+
 
 void CViewPattern::UpdateColors()
 {
-	BYTE r,g,b;
+	const auto &colors = TrackerSettings::Instance().rgbCustomColors;
+	m_Dib.SetAllColors(0, MAX_MODCOLORS, colors);
 
-	m_Dib.SetAllColors(0, MAX_MODCOLORS, TrackerSettings::Instance().rgbCustomColors);
-
-	r = hilightcolor(GetRValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKHILIGHT]),
-		GetRValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	g = hilightcolor(GetGValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKHILIGHT]),
-		GetGValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	b = hilightcolor(GetBValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKHILIGHT]),
-		GetBValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	m_Dib.SetColor(MODCOLOR_2NDHIGHLIGHT, RGB(r,g,b));
-
-	r = hilightcolor(GetRValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_VOLUME]),
-					GetRValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	g = hilightcolor(GetGValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_VOLUME]),
-					GetGValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	b = hilightcolor(GetBValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_VOLUME]),
-					GetBValue(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKNORMAL]));
-	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, RGB(r,g,b));
+	m_Dib.SetColor(MODCOLOR_2NDHIGHLIGHT, mixcolor(colors[MODCOLOR_BACKHILIGHT], colors[MODCOLOR_BACKNORMAL]));
+	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, mixcolor(colors[MODCOLOR_VOLUME], colors[MODCOLOR_BACKNORMAL]));
 
 	// Collaborator colours
 	// TODO: Mix with background color?
 	STATIC_ASSERT(MAX_MODPALETTECOLORS + Networking::MAX_CLIENTS <= 128);
 	for(int i = 0; i < Networking::MAX_CLIENTS; i++)
 	{
-		m_Dib.SetColor(MAX_MODPALETTECOLORS + i, GetDocument()->GetUserColor(i));
+		//m_Dib.SetColor(MAX_MODPALETTECOLORS + i, GetDocument()->GetUserColor(i));
+		m_Dib.SetColor(MAX_MODPALETTECOLORS + i, mixcolor(GetDocument()->GetUserColor(i), colors[MODCOLOR_BACKNORMAL]));
 	}
 
 	m_Dib.SetBlendColor(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BLENDCOLOR]);
@@ -981,7 +976,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					bk_col = MODCOLOR_BACKSELECTED;
 				} else if(collab_sel & COLUMN_BITS_NOTE)
 				{
-					tx_col = MODCOLOR_TEXTSELECTED;
+					tx_col = MODCOLOR_TEXTNORMAL;
 					bk_col = selectedColsCollabColor[col][0];
 				}
 				// Drawing note
@@ -1009,7 +1004,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						bk_col = MODCOLOR_BACKSELECTED;
 					} else if(collab_sel & COLUMN_BITS_INSTRUMENT)
 					{
-						tx_col = MODCOLOR_TEXTSELECTED;
+						tx_col = MODCOLOR_TEXTNORMAL;
 						bk_col = selectedColsCollabColor[col][1];
 					}
 					// Drawing instrument
@@ -1031,7 +1026,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						bk_col = MODCOLOR_BACKSELECTED;
 					} else if(collab_sel & COLUMN_BITS_VOLUME)
 					{
-						tx_col = MODCOLOR_TEXTSELECTED;
+						tx_col = MODCOLOR_TEXTNORMAL;
 						bk_col = selectedColsCollabColor[col][2];
 					} else if(!m->IsPcNote() && (TrackerSettings::Instance().m_dwPatternSetup & PATTERN_EFFECTHILIGHT))
 					{
@@ -1071,7 +1066,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						bk_col = MODCOLOR_BACKSELECTED;
 					} else if(collab_sel & COLUMN_BITS_FXCMD)
 					{
-						tx_col = MODCOLOR_TEXTSELECTED;
+						tx_col = MODCOLOR_TEXTNORMAL;
 						bk_col = selectedColsCollabColor[col][3];
 					}
 
@@ -1107,7 +1102,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						bk_col = MODCOLOR_BACKSELECTED;
 					} else if(collab_sel & COLUMN_BITS_FXPARAM)
 					{
-						tx_col = MODCOLOR_TEXTSELECTED;
+						tx_col = MODCOLOR_TEXTNORMAL;
 						bk_col = selectedColsCollabColor[col][4];
 					}
 

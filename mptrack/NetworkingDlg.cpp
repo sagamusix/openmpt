@@ -200,6 +200,16 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	std::string title;
 	inArchive >> title;
 	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
+	uint32 numPositions;
+	inArchive >> numPositions;
+	for(uint32 i = 0; i < numPositions; i++)
+	{
+		ClientID id;
+		SetCursorPosMsg msg;
+		inArchive >> id;
+		inArchive >> msg;
+		modDoc->m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
+	}
 	// TODO Tunings and samples
 	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
 	if(pChildFrm != nullptr)

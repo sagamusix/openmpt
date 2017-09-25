@@ -419,7 +419,7 @@ public:
 	void SetTextColor(int nText, int nBk=-1) { m_nTextColor = nText; if (nBk >= 0) m_nBkColor = nBk; }
 	void SetTextBkColor(UINT nBk) { m_nBkColor = nBk; }
 	void SetColor(UINT nIndex, COLORREF cr);
-	void SetAllColors(UINT nBaseIndex, UINT nColors, COLORREF *pcr);
+	void SetAllColors(UINT nBaseIndex, UINT nColors, const COLORREF *pcr);
 	void TextBlt(int x, int y, int cx, int cy, int srcx, int srcy, MODPLUGDIB *lpdib = nullptr);
 	void SetBlendMode(bool enable) { m_nBlendOffset = enable ? BLEND_OFFSET : 0; }
 	bool GetBlendMode() const { return m_nBlendOffset != 0; }

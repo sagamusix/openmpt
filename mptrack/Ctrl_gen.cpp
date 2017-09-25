@@ -688,7 +688,6 @@ void CCtrlGeneral::OnResamplingChanged()
 
 
 void CCtrlGeneral::OnCollaborate()
-//--------------------------------
 {
 	Networking::SharingDlg dlg(this, m_modDoc);
 	dlg.DoModal();

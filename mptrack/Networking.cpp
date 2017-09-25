@@ -61,7 +61,7 @@ void IOService::Run()
 }
 
 
-uint32 CollabConnection::m_nextId = 0;
+ClientID CollabConnection::m_nextId = 0;
 
 CollabConnection::CollabConnection(std::shared_ptr<Listener> listener)
 	: m_listener(listener)
@@ -402,7 +402,10 @@ void CollabServer::CloseDocument(CModDoc &modDoc)
 		// TODO: Close connections for all clients that belong to this document
 		for(auto &conn : doc->second.m_connections)
 		{
-			//conn->Write();
+			std::ostringstream sso;
+			cereal::BinaryOutputArchive ar(sso);
+			ar(QuitMsg);
+			conn->Write(sso.str());
 		}
 	}
 	m_documents.erase(&modDoc);
@@ -430,6 +433,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 {
 	cereal::BinaryInputArchive inArchive(inMsg);
 	NetworkMessage type;
+
 	inArchive >> type;
 	Log(std::string(type.type, 4).c_str());
 
@@ -479,6 +483,16 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					doc.m_collaborators++;
 					source->m_modDoc = modDoc;
 					source->m_userName = mpt::ToUnicode(mpt::CharsetUTF8, join.userName);
+
+					uint32 numPositions = modDoc->m_collabEditPositions.size();
+					ar(numPositions);
+					for(const auto &editPos : modDoc->m_collabEditPositions)
+					{
+						//ar(EditPosMsg);
+						ar(editPos.first);
+						SetCursorPosMsg msg{ editPos.second.sequence, editPos.second.order, editPos.second.pattern, editPos.second.row, editPos.second.channel, editPos.second.column };
+						ar(msg);
+					}
 				} else
 				{
 					ar(NoMoreClientsMsg);

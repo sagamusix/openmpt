@@ -70,6 +70,8 @@ const NetworkMessage InsertPatternMsg("INPA");
 const NetworkMessage InsertSampleMsg("INSA");
 const NetworkMessage InsertInstrumentMsg("ININ");
 
+const NetworkMessage QuitMsg("QUIT");
+
 struct DocumentInfo
 {
 	std::string name;
