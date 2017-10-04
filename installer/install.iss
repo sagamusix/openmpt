@@ -146,11 +146,15 @@ Type: files; Name: {app}\ModPlug Central.url
 Type: dirifempty; Name: {userappdata}\OpenMPT\Autosave; Tasks: not portable
 Type: dirifempty; Name: {userappdata}\OpenMPT\TemplateModules; Tasks: not portable
 Type: dirifempty; Name: {userappdata}\OpenMPT\tunings; Tasks: not portable
+Type: dirifempty; Name: {userappdata}\OpenMPT\Components\{#PlatformArchitecture}; Tasks: not portable
+Type: dirifempty; Name: {userappdata}\OpenMPT\Components; Tasks: not portable
 Type: dirifempty; Name: {userappdata}\OpenMPT; Tasks: not portable
 ; portable installation
 Type: dirifempty; Name: {app}\Autosave; Tasks: portable
 Type: dirifempty; Name: {app}\TemplateModules; Tasks: portable
 Type: dirifempty; Name: {app}\tunings; Tasks: portable
+Type: dirifempty; Name: {userappdata}\OpenMPT\Components\{#PlatformArchitecture}; Tasks: portable
+Type: dirifempty; Name: {userappdata}\OpenMPT\Components; Tasks: portable
 
 #include "utilities.iss"
 
@@ -238,7 +242,7 @@ begin
         // Check if installing on Wine 1.8 or later
         WineVersion := IsWine();
         IsModernSystem := ((WineVersion <> nil) and (CompareStr(AnsiString(WineVersion), '1.8') >= 0));
-#if PlatformName = "32-Bit"
+#if PlatformName == "32-Bit"
         BitnessPage.Add('32-Bit, for Wine 1.8 or newer and CPU with SSE2 instruction set');
         BitnessPage.Add('32-Bit, for Wine 1.6 or CPU without SSE2 instruction set');
 #else
@@ -248,7 +252,7 @@ begin
     except
         // Installing on Windows 7 or later
         IsModernSystem := (GetWindowsVersion >= $06010000);
-#if PlatformName = "32-Bit"
+#if PlatformName == "32-Bit"
         BitnessPage.Add('32-Bit, for Windows 7 or newer and CPU with SSE2 instruction set');
         BitnessPage.Add('32-Bit, for Windows XP / Vista or CPU without SSE2 instruction set');
 #else

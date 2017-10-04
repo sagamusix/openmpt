@@ -14,6 +14,10 @@ call build\auto\helper_get_svnversion.cmd
 call build\auto\helper_get_openmpt_version.cmd
 
 set MPT_REVISION=%LIBOPENMPT_VERSION_STRING%+%SVNVERSION%
+if "x%LIBOPENMPT_VERSION_PREREL%" == "x" (
+	set MPT_REVISION=%LIBOPENMPT_VERSION_STRING%+release
+)
+
 
 set MPT_PKG_FORMAT=%5
 if "%MPT_PKG_FORMAT%" == "" set MPT_PKG_FORMAT=zip
@@ -154,6 +158,7 @@ copy /y ..\..\libopenmpt\libopenmpt.h inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt.hpp inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt_config.h inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt_version.h inc\libopenmpt\ || goto error
+copy /y ..\..\libopenmpt\libopenmpt_ext.h inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt_ext.hpp inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt_stream_callbacks_buffer.h inc\libopenmpt\ || goto error
 copy /y ..\..\libopenmpt\libopenmpt_stream_callbacks_fd.h inc\libopenmpt\ || goto error
@@ -178,6 +183,7 @@ copy /y ..\..\bin\release\%MPT_VS_VER%-shared\x86-64-%MPT_BIN_TARGET64%\openmpt-
  inc\libopenmpt\libopenmpt.hpp ^
  inc\libopenmpt\libopenmpt_config.h ^
  inc\libopenmpt\libopenmpt_version.h ^
+ inc\libopenmpt\libopenmpt_ext.h ^
  inc\libopenmpt\libopenmpt_ext.hpp ^
  inc\libopenmpt\libopenmpt_stream_callbacks_buffer.h ^
  inc\libopenmpt\libopenmpt_stream_callbacks_fd.h ^
