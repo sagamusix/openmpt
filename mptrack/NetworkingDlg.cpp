@@ -121,7 +121,7 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 		JoinMsg join;
 		join.id = doc->id;
 		join.userName = mpt::ToCharset(mpt::CharsetUTF8, TrackerSettings::Instance().defaultArtist);
-		join.accessType = 0;	// Collaborator
+		join.accessType = JoinMsg::ACCESS_COLLABORATOR;
 		join.password = "";
 		if(doc->password)
 		{
@@ -220,6 +220,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
 	m_List.DeleteAllItems();
+	modDoc->m_chatDlg = new Networking::ChatDlg(*modDoc);
 	OnOK();
 	return 0;
 }
@@ -261,7 +262,7 @@ void SharingDlg::OnOK()
 	GetDlgItemText(IDC_EDIT3, password);
 	if(collabServer == nullptr)
 	{
-		VLDEnable();
+//		VLDEnable();
 		collabServer = std::make_shared<Networking::CollabServer>();
 		collabServer->StartAccept();
 	}
@@ -271,6 +272,10 @@ void SharingDlg::OnOK()
 	if(newConnection)
 	{
 		m_ModDoc.m_collabClient = newConnection;
+	}
+	if(m_ModDoc.m_chatDlg == nullptr)
+	{
+		m_ModDoc.m_chatDlg = new Networking::ChatDlg(m_ModDoc);
 	}
 }
 
@@ -288,12 +293,40 @@ void ChatDlg::DoDataExchange(CDataExchange* pDX)
 ChatDlg::ChatDlg(CModDoc &modDoc)
 	: m_ModDoc(modDoc)
 {
+	Create(IDD_NETWORKCHAT, CMainFrame::GetMainFrame());
+	ShowWindow(SW_SHOW);
+}
+
+
+ChatDlg::~ChatDlg()
+{
+	DestroyWindow();
 }
 
 
 void ChatDlg::OnOK()
 {
 	// Send message
+	CString message;
+	m_Input.GetWindowText(message);
+	mpt::ustring umessage = mpt::ToUnicode(message);
+	if(auto client = m_ModDoc.m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(ChatMsg);
+		ar(umessage);
+		client->Write(ss.str());
+		m_Input.SetWindowText(_T(""));
+	}
+}
+
+
+void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring message)
+{
+	auto len = m_History.GetWindowTextLength();
+	m_History.SetSel(len, len);
+	m_History.ReplaceSel(mpt::ToCString(MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ") + message + MPT_ULITERAL("\r\n")));
 }
 
 

@@ -70,6 +70,8 @@ const NetworkMessage InsertPatternMsg("INPA");
 const NetworkMessage InsertSampleMsg("INSA");
 const NetworkMessage InsertInstrumentMsg("ININ");
 
+const NetworkMessage ChatMsg("CHAT");
+
 const NetworkMessage QuitMsg("QUIT");
 
 struct DocumentInfo
@@ -105,6 +107,9 @@ struct WelcomeMsg
 
 struct JoinMsg
 {
+	static const uint32 ACCESS_COLLABORATOR = 0;
+	static const uint32 ACCESS_SPECTATOR = 1;
+
 	uint64 id;
 	std::string userName;
 	std::string password;

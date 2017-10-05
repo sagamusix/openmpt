@@ -73,6 +73,9 @@ class ChatDlg : public CDialog
 
 public:
 	ChatDlg(CModDoc &modDoc);
+	~ChatDlg();
+
+	void AddMessage(const mpt::ustring &sender, const mpt::ustring message);
 
 protected:
 	void DoDataExchange(CDataExchange* pDX) override;

@@ -471,7 +471,11 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			auto &doc = m_documents.at(modDoc);
 			if(mpt::ToUnicode(mpt::CharsetUTF8, join.password) == doc.m_password)
 			{
-				if(doc.m_collaborators < doc.m_maxCollaborators)
+				bool isCollaborator = join.accessType == JoinMsg::ACCESS_COLLABORATOR;
+				int &current = isCollaborator ? doc.m_collaborators : doc.m_spectators;
+				int &maximum = isCollaborator ? doc.m_maxCollaborators : doc.m_maxSpectators;
+
+				if(current < maximum)
 				{
 					CSoundFile &sndFile = modDoc->GetrSoundFile();
 					sndFile.SaveMixPlugins();
@@ -480,9 +484,10 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()));
 					//m_connections.push_back(source);
 					doc.m_connections.push_back(source);
-					doc.m_collaborators++;
+					current++;
 					source->m_modDoc = modDoc;
 					source->m_userName = mpt::ToUnicode(mpt::CharsetUTF8, join.userName);
+					source->m_accessType = join.accessType;
 
 					uint32 numPositions = modDoc->m_collabEditPositions.size();
 					ar(numPositions);
@@ -506,10 +511,9 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			ar(DocNotFoundMsg);
 		}
 		source->Write(sso.str());
-	} else
+	} else if(source->m_accessType == JoinMsg::ACCESS_COLLABORATOR)
 	{
 		// Document operation
-		// TODO: Check here if the source is a collaborator or spectator?
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
@@ -714,6 +718,18 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Notify the blocked caller
 				ar(std::move(retVal));
 				source->Write(sso.str());
+			} else if(type == ChatMsg)
+			{
+				mpt::ustring message;
+				inArchive >> message;
+				// Send back to all clients
+				ar(source->m_userName);
+				ar(message);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
 			}
 		}
 	}
@@ -779,6 +795,7 @@ void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::string
 LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
 	: CollabClient(modDoc.m_listener, std::make_shared<LocalCollabConnection>(modDoc.m_listener))
 {
+	m_connection->m_accessType = JoinMsg::ACCESS_COLLABORATOR;
 	m_connection->m_modDoc = &modDoc;
 }
 
