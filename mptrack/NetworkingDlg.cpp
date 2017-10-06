@@ -44,8 +44,10 @@ void NetworkingDlg::Show(CWnd *parent)
 
 BEGIN_MESSAGE_MAP(NetworkingDlg, CDialog)
 	//{{AFX_MSG_MAP(NetworkingDlg)
+	ON_COMMAND(IDC_BUTTON1, OnJoinCollaborator)
 	ON_COMMAND(IDC_BUTTON2,	OnConnect)
-	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, OnSelectDocument)
+	ON_COMMAND(IDC_BUTTON3, OnJoinSpectator)
+	ON_NOTIFY(NM_CLICK, IDC_LIST1, OnSelectDocument)
 	ON_MESSAGE(WM_USER + 100, OnOpenDocument)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -57,6 +59,8 @@ void NetworkingDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(NetworkingDlg)
 	DDX_Control(pDX, IDC_LIST1, m_List);
+	DDX_Control(pDX, IDC_BUTTON1, m_ButtonCollaborator);
+	DDX_Control(pDX, IDC_BUTTON3, m_ButtonSpectator);
 	//}}AFX_DATA_MAP
 }
 
@@ -83,6 +87,9 @@ BOOL NetworkingDlg::OnInitDialog()
 	};
 	m_List.SetHeaders(headers);
 	m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+
+	m_ButtonCollaborator.EnableWindow(FALSE);
+	m_ButtonSpectator.EnableWindow(FALSE);
 
 	return TRUE;
 }
@@ -113,15 +120,25 @@ void NetworkingDlg::OnConnect()
 void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	int item = reinterpret_cast<NM_LISTVIEW *>(pNMHDR)->iItem;
-	if(item < 0)
+	m_ButtonCollaborator.EnableWindow(item < 0 ? FALSE : TRUE);
+	m_ButtonSpectator.EnableWindow(item < 0 ? FALSE : TRUE);
+	m_selectedItem = item;
+	*pResult = 0;
+}
+
+
+void NetworkingDlg::Join(bool collaborator)
+{
+	int item = m_selectedItem;
+	if(item >= m_List.GetItemCount())
 		return;
-	DocumentInfo *doc = reinterpret_cast<DocumentInfo *>(m_List.GetItemData(item));
+	auto doc = reinterpret_cast<const DocumentInfo *>(m_List.GetItemData(item));
 	if(doc != nullptr)
 	{
 		JoinMsg join;
 		join.id = doc->id;
 		join.userName = mpt::ToCharset(mpt::CharsetUTF8, TrackerSettings::Instance().defaultArtist);
-		join.accessType = JoinMsg::ACCESS_COLLABORATOR;
+		join.accessType = collaborator ? JoinMsg::ACCESS_COLLABORATOR : JoinMsg::ACCESS_SPECTATOR;
 		join.password = "";
 		if(doc->password)
 		{
@@ -137,7 +154,6 @@ void NetworkingDlg::OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult)
 		ar(join);
 		m_client->Write(ss.str());
 	}
-	*pResult = 0;
 }
 
 
@@ -157,6 +173,8 @@ void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream
 			return;
 		}
 
+		m_ButtonCollaborator.EnableWindow(FALSE);
+		m_ButtonSpectator.EnableWindow(FALSE);
 		m_List.SetRedraw(FALSE);
 		m_List.DeleteAllItems();
 		m_docs = std::move(welcome.documents);

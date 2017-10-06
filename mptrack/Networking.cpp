@@ -511,6 +511,23 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			ar(DocNotFoundMsg);
 		}
 		source->Write(sso.str());
+	} else if(type == ChatMsg)
+	{
+		auto *modDoc = source->m_modDoc;
+		if(m_documents.count(modDoc))
+		{
+			ar(type);
+			mpt::ustring message;
+			inArchive >> message;
+			// Send back to all clients
+			ar(source->m_userName);
+			ar(message);
+			const std::string s = sso.str();
+			for(auto &c : m_documents.at(modDoc).m_connections)
+			{
+				c->Write(s);
+			}
+		}
 	} else if(source->m_accessType == JoinMsg::ACCESS_COLLABORATOR)
 	{
 		// Document operation
@@ -718,18 +735,6 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Notify the blocked caller
 				ar(std::move(retVal));
 				source->Write(sso.str());
-			} else if(type == ChatMsg)
-			{
-				mpt::ustring message;
-				inArchive >> message;
-				// Send back to all clients
-				ar(source->m_userName);
-				ar(message);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
 			}
 		}
 	}

@@ -25,8 +25,10 @@ namespace Networking
 class NetworkingDlg : public CDialog, public Listener
 {
 	CListCtrlEx m_List;
+	CButton m_ButtonCollaborator, m_ButtonSpectator;
 	std::vector<DocumentInfo> m_docs;
 	std::shared_ptr<RemoteCollabClient> m_client;
+	int m_selectedItem = 0;
 
 public:
 	static void Show(CWnd *parent);
@@ -39,9 +41,12 @@ protected:
 	//}}AFX_VIRTUAL
 
 	afx_msg void OnConnect();
+	afx_msg void OnJoinCollaborator() { Join(true); }
+	afx_msg void OnJoinSpectator() { Join(false); }
 	afx_msg void OnSelectDocument(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg LRESULT OnOpenDocument(WPARAM wParam, LPARAM lParam);
 
+	void Join(bool collaborator);
 	void Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg) override;
 
 	DECLARE_MESSAGE_MAP()
