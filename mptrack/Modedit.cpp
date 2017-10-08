@@ -593,6 +593,7 @@ bool CModDoc::ConvertSamplesToInstruments()
 	m_SndFile.m_nInstruments = std::min(m_SndFile.GetNumSamples(), instrumentMax);
 	for(SAMPLEINDEX smp = 1; smp <= m_SndFile.m_nInstruments; smp++)
 	{
+		InstrumentTransaction tr(m_SndFile, smp);
 		const bool muted = IsSampleMuted(smp);
 		MuteSample(smp, false);
 
@@ -758,9 +759,21 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 		}
 		if (result == cnfYes)
 		{
-			if(!ConvertSamplesToInstruments())
+			if(m_collabClient)
 			{
-				return INSTRUMENTINDEX_INVALID;
+				std::ostringstream ss;
+				cereal::BinaryOutputArchive ar(ss);
+				ar(Networking::ConvertInstrumentsMsg);
+				if(!ConvertStrTo<bool>(m_collabClient->WriteWithResult(ss.str())))
+				{
+					return INSTRUMENTINDEX_INVALID;
+				}
+			} else
+			{
+				if(!ConvertSamplesToInstruments())
+				{
+					return INSTRUMENTINDEX_INVALID;
+				}
 			}
 		}
 	}

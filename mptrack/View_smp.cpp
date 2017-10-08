@@ -2914,6 +2914,8 @@ void CViewSample::OnAddSilence()
 
 	BeginWaitCursor();
 
+	SampleDataTransaction trD(sndFile, m_nSample);
+	SamplePropertyTransaction trP(sndFile, m_nSample);
 	if(sample.nLength == 0 && sample.nVolume == 0)
 	{
 		sample.nVolume = 256;

@@ -69,6 +69,7 @@ const NetworkMessage ReturnValTransactionMsg("RETV");
 const NetworkMessage InsertPatternMsg("INPA");
 const NetworkMessage InsertSampleMsg("INSA");
 const NetworkMessage InsertInstrumentMsg("ININ");
+const NetworkMessage ConvertInstrumentsMsg("CNVI");
 
 const NetworkMessage ChatMsg("CHAT");
 

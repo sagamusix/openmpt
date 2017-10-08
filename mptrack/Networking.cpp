@@ -12,6 +12,7 @@
 #include "Networking.h"
 #include "NetworkTypes.h"
 #include "Moddoc.h"
+#include "Mainfrm.h"
 #include "TrackerSettings.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include "AudioCriticalSection.h"
@@ -731,6 +732,10 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						}
 					}
 					retVal = mpt::ToString(ins);
+				} else if(retType == ConvertInstrumentsMsg)
+				{
+					retVal = mpt::ToString(modDoc->ConvertSamplesToInstruments());
+					CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(&modDoc), UpdateHint().ModType().AsLPARAM());
 				}
 				// Notify the blocked caller
 				ar(std::move(retVal));
@@ -814,6 +819,8 @@ void LocalCollabClient::Write(const std::string &msg)
 
 std::string LocalCollabClient::WriteWithResult(const std::string &msg)
 {
+	m_connection->m_promise = std::promise<std::string>();
+
 	std::stringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
 	ar(ReturnValTransactionMsg);
