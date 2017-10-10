@@ -3292,4 +3292,12 @@ COLORREF CModDoc::GetUserColor(uint32 user) const
 }
 
 
+uint32 CModDoc::GetCollabUserID() const
+{
+	if(m_collabClient)
+		return m_collabClient->GetConnection()->m_id;
+	return 0;
+}
+
+
 OPENMPT_NAMESPACE_END

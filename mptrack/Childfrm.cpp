@@ -313,7 +313,6 @@ LRESULT CChildFrame::SendViewMessage(UINT uMsg, LPARAM lParam) const
 
 
 LRESULT CChildFrame::ActivateView(UINT nId, LPARAM lParam)
-//--------------------------------------------------------
 {
 	return ::SendMessage(m_hWndCtrl, WM_MOD_ACTIVATEVIEW, nId, lParam);
 }

@@ -145,10 +145,16 @@ public:
 	{
 		uint32 sequence, order, pattern, row, channel, column;
 	};
+	struct NetworkAnnotationPos
+	{
+		uint32 pattern, row, channel, column, id;
+	};
 	std::map<uint32 /*Networking::ClientID*/, NetworkCursorPos> m_collabEditPositions;
+	std::map<NetworkAnnotationPos, mpt::ustring> m_collabAnnotations;
 	Networking::ChatDlg *m_chatDlg;
 	void SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, uint32 chn, uint32 col);
 	COLORREF GetUserColor(uint32 user) const;
+	/*Networking::ClientID*/ uint32 GetCollabUserID() const;
 
 protected: // create from serialization only
 	CModDoc();

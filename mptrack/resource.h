@@ -1068,6 +1068,7 @@
 #define ID_PATTERN_SHRINK               32870
 #define ID_HELP_SEARCH                  32871
 #define ID_MODTREE_SHOWDIRS             32872
+#define ID_ADD_ANNOTATION               32873
 #define ID_PATTERNCOPY                  32874
 #define ID_PATTERNPASTE                 32875
 #define ID_NETLINK_MODPLUG              32876

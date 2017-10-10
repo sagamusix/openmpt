@@ -423,6 +423,7 @@ protected:
 	afx_msg void OnTogglePCNotePluginEditor();
 	afx_msg void OnSetQuantize();
 	afx_msg void OnLockPatternRows();
+	afx_msg void OnAddAnnotation();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

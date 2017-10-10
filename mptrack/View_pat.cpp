@@ -126,6 +126,7 @@ BEGIN_MESSAGE_MAP(CViewPattern, CModScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO,			OnUpdateUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO,			OnUpdateRedo)
 	ON_COMMAND_RANGE(ID_PLUGSELECT, ID_PLUGSELECT+MAX_MIXPLUGINS, OnSelectPlugin) //rewbs.patPlugName
+	ON_COMMAND(ID_ADD_ANNOTATION,				OnAddAnnotation)
 
 
 	//}}AFX_MSG_MAP
@@ -1472,6 +1473,11 @@ void CViewPattern::OnRButtonDown(UINT flags, CPoint pt)
 				s.Append(_T("Settings..."));
 			}
 			AppendMenu(hMenu, MF_STRING | (TrackerSettings::Instance().recordQuantizeRows != 0 ? MF_CHECKED : 0), ID_SETQUANTIZE, ih->GetKeyTextFromCommand(kcQuantizeSettings, s));
+		}
+
+		if(pModDoc->m_collabClient)
+		{
+			AppendMenu(hMenu, MF_STRING, ID_ADD_ANNOTATION, _T("Add Ann&otation"));
 		}
 
 		ClientToScreen(&pt);
@@ -6659,6 +6665,20 @@ void CViewPattern::ApplyToSelection(Func func)
 		{
 			func(*m, row, chn);
 		}
+	}
+}
+
+
+void CViewPattern::OnAddAnnotation()
+{
+	CModDoc *modDoc = GetDocument();
+	CModDoc::NetworkAnnotationPos pos{ GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()), modDoc->GetCollabUserID() };
+	mpt::ustring currentAnnotation = modDoc->m_collabAnnotations[pos];
+
+	CInputDlg dlg(this, _T("Annotation text:"), mpt::ToCString(currentAnnotation));
+	if(dlg.DoModal() && modDoc->m_collabClient)
+	{
+
 	}
 }
 
