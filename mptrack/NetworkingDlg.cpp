@@ -228,15 +228,15 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		inArchive >> msg;
 		modDoc->m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
 	}
-	// TODO Tunings and samples
+	m_client->SetListener(modDoc->m_listener);
+	modDoc->m_collabClient = std::move(m_client);
+	// TODO Tunings
 	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
 	if(pChildFrm != nullptr)
 	{
 		pTemplate->InitialUpdateFrame(pChildFrm, modDoc);
 	}
 	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
-	m_client->SetListener(modDoc->m_listener);
-	modDoc->m_collabClient = std::move(m_client);
 	m_List.DeleteAllItems();
 	modDoc->m_chatDlg = new Networking::ChatDlg(*modDoc);
 	OnOK();

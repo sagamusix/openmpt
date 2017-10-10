@@ -112,6 +112,8 @@ BOOL CCtrlGeneral::OnInitDialog()
 	UpdateView(GeneralHint().ModType());
 	OnActivatePage(0);
 	m_bInitialized = TRUE;
+
+	GetDlgItem(IDC_BUTTON2)->EnableWindow(std::dynamic_pointer_cast<Networking::RemoteCollabClient>(m_modDoc.m_collabClient) == nullptr ? TRUE : FALSE);
 	
 	return FALSE;
 }
