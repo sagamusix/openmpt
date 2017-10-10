@@ -148,6 +148,11 @@ public:
 	struct NetworkAnnotationPos
 	{
 		uint32 pattern, row, channel, column, id;
+
+		bool operator<(const NetworkAnnotationPos &r) const
+		{
+			return std::tie(pattern, row, channel, column, id) < std::tie(r.pattern, r.row, r.channel, r.column, r.id);
+		}
 	};
 	std::map<uint32 /*Networking::ClientID*/, NetworkCursorPos> m_collabEditPositions;
 	std::map<NetworkAnnotationPos, mpt::ustring> m_collabAnnotations;
