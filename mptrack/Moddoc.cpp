@@ -3259,6 +3259,12 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			inArchive >> message;
 			m_chatDlg->AddMessage(from, message);
 		}
+	} else if(type == Networking::SendAnnotationMsg)
+	{
+		Networking::AnnotationMsg msg;
+		inArchive >> msg;
+		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
+		m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

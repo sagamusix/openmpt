@@ -32,6 +32,7 @@
 #include "../soundlib/plugins/PlugInterface.h"
 #include <algorithm>
 #include "PatternTransaction.h"
+#include "NetworkAnnotation.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -6671,15 +6672,11 @@ void CViewPattern::ApplyToSelection(Func func)
 
 void CViewPattern::OnAddAnnotation()
 {
-	CModDoc *modDoc = GetDocument();
-	CModDoc::NetworkAnnotationPos pos{ GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()), modDoc->GetCollabUserID() };
-	mpt::ustring currentAnnotation = modDoc->m_collabAnnotations[pos];
-
-	CInputDlg dlg(this, _T("Annotation text:"), mpt::ToCString(currentAnnotation));
-	if(dlg.DoModal() && modDoc->m_collabClient)
+	if(m_annotation == nullptr)
 	{
-
+		m_annotation = mpt::make_unique<Networking::AnnotationEditor>(this, *GetDocument());
 	}
+	m_annotation->Show(GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()));
 }
 
 

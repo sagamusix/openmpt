@@ -95,6 +95,7 @@
 #define IDD_SHAREMODULE                 505
 #define IDD_NETWORKING                  506
 #define IDD_CONTROL_GRAPH               507
+#define IDD_ANNOTATION                  508
 #define IDD_SCALE_ENV_POINTS            510
 #define IDD_TUNING                      511
 #define IDD_UPDATE                      512

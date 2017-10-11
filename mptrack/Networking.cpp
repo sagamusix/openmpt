@@ -483,20 +483,25 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(ConnectOKMsg);
 					ar(sndFile);
 					ar(mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()));
-					//m_connections.push_back(source);
 					doc.m_connections.push_back(source);
 					current++;
 					source->m_modDoc = modDoc;
 					source->m_userName = mpt::ToUnicode(mpt::CharsetUTF8, join.userName);
 					source->m_accessType = join.accessType;
 
-					uint32 numPositions = modDoc->m_collabEditPositions.size();
+					uint32 numPositions = mpt::saturate_cast<uint32>(modDoc->m_collabEditPositions.size());
 					ar(numPositions);
 					for(const auto &editPos : modDoc->m_collabEditPositions)
 					{
-						//ar(EditPosMsg);
 						ar(editPos.first);
 						SetCursorPosMsg msg{ editPos.second.sequence, editPos.second.order, editPos.second.pattern, editPos.second.row, editPos.second.channel, editPos.second.column };
+						ar(msg);
+					}
+					uint32 numAnnotations = mpt::saturate_cast<uint32>(modDoc->m_collabAnnotations.size());
+					ar(numAnnotations);
+					for(const auto &anno : modDoc->m_collabAnnotations)
+					{
+						AnnotationMsg msg{ anno.first.pattern, anno.first.row, anno.first.channel, anno.first.column, mpt::ToCharset(mpt::CharsetUTF8, anno.second) };
 						ar(msg);
 					}
 				} else
@@ -675,6 +680,18 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Send back to clients
 				ar(source->m_id);
 				ar(msg);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
+			} else if(type == SendAnnotationMsg)
+			{
+				Networking::AnnotationMsg msg;
+				inArchive >> msg;
+				// Send back to clients
+				ar(msg);
+
 				const std::string s = sso.str();
 				for(auto &c : doc.m_connections)
 				{

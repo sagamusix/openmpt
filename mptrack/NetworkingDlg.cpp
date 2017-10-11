@@ -228,6 +228,15 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		inArchive >> msg;
 		modDoc->m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
 	}
+	uint32 numAnnotations;
+	inArchive >> numAnnotations;
+	for(uint32 i = 0; i < numAnnotations; i++)
+	{
+		AnnotationMsg msg;
+		inArchive >> msg;
+		CModDoc::NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
+		modDoc->m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
+	}
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
 	// TODO Tunings

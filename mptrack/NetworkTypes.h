@@ -71,6 +71,8 @@ const NetworkMessage InsertSampleMsg("INSA");
 const NetworkMessage InsertInstrumentMsg("ININ");
 const NetworkMessage ConvertInstrumentsMsg("CNVI");
 
+const NetworkMessage SendAnnotationMsg("ANNO");
+
 const NetworkMessage ChatMsg("CHAT");
 
 const NetworkMessage QuitMsg("QUIT");
@@ -252,6 +254,18 @@ struct PluginEditMsg
 	void serialize(Archive &archive)
 	{
 		archive(plugin, params, chunk);
+	}
+};
+
+struct AnnotationMsg
+{
+	uint32 pattern, row, channel, column;
+	std::string message;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(pattern, row, channel, column, message);
 	}
 };
 

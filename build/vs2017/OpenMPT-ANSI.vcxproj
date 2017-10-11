@@ -776,6 +776,7 @@
     <ClInclude Include="..\..\mptrack\MoveFXSlotDialog.h" />
     <ClInclude Include="..\..\mptrack\Mpdlgs.h" />
     <ClInclude Include="..\..\mptrack\Mptrack.h" />
+    <ClInclude Include="..\..\mptrack\NetworkAnnotation.h" />
     <ClInclude Include="..\..\mptrack\NetworkListener.h" />
     <ClInclude Include="..\..\mptrack\NetworkTypes.h" />
     <ClInclude Include="..\..\mptrack\Networking.h" />
@@ -1009,6 +1010,7 @@
     <ClCompile Include="..\..\mptrack\Mpdlgs.cpp" />
     <ClCompile Include="..\..\mptrack\Mpt_midi.cpp" />
     <ClCompile Include="..\..\mptrack\Mptrack.cpp" />
+    <ClCompile Include="..\..\mptrack\NetworkAnnotation.cpp" />
     <ClCompile Include="..\..\mptrack\NetworkTypes.cpp" />
     <ClCompile Include="..\..\mptrack\Networking.cpp" />
     <ClCompile Include="..\..\mptrack\NetworkingDlg.cpp" />

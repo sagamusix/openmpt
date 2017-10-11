@@ -20,6 +20,7 @@ class CModDoc;
 class CEditCommand;
 class CEffectVis;
 class CInputHandler;
+namespace Networking { class AnnotationEditor; }
 
 // Drag & Drop info
 #define DRAGITEM_VALUEMASK		0x00FFFFFF
@@ -180,6 +181,8 @@ protected:
 
 public:
 	CEffectVis *m_pEffectVis;	//rewbs.fxVis
+
+	std::unique_ptr<Networking::AnnotationEditor> m_annotation;
 
 	CViewPattern();
 	~CViewPattern();
