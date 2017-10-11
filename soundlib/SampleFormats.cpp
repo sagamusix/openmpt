@@ -408,7 +408,7 @@ bool CSoundFile::ReadWAVSample(SAMPLEINDEX nSample, FileReader &file, bool mayNo
 	sample.Initialize();
 	sample.nLength = wavFile.GetSampleLength();
 	sample.nC5Speed = wavFile.GetSampleRate();
-	wavFile.ApplySampleSettings(sample, m_szNames[nSample]);
+	wavFile.ApplySampleSettings(sample, GetCharsetInternal(), m_szNames[nSample]);
 
 	FileReader sampleChunk = wavFile.GetSampleData();
 
@@ -539,8 +539,8 @@ bool CSoundFile::SaveWAVSample(SAMPLEINDEX nSample, const mpt::PathString &filen
 	}
 
 	FileTags tags;
+	tags.SetEncoder();
 	tags.title = mpt::ToUnicode(GetCharsetInternal(), m_szNames[nSample]);
-	tags.encoder = mpt::ToUnicode(mpt::CharsetUTF8, MptVersion::GetOpenMPTVersionStr());
 	file.WriteMetatags(tags);
 
 	return true;
@@ -2208,7 +2208,7 @@ bool CSoundFile::ReadAUSample(SAMPLEINDEX nSample, FileReader &file, bool mayNor
 
 	FileTags tags;
 
-	// This reads annotation metadata as written by sox or ffmpeg.
+	// This reads annotation metadata as written by OpenMPT, sox, ffmpeg.
 	// Additionally, we fall back to just reading the whole field as a single comment.
 	file.Seek(24);
 	std::vector<mpt::byte> annotationData;

@@ -387,6 +387,9 @@
     <ClInclude Include="..\..\mptrack\StreamEncoder.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\StreamEncoderAU.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\StreamEncoderFLAC.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -1062,6 +1065,9 @@
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\StreamEncoder.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\StreamEncoderAU.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\StreamEncoderFLAC.cpp">
