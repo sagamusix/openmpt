@@ -220,8 +220,8 @@ public:
 	void SanitizeCursor();
 
 	UINT GetColumnOffset(PatternCursor::Columns column) const;
-	POINT GetPointFromPosition(PatternCursor cursor);
-	PatternCursor GetPositionFromPoint(POINT pt);
+	POINT GetPointFromPosition(PatternCursor cursor) const;
+	PatternCursor GetPositionFromPoint(POINT pt) const;
 
 	DWORD GetDragItem(CPoint point, RECT &rect);
 
@@ -330,6 +330,7 @@ public:
 	void UpdateView(UpdateHint hint, CObject *pObj = nullptr) override;
 	LRESULT OnModViewMsg(WPARAM, LPARAM) override;
 	LRESULT OnPlayerNotify(Notification *) override;
+	INT_PTR OnToolHitTest(CPoint point, TOOLINFO *pTI) const override;
 	//}}AFX_VIRTUAL
 
 protected:
@@ -427,6 +428,7 @@ protected:
 	afx_msg void OnSetQuantize();
 	afx_msg void OnLockPatternRows();
 	afx_msg void OnAddAnnotation();
+	afx_msg BOOL OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

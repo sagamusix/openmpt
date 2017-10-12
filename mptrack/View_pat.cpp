@@ -127,8 +127,9 @@ BEGIN_MESSAGE_MAP(CViewPattern, CModScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO,			OnUpdateUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO,			OnUpdateRedo)
 	ON_COMMAND_RANGE(ID_PLUGSELECT, ID_PLUGSELECT+MAX_MIXPLUGINS, OnSelectPlugin) //rewbs.patPlugName
-	ON_COMMAND(ID_ADD_ANNOTATION,				OnAddAnnotation)
-
+	
+	ON_COMMAND(ID_ADD_ANNOTATION,	OnAddAnnotation)
+	ON_NOTIFY_EX(TTN_NEEDTEXT, 0,	OnToolTipText)
 
 	//}}AFX_MSG_MAP
 	ON_WM_INITMENU()
@@ -174,6 +175,7 @@ CViewPattern::~CViewPattern()
 void CViewPattern::OnInitialUpdate()
 {
 	CModScrollView::OnInitialUpdate();
+	EnableToolTips();
 	MemsetZero(ChnVUMeters);
 	MemsetZero(OldVUMeters);
 	memset(previousNote, NOTE_NONE, sizeof(previousNote));
@@ -6677,6 +6679,73 @@ void CViewPattern::OnAddAnnotation()
 		m_annotation = mpt::make_unique<Networking::AnnotationEditor>(this, *GetDocument());
 	}
 	m_annotation->Show(GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()));
+}
+
+
+INT_PTR CViewPattern::OnToolHitTest(CPoint point, TOOLINFO *pTI) const
+{
+	if(point.x >= m_szHeader.cx && point.y >= m_szHeader.cy)
+	{
+		//PatternCursor c = GetPositionFromPoint(point);
+		pTI->hwnd = m_hWnd;
+		pTI->uId = point.x + (point.y << (sizeof(pTI->uId) * 4));
+		CRect rect;
+		GetClientRect(rect);
+		pTI->rect = rect;
+		pTI->lpszText = LPSTR_TEXTCALLBACK;
+		return pTI->uId;
+	}
+	return 0;
+}
+
+
+BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
+{
+	TOOLTIPTEXT *pTTT = (TOOLTIPTEXT *)pNMHDR;
+	CString text;
+	UINT_PTR nID = pNMHDR->idFrom;
+	if(!(pTTT->uFlags & TTF_IDISHWND))
+	{
+		int x = nID & ((1 << (sizeof(nID) * 4)) - 1);
+		int y = nID >> (sizeof(nID) * 4);
+		if(x >= m_szHeader.cx && y >= m_szHeader.cy)
+		{
+			const CModDoc &modDoc = *GetDocument();
+			const CSoundFile &sndFile = modDoc.GetrSoundFile();
+			PatternCursor c = GetPositionFromPoint(CPoint(x, y));
+			for(auto &editPos : modDoc.m_collabEditPositions)
+			{
+				const auto &pos = editPos.second;
+				if(pos.sequence == sndFile.Order.GetCurrentSequenceIndex()
+					&& pos.order == GetCurrentOrder()
+					&& pos.pattern == GetCurrentPattern()
+					&& pos.row == c.GetRow()
+					&& pos.channel == c.GetChannel()
+					&& pos.column == static_cast<uint32>(c.GetColumnType()))
+				{
+					text.AppendFormat(_T("%d is editing here\r\n"), editPos.first);
+				}
+			}
+			for(auto &annoPos : modDoc.m_collabAnnotations)
+			{
+				const auto &pos = annoPos.first;
+				if(pos.pattern == GetCurrentPattern()
+					&& pos.row == c.GetRow()
+					&& pos.channel == c.GetChannel()
+					&& pos.column == static_cast<uint32>(c.GetColumnType()))
+				{
+					text += mpt::ToCString(annoPos.second);
+				}
+			}
+			if(!text.IsEmpty())
+			{
+				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
+				mpt::CopyCStringToBuffer(pTTT->szText, text);
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 
