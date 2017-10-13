@@ -23,7 +23,7 @@ AnnotationEditor::AnnotationEditor(CWnd *parent, CModDoc &modDoc)
 }
 
 
-void AnnotationEditor::Show(PATTERNINDEX pat, ROWINDEX row, CHANNELINDEX chn, uint32 column)
+void AnnotationEditor::Show(CPoint position, PATTERNINDEX pat, ROWINDEX row, CHANNELINDEX chn, uint32 column)
 {
 	m_pattern = pat;
 	m_row = row;
@@ -32,6 +32,12 @@ void AnnotationEditor::Show(PATTERNINDEX pat, ROWINDEX row, CHANNELINDEX chn, ui
 
 	CModDoc::NetworkAnnotationPos pos{ m_pattern, m_row, m_channel, m_column };
 	SetDlgItemText(IDC_EDIT1, mpt::ToCString(m_modDoc.m_collabAnnotations[pos]));
+	
+	// Center window around annotated point
+	CRect rect;
+	GetWindowRect(rect);
+	rect.MoveToXY(position.x - rect.Width() / 2, position.y - rect.Height() / 2);
+	MoveWindow(rect);
 
 	ShowWindow(SW_SHOW);
 }

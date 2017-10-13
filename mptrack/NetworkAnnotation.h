@@ -16,7 +16,7 @@ class AnnotationEditor : public CDialog
 
 public:
 	AnnotationEditor(CWnd *parent, CModDoc &modDoc);
-	void Show(PATTERNINDEX pat, ROWINDEX row, CHANNELINDEX chn, uint32 column);
+	void Show(CPoint position, PATTERNINDEX pat, ROWINDEX row, CHANNELINDEX chn, uint32 column);
 
 protected:
 	afx_msg void OnActivate(UINT nState, CWnd *pWndOther, BOOL bMinimized);

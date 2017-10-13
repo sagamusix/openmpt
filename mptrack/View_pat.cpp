@@ -6678,7 +6678,9 @@ void CViewPattern::OnAddAnnotation()
 	{
 		m_annotation = mpt::make_unique<Networking::AnnotationEditor>(this, *GetDocument());
 	}
-	m_annotation->Show(GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()));
+	CPoint pt = GetPointFromPosition(m_Cursor);
+	ClientToScreen(&pt);
+	m_annotation->Show(pt, GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()));
 }
 
 
