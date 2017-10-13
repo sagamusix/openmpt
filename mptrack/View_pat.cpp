@@ -6695,7 +6695,7 @@ INT_PTR CViewPattern::OnToolHitTest(CPoint point, TOOLINFO *pTI) const
 		pTI->lpszText = LPSTR_TEXTCALLBACK;
 		return pTI->uId;
 	}
-	return 0;
+	return -1;
 }
 
 
@@ -6721,9 +6721,11 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 					&& pos.pattern == GetCurrentPattern()
 					&& pos.row == c.GetRow()
 					&& pos.channel == c.GetChannel()
-					&& pos.column == static_cast<uint32>(c.GetColumnType()))
+					&& pos.column == static_cast<uint32>(c.GetColumnType())
+					&& modDoc.m_collabNames.count(editPos.first))
 				{
-					text.AppendFormat(_T("%d is editing here\r\n"), editPos.first);
+					text += mpt::ToCString(modDoc.m_collabNames.at(editPos.first)) + _T(" is editing here\r\n");
+					//text.AppendFormat(_T("%d is editing here\r\n"), editPos.first);
 				}
 			}
 			for(auto &annoPos : modDoc.m_collabAnnotations)

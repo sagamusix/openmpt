@@ -156,6 +156,7 @@ public:
 	};
 	std::map<uint32 /*Networking::ClientID*/, NetworkCursorPos> m_collabEditPositions;
 	std::map<NetworkAnnotationPos, mpt::ustring> m_collabAnnotations;
+	std::map<uint32 /*Networking::ClientID*/, mpt::ustring> m_collabNames;
 	Networking::ChatDlg *m_chatDlg;
 	void SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, uint32 chn, uint32 col);
 	COLORREF GetUserColor(uint32 user) const;

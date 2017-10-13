@@ -291,7 +291,6 @@ void RemoteCollabConnection::Close()
 void RemoteCollabConnection::WriteImpl()
 {
 	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
-#if 1
 	const Message &message = that->m_outMessages.front();
 	asio::async_write(m_socket, asio::buffer(message.msg.data() + message.written, std::min(size_t(8192), message.remain)),
 		m_strand.wrap([that](std::error_code error, const size_t written)
@@ -317,32 +316,6 @@ void RemoteCollabConnection::WriteImpl()
 			that->WriteImpl();
 		}
 	}));
-#else
-	m_strand.dispatch([that]()
-	{
-		while(!that->m_outMessages.empty())
-		{
-			const std::string &message = that->m_outMessages.front();
-
-			std::error_code error;
-			size_t remain = message.size(), pos = 0;
-			while(remain)
-			{
-				size_t toWrite = std::min(remain, size_t(8192));
-				auto written = asio::write(that->m_socket, asio::buffer(message.data() + pos, toWrite), error);
-				remain -= written;
-				pos += written;
-				Log("Remains to write: %d / %d", remain, message.size());
-				if(error)
-				{
-					std::cerr << "Write Error: " << std::system_error(error).what() << std::endl;
-					return;
-				}
-			}
-			that->m_outMessages.pop_front();
-		}
-	});
-#endif
 }
 
 
@@ -504,6 +477,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						AnnotationMsg msg{ anno.first.pattern, anno.first.row, anno.first.channel, anno.first.column, mpt::ToCharset(mpt::CharsetUTF8, anno.second) };
 						ar(msg);
 					}
+					// TODO send names
 				} else
 				{
 					ar(NoMoreClientsMsg);
