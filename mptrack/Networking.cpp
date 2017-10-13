@@ -477,7 +477,26 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						AnnotationMsg msg{ anno.first.pattern, anno.first.row, anno.first.channel, anno.first.column, mpt::ToCharset(mpt::CharsetUTF8, anno.second) };
 						ar(msg);
 					}
-					// TODO send names
+					uint32 numNames = mpt::saturate_cast<uint32>(doc.m_connections.size());
+					ar(numNames);
+					for(const auto &conn : doc.m_connections)
+					{
+						ar(conn->m_id);
+						ar(conn->m_userName);
+					}
+
+					{
+						std::ostringstream ssoj;
+						cereal::BinaryOutputArchive arj(ssoj);
+						arj(UserJoinedMsg);
+						arj(source->m_id);
+						arj(source->m_userName);
+						const std::string s = ssoj.str();
+						for(auto &c : doc.m_connections)
+						{
+							c->Write(s);
+						}
+					}
 				} else
 				{
 					ar(NoMoreClientsMsg);

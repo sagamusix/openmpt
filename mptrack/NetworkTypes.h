@@ -50,6 +50,9 @@ const NetworkMessage DocNotFoundMsg("404!");
 const NetworkMessage WrongPasswordMsg("403!");
 const NetworkMessage NoMoreClientsMsg("FULL");
 
+const NetworkMessage UserJoinedMsg("USRJ");
+const NetworkMessage UserQuitMsg("USRQ");
+
 const NetworkMessage EnvelopeTransactionMsg("ENTR");
 const NetworkMessage InstrumentTransactionMsg("INTR");
 
