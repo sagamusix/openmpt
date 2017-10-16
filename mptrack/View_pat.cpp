@@ -6704,7 +6704,7 @@ INT_PTR CViewPattern::OnToolHitTest(CPoint point, TOOLINFO *pTI) const
 BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 {
 	TOOLTIPTEXT *pTTT = (TOOLTIPTEXT *)pNMHDR;
-	CString text;
+	mpt::winstring text;
 	UINT_PTR nID = pNMHDR->idFrom;
 	if(!(pTTT->uFlags & TTF_IDISHWND))
 	{
@@ -6726,8 +6726,7 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 					&& pos.column == static_cast<uint32>(c.GetColumnType())
 					&& modDoc.m_collabNames.count(editPos.first))
 				{
-					text += mpt::ToCString(modDoc.m_collabNames.at(editPos.first)) + _T(" is editing here\r\n");
-					//text.AppendFormat(_T("%d is editing here\r\n"), editPos.first);
+					text += mpt::ToWin(modDoc.m_collabNames.at(editPos.first)) + _T(" is editing here\r\n");
 				}
 			}
 			for(auto &annoPos : modDoc.m_collabAnnotations)
@@ -6738,13 +6737,13 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 					&& pos.channel == c.GetChannel()
 					&& pos.column == static_cast<uint32>(c.GetColumnType()))
 				{
-					text += mpt::ToCString(annoPos.second);
+					text += mpt::ToWin(annoPos.second);
 				}
 			}
-			if(!text.IsEmpty())
+			if(!text.empty())
 			{
 				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
-				mpt::WinStringBuf(pTTT->szText) = mpt::ToWin(text);
+				mpt::WinStringBuf(pTTT->szText) = text;
 				return TRUE;
 			}
 		}
