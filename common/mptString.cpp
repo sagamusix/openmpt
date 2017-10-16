@@ -72,6 +72,10 @@ List of string types
     UTF16 (on windows) or UTF32 (otherwise). Do not use unless there is an
     obvious reason to do so.
 
+ *  mpt::lstring (OpenMPT)
+    OpenMPT locale string type. The encoding is always CP_ACP. Do not use unless
+    there is an obvious reason to do so.
+
  *  char* (OpenMPT, libopenmpt)
     C string of unspecified encoding. Use only for static literals or in
     performance critical inner loops where full control and avoidance of memory
@@ -82,6 +86,10 @@ List of string types
     performance critical inner loops where full control and avoidance of memory
     allocation is required.
 
+ *  mpt::winstring (OpenMPT)
+    OpenMPT type-safe string to interface with native WinAPI, either encoded in
+    locale/CP_ACP (if !UNICODE) or UTF16 (if UNICODE).
+
  *  CString (OpenMPT)
     MFC string type, either encoded in locale/CP_ACP (if !UNICODE) or UTF16 (if
     UNICODE). Specify literals with _T(""). Use in MFC GUI code.
@@ -91,8 +99,8 @@ List of string types
     is an obvious reason to do so.
 
  *  CStringW (OpenMPT)
-    MFC Unicode string type. Use in MFC GUI code when explicit Unicode support
-    is required.
+    MFC Unicode string type. Do not use unless there is an obvious reason to do
+    so.
 
  *  mpt::PathString (OpenMPT, libopenmpt)
     String type representing paths and filenames. Always use for these in order
@@ -215,23 +223,15 @@ else
   else
    T = mpt::PathString
   fi
+ elif winapi interfacing code
+  T = mpt::winstring
  elif mfc/gui code
-  if directly interface with wide winapi
-   T = CStringW
-  elif needs unicode support
-   T = CStringW
-  else
-   T = CString
-  fi
+  T = CString
  else
-  if directly interfacing with wide winapi
-   T = std::wstring
+  if constexpr context or global data
+   T = MPT_UCHAR_TYPE* / MPT_ULITERAL
   else
-   if constexpr context or global data
-    T = MPT_UCHAR_TYPE* / MPT_ULITERAL
-   else
-    T = mpt::ustring
-	 fi
+   T = mpt::ustring
   fi
  fi
 fi
@@ -293,10 +293,10 @@ when converting between different Unicode encodings.
 Interfacing with WinAPI
 -----------------------
 
-When in MFC code, use CString or CStringW as appropriate.
-When in non MFC code, either use std::wstring when directly interfacing with the
-Unicode API, or use the TCHAR helper functions: ToTcharBuf, FromTcharBuf,
-ToTcharStr, FromTcharStr.
+When in MFC code, use CString.
+When in non MFC code, either use std::wstring when directly interfacing with
+APIs only available in WCHAR variants, or use mpt::winstring and
+mpt::WinStringBuf helpers otherwise.
 
 
 
@@ -1425,6 +1425,12 @@ std::wstring ToWide(Charset from, const std::string &str)
 {
 	return String::DecodeImpl(from, str);
 }
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+std::wstring ToWide(const mpt::lstring &str)
+{
+	return String::DecodeImpl(CharsetLocale, str);
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
 #endif
 
 #if MPT_WSTRING_CONVERT
@@ -1437,6 +1443,56 @@ std::string ToCharset(Charset to, Charset from, const std::string &str)
 {
 	return String::ConvertImpl<std::string>(to, from, str);
 }
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+std::string ToCharset(Charset to, const mpt::lstring &str)
+{
+	return String::ConvertImpl<std::string>(to, CharsetLocale, str);
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
+
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+#if MPT_WSTRING_CONVERT
+mpt::lstring ToLocale(const std::wstring &str)
+{
+	return String::EncodeImpl<mpt::lstring>(CharsetLocale, str);
+}
+#endif
+mpt::lstring ToLocale(Charset from, const std::string &str)
+{
+	return String::ConvertImpl<mpt::lstring>(CharsetLocale, from, str);
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
+
+#if MPT_OS_WINDOWS
+#if MPT_WSTRING_CONVERT
+mpt::winstring ToWin(const std::wstring &str)
+{
+	#ifdef UNICODE
+		return str;
+	#else
+		return ToLocale(str);
+	#endif
+}
+#endif
+mpt::winstring ToWin(Charset from, const std::string &str)
+{
+	#ifdef UNICODE
+		return ToWide(from, str);
+	#else
+		return ToLocale(from, str);
+	#endif
+}
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+mpt::winstring ToWin(const mpt::lstring &str)
+{
+	#ifdef UNICODE
+		return ToWide(str);
+	#else
+		return str;
+	#endif
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
+#endif // MPT_OS_WINDOWS
 
 
 #if defined(_MFC_VER)
@@ -1473,39 +1529,30 @@ std::string ToCharset(Charset to, const CString &str)
 		return ToCharset(to, CharsetLocale, str.GetString());
 	#endif
 }
-
-#ifdef UNICODE
-// inline
-#else // !UNICODE
-CStringW ToCStringW(const CString &str)
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+CString ToCString(const mpt::lstring &str)
 {
-	return ToWide(str).c_str();
+	#ifdef UNICODE
+		return ToWide(str).c_str();
+	#else
+		return str.c_str();
+	#endif
 }
-CStringW ToCStringW(const std::wstring &str)
+mpt::lstring ToLocale(const CString &str)
 {
-	return str.c_str();
+	#ifdef UNICODE
+		return String::EncodeImpl<mpt::lstring>(CharsetLocale, str.GetString());
+	#else
+		return str.GetString();
+	#endif
 }
-CStringW ToCStringW(Charset from, const std::string &str)
-{
-	return ToWide(from, str).c_str();
-}
-CStringW ToCStringW(const CStringW &str)
-{
-	return str;
-}
-std::wstring ToWide(const CStringW &str)
+#endif // MPT_ENABLE_CHARSET_LOCALE
+#if MPT_OS_WINDOWS
+mpt::winstring ToWin(const CString &str)
 {
 	return str.GetString();
 }
-std::string ToCharset(Charset to, const CStringW &str)
-{
-	return ToCharset(to, str.GetString());
-}
-CString ToCString(const CStringW &str)
-{
-	return ToCharset(CharsetLocale, str).c_str();
-}
-#endif // UNICODE
+#endif // MPT_OS_WINDOWS
 
 #endif // MFC
 
@@ -1523,6 +1570,12 @@ mpt::ustring ToUnicode(Charset from, const std::string &str)
 {
 	return String::ConvertImpl<mpt::ustring>(mpt::CharsetUTF8, from, str);
 }
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+mpt::ustring ToUnicode(const mpt::lstring &str)
+{
+	return String::ConvertImpl<mpt::ustring>(mpt::CharsetUTF8, mpt::CharsetLocale, str);
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
 #if defined(_MFC_VER)
 mpt::ustring ToUnicode(const CString &str)
 {
@@ -1532,12 +1585,6 @@ mpt::ustring ToUnicode(const CString &str)
 		return String::ConvertImpl<mpt::ustring, std::string>(mpt::CharsetUTF8, mpt::CharsetLocale, str.GetString());
 	#endif // UNICODE
 }
-#ifndef UNICODE
-mpt::ustring ToUnicode(const CStringW &str)
-{
-	return String::EncodeImpl<mpt::ustring>(mpt::CharsetUTF8, str.GetString());
-}
-#endif // !UNICODE
 #endif // MFC
 #endif // MPT_USTRING_MODE_WIDE
 
@@ -1554,6 +1601,22 @@ std::string ToCharset(Charset to, const mpt::ustring &str)
 {
 	return String::ConvertImpl<std::string, mpt::ustring>(to, mpt::CharsetUTF8, str);
 }
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+mpt::lstring ToLocale(const mpt::ustring &str)
+{
+	return String::ConvertImpl<mpt::lstring, mpt::ustring>(mpt::CharsetLocale, mpt::CharsetUTF8, str);
+}
+#endif // MPT_ENABLE_CHARSET_LOCALE
+#if MPT_OS_WINDOWS
+mpt::winstring ToWin(const mpt::ustring &str)
+{
+	#ifdef UNICODE
+		return String::DecodeImpl<mpt::ustring>(mpt::CharsetUTF8, str);
+	#else
+		return String::ConvertImpl<mpt::lstring, mpt::ustring>(mpt::CharsetLocale, mpt::CharsetUTF8, str);
+	#endif
+}
+#endif // MPT_OS_WINDOWS
 #if defined(_MFC_VER)
 CString ToCString(const mpt::ustring &str)
 {
@@ -1731,9 +1794,9 @@ mpt::ustring ToLowerCase(const mpt::ustring &s)
 			tmp.MakeLower();
 			return mpt::ToUnicode(tmp);
 		#else // !UNICODE
-			CStringW tmp = mpt::ToCStringW(s);
+			CStringW tmp = mpt::ToWide(s).c_str();
 			tmp.MakeLower();
-			return mpt::ToUnicode(tmp);
+			return mpt::ToUnicode(tmp.GetString());
 		#endif // UNICODE
 	#else // !_MFC_VER
 		std::wstring ws = mpt::ToWide(s);
@@ -1750,9 +1813,9 @@ mpt::ustring ToUpperCase(const mpt::ustring &s)
 			tmp.MakeUpper();
 			return mpt::ToUnicode(tmp);
 		#else // !UNICODE
-			CStringW tmp = mpt::ToCStringW(s);
+			CStringW tmp = mpt::ToWide(s).c_str();
 			tmp.MakeUpper();
-			return mpt::ToUnicode(tmp);
+			return mpt::ToUnicode(tmp.GetString());
 		#endif // UNICODE
 	#else // !_MFC_VER
 		std::wstring ws = mpt::ToWide(s);

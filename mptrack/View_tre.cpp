@@ -382,7 +382,7 @@ mpt::PathString CModTree::InsLibGetFullPath(HTREEITEM hItem) const
 {
 	mpt::PathString fullPath = m_InstrLibPath;
 	fullPath.EnsureTrailingSlash();
-	return fullPath + mpt::PathString::FromCStringW(GetItemTextW(hItem));
+	return fullPath + mpt::PathString::FromWide(GetItemTextW(hItem));
 }
 
 
@@ -748,14 +748,14 @@ void CModTree::RefreshInstrumentLibrary()
 {
 	SetRedraw(FALSE);
 	// Check if the currently selected item should be selected after refreshing
-	CStringW oldItem;
+	std::wstring oldItem;
 	if((IsSampleBrowser() || GetParentRootItem(GetSelectedItem()) == m_hInsLib)
-		&& GetItemTextW(GetSampleBrowser()->m_hInsLib) == (m_SongFileName.empty() ? m_InstrLibPath : m_SongFileName).ToCStringW())
+		&& GetItemTextW(GetSampleBrowser()->m_hInsLib) == (m_SongFileName.empty() ? m_InstrLibPath : m_SongFileName).ToWide())
 	{
 		oldItem = GetItemTextW(GetSelectedItem());
 	}
 	EmptyInstrumentLibrary();
-	FillInstrumentLibrary(oldItem);
+	FillInstrumentLibrary(oldItem.c_str());
 	SetRedraw(TRUE);
 	if(!IsSampleBrowser())
 	{
@@ -783,7 +783,7 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 	{
 		// Module folder + sub folders
 		std::wstring name = modDoc.GetPathNameMpt().GetFullFileName().ToWide();
-		if(name.empty()) name = mpt::PathString::FromCStringSilent(modDoc.GetTitle()).SanitizeComponent().ToWide();
+		if(name.empty()) name = mpt::PathString::FromCString(modDoc.GetTitle()).SanitizeComponent().ToWide();
 
 		if(!info.hSong)
 		{
@@ -1381,7 +1381,7 @@ BOOL CModTree::ExecuteItem(HTREEITEM hItem)
 
 		case MODITEM_INSLIB_SONG:
 		case MODITEM_INSLIB_FOLDER:
-			InstrumentLibraryChDir(mpt::PathString::FromCStringW(GetItemTextW(hItem)), modItem.type == MODITEM_INSLIB_SONG);
+			InstrumentLibraryChDir(mpt::PathString::FromWide(GetItemTextW(hItem)), modItem.type == MODITEM_INSLIB_SONG);
 			return TRUE;
 
 		case MODITEM_HDR_SONG:
@@ -3553,7 +3553,7 @@ void CModTree::OnRefreshInstrLib()
 			HTREEITEM hItem = GetChildItem(m_hInsLib);
 			while (hItem != NULL)
 			{
-				const mpt::PathString str = mpt::PathString::FromCStringW(GetItemTextW(hItem));
+				const mpt::PathString str = mpt::PathString::FromWide(GetItemTextW(hItem));
 				if(!mpt::PathString::CompareNoCase(str, m_InstrLibHighlightPath))
 				{
 					hActive = hItem;

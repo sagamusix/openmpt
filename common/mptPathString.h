@@ -223,22 +223,11 @@ public:
 	static PathString FromNative(const RawPathString &path) { return PathString(path); }
 #if defined(_MFC_VER)
 	// CString TCHAR, so this is CHAR or WCHAR, depending on UNICODE
-	MPT_DEPRECATED_PATH CString ToCString() const { return mpt::ToCString(path); }
-	MPT_DEPRECATED_PATH static PathString FromCString(const CString &path) { return PathString(mpt::ToWide(path)); }
-	// Non-warning-generating versions of the above. Use with extra care.
-	CString ToCStringSilent() const { return mpt::ToCString(path); }
-	static PathString FromCStringSilent(const CString &path) { return PathString(mpt::ToWide(path)); }
+	CString ToCString() const { return mpt::ToCString(path); }
+	static PathString FromCString(const CString &path) { return PathString(mpt::ToWide(path)); }
 	// really special purpose, if !UNICODE, encode unicode in CString as UTF8:
 	static mpt::PathString TunnelOutofCString(const CString &path);
 	static CString TunnelIntoCString(const mpt::PathString &path);
-	// CStringW
-#ifdef UNICODE
-	MPT_DEPRECATED_PATH CString ToCStringW() const { return mpt::ToCString(path); }
-	MPT_DEPRECATED_PATH static PathString FromCStringW(const CString &path) { return PathString(mpt::ToWide(path)); }
-#else
-	CStringW ToCStringW() const { return mpt::ToCStringW(path); }
-	static PathString FromCStringW(const CStringW &path) { return PathString(mpt::ToWide(path)); }
-#endif
 #endif
 
 	// Convert a path to its simplified form, i.e. remove ".\" and "..\" entries
