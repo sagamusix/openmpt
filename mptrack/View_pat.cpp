@@ -6744,7 +6744,7 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 			if(!text.IsEmpty())
 			{
 				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
-				mpt::CopyCStringToBuffer(pTTT->szText, text);
+				mpt::WinStringBuf(pTTT->szText) = mpt::ToWin(text);
 				return TRUE;
 			}
 		}

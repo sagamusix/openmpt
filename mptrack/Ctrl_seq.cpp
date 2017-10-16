@@ -1186,7 +1186,7 @@ void COrderList::OnInsertOrder()
 {
 	// insert the same order(s) after the currently selected order(s)
 	ModSequence &order = Order();
-	SequenceTransaction tr(sndFile);
+	SequenceTransaction tr(m_pModDoc.GetrSoundFile());
 
 	const OrdSelection selection = GetCurSel(false);
 	const ORDERINDEX insertCount = order.insert(selection.lastOrd + 1, selection.lastOrd - selection.firstOrd + 1);
@@ -1218,7 +1218,7 @@ void COrderList::OnInsertSeparatorPattern()
 {
 	// Insert a separator pattern after the current pattern, don't move order list cursor
 	ModSequence &order = Order();
-	SequenceTransaction tr(sndFile);
+	SequenceTransaction tr(m_pModDoc.GetrSoundFile());
 
 	const OrdSelection selection = GetCurSel(true);
 	ORDERINDEX insertPos = selection.firstOrd;
