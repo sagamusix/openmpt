@@ -490,7 +490,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						cereal::BinaryOutputArchive arj(ssoj);
 						arj(UserJoinedMsg);
 						arj(source->m_id);
-						arj(source->m_userName);
+						arj(join.userName);
 						const std::string s = ssoj.str();
 						for(auto &c : doc.m_connections)
 						{

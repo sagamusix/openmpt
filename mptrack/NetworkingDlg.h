@@ -74,6 +74,7 @@ protected:
 class ChatDlg : public CDialog
 {
 	CEdit m_History, m_Input;
+	CListBox m_Users, m_Annotations;
 	CModDoc &m_ModDoc;
 
 public:
@@ -81,10 +82,15 @@ public:
 	~ChatDlg();
 
 	void AddMessage(const mpt::ustring &sender, const mpt::ustring message);
+	void Update();
 
 protected:
 	void DoDataExchange(CDataExchange* pDX) override;
 	void OnOK() override;
+	
+	afx_msg void OnGotoAnnotation();
+
+	DECLARE_MESSAGE_MAP()
 };
 
 }

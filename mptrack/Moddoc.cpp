@@ -3276,7 +3276,24 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> msg;
 		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
 		m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
+		if(m_chatDlg) m_chatDlg->Update();
+	} else if(type == Networking::UserJoinedMsg)
+	{
+		Networking::ClientID id;
+		std::string name;
+		inArchive >> id;
+		inArchive >> name;
+		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
+		if(m_chatDlg) m_chatDlg->Update();
+	} else if(type == Networking::UserQuitMsg)
+	{
+		// TODO
+		Networking::ClientID id;
+		inArchive >> id;
+		m_collabNames.erase(id);
+		if(m_chatDlg) m_chatDlg->Update();
 	}
+
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
 	{
