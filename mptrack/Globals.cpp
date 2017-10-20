@@ -465,7 +465,7 @@ void CModControlView::OnTabSelchange(NMHDR*, LRESULT* pResult)
 
 LRESULT CModControlView::OnActivateModView(WPARAM nIndex, LPARAM lParam)
 {
-	if(::GetActiveWindow() != CMainFrame::GetMainFrame()->m_hWnd)
+	if(!CMainFrame::GetMainFrame()->IsWindowEnabled())
 	{
 		// If we are in a dialog (e.g. Amplify Sample), do not allow to switch to a different tab. Otherwise, watch the tracker crash!
 		return 0;

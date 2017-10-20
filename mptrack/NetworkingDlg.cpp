@@ -322,12 +322,21 @@ void SharingDlg::OnOK()
 }
 
 
+BEGIN_MESSAGE_MAP(ChatDlg, CDialog)
+	//{{AFX_MSG_MAP(ChatDlg)
+	ON_LBN_SELCHANGE(IDC_LIST2, OnGotoAnnotation)
+	//}}AFX_MSG_MAP
+END_MESSAGE_MAP()
+
+
 void ChatDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(ChatDlg)
 	DDX_Control(pDX, IDC_EDIT1, m_History);
 	DDX_Control(pDX, IDC_EDIT2, m_Input);
+	DDX_Control(pDX, IDC_LIST1, m_Users);
+	DDX_Control(pDX, IDC_LIST2, m_Annotations);
 	//}}AFX_DATA_MAP
 }
 
@@ -369,6 +378,38 @@ void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring message)
 	auto len = m_History.GetWindowTextLength();
 	m_History.SetSel(len, len);
 	m_History.ReplaceSel(mpt::ToCString(MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ") + message + MPT_ULITERAL("\r\n")));
+}
+
+
+void ChatDlg::Update()
+{
+	m_Users.SetRedraw(FALSE);
+	m_Users.ResetContent();
+	for(const auto &user : m_ModDoc.m_collabNames)
+	{
+		m_Users.AddString(mpt::ToCString(user.second));
+	}
+	m_Users.SetRedraw(TRUE);
+
+	m_Annotations.SetRedraw(FALSE);
+	m_Annotations.ResetContent();
+	for(const auto &anno : m_ModDoc.m_collabAnnotations)
+	{
+		m_Annotations.AddString(mpt::cformat(_T("Pattern %1, row %2, channel %3: "))(anno.first.pattern, anno.first.row, anno.first.channel) + mpt::ToCString(anno.second));
+	}
+	m_Annotations.SetRedraw(TRUE);
+}
+
+
+void ChatDlg::OnGotoAnnotation()
+{
+	int sel = m_Annotations.GetCurSel();
+	if(sel >= 0 && static_cast<size_t>(sel) < m_ModDoc.m_collabAnnotations.size())
+	{
+		auto pos = m_ModDoc.m_collabAnnotations.cbegin();
+		std::advance(pos, sel);
+		m_ModDoc.ActivateView(IDD_CONTROL_PATTERNS, pos->first.pattern);
+	}
 }
 
 

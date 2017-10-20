@@ -107,6 +107,7 @@ void CViewPattern::UpdateColors()
 
 	m_Dib.SetColor(MODCOLOR_2NDHIGHLIGHT, mixcolor(colors[MODCOLOR_BACKHILIGHT], colors[MODCOLOR_BACKNORMAL]));
 	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, mixcolor(colors[MODCOLOR_VOLUME], colors[MODCOLOR_BACKNORMAL]));
+	m_Dib.SetColor(MODCOLOR_ANNOTATION, mixcolor(colors[MODCOLOR_BACKPLAYCURSOR], colors[MODCOLOR_BACKNORMAL]));
 
 	// Collaborator colours
 	// TODO: Mix with background color?
@@ -789,6 +790,18 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 	for (ROWINDEX row=startRow; row<numRows; row++)
 	{
 		MemsetZero(selectedColsCollab);
+		for(const auto &sel : GetDocument()->m_collabAnnotations)
+		{
+			const auto &pos = sel.first;
+			if(pos.pattern == GetCurrentPattern()
+				&& pos.row == row)
+			{
+				selectedColsCollab[pos.channel] |= (1 << pos.column);
+				selectedColsCollabColor[pos.channel][pos.column] = MODCOLOR_ANNOTATION;
+				hasCollabCursors = true;
+			}
+		}
+		
 		for(const auto &sel : GetDocument()->m_collabEditPositions)
 		{
 			const auto &pos = sel.second;
