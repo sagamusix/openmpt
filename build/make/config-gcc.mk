@@ -24,6 +24,12 @@ ARFLAGS  := rcs
 
 endif
 
+ifeq ($(MODERN),1)
+CXXFLAGS += -Wlogical-op -Wdouble-promotion -Wframe-larger-than=16000
+CFLAGS   += -Wlogical-op -Wdouble-promotion -Wframe-larger-than=4000
+LDFLAGS  += -fuse-ld=gold -Wl,-no-undefined -Wl,--detect-odr-violations
+endif
+
 CFLAGS_SILENT += -Wno-unused-parameter -Wno-unused-function -Wno-cast-qual -Wno-old-style-declaration -Wno-type-limits -Wno-unused-but-set-variable
 
 ifeq ($(CHECKED_ADDRESS),1)

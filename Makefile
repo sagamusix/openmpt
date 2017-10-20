@@ -48,6 +48,8 @@
 #  TEST=1           Include test suite in default target.
 #  ONLY_TEST=0      Only build the test suite.
 #  STRICT=0         Treat warnings as errors.
+#  MODERN=0         Pass more modern compiler options.
+#  STDCXX=c++11     C++ standard version (only for GCC and clang)
 #  CHECKED=0        Enable run-time assertions.
 #  CHECKED_ADDRESS=0   Enable address sanitizer
 #  CHECKED_UNDEFINED=0 Enable undefined behaviour sanitizer
@@ -151,6 +153,7 @@ ONLY_TEST=0
 SOSUFFIX=.so
 SOSUFFIXWINDOWS=0
 OPENMPT123=1
+MODERN=0
 STRICT=0
 
 CHECKED=0

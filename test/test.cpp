@@ -509,11 +509,11 @@ static MPT_NOINLINE void TestStringFormatting()
 	VERIFY_EQUAL(ConvertStrTo<uint64>("9223372036854775807"), (uint64)int64_max);
 	VERIFY_EQUAL(ConvertStrTo<uint64>("18446744073709551615"), uint64_max);
 
-	VERIFY_EQUAL(ConvertStrTo<float>("-87.0"), -87.0);
+	VERIFY_EQUAL(ConvertStrTo<float>("-87.0"), -87.0f);
 	VERIFY_EQUAL(ConvertStrTo<double>("-0.5e-6"), -0.5e-6);
 	VERIFY_EQUAL(ConvertStrTo<double>("58.65403492763"), 58.65403492763);
 
-	VERIFY_EQUAL(ConvertStrTo<float>(mpt::fmt::val(-87.0)), -87.0);
+	VERIFY_EQUAL(ConvertStrTo<float>(mpt::fmt::val(-87.0)), -87.0f);
 	VERIFY_EQUAL(ConvertStrTo<double>(mpt::fmt::val(-0.5e-6)), -0.5e-6);
 
 	VERIFY_EQUAL(mpt::String::Parse::Hex<unsigned char>("fe"), 254);
@@ -631,11 +631,25 @@ Gregorian TestDate2(int s, int m, int h, int D, int M, int Y) {
 	return Gregorian{Y,M,D,h,m,s};
 }
 
+#if MPT_ENDIAN_IS_CONSTEXPR
+static constexpr int32le TestEndianConstexpr(uint32 x)
+{
+	int32le foo;
+	foo = x;
+	return foo;
+}
+#endif
+
 static MPT_NOINLINE void TestMisc1()
 {
 
 	VERIFY_EQUAL(mpt::endian(), mpt::detail::endian_probe());
 	VERIFY_EQUAL((mpt::endian() == mpt::endian_big) || (mpt::endian() == mpt::endian_little), true);	
+
+#if MPT_ENDIAN_IS_CONSTEXPR
+	constexpr int32le foo = TestEndianConstexpr(23);
+	(void)foo;
+#endif
 
 #define SwapBytesReturn(x) SwapBytesLE(SwapBytesBE(x))
 
@@ -1256,7 +1270,7 @@ static MPT_NOINLINE void TestMisc2()
 	{
 		VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull).ToUString(), MPT_USTRING("2ed6593a-dfe6-4cf8-b2e5-75ad7f600c32"));
 		#if defined(MODPLUG_TRACKER) || !defined(NO_DMO)
-			VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull), MPT_UUID(2ed6593a,dfe6,4cf8,b2e5,75ad7f600c32));
+			VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull), "2ed6593a-dfe6-4cf8-b2e5-75ad7f600c32"_uuid);
 			VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull), mpt::UUID(Util::StringToGUID(L"{2ed6593a-dfe6-4cf8-b2e5-75ad7f600c32}")));
 			VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull), mpt::UUID(Util::StringToCLSID(L"{2ed6593a-dfe6-4cf8-b2e5-75ad7f600c32}")));
 		#endif
@@ -1291,10 +1305,13 @@ static MPT_NOINLINE void TestMisc2()
 		uuiddata[i] = static_cast<uint8>(i);
 	}
 	STATIC_ASSERT(sizeof(mpt::UUID) == 16);
-	mpt::UUID uuid2;
+	UUIDbin uuid2;
 	std::memcpy(&uuid2, uuiddata, 16);
-	VERIFY_EQUAL(uuid2.ToString(), std::string("00010203-0405-0607-0809-0a0b0c0d0e0f"));
+	VERIFY_EQUAL(mpt::UUID(uuid2).ToString(), std::string("00010203-0405-0607-0809-0a0b0c0d0e0f"));
 	}
+
+	constexpr mpt::UUID uuid3 = "2ed6593a-dfe6-4cf8-b2e5-75ad7f600c32"_uuid;
+	VERIFY_EQUAL(mpt::UUID(0x2ed6593au, 0xdfe6, 0x4cf8, 0xb2e575ad7f600c32ull), uuid3);
 
 	// check that empty stringstream behaves correctly with our MSVC workarounds when using iostream interface directly
 
@@ -1521,6 +1538,193 @@ static MPT_NOINLINE void TestMisc2()
 		VERIFY_EQUAL(mpt::IO::TellRead(s), 1);
 		VERIFY_EQUAL(mpt::IO::IsValid(s), true);
 		VERIFY_EQUAL(std::string(1, a), std::string(1, 'a'));
+	}
+	
+	{
+		auto TestAdaptive16 = [](uint16 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		{
+			mpt::stringstream f;
+			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt16LE(f, value, fixedSize), true);
+			VERIFY_EQUAL(mpt::IO::TellWrite(f), expected_size);
+			if(bytes)
+			{
+				mpt::IO::SeekBegin(f);
+				for(std::size_t i = 0; i < expected_size; ++i)
+				{
+					uint8 val = 0;
+					mpt::IO::ReadIntLE<uint8>(f, val);
+					VERIFY_EQUAL_QUIET_NONCONT(val, static_cast<uint8>(bytes[i]));
+				}
+			}
+			mpt::IO::SeekBegin(f);
+			uint16 result = 0;
+			VERIFY_EQUAL(mpt::IO::ReadAdaptiveInt16LE(f, result), true);
+			VERIFY_EQUAL(result, value);
+		};
+		auto TestAdaptive32 = [](uint32 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		{
+			mpt::stringstream f;
+			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt32LE(f, value, fixedSize), true);
+			VERIFY_EQUAL(mpt::IO::TellWrite(f), expected_size);
+			if(bytes)
+			{
+				mpt::IO::SeekBegin(f);
+				for(std::size_t i = 0; i < expected_size; ++i)
+				{
+					uint8 val = 0;
+					mpt::IO::ReadIntLE<uint8>(f, val);
+					VERIFY_EQUAL_QUIET_NONCONT(val, static_cast<uint8>(bytes[i]));
+				}
+			}
+			mpt::IO::SeekBegin(f);
+			uint32 result = 0;
+			VERIFY_EQUAL(mpt::IO::ReadAdaptiveInt32LE(f, result), true);
+			VERIFY_EQUAL(result, value);
+		};
+		auto TestAdaptive64 = [](uint64 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		{
+			mpt::stringstream f;
+			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt64LE(f, value, fixedSize), true);
+			VERIFY_EQUAL(mpt::IO::TellWrite(f), expected_size);
+			if(bytes)
+			{
+				mpt::IO::SeekBegin(f);
+				for(std::size_t i = 0; i < expected_size; ++i)
+				{
+					uint8 val = 0;
+					mpt::IO::ReadIntLE<uint8>(f, val);
+					VERIFY_EQUAL_QUIET_NONCONT(val, static_cast<uint8>(bytes[i]));
+				}
+			}
+			mpt::IO::SeekBegin(f);
+			uint64 result = 0;
+			VERIFY_EQUAL(mpt::IO::ReadAdaptiveInt64LE(f, result), true);
+			VERIFY_EQUAL(result, value);
+		};
+		TestAdaptive16(0, 1, 0, "\x00");
+		TestAdaptive16(1, 1, 0, "\x02");
+		TestAdaptive16(2, 1, 0, nullptr);
+		TestAdaptive16(0x7f, 1, 0, nullptr);
+		TestAdaptive16(0x80, 2, 0, "\x01\x01");
+		TestAdaptive16(0x81, 2, 0, "\x03\x01");
+		TestAdaptive16(0x7fff, 2, 0, "\xff\xff");
+		TestAdaptive16(0, 1, 1, nullptr);
+		TestAdaptive16(1, 1, 1, nullptr);
+		TestAdaptive16(2, 1, 1,  nullptr);
+		TestAdaptive16(0x7f, 1, 1, nullptr);
+		TestAdaptive16(0x80, 2, 0, nullptr);
+		TestAdaptive16(0x81, 2, 0, nullptr);
+		TestAdaptive16(0x7fff, 2, 0, nullptr);
+		TestAdaptive16(0, 2, 2, "\x01\x00");
+		TestAdaptive16(1, 2, 2, "\x03\x00");
+		TestAdaptive16(2, 2, 2, nullptr);
+		TestAdaptive16(0x7f, 2, 2, nullptr);
+		TestAdaptive16(0x80, 2, 2, nullptr);
+		TestAdaptive16(0x81, 2, 2, nullptr);
+		TestAdaptive16(0x7fff, 2, 2, nullptr);
+
+		TestAdaptive32(0, 1, 0, "\x00");
+		TestAdaptive32(1, 1, 0, nullptr);
+		TestAdaptive32(2, 1, 0, nullptr);
+		TestAdaptive32(0x3f, 1, 0, nullptr);
+		TestAdaptive32(0x40, 2, 0, "\x01\x01");
+		TestAdaptive32(0x41, 2, 0, "\x05\x01");
+		TestAdaptive32(0x7f, 2, 0, nullptr);
+		TestAdaptive32(0x80, 2, 0, nullptr);
+		TestAdaptive32(0x3fff, 2, 0, nullptr);
+		TestAdaptive32(0x4000, 3, 0, "\x02\x00\x01");
+		TestAdaptive32(0x4001, 3, 0, nullptr);
+		TestAdaptive32(0x3fffff, 3, 0, nullptr);
+		TestAdaptive32(0x400000, 4, 0, "\x03\x00\x00\x01");
+		TestAdaptive32(0x400001, 4, 0, nullptr);
+		TestAdaptive32(0x3fffffff, 4, 0, "\xff\xff\xff\xff");
+		TestAdaptive32(0, 2, 2, nullptr);
+		TestAdaptive32(1, 2, 2, nullptr);
+		TestAdaptive32(2, 2, 2, nullptr);
+		TestAdaptive32(0x3f, 2, 2, nullptr);
+		TestAdaptive32(0x40, 2, 2, nullptr);
+		TestAdaptive32(0x41, 2, 2, nullptr);
+		TestAdaptive32(0x7f, 2, 2, nullptr);
+		TestAdaptive32(0x80, 2, 2, nullptr);
+		TestAdaptive32(0x3fff, 2, 2, nullptr);
+		TestAdaptive32(0, 3, 3, nullptr);
+		TestAdaptive32(1, 3, 3, nullptr);
+		TestAdaptive32(2, 3, 3, nullptr);
+		TestAdaptive32(0x3f, 3, 3, nullptr);
+		TestAdaptive32(0x40, 3, 3, nullptr);
+		TestAdaptive32(0x41, 3, 3, nullptr);
+		TestAdaptive32(0x7f, 3, 3, nullptr);
+		TestAdaptive32(0x80, 3, 3, nullptr);
+		TestAdaptive32(0x3fff, 3, 3, nullptr);
+		TestAdaptive32(0x4000, 3, 3, nullptr);
+		TestAdaptive32(0x4001, 3, 3, nullptr);
+		TestAdaptive32(0x3fffff, 3, 3, nullptr);
+		TestAdaptive32(0, 4, 4, nullptr);
+		TestAdaptive32(1, 4, 4, nullptr);
+		TestAdaptive32(2, 4, 4, nullptr);
+		TestAdaptive32(0x3f, 4, 4, nullptr);
+		TestAdaptive32(0x40, 4, 4, nullptr);
+		TestAdaptive32(0x41, 4, 4, nullptr);
+		TestAdaptive32(0x7f, 4, 4, nullptr);
+		TestAdaptive32(0x80, 4, 4, nullptr);
+		TestAdaptive32(0x3fff, 4, 4, nullptr);
+		TestAdaptive32(0x4000, 4, 4, nullptr);
+		TestAdaptive32(0x4001, 4, 4, nullptr);
+		TestAdaptive32(0x3fffff, 4, 4, nullptr);
+		TestAdaptive32(0x400000, 4, 4, nullptr);
+		TestAdaptive32(0x400001, 4, 4, nullptr);
+		TestAdaptive32(0x3fffffff, 4, 4, nullptr);
+
+		TestAdaptive64(0, 1, 0, nullptr);
+		TestAdaptive64(1, 1, 0, nullptr);
+		TestAdaptive64(2, 1, 0, nullptr);
+		TestAdaptive64(0x3f, 1, 0, nullptr);
+		TestAdaptive64(0x40, 2, 0, nullptr);
+		TestAdaptive64(0x41, 2, 0, nullptr);
+		TestAdaptive64(0x7f, 2, 0, nullptr);
+		TestAdaptive64(0x80, 2, 0, nullptr);
+		TestAdaptive64(0x3fff, 2, 0, nullptr);
+		TestAdaptive64(0x4000, 4, 0, nullptr);
+		TestAdaptive64(0x4001, 4, 0, nullptr);
+		TestAdaptive64(0x3fffff, 4, 0, nullptr);
+		TestAdaptive64(0x400000, 4, 0, nullptr);
+		TestAdaptive64(0x400001, 4, 0, nullptr);
+		TestAdaptive64(0x3fffffff, 4, 0, nullptr);
+		TestAdaptive64(0x40000000, 8, 0, nullptr);
+		TestAdaptive64(0x40000001, 8, 0, nullptr);
+		TestAdaptive64(0x3fffffffffffffffull, 8, 0, nullptr);
+		TestAdaptive64(0, 2, 2, nullptr);
+		TestAdaptive64(1, 2, 2, nullptr);
+		TestAdaptive64(2, 2, 2, nullptr);
+		TestAdaptive64(0x3f, 2, 2, nullptr);
+		TestAdaptive64(0, 4, 4, nullptr);
+		TestAdaptive64(1, 4, 4, nullptr);
+		TestAdaptive64(2, 4, 4, nullptr);
+		TestAdaptive64(0x3f, 4, 4, nullptr);
+		TestAdaptive64(0x40, 4, 4, nullptr);
+		TestAdaptive64(0x41, 4, 4, nullptr);
+		TestAdaptive64(0x7f, 4, 4, nullptr);
+		TestAdaptive64(0x80, 4, 4, nullptr);
+		TestAdaptive64(0x3fff, 4, 4, nullptr);
+		TestAdaptive64(0, 8, 8, nullptr);
+		TestAdaptive64(1, 8, 8, nullptr);
+		TestAdaptive64(2, 8, 8, nullptr);
+		TestAdaptive64(0x3f, 8, 8, nullptr);
+		TestAdaptive64(0x40, 8, 8, nullptr);
+		TestAdaptive64(0x41, 8, 8, nullptr);
+		TestAdaptive64(0x7f, 8, 8, nullptr);
+		TestAdaptive64(0x80, 8, 8, nullptr);
+		TestAdaptive64(0x3fff, 8, 8, nullptr);
+		TestAdaptive64(0x4000, 8, 8, nullptr);
+		TestAdaptive64(0x4001, 8, 8, nullptr);
+		TestAdaptive64(0x3fffff, 8, 8, nullptr);
+		TestAdaptive64(0x400000, 8, 8, nullptr);
+		TestAdaptive64(0x400001, 8, 8, nullptr);
+		TestAdaptive64(0x3fffffff, 8, 8, nullptr);
+		TestAdaptive64(0x40000000, 8, 8, nullptr);
+		TestAdaptive64(0x40000001, 8, 8, nullptr);
+		TestAdaptive64(0x3fffffffffffffffull, 8, 8, nullptr);
+	
 	}
 
 #ifdef MPT_ENABLE_FILEIO
