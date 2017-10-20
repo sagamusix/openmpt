@@ -78,7 +78,6 @@ enum ModColor
 	// Internal color codes (not saved to color preset files)
 	MODCOLOR_2NDHIGHLIGHT,
 	MODCOLOR_DEFAULTVOLUME,
-	MODCOLOR_ANNOTATION,
 	MAX_MODPALETTECOLORS
 };
 

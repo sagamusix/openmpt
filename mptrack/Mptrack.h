@@ -421,6 +421,7 @@ public:
 	void SetColor(UINT nIndex, COLORREF cr);
 	void SetAllColors(UINT nBaseIndex, UINT nColors, const COLORREF *pcr);
 	void TextBlt(int x, int y, int cx, int cy, int srcx, int srcy, MODPLUGDIB *lpdib = nullptr);
+	void SetPoint(int x, int y, uint8 color);
 	void SetBlendMode(bool enable) { m_nBlendOffset = enable ? BLEND_OFFSET : 0; }
 	bool GetBlendMode() const { return m_nBlendOffset != 0; }
 	void SetBlendColor(COLORREF cr);

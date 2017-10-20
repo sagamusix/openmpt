@@ -107,7 +107,6 @@ void CViewPattern::UpdateColors()
 
 	m_Dib.SetColor(MODCOLOR_2NDHIGHLIGHT, mixcolor(colors[MODCOLOR_BACKHILIGHT], colors[MODCOLOR_BACKNORMAL]));
 	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, mixcolor(colors[MODCOLOR_VOLUME], colors[MODCOLOR_BACKNORMAL]));
-	m_Dib.SetColor(MODCOLOR_ANNOTATION, mixcolor(colors[MODCOLOR_BACKPLAYCURSOR], colors[MODCOLOR_BACKNORMAL]));
 
 	// Collaborator colours
 	// TODO: Mix with background color?
@@ -343,6 +342,22 @@ static MPT_FORCEINLINE void DrawPadding(CFastBitmap &dib, const PATTERNFONT *pfn
 	if(pfnt->padding[col])
 		dib.TextBlt(x + pfnt->nEltWidths[col] - pfnt->padding[col], y, pfnt->padding[col], pfnt->spacingY, pfnt->nClrX + pfnt->nEltWidths[col] - pfnt->padding[col], pfnt->nClrY, pfnt->dib);
 }
+
+
+static void DrawAnnotationBox(CFastBitmap &dib, const PATTERNFONT *pfnt, int x, int y, int col)
+{
+	for(UINT px = 0; px < pfnt->nEltWidths[col]; px += 2)
+	{
+		dib.SetPoint(x + px, y, MODCOLOR_TEXTNORMAL);
+		dib.SetPoint(x + px, y + pfnt->nHeight -1, MODCOLOR_TEXTNORMAL);
+	}
+	for(int py = 0; py < pfnt->nHeight; py += 2)
+	{
+		dib.SetPoint(x, y + py, MODCOLOR_TEXTNORMAL);
+		dib.SetPoint(x + pfnt->nEltWidths[col] - 1, y + py, MODCOLOR_TEXTNORMAL);
+	}
+}
+
 
 void CViewPattern::DrawNote(int x, int y, UINT note, CTuning* pTuning)
 {
@@ -744,7 +759,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 	bool isPlaying, ROWINDEX startRow, ROWINDEX numRows, CHANNELINDEX startChan, CRect &rcClient, int *pypaint)
 {
 	uint8 selectedCols[MAX_BASECHANNELS];	// Bit mask of selected channel components
-	uint8 selectedColsCollab[MAX_BASECHANNELS];	// Bit mask of selected channel components
+	uint8 selectedColsCollab[MAX_BASECHANNELS];	// Bit mask of channel components where edit cursors of other users are located
+	uint8 selectedColsAnnotation[MAX_BASECHANNELS];	// Bit mask of channel components where annotations have been made
 	uint8 selectedColsCollabColor[MAX_BASECHANNELS][PatternCursor::lastColumn + 1];
 	static_assert(PatternCursor::lastColumn <= 7, "Columns are used as bitmasks here.");
 
@@ -789,15 +805,15 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 	int row_col = -1, row_bkcol = -1;
 	for (ROWINDEX row=startRow; row<numRows; row++)
 	{
+		MemsetZero(selectedColsAnnotation);
 		MemsetZero(selectedColsCollab);
 		for(const auto &sel : GetDocument()->m_collabAnnotations)
 		{
 			const auto &pos = sel.first;
-			if(pos.pattern == GetCurrentPattern()
+			if(pos.pattern == nPattern
 				&& pos.row == row)
 			{
-				selectedColsCollab[pos.channel] |= (1 << pos.column);
-				selectedColsCollabColor[pos.channel][pos.column] = MODCOLOR_ANNOTATION;
+				selectedColsAnnotation[pos.channel] |= (1 << pos.column);
 				hasCollabCursors = true;
 			}
 		}
@@ -806,7 +822,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		{
 			const auto &pos = sel.second;
 			if(pos.sequence == GetDocument()->GetrSoundFile().Order.GetCurrentSequenceIndex()
-				&& pos.pattern == GetCurrentPattern()
+				&& pos.pattern == nPattern
 				&& pos.row == row)
 			{
 				selectedColsCollab[pos.channel] |= (1 << pos.column);
@@ -908,7 +924,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		xbmp = nbmp = 0;
 		do
 		{
-			int x, bk_col, tx_col, col_sel, collab_sel, fx_col;
+			int x, bk_col, tx_col, col_sel, fx_col;
 
 			const ModCommand *m = pattern.GetpModCommand(row, static_cast<CHANNELINDEX>(col));
 
@@ -942,7 +958,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 			selectedCols[col] |= COLUMN_BITS_SKIP;
 			col_sel = 0;
 			if (bRowSel) col_sel = selectedCols[col] & COLUMN_BITS_ALL;
-			collab_sel = selectedColsCollab[col] & COLUMN_BITS_ALL;
+			int collab_sel = selectedColsCollab[col] & COLUMN_BITS_ALL;
+			int anno_sel = selectedColsAnnotation[col] & COLUMN_BITS_ALL;
 			tx_col = row_col;
 			bk_col = row_bkcol;
 			if (col_sel)
@@ -951,7 +968,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 				bk_col = MODCOLOR_BACKSELECTED;
 			}
 			// Speedup: Empty command which is either not or fully selected
-			if (m->IsEmpty() && ((!col_sel) || (col_sel == COLUMN_BITS_ALLCOLUMNS)) && !collab_sel)
+			if (m->IsEmpty() && ((!col_sel) || (col_sel == COLUMN_BITS_ALLCOLUMNS)) && !collab_sel && !anno_sel)
 			{
 				m_Dib.SetTextColor(tx_col, bk_col);
 				m_Dib.TextBlt(xbmp, 0, nColumnWidth-4, m_szCell.cy, pfnt->nClrX, pfnt->nClrY, pfnt->dib);
@@ -998,6 +1015,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					DrawNote(xbmp+x, 0, m->note, sndFile.Instruments[m->instr]->pTuning);
 				else //Original
 					DrawNote(xbmp+x, 0, m->note);
+
+				if(anno_sel & COLUMN_BITS_NOTE)
+				{
+					DrawAnnotationBox(m_Dib, pfnt, xbmp + x, 0, 0);
+				}
 			}
 			x += pfnt->nEltWidths[0];
 			// Instrument
@@ -1023,6 +1045,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					// Drawing instrument
 					m_Dib.SetTextColor(tx_col, bk_col);
 					DrawInstrument(xbmp+x, 0, m->instr);
+
+					if(anno_sel & COLUMN_BITS_INSTRUMENT)
+					{
+						DrawAnnotationBox(m_Dib, pfnt, xbmp + x, 0, 1);
+					}
 				}
 				x += pfnt->nEltWidths[1];
 			}
@@ -1054,6 +1081,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					// Drawing Volume
 					m_Dib.SetTextColor(tx_col, bk_col);
 					DrawVolumeCommand(xbmp + x, 0, *m, drawDefaultVolume);
+
+					if(anno_sel & COLUMN_BITS_VOLUME)
+					{
+						DrawAnnotationBox(m_Dib, pfnt, xbmp + x, 0, 2);
+					}
 				}
 				x += pfnt->nEltWidths[2];
 			}
@@ -1102,6 +1134,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						}
 					}
 					DrawPadding(m_Dib, pfnt, xbmp + x, 0, 3);
+
+					if(anno_sel & COLUMN_BITS_FXCMD)
+					{
+						DrawAnnotationBox(m_Dib, pfnt, xbmp + x, 0, 3);
+					}
 				}
 				x += pfnt->nEltWidths[3];
 				// Param
@@ -1125,8 +1162,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					{
 						m_Dib.TextBlt(xbmp + x, 0, pfnt->nParamHiWidth, m_szCell.cy, pfnt->nNumX, pfnt->nNumY+((val / 10) % 10)*pfnt->spacingY, pfnt->dib);
 						m_Dib.TextBlt(xbmp + x + pfnt->nParamHiWidth, 0, pfnt->nEltWidths[4] - pfnt->padding[4] - pfnt->nParamHiWidth, m_szCell.cy, pfnt->nNumX+pfnt->paramLoMargin, pfnt->nNumY+(val % 10)*pfnt->spacingY, pfnt->dib);
-					}
-					else
+					} else
 					{
 						if (m->command)
 						{
@@ -1138,6 +1174,11 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 						}
 					}
 					DrawPadding(m_Dib, pfnt, xbmp + x, 0, 4);
+
+					if(anno_sel & COLUMN_BITS_FXPARAM)
+					{
+						DrawAnnotationBox(m_Dib, pfnt, xbmp + x, 0, 4);
+					}
 				}
 			}
 		DoBlit:
@@ -1146,6 +1187,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 			xpaint += nColumnWidth;
 			if ((xbmp + nColumnWidth >= (UINT)m_Dib.GetWidth()) || (xpaint >= rcClient.right)) break;
 		} while (++col < maxcol);
+
 		m_Dib.Blit(hdc, xpaint-xbmp, ypaint, xbmp, m_szCell.cy);
 	SkipRow:
 		ypaint += m_szCell.cy;

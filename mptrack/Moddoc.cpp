@@ -3275,7 +3275,10 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		Networking::AnnotationMsg msg;
 		inArchive >> msg;
 		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
-		m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
+		if(msg.message.empty())
+			m_collabAnnotations.erase(pos);
+		else
+			m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 		if(m_chatDlg) m_chatDlg->Update();
 	} else if(type == Networking::UserJoinedMsg)
 	{

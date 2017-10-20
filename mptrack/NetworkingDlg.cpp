@@ -395,7 +395,7 @@ void ChatDlg::Update()
 	m_Annotations.ResetContent();
 	for(const auto &anno : m_ModDoc.m_collabAnnotations)
 	{
-		m_Annotations.AddString(mpt::cformat(_T("Pattern %1, row %2, channel %3: "))(anno.first.pattern, anno.first.row, anno.first.channel) + mpt::ToCString(anno.second));
+		m_Annotations.AddString(mpt::cformat(_T("Pattern %1, row %2, channel %3: "))(anno.first.pattern, anno.first.row, anno.first.channel + 1) + mpt::ToCString(anno.second));
 	}
 	m_Annotations.SetRedraw(TRUE);
 }

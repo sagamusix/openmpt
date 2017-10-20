@@ -1997,6 +1997,15 @@ void CFastBitmap::TextBlt(int x, int y, int cx, int cy, int srcx, int srcy, MODP
 }
 
 
+void CFastBitmap::SetPoint(int x, int y, uint8 color)
+{
+	if(x >= 0 && y >= 0 && x < m_Dib.bmiHeader.biWidth && y < m_Dib.bmiHeader.biHeight)
+	{
+		m_Dib.DibBits[x + y * m_Dib.bmiHeader.biWidth] = color;
+	}
+}
+
+
 void CFastBitmap::SetSize(int x, int y)
 {
 	if(x > 4)
