@@ -1947,6 +1947,8 @@ void CViewSample::OnSetLoop()
 		{
 			if ((sample.nLoopStart != m_dwBeginSel) || (sample.nLoopEnd != m_dwEndSel))
 			{
+				SamplePropertyTransaction tr(sndFile, m_nSample);
+				pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_none, "Set Loop");
 				sample.SetLoop(m_dwBeginSel, m_dwEndSel, true, sample.uFlags[CHN_PINGPONGLOOP], sndFile);
 				SetModified(SampleHint().Info().Data(), true, false);
 			}
@@ -1966,6 +1968,8 @@ void CViewSample::OnSetSustainLoop()
 		{
 			if ((sample.nSustainStart != m_dwBeginSel) || (sample.nSustainEnd != m_dwEndSel))
 			{
+				SamplePropertyTransaction tr(sndFile, m_nSample);
+				pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_none, "Set Sustain Loop");
 				sample.SetSustainLoop(m_dwBeginSel, m_dwEndSel, true, sample.uFlags[CHN_PINGPONGSUSTAIN], sndFile);
 				SetModified(SampleHint().Info().Data(), true, false);
 			}
