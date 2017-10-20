@@ -2620,6 +2620,7 @@ void CCtrlSamples::OnSilence()
 	if(selection.selectionActive && len > 1)
 	{
 		ModSample &sample = m_sndFile.GetSample(m_nSample);
+		SampleDataTransaction transaction(m_sndFile, m_nSample);
 		PrepareUndo("Silence", sundo_update, selection.nStart, selection.nEnd);
 		if(ctrlSmp::SilenceSample(sample, selection.nStart, selection.nEnd, m_sndFile))
 		{
@@ -2871,6 +2872,7 @@ void CCtrlSamples::OnVibTypeChanged()
 	int n = m_ComboAutoVib.GetCurSel();
 	if (n >= 0)
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		PrepareUndo("Set Vibrato Type");
 		m_sndFile.GetSample(m_nSample).nVibType = static_cast<uint8>(m_ComboAutoVib.GetItemData(n));
 
@@ -2888,6 +2890,7 @@ void CCtrlSamples::OnVibDepthChanged()
 	int n = GetDlgItemInt(IDC_EDIT15);
 	if ((n >= lmin) && (n <= lmax))
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Vibrato Depth");
 		m_sndFile.GetSample(m_nSample).nVibDepth = static_cast<uint8>(n);
 
@@ -2905,6 +2908,7 @@ void CCtrlSamples::OnVibSweepChanged()
 	int n = GetDlgItemInt(IDC_EDIT14);
 	if ((n >= lmin) && (n <= lmax))
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Vibrato Sweep");
 		m_sndFile.GetSample(m_nSample).nVibSweep = static_cast<uint8>(n);
 
@@ -2922,6 +2926,7 @@ void CCtrlSamples::OnVibRateChanged()
 	int n = GetDlgItemInt(IDC_EDIT16);
 	if ((n >= lmin) && (n <= lmax))
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Vibrato Rate");
 		m_sndFile.GetSample(m_nSample).nVibRate = static_cast<uint8>(n);
 
@@ -2938,6 +2943,7 @@ void CCtrlSamples::OnLoopTypeChanged()
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	bool wasDisabled = !sample.uFlags[CHN_LOOP];
 
+	SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Set Loop Type");
 
 	// Loop type index: 0: Off, 1: On, 2: PingPong
@@ -2972,6 +2978,7 @@ void CCtrlSamples::OnLoopPointsChanged()
 	SmpLength start = GetDlgItemInt(IDC_EDIT1, NULL, FALSE), end = GetDlgItemInt(IDC_EDIT2, NULL, FALSE);
 	if(start < end || !sample.uFlags[CHN_LOOP])
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Loop");
 		const int n = m_ComboLoopType.GetCurSel();
 		sample.SetLoop(start, end, n > 0, n == 2, m_sndFile);
@@ -2987,6 +2994,7 @@ void CCtrlSamples::OnSustainTypeChanged()
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	bool wasDisabled = !sample.uFlags[CHN_SUSTAINLOOP];
 
+	SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 	PrepareUndo("Set Sustain Loop Type");
 
 	// Loop type index: 0: Off, 1: On, 2: PingPong
@@ -3021,6 +3029,7 @@ void CCtrlSamples::OnSustainPointsChanged()
 	SmpLength start = GetDlgItemInt(IDC_EDIT3, NULL, FALSE), end = GetDlgItemInt(IDC_EDIT4, NULL, FALSE);
 	if(start < end || !sample.uFlags[CHN_SUSTAINLOOP])
 	{
+		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Sustain Loop");
 		const int n = m_ComboSustainType.GetCurSel();
 		sample.SetSustainLoop(start, end, n > 0, n == 2, m_sndFile);
@@ -3562,6 +3571,11 @@ void CCtrlSamples::PropagateAutoVibratoChanges()
 		if(m_sndFile.IsSampleReferencedByInstrument(m_nSample, i))
 		{
 			const auto referencedSamples = m_sndFile.Instruments[i]->GetSamples();
+			std::vector<SamplePropertyTransaction> transactions;
+			for(SAMPLEINDEX smp : referencedSamples)
+			{
+				transactions.push_back(SamplePropertyTransaction(m_sndFile, smp));
+			}
 
 			// Propagate changes to all samples that belong to this instrument.
 			const ModSample &it = m_sndFile.GetSample(m_nSample);

@@ -1672,7 +1672,6 @@ void CViewSample::OnLButtonDown(UINT, CPoint point)
 	if (m_dwStatus[SMPSTATUS_DRAWING])
 	{
 		m_lastDrawPoint = point;
-		SampleDataTransaction transaction(sndFile, m_nSample);
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Draw Sample");
 		if(sample.GetElementarySampleSize() == 2)
 			SetInitialDrawPoint<int16, uint16>(sample, point);
@@ -1694,6 +1693,10 @@ void CViewSample::OnLButtonDown(UINT, CPoint point)
 
 void CViewSample::OnLButtonUp(UINT, CPoint)
 {
+	if(m_dwStatus[SMPSTATUS_DRAWING])
+	{
+		SampleDataTransaction transaction(GetDocument()->GetrSoundFile(), m_nSample, true);
+	}
 	if(m_dwStatus[SMPSTATUS_MOUSEDRAG])
 	{
 		m_dwStatus.reset(SMPSTATUS_MOUSEDRAG);

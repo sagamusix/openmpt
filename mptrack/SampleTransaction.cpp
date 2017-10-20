@@ -59,12 +59,13 @@ SamplePropertyTransaction::~SamplePropertyTransaction()
 }
 
 
-SampleDataTransaction::SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample)
+SampleDataTransaction::SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample, bool force)
 	: m_sndFile(sndFile)
 	, m_sample(sample)
+	, m_force(force)
 {
 	ModSample &smp = sndFile.GetSample(sample);
-	if(smp.HasSampleData())
+	if(smp.HasSampleData() && !force)
 	{
 		m_oldData.assign(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
 	}
@@ -75,7 +76,7 @@ SampleDataTransaction::~SampleDataTransaction()
 {
 	ModSample &smp = m_sndFile.GetSample(m_sample);
 	auto newData = mpt::as_span(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
-	if(mpt::as_span(m_oldData) != newData)
+	if(m_force || mpt::as_span(m_oldData) != newData)
 	{
 		auto *modDoc = m_sndFile.GetpModDoc();
 		if(modDoc->m_collabClient)
@@ -83,6 +84,9 @@ SampleDataTransaction::~SampleDataTransaction()
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
 			ar(Networking::SampleDataTransactionMsg);
+			Networking::SamplePropertyEditMsg msg{ m_sample, smp };
+			mpt::String::Copy(msg.name, m_sndFile.m_szNames[m_sample]);
+			ar(msg);
 			ar(cereal::make_size_tag(static_cast<cereal::size_type>(newData.size())));
 			ar(cereal::binary_data(newData.data(), newData.size() * sizeof(newData[0])));
 			modDoc->m_collabClient->Write(ss.str());

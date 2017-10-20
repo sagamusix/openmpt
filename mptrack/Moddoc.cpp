@@ -3146,6 +3146,35 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			msg.Apply(m_SndFile, msg.id);
 		}
 		hint = SampleHint(msg.id).Names().Info();
+	} else if(type == Networking::SampleDataTransactionMsg)
+	{
+		Networking::SamplePropertyEditMsg msg;
+		std::vector<uint8> data;
+		inArchive >> msg;
+		inArchive >> data;
+
+		if(msg.id > 0 && msg.id < MAX_SAMPLES)
+		{
+			CriticalSection cs;
+			if(msg.id > GetNumSamples())
+			{
+				m_SndFile.m_nSamples = msg.id;
+			}
+			ModSample &sample = m_SndFile.GetSample(msg.id);
+			size_t oldSize = sample.pSample != nullptr ? sample.GetSampleSizeInBytes() : 0;
+			msg.Apply(m_SndFile, msg.id);
+			sample.nLength = msg.sample.nLength;
+			if(oldSize < data.size())
+			{
+				sample.AllocateSample();
+			}
+			if(sample.pSample != nullptr)
+			{
+				memcpy(sample.pSample8, data.data(), data.size());
+			}
+		}
+
+		hint = SampleHint(msg.id).Names().Info().Data();
 	} else if(type == Networking::InstrumentTransactionMsg)
 	{
 		INSTRUMENTINDEX id;

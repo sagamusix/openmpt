@@ -16,14 +16,15 @@ public:
 };
 
 
-class SampleDataTransaction //: public SamplePropertyTransaction
+class SampleDataTransaction
 {
 	CSoundFile &m_sndFile;
 	std::vector<int8> m_oldData;
 	SAMPLEINDEX m_sample;
+	bool m_force;
 
 public:
-	SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample);
+	SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sample, bool force = false);
 	~SampleDataTransaction();
 };
 

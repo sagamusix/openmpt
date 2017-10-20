@@ -570,13 +570,21 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				}
 			} else if(type == SampleDataTransactionMsg)
 			{
+				SamplePropertyEditMsg msg;
+				inArchive >> msg;
 				cereal::size_type size;
 				inArchive >> size;
 				std::vector<int8> data(static_cast<size_t>(size));
 				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(size)));
-				//ar(make_size_tag(size));
-				//str.resize(static_cast<std::size_t>(size));
-				//ar(cereal::binary_data(const_cast<CharT *>(str.data()), static_cast<std::size_t>(size) * sizeof(CharT)));
+				
+				// Send back to all clients
+				ar(msg);
+				ar(data);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
 			} else if(type == InstrumentTransactionMsg)
 			{
 				INSTRUMENTINDEX id;

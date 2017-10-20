@@ -349,7 +349,7 @@ static void DrawAnnotationBox(CFastBitmap &dib, const PATTERNFONT *pfnt, int x, 
 	for(UINT px = 0; px < pfnt->nEltWidths[col]; px += 2)
 	{
 		dib.SetPoint(x + px, y, MODCOLOR_TEXTNORMAL);
-		dib.SetPoint(x + px, y + pfnt->nHeight -1, MODCOLOR_TEXTNORMAL);
+		dib.SetPoint(x + px, y + pfnt->nHeight - 1, MODCOLOR_TEXTNORMAL);
 	}
 	for(int py = 0; py < pfnt->nHeight; py += 2)
 	{
