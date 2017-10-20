@@ -108,6 +108,7 @@ BEGIN_MESSAGE_MAP(CModDoc, CDocument)
 	ON_COMMAND(ID_EDIT_CLEANUP,			OnShowCleanup)
 	ON_COMMAND(ID_PATTERN_MIDIMACRO,	OnSetupZxxMacros)
 	ON_COMMAND(ID_CHANNEL_MANAGER,		OnChannelManager)
+	ON_COMMAND(ID_NETWORKING_CHAT,		OnNetworkingChat)
 
 	ON_COMMAND(ID_ESTIMATESONGLENGTH,	OnEstimateSongLength)
 	ON_COMMAND(ID_APPROX_BPM,			OnApproximateBPM)
@@ -3367,6 +3368,15 @@ uint32 CModDoc::GetCollabUserID() const
 	if(m_collabClient)
 		return m_collabClient->GetConnection()->m_id;
 	return 0;
+}
+
+
+void CModDoc::OnNetworkingChat()
+{
+	if(m_chatDlg)
+	{
+		m_chatDlg->ShowWindow(SW_SHOW);
+	}
 }
 
 

@@ -132,7 +132,7 @@ void CToolBarEx::EnableFlatButtons(BOOL bFlat)
 // Play Command
 #define PLAYCMD_INDEX		10
 #define TOOLBAR_IMAGE_PAUSE	8
-#define TOOLBAR_IMAGE_PLAY	13
+#define TOOLBAR_IMAGE_PLAY	14
 // Base octave
 #define EDITOCTAVE_INDEX	13
 #define EDITOCTAVE_WIDTH	SCALEWIDTH(55)
@@ -218,6 +218,7 @@ static UINT MainButtons[] =
 	ID_SEPARATOR,
 		ID_SEPARATOR,	// VU Meter
 	ID_NETWORKING,
+	ID_NETWORKING_CHAT,
 };
 
 

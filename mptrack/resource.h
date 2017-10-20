@@ -1203,6 +1203,7 @@
 #define ID_EDIT_PASTESPECIAL            43236
 #define ID_ORDERLIST_EDIT_COPY_ORDERS   43237
 #define ID_NETWORKING                   43238
+#define ID_NETWORKING_CHAT              43239
 #define ID_CHANGE_PCNOTE_PARAM          43242
 #define ID_MODTREE_CLOSE                44243
 #define ID_SAMPLE_GENERATOR_MENU        44244

@@ -477,6 +477,7 @@ public:
 	afx_msg void OnAppendModule();
 	afx_msg void OnViewMIDIMapping() { ViewMIDIMapping(); }
 	afx_msg void OnChannelManager();
+	afx_msg void OnNetworkingChat();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 private:
