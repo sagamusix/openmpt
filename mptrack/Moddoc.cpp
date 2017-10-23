@@ -3159,9 +3159,11 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Receive updated sample data
 		Networking::SamplePropertyEditMsg msg;
-		std::vector<uint8> data;
+		cereal::size_type size;
+		//std::vector<uint8> data;
 		inArchive >> msg;
-		inArchive >> data;
+		inArchive >> cereal::make_size_tag(size);
+		//inArchive >> data;
 
 		if(msg.id > 0 && msg.id < MAX_SAMPLES)
 		{
@@ -3174,13 +3176,13 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			size_t oldSize = sample.pSample != nullptr ? sample.GetSampleSizeInBytes() : 0;
 			msg.Apply(m_SndFile, msg.id);
 			sample.nLength = msg.sample.nLength;
-			if(oldSize < data.size())
+			if(oldSize < size)
 			{
 				sample.AllocateSample();
 			}
 			if(sample.pSample != nullptr)
 			{
-				memcpy(sample.pSample8, data.data(), data.size());
+				inArchive >> cereal::binary_data(sample.pSample8, sample.GetSampleSizeInBytes());
 			}
 		}
 

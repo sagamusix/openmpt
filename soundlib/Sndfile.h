@@ -282,8 +282,9 @@ public: //Misc
 	//Tuning-->
 public:
 	static CTuning* CreateTuning12TET(const std::string &name);
-	static CTuning *GetDefaultTuning() {return nullptr;}
-	CTuningCollection& GetTuneSpecificTunings() {return *m_pTuningsTuneSpecific;}
+	static CTuning *GetDefaultTuning() { return nullptr; }
+	CTuningCollection& GetTuneSpecificTunings() { return *m_pTuningsTuneSpecific; }
+	const CTuningCollection& GetTuneSpecificTunings() const { return *m_pTuningsTuneSpecific; }
 
 	std::string GetNoteName(const ModCommand::NOTE note, const INSTRUMENTINDEX inst) const;
 	std::string GetNoteName(const ModCommand::NOTE note) const;

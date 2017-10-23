@@ -217,9 +217,6 @@ private:
 			return true;
 	}
 
-	template<class Archive>
-	void serialize(Archive &archive);
-
 private:
 
 	TUNINGTYPE m_TuningType;

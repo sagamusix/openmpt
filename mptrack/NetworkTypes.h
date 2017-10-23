@@ -17,8 +17,6 @@
 #include <cereal/archives/binary.hpp>
 
 #include "../soundlib/Sndfile.h"
-#include "../soundlib/tuning.h"
-#include "../soundlib/tuningcollection.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -274,6 +272,9 @@ struct AnnotationMsg
 	}
 };
 
+std::string SerializeTunings(const CSoundFile &sndFile);
+void DeserializeTunings(CSoundFile &sndFile, const std::string &s);
+
 }
 
 
@@ -300,12 +301,17 @@ template<class Archive>
 void CSoundFile::save(Archive &archive) const
 {
 	const_cast<CSoundFile *>(this)->serializeCommon(archive);
+	archive(Networking::SerializeTunings(*this));
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		if(Instruments[i])
 			archive(*Instruments[i]);
 		else
 			archive(ModInstrument());
+		/*if(Instruments[i] && Instruments[i]->pTuning)
+			archive(Instruments[i]->pTuning->GetName());
+		else
+			archive(std::string());*/
 	}
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 	{
@@ -317,20 +323,6 @@ void CSoundFile::save(Archive &archive) const
 			archive(cereal::binary_data(Samples[i].pSample8, Samples[i].GetSampleSizeInBytes()));
 		}
 	}
-	// TODO Tunings
-	uint64 numTunings = 0;
-	if(m_pTuningsTuneSpecific)
-	{
-		numTunings = m_pTuningsTuneSpecific->GetNumTunings();
-		archive(numTunings);
-		for(const auto &tuning : *m_pTuningsTuneSpecific)
-		{
-			archive(tuning);
-		}
-	} else
-	{
-		archive(numTunings);
-	}
 }
 template<class Archive>
 void CSoundFile::load(Archive &archive)
@@ -338,6 +330,10 @@ void CSoundFile::load(Archive &archive)
 	serializeCommon(archive);
 	SetModSpecsPointer(m_pModSpecs, GetType());
 	SetMixLevels(m_nMixLevels);
+	std::string tunings;
+	archive(tunings);
+	Networking::DeserializeTunings(*this, tunings);
+	// TODO Add Tunings to instruments
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		ModInstrument *ins = AllocateInstrument(i);
@@ -349,6 +345,12 @@ void CSoundFile::load(Archive &archive)
 			ModInstrument temp;
 			archive(temp);
 		}
+		/*std::string tuning;
+		archive(tuning);
+		if(!tuning.empty() && ins != nullptr)
+		{
+			ins->pTuning = 
+		}*/
 	}
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 	{
@@ -360,14 +362,6 @@ void CSoundFile::load(Archive &archive)
 			archive(cereal::binary_data(Samples[i].pSample8, Samples[i].GetSampleSizeInBytes()));
 		}
 	}
-	uint64 numTunings = 0;
-	archive(numTunings);
-	for(uint64 i = 0; i < numTunings; i++)
-	{
-		Tuning::CTuningRTI tuning;
-		archive(tuning);
-	}
-	// TODO Tunings
 	for(auto &plug : m_MixPlugins)
 	{
 		CreateMixPluginProc(plug, *this);
@@ -376,12 +370,6 @@ void CSoundFile::load(Archive &archive)
 			plug.pMixPlugin->RestoreAllParameters(plug.defaultProgram);
 		}
 	}
-}
-
-template<class Archive>
-void Tuning::CTuning::serialize(Archive &archive)
-{
-	archive(m_TuningType, m_RatioTable, m_RatioTableFine, m_StepMin, m_GroupSize, m_GroupRatio, m_FineStepCount, m_TuningName, m_NoteNameMap);
 }
 
 

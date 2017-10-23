@@ -11,11 +11,35 @@
 #include "stdafx.h"
 #include "NetworkTypes.h"
 #include "../common/StringFixer.h"
+#include "../soundlib/tuning.h"
+#include "../soundlib/tuningcollection.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
 namespace Networking
 {
+
+std::string SerializeTunings(const CSoundFile &sndFile)
+{
+	std::ostringstream ss;
+	for(const auto &tun : sndFile.GetTuneSpecificTunings())
+	{
+		tun->Serialize(ss);
+	}
+	return ss.str();
+}
+
+
+void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
+{
+	std::istringstream is(s);
+	bool result = false;
+	while(!is.eof() && !result)
+	{
+		result = sndFile.GetTuneSpecificTunings().AddTuning(is);
+	}
+}
+
 
 void PatternEditMsg::Apply(CPattern &pat)
 {
