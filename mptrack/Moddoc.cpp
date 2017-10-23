@@ -154,6 +154,10 @@ CModDoc::CModDoc()
 CModDoc::~CModDoc()
 {
 	ClearLog();
+	if(m_collabClient)
+	{
+		m_collabClient->Quit();
+	}
 	if(Networking::collabServer != nullptr)
 	{
 		Networking::collabServer->CloseDocument(*this);
@@ -3322,7 +3326,6 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_chatDlg) m_chatDlg->Update();
 	} else if(type == Networking::UserQuitMsg)
 	{
-		// TODO
 		Networking::ClientID id;
 		inArchive >> id;
 		m_collabNames.erase(id);

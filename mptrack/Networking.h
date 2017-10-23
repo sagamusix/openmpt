@@ -129,11 +129,13 @@ public:
 		: m_listener(listener)
 		, m_connection(connection)
 	{ }
-
+	
 	virtual void Write(const std::string &msg) = 0;
 	virtual std::string WriteWithResult(const std::string &msg) = 0;
 
 	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
+
+	void Quit();
 
 	void SetListener(std::shared_ptr<Listener> listener)
 	{

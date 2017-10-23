@@ -528,6 +528,26 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				c->Write(s);
 			}
 		}
+	} else if(type == UserQuitMsg)
+	{
+		// A collaborator or spectator leaves the document
+		auto *modDoc = source->m_modDoc;
+		auto &connections = m_documents.at(modDoc).m_connections;
+		auto conn = std::find(connections.begin(), connections.end(), source);
+		if(conn != connections.end())
+		{
+			connections.erase(conn);
+		}
+		if(m_documents.count(modDoc))
+		{
+			ar(type);
+			ar(source->m_id);
+			const std::string s = sso.str();
+			for(auto &c : m_documents.at(modDoc).m_connections)
+			{
+				c->Write(s);
+			}
+		}
 	} else if(source->m_accessType == JoinMsg::ACCESS_COLLABORATOR)
 	{
 		// Document operation
@@ -762,6 +782,15 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			}
 		}
 	}
+}
+
+
+void CollabClient::Quit()
+{
+	std::ostringstream sso;
+	cereal::BinaryOutputArchive ar(sso);
+	ar(UserQuitMsg);
+	Write(sso.str());
 }
 
 
