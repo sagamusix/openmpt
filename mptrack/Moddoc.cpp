@@ -3126,11 +3126,12 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
 	inArchive >> type;
-	OutputDebugStringA(std::string(type.type, 4).c_str());
+	//OutputDebugStringA(std::string(type.type, 4).c_str());
 	UpdateHint hint;
 
 	if(type == Networking::PatternTransactionMsg)
 	{
+		// Receive updated pattern data
 		Networking::PatternEditMsg msg;
 		inArchive >> msg;
 		CriticalSection cs;
@@ -3141,6 +3142,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = PatternHint(msg.pattern).Names().Data();
 	} else if(type == Networking::SamplePropertyTransactionMsg)
 	{
+		// Receive updated sample properties
 		Networking::SamplePropertyEditMsg msg;
 		inArchive >> msg;
 		CriticalSection cs;
@@ -3155,6 +3157,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SampleHint(msg.id).Names().Info();
 	} else if(type == Networking::SampleDataTransactionMsg)
 	{
+		// Receive updated sample data
 		Networking::SamplePropertyEditMsg msg;
 		std::vector<uint8> data;
 		inArchive >> msg;
@@ -3184,6 +3187,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SampleHint(msg.id).Names().Info().Data();
 	} else if(type == Networking::InstrumentTransactionMsg)
 	{
+		// Receive updated instrument
 		INSTRUMENTINDEX id;
 		ModInstrument instr;
 		inArchive >> id;
@@ -3204,6 +3208,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			hint.ModType();
 	} else if(type == Networking::EnvelopeTransactionMsg)
 	{
+		// Receive updated instrument envelope
 		INSTRUMENTINDEX id;
 		EnvelopeType envType;
 		InstrumentEnvelope env;
@@ -3226,6 +3231,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			hint.ModType();
 	} else if(type == Networking::PatternResizeMsg)
 	{
+		// Receive new pattern size
 		PATTERNINDEX pat;
 		ROWINDEX rows;
 		bool atEnd;
@@ -3243,6 +3249,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = PatternHint(pat).Data();
 	} else if(type == Networking::SequenceTransactionMsg)
 	{
+		// Receive updated order list
 		Networking::SequenceMsg msg;
 		inArchive >> msg;
 		CriticalSection cs;
@@ -3253,6 +3260,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = SequenceHint(msg.seq).Names().Data();
 	} else if(type == Networking::EditPosMsg)
 	{
+		// Receive some client's pattern edit position
 		Networking::ClientID id;
 		Networking::SetCursorPosMsg msg;
 		inArchive >> id;
@@ -3278,6 +3286,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = RowHint(msg.row);
 	} else if(type == Networking::InsertPatternMsg)
 	{
+		// Receive request to insert a new specified pattern
 		PATTERNINDEX pat;
 		ROWINDEX rows;
 		inArchive >> pat;
@@ -3286,12 +3295,14 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = PatternHint(pat).Names().Data();
 	} else if(type == Networking::InsertInstrumentMsg)
 	{
+		// Receive request to insert a specified instrument
 		INSTRUMENTINDEX ins;
 		inArchive >> ins;
 		m_SndFile.AllocateInstrument(ins);
 		hint = InstrumentHint(ins).Envelope().Info().Names();
 	} else if(type == Networking::ReturnValTransactionMsg)
 	{
+		// Receive result of a transaction message
 		uint64 handle;
 		std::string retVal;
 		inArchive >> handle;
@@ -3299,6 +3310,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		reinterpret_cast<std::promise<std::string> *>(handle)->set_value(retVal);
 	} else if(type == Networking::ChatMsg)
 	{
+		// Receive chat message
 		if(m_chatDlg)
 		{
 			mpt::ustring from, message;
@@ -3308,6 +3320,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 	} else if(type == Networking::SendAnnotationMsg)
 	{
+		// Add / remove annotation
 		Networking::AnnotationMsg msg;
 		inArchive >> msg;
 		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
@@ -3318,6 +3331,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_chatDlg) m_chatDlg->Update();
 	} else if(type == Networking::UserJoinedMsg)
 	{
+		// Add new user to collaborator list
 		Networking::ClientID id;
 		std::string name;
 		inArchive >> id;
@@ -3326,6 +3340,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_chatDlg) m_chatDlg->Update();
 	} else if(type == Networking::UserQuitMsg)
 	{
+		// Remove user from collaborator list
 		Networking::ClientID id;
 		inArchive >> id;
 		m_collabNames.erase(id);
