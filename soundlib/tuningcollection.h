@@ -60,6 +60,13 @@ public:
 	Tuning::SerializationResult Serialize(std::ostream&, const std::string &name) const;
 	Tuning::SerializationResult Deserialize(std::istream&, std::string &name);
 
+	std::vector<std::unique_ptr<CTuning> >::iterator begin() { return m_Tunings.begin(); }
+	std::vector<std::unique_ptr<CTuning> >::const_iterator begin() const { return m_Tunings.begin(); }
+	std::vector<std::unique_ptr<CTuning> >::const_iterator cbegin() { return m_Tunings.cbegin(); }
+	std::vector<std::unique_ptr<CTuning> >::iterator end() { return m_Tunings.end(); }
+	std::vector<std::unique_ptr<CTuning> >::const_iterator end() const { return m_Tunings.end(); }
+	std::vector<std::unique_ptr<CTuning> >::const_iterator cend() { return m_Tunings.cend(); }
+
 private:
 
 	std::vector<std::unique_ptr<CTuning> > m_Tunings;

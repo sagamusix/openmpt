@@ -16,7 +16,9 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
-#include "Sndfile.h"
+#include "../soundlib/Sndfile.h"
+#include "../soundlib/tuning.h"
+#include "../soundlib/tuningcollection.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -42,43 +44,43 @@ struct NetworkMessage
 	}
 };
 
-const NetworkMessage ListMsg("LIST");
+const NetworkMessage ListMsg("LIST");	// Get a list of shared documents from the server
 
-const NetworkMessage ConnectMsg("CONN");
-const NetworkMessage ConnectOKMsg("!OK!");
-const NetworkMessage DocNotFoundMsg("404!");
-const NetworkMessage WrongPasswordMsg("403!");
-const NetworkMessage NoMoreClientsMsg("FULL");
+const NetworkMessage ConnectMsg("CONN");	// Join a document
+const NetworkMessage ConnectOKMsg("!OK!");	// It is okay to join the document
+const NetworkMessage DocNotFoundMsg("404!");	// Unknown document
+const NetworkMessage WrongPasswordMsg("403!");	// Invalid password
+const NetworkMessage NoMoreClientsMsg("FULL");	// No more clients can join this document
 
-const NetworkMessage UserJoinedMsg("USRJ");
-const NetworkMessage UserQuitMsg("USRQ");
+const NetworkMessage UserJoinedMsg("USRJ");	// A user joins a shared document
+const NetworkMessage UserQuitMsg("USRQ");	// A user leaves a shared document
 
-const NetworkMessage EnvelopeTransactionMsg("ENTR");
-const NetworkMessage InstrumentTransactionMsg("INTR");
+const NetworkMessage EnvelopeTransactionMsg("ENTR");	// Modification of a single envelope of a single instrument
+const NetworkMessage InstrumentTransactionMsg("INTR");	// Modification of a single instrument
 
-const NetworkMessage SamplePropertyTransactionMsg("SATR");
-const NetworkMessage SampleDataTransactionMsg("SDTR");
+const NetworkMessage SamplePropertyTransactionMsg("SATR");	// Modification of sample propreties of a single sample
+const NetworkMessage SampleDataTransactionMsg("SDTR");	// Modification of a single sample's data
 
-const NetworkMessage PatternTransactionMsg("PATR");
-const NetworkMessage PatternResizeMsg("PSTR");
-const NetworkMessage EditPosMsg("EDPS");
+const NetworkMessage PatternTransactionMsg("PATR");	// Modification of a single pattern
+const NetworkMessage PatternResizeMsg("PSTR");	// Resizing of a single pattern
+const NetworkMessage EditPosMsg("EDPS");	// Tell other clients about current edit position
 
-const NetworkMessage SequenceTransactionMsg("SQTR");
+const NetworkMessage SequenceTransactionMsg("SQTR");	// Modification of an order list (sequence)
 
-const NetworkMessage PluginDataTransactionMsg("PLTR");
+const NetworkMessage PluginDataTransactionMsg("PLTR");	// Automation of a single plugin
 
-const NetworkMessage ReturnValTransactionMsg("RETV");
+const NetworkMessage ReturnValTransactionMsg("RETV");	// Message with return type (one of the following messages)
 
-const NetworkMessage InsertPatternMsg("INPA");
-const NetworkMessage InsertSampleMsg("INSA");
-const NetworkMessage InsertInstrumentMsg("ININ");
-const NetworkMessage ConvertInstrumentsMsg("CNVI");
+const NetworkMessage InsertPatternMsg("INPA");	// Request to insert a new pattern
+const NetworkMessage InsertSampleMsg("INSA");	// Request to insert a new sample
+const NetworkMessage InsertInstrumentMsg("ININ");	// Request to insert a new instrument
+const NetworkMessage ConvertInstrumentsMsg("CNVI");	// Request to convert all samples to instruments
 
-const NetworkMessage SendAnnotationMsg("ANNO");
+const NetworkMessage SendAnnotationMsg("ANNO");	// Add/change/remove an annoation at a given pattern position
 
-const NetworkMessage ChatMsg("CHAT");
+const NetworkMessage ChatMsg("CHAT");	// Send a chat message
 
-const NetworkMessage QuitMsg("QUIT");
+const NetworkMessage QuitMsg("QUIT");	// Close connection
 
 struct DocumentInfo
 {
@@ -316,6 +318,19 @@ void CSoundFile::save(Archive &archive) const
 		}
 	}
 	// TODO Tunings
+	uint64 numTunings = 0;
+	if(m_pTuningsTuneSpecific)
+	{
+		numTunings = m_pTuningsTuneSpecific->GetNumTunings();
+		archive(numTunings);
+		for(const auto &tuning : *m_pTuningsTuneSpecific)
+		{
+			archive(tuning);
+		}
+	} else
+	{
+		archive(numTunings);
+	}
 }
 template<class Archive>
 void CSoundFile::load(Archive &archive)
@@ -345,6 +360,13 @@ void CSoundFile::load(Archive &archive)
 			archive(cereal::binary_data(Samples[i].pSample8, Samples[i].GetSampleSizeInBytes()));
 		}
 	}
+	uint64 numTunings = 0;
+	archive(numTunings);
+	for(uint64 i = 0; i < numTunings; i++)
+	{
+		Tuning::CTuningRTI tuning;
+		archive(tuning);
+	}
 	// TODO Tunings
 	for(auto &plug : m_MixPlugins)
 	{
@@ -355,6 +377,13 @@ void CSoundFile::load(Archive &archive)
 		}
 	}
 }
+
+template<class Archive>
+void Tuning::CTuning::serialize(Archive &archive)
+{
+	archive(m_TuningType, m_RatioTable, m_RatioTableFine, m_StepMin, m_GroupSize, m_GroupRatio, m_FineStepCount, m_TuningName, m_NoteNameMap);
+}
+
 
 OPENMPT_NAMESPACE_END
 

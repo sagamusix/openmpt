@@ -406,6 +406,7 @@ void CollabServer::StartAccept()
 
 void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &inMsg)
 {
+	// Handle messages being received by the server
 	cereal::BinaryInputArchive inArchive(inMsg);
 	NetworkMessage type;
 
@@ -487,6 +488,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					}
 
 					{
+						// Tell everyone that this user joined
 						std::ostringstream ssoj;
 						cereal::BinaryOutputArchive arj(ssoj);
 						arj(UserJoinedMsg);
