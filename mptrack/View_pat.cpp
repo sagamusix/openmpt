@@ -6704,7 +6704,8 @@ INT_PTR CViewPattern::OnToolHitTest(CPoint point, TOOLINFO *pTI) const
 BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 {
 	TOOLTIPTEXT *pTTT = (TOOLTIPTEXT *)pNMHDR;
-	mpt::winstring text;
+	static mpt::winstring text;
+	text.clear();
 	UINT_PTR nID = pNMHDR->idFrom;
 	if(!(pTTT->uFlags & TTF_IDISHWND))
 	{
@@ -6743,7 +6744,8 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 			if(!text.empty())
 			{
 				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
-				mpt::WinStringBuf(pTTT->szText) = text;
+				pTTT->lpszText = const_cast<wchar_t *>(text.c_str());
+				//mpt::WinStringBuf(pTTT->szText) = text;
 				return TRUE;
 			}
 		}

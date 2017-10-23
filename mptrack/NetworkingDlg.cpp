@@ -361,6 +361,10 @@ void ChatDlg::OnOK()
 	// Send message
 	CString message;
 	m_Input.GetWindowText(message);
+	if(message.IsEmpty())
+	{
+		return;
+	}
 	mpt::ustring umessage = mpt::ToUnicode(message);
 	if(auto client = m_ModDoc.m_collabClient)
 	{

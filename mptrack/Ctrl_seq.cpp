@@ -1553,7 +1553,7 @@ BOOL COrderList::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 	TOOLTIPTEXT *pTTT = (TOOLTIPTEXT *)pNMHDR;
 	if(!(pTTT->uFlags & TTF_IDISHWND))
 	{
-		CString text;
+		static CString text;
 		const CSoundFile &sndFile = m_pModDoc.GetrSoundFile();
 		const ModSequence &order = Order();
 		const ORDERINDEX ord = static_cast<ORDERINDEX>(pNMHDR->idFrom), ordLen = order.GetLengthTailTrimmed();
@@ -1567,8 +1567,23 @@ BOOL COrderList::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
 				text += _T("\r\n") + mpt::ToCString(sndFile.GetCharsetInternal(), name);
 			}
+			if(m_pModDoc.m_collabClient)
+			{
+				::SendMessage(pNMHDR->hwndFrom, TTM_SETMAXTIPWIDTH, 0, int32_max);	// Allow multiline tooltip
+				for(const auto &editPos : m_pModDoc.m_collabEditPositions)
+				{
+					const auto &pos = editPos.second;
+					if(pos.sequence == sndFile.Order.GetCurrentSequenceIndex()
+						&& pos.order == ord
+						&& m_pModDoc.m_collabNames.count(editPos.first))
+					{
+						text += _T("\r\n") + mpt::ToCString(m_pModDoc.m_collabNames.at(editPos.first)) + _T(" is editing here");
+					}
+				}
+			}
 		}
-		mpt::CStringBuf(pTTT->szText) = text;
+		pTTT->lpszText = const_cast<LPWSTR>(text.GetString());
+		//mpt::CStringBuf(pTTT->szText) = text;
 		return TRUE;
 	}
 	return FALSE;
