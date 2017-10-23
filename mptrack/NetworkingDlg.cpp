@@ -262,7 +262,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	}
 	CMainFrame::GetMainFrame()->GetUpperTreeview()->AddDocument(*modDoc);
 	m_List.DeleteAllItems();
-	modDoc->m_chatDlg = new Networking::ChatDlg(*modDoc);
+	modDoc->m_chatDlg = mpt::make_unique<Networking::ChatDlg>(*modDoc);
 	OnOK();
 	return 0;
 }
@@ -317,7 +317,7 @@ void SharingDlg::OnOK()
 	}
 	if(m_ModDoc.m_chatDlg == nullptr)
 	{
-		m_ModDoc.m_chatDlg = new Networking::ChatDlg(m_ModDoc);
+		m_ModDoc.m_chatDlg = mpt::make_unique<Networking::ChatDlg>(m_ModDoc);
 	}
 }
 
@@ -346,6 +346,7 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 {
 	Create(IDD_NETWORKCHAT, CMainFrame::GetMainFrame());
 	ShowWindow(SW_SHOW);
+	Update();
 }
 
 

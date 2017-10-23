@@ -138,7 +138,6 @@ CModDoc::CModDoc()
 	, m_InstrumentUndo(*this)
 	, bModifiedAutosave(false)
 	, m_listener(std::make_shared<Listener>(*this))
-	, m_chatDlg(nullptr)
 {
 	// Set the creation date of this file (or the load time if we're loading an existing file)
 	time(&m_creationTime);
@@ -159,7 +158,10 @@ CModDoc::~CModDoc()
 	{
 		Networking::collabServer->CloseDocument(*this);
 	}
-	delete m_chatDlg;
+	if(m_chatDlg)
+	{
+		m_chatDlg->DestroyWindow();
+	}
 }
 
 

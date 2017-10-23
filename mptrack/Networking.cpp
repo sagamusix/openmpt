@@ -341,6 +341,7 @@ std::shared_ptr<LocalCollabClient> CollabServer::AddDocument(CModDoc &modDoc, in
 		// New document
 		auto client = std::make_shared<LocalCollabClient>(modDoc);
 		m_documents[&modDoc] = NetworkedDocument(collaborators, spectators, password, client->GetConnection());
+		modDoc.m_collabNames[client->GetConnection()->m_id] = client->GetConnection()->m_userName;
 		return client;
 	} else
 	{
