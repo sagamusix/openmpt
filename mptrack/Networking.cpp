@@ -411,7 +411,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	NetworkMessage type;
 
 	inArchive >> type;
-	Log(std::string(type.type, 4).c_str());
+	//Log(std::string(type.type, 4).c_str());
 
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);

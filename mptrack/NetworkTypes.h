@@ -301,7 +301,6 @@ template<class Archive>
 void CSoundFile::save(Archive &archive) const
 {
 	const_cast<CSoundFile *>(this)->serializeCommon(archive);
-	archive(Networking::SerializeTunings(*this));
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		if(Instruments[i])
@@ -313,6 +312,7 @@ void CSoundFile::save(Archive &archive) const
 		else
 			archive(std::string());*/
 	}
+	archive(Networking::SerializeTunings(*this));
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 	{
 		/*cereal::size_type size = Samples[i].GetSampleSizeInBytes();
@@ -332,8 +332,6 @@ void CSoundFile::load(Archive &archive)
 	SetMixLevels(m_nMixLevels);
 	std::string tunings;
 	archive(tunings);
-	Networking::DeserializeTunings(*this, tunings);
-	// TODO Add Tunings to instruments
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		ModInstrument *ins = AllocateInstrument(i);
@@ -352,6 +350,7 @@ void CSoundFile::load(Archive &archive)
 			ins->pTuning = 
 		}*/
 	}
+	Networking::DeserializeTunings(*this, tunings);
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 	{
 		//cereal::size_type size;

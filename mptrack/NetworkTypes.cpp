@@ -22,9 +22,18 @@ namespace Networking
 std::string SerializeTunings(const CSoundFile &sndFile)
 {
 	std::ostringstream ss;
-	for(const auto &tun : sndFile.GetTuneSpecificTunings())
+	sndFile.GetTuneSpecificTunings().Serialize(ss, "Tune specific");
+	/*for(const auto &tun : sndFile.GetTuneSpecificTunings())
 	{
 		tun->Serialize(ss);
+	}*/
+	cereal::BinaryOutputArchive ar(ss);
+	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
+	{
+		if(sndFile.Instruments[i] && sndFile.Instruments[i]->pTuning)
+			ar(sndFile.Instruments[i]->pTuning->GetName());
+		else
+			ar(std::string());
 	}
 	return ss.str();
 }
@@ -33,10 +42,29 @@ std::string SerializeTunings(const CSoundFile &sndFile)
 void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 {
 	std::istringstream is(s);
-	bool result = false;
+	std::string name;
+	auto &tunings = sndFile.GetTuneSpecificTunings();
+	tunings.Deserialize(is, name);
+	/*bool result = false;
 	while(!is.eof() && !result)
 	{
 		result = sndFile.GetTuneSpecificTunings().AddTuning(is);
+	}*/
+	cereal::BinaryInputArchive ar(is);
+	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
+	{
+		std::string tuning;
+		ar(tuning);
+		if(sndFile.Instruments[i] && !tuning.empty())
+		{
+			for(const auto &tun : tunings)
+			{
+				if(tun->GetName() == tuning)
+				{
+					sndFile.Instruments[i]->pTuning = tun.get();
+				}
+			}
+		}
 	}
 }
 
