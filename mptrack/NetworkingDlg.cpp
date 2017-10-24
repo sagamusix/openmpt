@@ -326,6 +326,7 @@ void SharingDlg::OnOK()
 BEGIN_MESSAGE_MAP(ChatDlg, CDialog)
 	//{{AFX_MSG_MAP(ChatDlg)
 	ON_LBN_SELCHANGE(IDC_LIST2, OnGotoAnnotation)
+	ON_MESSAGE(WM_USER + 101, OnUpdate)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -389,6 +390,12 @@ void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring message)
 
 void ChatDlg::Update()
 {
+	PostMessage(WM_USER + 101, 0, 0);
+}
+
+
+LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
+{
 	m_Users.SetRedraw(FALSE);
 	m_Users.ResetContent();
 	for(const auto &user : m_ModDoc.m_collabNames)
@@ -404,6 +411,7 @@ void ChatDlg::Update()
 		m_Annotations.AddString(mpt::cformat(_T("Pattern %1, row %2, channel %3: "))(anno.first.pattern, anno.first.row, anno.first.channel + 1) + mpt::ToCString(anno.second));
 	}
 	m_Annotations.SetRedraw(TRUE);
+	return 0;
 }
 
 

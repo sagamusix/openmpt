@@ -89,6 +89,7 @@ protected:
 	void OnOK() override;
 	
 	afx_msg void OnGotoAnnotation();
+	afx_msg LRESULT OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/);
 
 	DECLARE_MESSAGE_MAP()
 };

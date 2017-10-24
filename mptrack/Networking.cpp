@@ -115,7 +115,7 @@ void RemoteCollabConnection::Read()
 			auto length = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)), ec);
 			if(ec)
 			{
-				return;
+				break;
 			}
 
 			MsgHeader header;
@@ -128,7 +128,7 @@ void RemoteCollabConnection::Read()
 			asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], header.compressedSize), ec);
 			if(ec)
 			{
-				return;
+				break;
 			}
 			if(!that->Parse())
 			{
@@ -136,42 +136,6 @@ void RemoteCollabConnection::Read()
 			}
 		}
 	});
-	return;
-
-/*	m_inMessage.resize(sizeof(MsgHeader));
-	m_strand.dispatch([that]()
-	{
-		asio::async_read(that->m_socket,
-			asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)),
-			[that](std::error_code ec, std::size_t length)
-		{
-			if(!ec)
-			{
-				MsgHeader header;
-				MPT_ASSERT(length == sizeof(MsgHeader));
-				std::memcpy(&header, that->m_inMessage.data(), sizeof(MsgHeader));
-				that->m_inMessage.resize(header.compressedSize);
-				that->m_origSize = header.origSize;
-
-				auto remain = header.compressedSize.get();
-				size_t offset = 0;
-				while(remain)
-				{
-					Log("Trying to read %d (%d available)", remain, that->m_socket.available());
-					auto read = remain;
-					LimitMax(read, that->m_socket.available());
-					auto actualRead = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[offset], read));
-					remain -= actualRead;
-					offset += actualRead;
-					MPT_ASSERT(read == actualRead);
-				}
-				if(that->Parse())
-				{
-					that->Read();
-				}
-			}
-		});
-	});*/
 }
 
 
@@ -189,7 +153,6 @@ bool CollabConnection::Parse()
 		strm.avail_out = sizeof(outBuf);
 		strm.next_out = reinterpret_cast<Bytef *>(outBuf);
 		inflate(&strm, Z_FINISH);
-		//decompressedMessage.insert(decompressedMessage.size(), outBuf, sizeof(outBuf) - strm.avail_out);
 		decompressedStream.write(outBuf, sizeof(outBuf) - strm.avail_out);
 	} while(strm.avail_out == 0);
 	if(auto listener = m_listener.lock())

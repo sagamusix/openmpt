@@ -2877,7 +2877,9 @@ void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, co
 	{
 		const SNDMIXPLUGIN &plugin = plugarray[iPlug];
 		str.clear();
-		str += mpt::format(MPT_USTRING("FX%1: "))(iPlug + 1);
+		str += MPT_USTRING("FX");
+		str += mpt::ufmt::val(iPlug + 1);
+		str += MPT_USTRING(": ");
 		const size_t size0 = str.size();
 		str += (librarynames) ? mpt::ToUnicode(mpt::CharsetUTF8, plugin.GetLibraryName()) : mpt::ToUnicode(mpt::CharsetLocale, plugin.GetName());
 		if(str.size() <= size0) str += MPT_USTRING("--");
