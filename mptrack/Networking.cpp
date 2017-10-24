@@ -124,7 +124,7 @@ void RemoteCollabConnection::Read()
 			that->m_inMessage.resize(header.compressedSize);
 			that->m_origSize = header.origSize;
 
-			Log("Trying to read %d (%d available)", header.compressedSize, that->m_socket.available());
+			//Log("Trying to read %d (%d available)", header.compressedSize, that->m_socket.available());
 			asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], header.compressedSize), ec);
 			if(ec)
 			{
@@ -135,6 +135,7 @@ void RemoteCollabConnection::Read()
 				break;
 			}
 		}
+		Log("Closing remote thread");
 	});
 }
 
@@ -760,6 +761,7 @@ void CollabClient::Quit()
 	cereal::BinaryOutputArchive ar(sso);
 	ar(UserQuitMsg);
 	Write(sso.str());
+	m_connection->Close();
 }
 
 
@@ -774,16 +776,6 @@ RemoteCollabClient::RemoteCollabClient(const std::string &server, const std::str
 
 bool RemoteCollabClient::Connect()
 {
-	/*auto that = shared_from_this();
-	asio::async_connect(m_socket, m_endpoint_iterator,
-		[that](std::error_code ec, asio::ip::tcp::resolver::iterator)
-	{
-		if(!ec)
-		{
-			that->m_connection = std::make_shared<CollabConnection>(std::move(that->m_socket), that);
-			that->m_connection->Read();
-		}
-	});*/
 	std::error_code ec;
 	asio::connect(m_socket, m_endpoint_iterator, ec);
 	if(ec)

@@ -65,6 +65,7 @@ public:
 	std::string WriteWithResult(const std::string &message);
 	virtual void Read() = 0;
 	virtual void Send(const std::string &message) = 0;
+	virtual void Close() = 0;
 
 	void SetListener(std::shared_ptr<Listener> listener)
 	{
@@ -99,7 +100,7 @@ public:
 
 	void Read() override;
 	void Send(const std::string &message) override;
-	void Close();
+	void Close() override;
 
 protected:
 	void WriteImpl();
@@ -115,6 +116,7 @@ public:
 
 	void Send(const std::string &message) override;
 	void Read() override { }
+	void Close() override { }
 };
 
 
