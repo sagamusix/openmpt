@@ -162,7 +162,7 @@ CModDoc::~CModDoc()
 	{
 		Networking::collabServer->CloseDocument(*this);
 	}
-	if(m_chatDlg)
+	if(m_chatDlg && m_chatDlg->m_hWnd)
 	{
 		m_chatDlg->DestroyWindow();
 	}
@@ -3121,7 +3121,7 @@ void CModDoc::DeserializeViews()
 }
 
 
-void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &inMsg)
+bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &inMsg)
 {
 	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
@@ -3160,10 +3160,8 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive updated sample data
 		Networking::SamplePropertyEditMsg msg;
 		cereal::size_type size;
-		//std::vector<uint8> data;
 		inArchive >> msg;
 		inArchive >> cereal::make_size_tag(size);
-		//inArchive >> data;
 
 		if(msg.id > 0 && msg.id < MAX_SAMPLES)
 		{
@@ -3201,7 +3199,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			if(id > GetNumInstruments() || m_SndFile.Instruments[id] == nullptr)
 			{
 				if(m_SndFile.AllocateInstrument(id) == nullptr)
-					return;
+					return true;
 			}
 			*m_SndFile.Instruments[id] = instr;
 		}
@@ -3224,7 +3222,7 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			if(id > GetNumInstruments() || m_SndFile.Instruments[id] == nullptr)
 			{
 				if(m_SndFile.AllocateInstrument(id) == nullptr)
-					return;
+					return true;
 			}
 			m_SndFile.Instruments[id]->GetEnvelope(envType) = env;
 		}
@@ -3347,13 +3345,15 @@ void CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> id;
 		m_collabNames.erase(id);
 		if(m_chatDlg) m_chatDlg->Update();
+		return false;
 	}
-
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
 	{
 		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), hint.AsLPARAM());
 	}
+
+	return true;
 }
 
 

@@ -307,10 +307,6 @@ void CSoundFile::save(Archive &archive) const
 			archive(*Instruments[i]);
 		else
 			archive(ModInstrument());
-		/*if(Instruments[i] && Instruments[i]->pTuning)
-			archive(Instruments[i]->pTuning->GetName());
-		else
-			archive(std::string());*/
 	}
 	archive(Networking::SerializeTunings(*this));
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
@@ -330,8 +326,6 @@ void CSoundFile::load(Archive &archive)
 	serializeCommon(archive);
 	SetModSpecsPointer(m_pModSpecs, GetType());
 	SetMixLevels(m_nMixLevels);
-	std::string tunings;
-	archive(tunings);
 	for(INSTRUMENTINDEX i = 1; i <= GetNumInstruments(); i++)
 	{
 		ModInstrument *ins = AllocateInstrument(i);
@@ -343,13 +337,9 @@ void CSoundFile::load(Archive &archive)
 			ModInstrument temp;
 			archive(temp);
 		}
-		/*std::string tuning;
-		archive(tuning);
-		if(!tuning.empty() && ins != nullptr)
-		{
-			ins->pTuning = 
-		}*/
 	}
+	std::string tunings;
+	archive(tunings);
 	Networking::DeserializeTunings(*this, tunings);
 	for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 	{

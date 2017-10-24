@@ -124,7 +124,7 @@ protected:
 
 public:
 	std::shared_ptr<Networking::CollabClient> m_collabClient;
-	void Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg);
+	bool Receive(std::shared_ptr<Networking::CollabConnection>, std::stringstream &msg);
 
 	class Listener : public Networking::Listener
 	{
@@ -133,9 +133,9 @@ public:
 	public:
 		Listener(CModDoc &modDoc) : m_modDoc(modDoc) { }
 
-		void Receive(std::shared_ptr<Networking::CollabConnection> conn, std::stringstream &msg) override
+		bool Receive(std::shared_ptr<Networking::CollabConnection> conn, std::stringstream &msg) override
 		{
-			m_modDoc.Receive(conn, msg);
+			return m_modDoc.Receive(conn, msg);
 		}
 		CModDoc *operator->() { return &m_modDoc; }
 		const CModDoc *operator->() const { return &m_modDoc; }

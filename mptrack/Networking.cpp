@@ -130,7 +130,10 @@ void RemoteCollabConnection::Read()
 			{
 				return;
 			}
-			that->Parse();
+			if(!that->Parse())
+			{
+				break;
+			}
 		}
 	});
 	return;
@@ -191,8 +194,7 @@ bool CollabConnection::Parse()
 	} while(strm.avail_out == 0);
 	if(auto listener = m_listener.lock())
 	{
-		listener->Receive(shared_from_this(), decompressedStream);
-		return true;
+		return listener->Receive(shared_from_this(), decompressedStream);
 	}
 	return false;
 }
@@ -404,7 +406,7 @@ void CollabServer::StartAccept()
 }
 
 
-void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &inMsg)
+bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &inMsg)
 {
 	// Handle messages being received by the server
 	cereal::BinaryInputArchive inArchive(inMsg);
@@ -550,6 +552,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				c->Write(s);
 			}
 		}
+		return false;
 	} else if(source->m_accessType == JoinMsg::ACCESS_COLLABORATOR)
 	{
 		// Document operation
@@ -784,6 +787,7 @@ void CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			}
 		}
 	}
+	return true;
 }
 
 
@@ -843,12 +847,13 @@ std::string RemoteCollabClient::WriteWithResult(const std::string &msg)
 }
 
 
-void CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
+bool CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
 {
 	if(auto listener = m_listener.lock())
 	{
-		listener->Receive(source, msg);
+		return listener->Receive(source, msg);
 	}
+	return false;
 }
 
 

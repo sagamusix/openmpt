@@ -133,7 +133,7 @@ public:
 	virtual void Write(const std::string &msg) = 0;
 	virtual std::string WriteWithResult(const std::string &msg) = 0;
 
-	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
+	bool Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void Quit();
 
@@ -215,7 +215,7 @@ public:
 	NetworkedDocument GetDocument(CModDoc &modDoc) const;
 	void CloseDocument(CModDoc &modDoc);
 
-	void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
+	bool Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) override;
 
 	void StartAccept();
 

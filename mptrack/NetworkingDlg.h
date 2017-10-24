@@ -47,7 +47,7 @@ protected:
 	afx_msg LRESULT OnOpenDocument(WPARAM wParam, LPARAM lParam);
 
 	void Join(bool collaborator);
-	void Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg) override;
+	bool Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg) override;
 
 	DECLARE_MESSAGE_MAP()
 };

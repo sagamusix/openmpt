@@ -157,7 +157,7 @@ void NetworkingDlg::Join(bool collaborator)
 }
 
 
-void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg)
+bool NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg)
 {
 	cereal::BinaryInputArchive inArchive(msg);
 	NetworkMessage type;
@@ -170,7 +170,7 @@ void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream
 		if(welcome.version != MptVersion::str)
 		{
 			Reporting::Error(mpt::format("The server is running a different version of OpenMPT. You must be using the same version as the server (%1).")(welcome.version), "Collaboration Server");
-			return;
+			return false;
 		}
 
 		m_ButtonCollaborator.EnableWindow(FALSE);
@@ -203,6 +203,7 @@ void NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream
 		// Need to do this in GUI thread
 		SendMessage(WM_USER + 100, reinterpret_cast<WPARAM>(&inArchive));
 	}
+	return true;
 }
 
 

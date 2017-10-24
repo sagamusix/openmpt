@@ -11,7 +11,7 @@ class Listener
 {
 public:
 	virtual ~Listener() { }
-	virtual void Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) = 0;
+	virtual bool Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg) = 0;
 };
 
 }

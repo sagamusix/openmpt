@@ -22,12 +22,12 @@ namespace Networking
 std::string SerializeTunings(const CSoundFile &sndFile)
 {
 	std::ostringstream ss;
-	sndFile.GetTuneSpecificTunings().Serialize(ss, "Tune specific");
-	/*for(const auto &tun : sndFile.GetTuneSpecificTunings())
-	{
-		tun->Serialize(ss);
-	}*/
 	cereal::BinaryOutputArchive ar(ss);
+	{
+		std::ostringstream tss;
+		sndFile.GetTuneSpecificTunings().Serialize(tss, "Tune specific");
+		ar(tss.str());
+	}
 	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
 	{
 		if(sndFile.Instruments[i] && sndFile.Instruments[i]->pTuning)
@@ -42,15 +42,15 @@ std::string SerializeTunings(const CSoundFile &sndFile)
 void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 {
 	std::istringstream is(s);
-	std::string name;
-	auto &tunings = sndFile.GetTuneSpecificTunings();
-	tunings.Deserialize(is, name);
-	/*bool result = false;
-	while(!is.eof() && !result)
-	{
-		result = sndFile.GetTuneSpecificTunings().AddTuning(is);
-	}*/
 	cereal::BinaryInputArchive ar(is);
+	auto &tunings = sndFile.GetTuneSpecificTunings();
+	{
+		std::string ts;
+		ar(ts);
+		std::istringstream tss(ts);
+		std::string name;
+		tunings.Deserialize(tss, name);
+	}
 	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
 	{
 		std::string tuning;
@@ -62,6 +62,7 @@ void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 				if(tun->GetName() == tuning)
 				{
 					sndFile.Instruments[i]->pTuning = tun.get();
+					break;
 				}
 			}
 		}
