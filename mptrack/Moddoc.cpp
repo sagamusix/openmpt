@@ -3131,6 +3131,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	inArchive >> type;
 	//OutputDebugStringA(std::string(type.type, 4).c_str());
 	UpdateHint hint;
+	bool modified = true;
 
 	if(type == Networking::PatternTransactionMsg)
 	{
@@ -3287,6 +3288,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), SequenceHint().Data().AsLPARAM());
 		}
 		hint = RowHint(msg.row);
+		modified = false;
 	} else if(type == Networking::InsertPatternMsg)
 	{
 		// Receive request to insert a new specified pattern
@@ -3311,6 +3313,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> handle;
 		inArchive >> retVal;
 		reinterpret_cast<std::promise<std::string> *>(handle)->set_value(retVal);
+		modified = false;
 	} else if(type == Networking::ChatMsg)
 	{
 		// Receive chat message
@@ -3321,6 +3324,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			inArchive >> message;
 			m_chatDlg->AddMessage(from, message);
 		}
+		modified = false;
 	} else if(type == Networking::SendAnnotationMsg)
 	{
 		// Add / remove annotation
@@ -3357,6 +3361,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> name;
 		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
 		if(m_chatDlg) m_chatDlg->Update();
+		modified = false;
 	} else if(type == Networking::UserQuitMsg)
 	{
 		// Remove user from collaborator list
@@ -3370,6 +3375,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
 	{
 		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), hint.AsLPARAM());
+	}
+	if(modified)
+	{
+		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_SETMODIFIED, reinterpret_cast<WPARAM>(this), true);
 	}
 
 	return true;

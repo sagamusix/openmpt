@@ -106,6 +106,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,			OnCustomKeyMsg)
 	ON_MESSAGE(WM_MOD_MIDIMAPPING,			OnViewMIDIMapping)
 	ON_MESSAGE(WM_MOD_UPDATEVIEWS,			OnUpdateViews)
+	ON_MESSAGE(WM_MOD_SETMODIFIED,			OnSetModified)
 	ON_COMMAND(ID_INTERNETUPDATE,			OnInternetUpdate)
 	ON_COMMAND(ID_HELP_SHOWSETTINGSFOLDER,	OnShowSettingsFolder)
 	ON_MESSAGE(MPT_WM_APP_UPDATECHECK_PROGRESS, OnUpdateCheckProgress)
@@ -2258,6 +2259,16 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 	if(modDoc)
 	{
 		reinterpret_cast<CModDoc *>(modDoc)->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(hint));
+	}
+	return 0;
+}
+
+
+LRESULT CMainFrame::OnSetModified(WPARAM modDoc, LPARAM modified)
+{
+	if(modDoc)
+	{
+		reinterpret_cast<CModDoc *>(modDoc)->SetModified(modified ? TRUE : FALSE);
 	}
 	return 0;
 }

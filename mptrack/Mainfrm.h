@@ -53,6 +53,7 @@ enum
 	WM_MOD_PLUGPARAMAUTOMATE,
 	WM_MOD_MIDIMAPPING,
 	WM_MOD_UPDATEVIEWS,
+	WM_MOD_SETMODIFIED,
 };
 
 enum
@@ -513,6 +514,7 @@ protected:
 	afx_msg BOOL OnInternetLink(UINT nID);
 	afx_msg LRESULT OnUpdatePosition(WPARAM, LPARAM lParam);
 	afx_msg LRESULT OnUpdateViews(WPARAM modDoc, LPARAM hint);
+	afx_msg LRESULT OnSetModified(WPARAM modDoc, LPARAM modified);
 	afx_msg void OnOpenTemplateModule(UINT nId);
 	afx_msg void OnExampleSong(UINT nId);
 	afx_msg void OnOpenMRUItem(UINT nId);

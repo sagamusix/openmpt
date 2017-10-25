@@ -2296,6 +2296,27 @@ void CSoundFile::SaveExtendedSongProperties(FILE* f) const
 			GetMIDIMapper().Serialize(f);
 		}
 	}
+
+	if(m_pModDoc && !m_pModDoc->m_collabAnnotations.empty())
+	{
+		for(const auto &anno : m_pModDoc->m_collabAnnotations)
+		{
+			mpt::ostringstream oStrm;
+			mpt::IO::WriteVarInt(oStrm, anno.first.pattern);
+			mpt::IO::WriteVarInt(oStrm, anno.first.row);
+			mpt::IO::WriteVarInt(oStrm, anno.first.channel);
+			mpt::IO::WriteVarInt(oStrm, anno.first.column);
+			std::string u8 = mpt::ToCharset(mpt::CharsetUTF8, anno.second);
+			size_t u8len = u8.length();
+			mpt::IO::WriteVarInt(oStrm, u8len);
+			mpt::IO::WriteRaw(oStrm, u8.c_str(), u8len);
+
+			std::string data = oStrm.str();
+			uint16 length = mpt::saturate_cast<uint16>(data.size());
+			WRITEMODULARHEADER(MAGIC4LE('A', 'N', 'N', 'O'), length);
+			mpt::IO::WriteRaw(f, data.data(), length);
+		}
+	}
 #endif
 
 #undef WRITEMODULAR
@@ -2449,6 +2470,25 @@ void CSoundFile::LoadExtendedSongProperties(FileReader &file, bool *pInterpretMp
 					}
 				}
 				break;
+
+#ifdef MODPLUG_TRACKER
+			case MAGIC4LE('A','N','N','O'):
+				// Collaboration annotations
+				if(size >= 6 && m_pModDoc)
+				{
+					CModDoc::NetworkAnnotationPos pos;
+					size_t u8len;
+					std::string u8;
+					chunk.ReadVarInt(pos.pattern);
+					chunk.ReadVarInt(pos.row);
+					chunk.ReadVarInt(pos.channel);
+					chunk.ReadVarInt(pos.column);
+					chunk.ReadVarInt(u8len);
+					chunk.ReadString<mpt::String::maybeNullTerminated>(u8, u8len);
+					m_pModDoc->m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, u8);
+				}
+			break;
+#endif
 		}
 
 	}
