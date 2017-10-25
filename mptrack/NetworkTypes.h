@@ -65,6 +65,8 @@ const NetworkMessage EditPosMsg("EDPS");	// Tell other clients about current edi
 
 const NetworkMessage SequenceTransactionMsg("SQTR");	// Modification of an order list (sequence)
 
+const NetworkMessage ChannelSettingsMsg("CHST");	// Modification of channel settings
+
 const NetworkMessage PluginDataTransactionMsg("PLTR");	// Automation of a single plugin
 
 const NetworkMessage ReturnValTransactionMsg("RETV");	// Message with return type (one of the following messages)

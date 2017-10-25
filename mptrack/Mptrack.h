@@ -466,6 +466,9 @@ CString GetWindowTextString(const CWnd &wnd);
 // Get window text (e.g. edit box content) as a unicode string
 mpt::ustring GetWindowTextUnicode(const CWnd &wnd);
 
+// Set window text while preserving the cursor position
+void SetWindowTextSel(CEdit &wnd, const CString &str);
+
 ///////////////////////////////////////////////////
 // Tables
 

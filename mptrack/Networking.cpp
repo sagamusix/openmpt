@@ -20,6 +20,8 @@
 #include <cereal/cereal.hpp>
 #include <iostream>
 
+#define MPT_SIMULATE_NETWORK_LAG
+
 OPENMPT_NAMESPACE_BEGIN
 
 
@@ -688,6 +690,22 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
+			} else if(type == ChannelSettingsMsg)
+			{
+				CHANNELINDEX chn, sourceChn;
+				ModChannelSettings settings;
+				inArchive >> chn;
+				inArchive >> sourceChn;
+				inArchive >> settings;
+				// Send back to clients
+				ar(chn);
+				ar(sourceChn);
+				ar(settings);
+				const std::string s = sso.str();
+				for(auto &c : doc.m_connections)
+				{
+					c->Write(s);
+				}
 			} else if(type == ReturnValTransactionMsg)
 			{
 				uint64 handle;
@@ -804,6 +822,9 @@ std::string RemoteCollabClient::WriteWithResult(const std::string &msg)
 
 bool CollabClient::Receive(std::shared_ptr<CollabConnection> source, std::stringstream &msg)
 {
+#ifdef MPT_SIMULATE_NETWORK_LAG
+	Sleep(30);	// simulate lag
+#endif // MPT_SIMULATE_NETWORK_LAG
 	if(auto listener = m_listener.lock())
 	{
 		return listener->Receive(source, msg);

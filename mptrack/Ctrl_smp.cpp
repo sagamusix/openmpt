@@ -761,11 +761,11 @@ void CCtrlSamples::UpdateView(UpdateHint hint, CObject *pObj)
 		SetDlgItemText(IDC_TEXT5, s);
 		// Name
 		s = mpt::ToCString(m_sndFile.GetCharsetInternal(), m_sndFile.m_szNames[m_nSample]);
-		SetDlgItemText(IDC_SAMPLE_NAME, s);
+		SetWindowTextSel(m_EditName, s);
 		// File Name
 		s = mpt::ToCString(m_sndFile.GetCharsetInternal(), sample.filename);
 		if (specs.sampleFilenameLengthMax == 0) s.Empty();
-		SetDlgItemText(IDC_SAMPLE_FILENAME, s);
+		SetWindowTextSel(m_EditFileName, s);
 		// Volume
 		if(sample.uFlags[SMP_NODEFAULTVOLUME])
 			SetDlgItemText(IDC_EDIT7, _T("none"));
@@ -784,7 +784,7 @@ void CCtrlSamples::UpdateView(UpdateHint hint, CObject *pObj)
 		if (m_sndFile.GetType() & (MOD_TYPE_S3M | MOD_TYPE_IT | MOD_TYPE_MPT))
 		{
 			s.Format(_T("%lu"), sample.nC5Speed);
-			m_EditFineTune.SetWindowText(s);
+			SetWindowTextSel(m_EditFineTune, s);
 			if(sample.nC5Speed != 0)
 				transp = ModSample::FrequencyToTranspose(sample.nC5Speed) >> 7;
 		} else
@@ -831,17 +831,17 @@ void CCtrlSamples::UpdateView(UpdateHint hint, CObject *pObj)
 		if (sample.uFlags[CHN_REVERSE]) d |= 4;
 		m_ComboLoopType.SetCurSel(d);
 		s.Format(_T("%lu"), sample.nLoopStart);
-		m_EditLoopStart.SetWindowText(s);
+		SetWindowTextSel(m_EditLoopStart, s);
 		s.Format(_T("%lu"), sample.nLoopEnd);
-		m_EditLoopEnd.SetWindowText(s);
+		SetWindowTextSel(m_EditLoopEnd, s);
 		// Sustain Loop
 		d = 0;
 		if (sample.uFlags[CHN_SUSTAINLOOP]) d = sample.uFlags[CHN_PINGPONGSUSTAIN] ? 2 : 1;
 		m_ComboSustainType.SetCurSel(d);
 		s.Format(_T("%lu"), sample.nSustainStart);
-		m_EditSustainStart.SetWindowText(s);
+		SetWindowTextSel(m_EditSustainStart, s);
 		s.Format(_T("%lu"), sample.nSustainEnd);
-		m_EditSustainEnd.SetWindowText(s);
+		SetWindowTextSel(m_EditSustainEnd, s);
 	}
 	if (hintType[HINT_MODTYPE | HINT_SAMPLEINFO | HINT_SMPNAMES])
 	{
@@ -3134,7 +3134,7 @@ void CCtrlSamples::OnVScroll(UINT nCode, UINT, CScrollBar *scrollBar)
 			if(!m_startedEdit && lastScrollbar != scrollBar) PrepareUndo("Set Loop Start");
 			sample.nLoopStart = i;
 			wsprintf(s, _T("%u"), sample.nLoopStart);
-			m_EditLoopStart.SetWindowText(s);
+			SetWindowTextSel(m_EditLoopStart, s);
 			redraw = true;
 			sample.PrecomputeLoops(m_sndFile);
 		}
@@ -3172,7 +3172,7 @@ void CCtrlSamples::OnVScroll(UINT nCode, UINT, CScrollBar *scrollBar)
 			if(!m_startedEdit && lastScrollbar != scrollBar) PrepareUndo("Set Loop End");
 			sample.nLoopEnd = i;
 			wsprintf(s, _T("%u"), sample.nLoopEnd);
-			m_EditLoopEnd.SetWindowText(s);
+			SetWindowTextSel(m_EditLoopEnd, s);
 			redraw = true;
 			sample.PrecomputeLoops(m_sndFile);
 		}
@@ -3211,7 +3211,7 @@ void CCtrlSamples::OnVScroll(UINT nCode, UINT, CScrollBar *scrollBar)
 			if(!m_startedEdit && lastScrollbar != scrollBar) PrepareUndo("Set Sustain Loop Start");
 			sample.nSustainStart = i;
 			wsprintf(s, _T("%u"), sample.nSustainStart);
-			m_EditSustainStart.SetWindowText(s);
+			SetWindowTextSel(m_EditSustainStart, s);
 			redraw = true;
 			sample.PrecomputeLoops(m_sndFile);
 		}
@@ -3249,7 +3249,7 @@ void CCtrlSamples::OnVScroll(UINT nCode, UINT, CScrollBar *scrollBar)
 			if(!m_startedEdit && lastScrollbar != scrollBar) PrepareUndo("Set Sustain Loop End");
 			sample.nSustainEnd = i;
 			wsprintf(s, _T("%u"), sample.nSustainEnd);
-			m_EditSustainEnd.SetWindowText(s);
+			SetWindowTextSel(m_EditSustainEnd, s);
 			redraw = true;
 			sample.PrecomputeLoops(m_sndFile);
 		}

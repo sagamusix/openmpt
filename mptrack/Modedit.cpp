@@ -30,6 +30,7 @@
 #include "InstrumentTransaction.h"
 #include "SampleTransaction.h"
 #include "SequenceTransaction.h"
+#include "GlobalsTransaction.h"
 #include "Networking.h"
 #include "NetworkTypes.h"
 
@@ -177,14 +178,21 @@ CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrde
 	}
 
 	CriticalSection cs;
-	std::vector<PatternTransaction> transactions;
-	transactions.reserve(m_SndFile.Patterns.Size());
+	std::vector<PatternTransaction> patternTransactions;
+	patternTransactions.reserve(m_SndFile.Patterns.Size());
 	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
 	{
 		if(m_SndFile.Patterns[pat].IsValid())
 		{
-			transactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
+			patternTransactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
 		}
+	}
+
+	std::vector<ChannelSettingsTransaction> channelTransactions;
+	channelTransactions.reserve(newNumChannels);
+	for(CHANNELINDEX chn = 0; chn < newNumChannels; chn++)
+	{
+		channelTransactions.push_back(ChannelSettingsTransaction(m_SndFile, chn, newOrder[chn]));
 	}
 
 	if(oldNumChannels == newNumChannels)

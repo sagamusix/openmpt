@@ -29,6 +29,7 @@
 
 #include "Networking.h"
 #include "NetworkTypes.h"
+#include "GlobalsTransaction.h"
 #include <sstream>
 
 // This is used for retrieving the correct background colour for the
@@ -367,9 +368,10 @@ void CViewGlobals::UpdateView(UpdateHint hint, CObject *pObject)
 				SetDlgItemInt(IDC_EDIT2+ichn*2, pan);
 
 				// Channel name
+				CEdit *nameEdit = static_cast<CEdit *>(GetDlgItem(IDC_EDIT9 + ichn));
 				s = sndFile.ChnSettings[nChn].szName;
-				SetDlgItemText(IDC_EDIT9 + ichn, s);
-				((CEdit*)(GetDlgItem(IDC_EDIT9 + ichn)))->LimitText(MAX_CHANNELNAME - 1);
+				SetWindowTextSel(*nameEdit, s);
+				nameEdit->LimitText(MAX_CHANNELNAME - 1);
 			}
 			else
 				SetDlgItemText(IDC_TEXT1 + ichn, _T(""));
@@ -629,6 +631,7 @@ void CViewGlobals::OnSurround(const CHANNELINDEX chnMod4, const UINT itemID)
 	{
 		const bool b = (IsDlgButtonChecked(itemID) != FALSE);
 		const CHANNELINDEX nChn = (CHANNELINDEX)(m_nActiveTab * CHANNELS_IN_TAB) + chnMod4;
+		ChannelSettingsTransaction tr(pModDoc->GetrSoundFile(), nChn);
 		pModDoc->SurroundChannel(nChn, b);
 		pModDoc->UpdateAllViews(nullptr, GeneralHint(nChn).Channels());
 	}
@@ -646,6 +649,7 @@ void CViewGlobals::OnEditVol(const CHANNELINDEX chnMod4, const UINT itemID)
 	const int vol = GetDlgItemIntEx(itemID);
 	if ((pModDoc) && (vol >= 0) && (vol <= 64) && (!m_nLockCount))
 	{
+		ChannelSettingsTransaction tr(pModDoc->GetrSoundFile(), nChn);
 		if (pModDoc->SetChannelGlobalVolume(nChn, static_cast<uint16>(vol)))
 		{
 			m_sbVolume[chnMod4].SetPos(vol);
@@ -667,6 +671,7 @@ void CViewGlobals::OnEditPan(const CHANNELINDEX chnMod4, const UINT itemID)
 	const int pan = GetDlgItemIntEx(itemID);
 	if ((pModDoc) && (pan >= 0) && (pan <= 256) && (!m_nLockCount))
 	{
+		ChannelSettingsTransaction tr(pModDoc->GetrSoundFile(), nChn);
 		if (pModDoc->SetChannelDefaultPan(nChn, static_cast<uint16>(pan)))
 		{
 			m_sbPan[chnMod4].SetPos(pan / 4);
@@ -708,6 +713,7 @@ void CViewGlobals::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 				pos = (short int)m_sbVolume[iCh].GetPos();
 				if ((pos >= 0) && (pos <= 64))
 				{
+					ChannelSettingsTransaction tr(pModDoc->GetrSoundFile(), nChn + iCh);
 					if (pModDoc->SetChannelGlobalVolume(nChn + iCh, pos))
 					{
 						SetDlgItemInt(IDC_EDIT1 + iCh * 2, pos);
@@ -720,6 +726,7 @@ void CViewGlobals::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 				pos = (short int)m_sbPan[iCh].GetPos();
 				if(pos >= 0 && pos <= 64 && (static_cast<uint16>(pos) != pModDoc->GetSoundFile()->ChnSettings[nChn+iCh].nPan / 4u))
 				{
+					ChannelSettingsTransaction tr(pModDoc->GetrSoundFile(), nChn + iCh);
 					if (pModDoc->SetChannelDefaultPan(nChn + iCh, pos * 4))
 					{
 						SetDlgItemInt(IDC_EDIT2 + iCh * 2, pos * 4);
@@ -827,12 +834,13 @@ void CViewGlobals::OnEditName(const CHANNELINDEX chnMod4, const UINT itemID)
 	if ((pModDoc) && (!m_nLockCount))
 	{
 		CSoundFile &sndFile = pModDoc->GetrSoundFile();
-		const UINT nChn = m_nActiveTab * CHANNELS_IN_TAB + chnMod4;
+		const CHANNELINDEX nChn = m_nActiveTab * CHANNELS_IN_TAB + chnMod4;
 		CString tmp;
 		GetDlgItemText(itemID, tmp);
 		const std::string s = mpt::ToCharset(sndFile.GetCharsetInternal(), tmp);
 		if ((sndFile.GetType() & (MOD_TYPE_XM|MOD_TYPE_IT|MOD_TYPE_MPT)) && (nChn < sndFile.GetNumChannels()) && (s != sndFile.ChnSettings[nChn].szName))
 		{
+			ChannelSettingsTransaction tr(sndFile, nChn);
 			mpt::String::Copy(sndFile.ChnSettings[nChn].szName, s);
 			pModDoc->SetModified();
 			pModDoc->UpdateAllViews(this, GeneralHint(nChn).Channels());
@@ -857,6 +865,7 @@ void CViewGlobals::OnFxChanged(const CHANNELINDEX chnMod4)
 		if ((nfx >= 0) && (nfx <= MAX_MIXPLUGINS) && (nChn < sndFile.GetNumChannels())
 		 && (sndFile.ChnSettings[nChn].nMixPlugin != (UINT)nfx))
 		{
+			ChannelSettingsTransaction tr(sndFile, nChn);
 			sndFile.ChnSettings[nChn].nMixPlugin = (PLUGINDEX)nfx;
 			if(sndFile.GetModSpecifications().supportsPlugins)
 				pModDoc->SetModified();

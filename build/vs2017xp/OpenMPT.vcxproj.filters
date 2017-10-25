@@ -255,6 +255,9 @@
     <ClInclude Include="..\..\mptrack\Globals.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\GlobalsTransaction.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\ImageLists.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -933,6 +936,9 @@
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\Globals.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\GlobalsTransaction.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\InputHandler.cpp">

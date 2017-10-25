@@ -759,6 +759,7 @@
     <ClInclude Include="..\..\mptrack\FolderScanner.h" />
     <ClInclude Include="..\..\mptrack\GeneralConfigDlg.h" />
     <ClInclude Include="..\..\mptrack\Globals.h" />
+    <ClInclude Include="..\..\mptrack\GlobalsTransaction.h" />
     <ClInclude Include="..\..\mptrack\ImageLists.h" />
     <ClInclude Include="..\..\mptrack\InputHandler.h" />
     <ClInclude Include="..\..\mptrack\InstrumentTransaction.h" />
@@ -989,6 +990,7 @@
     <ClCompile Include="..\..\mptrack\FolderScanner.cpp" />
     <ClCompile Include="..\..\mptrack\GeneralConfigDlg.cpp" />
     <ClCompile Include="..\..\mptrack\Globals.cpp" />
+    <ClCompile Include="..\..\mptrack\GlobalsTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\InputHandler.cpp" />
     <ClCompile Include="..\..\mptrack\InstrumentTransaction.cpp" />
     <ClCompile Include="..\..\mptrack\KeyConfigDlg.cpp" />

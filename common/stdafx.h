@@ -14,6 +14,7 @@
 
 // has to be first
 #include "BuildSettings.h"
+#include <vld.h>
 
 
 #if defined(MODPLUG_TRACKER)

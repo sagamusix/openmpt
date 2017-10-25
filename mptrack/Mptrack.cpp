@@ -1847,6 +1847,15 @@ mpt::ustring GetWindowTextUnicode(const CWnd &wnd)
 }
 
 
+void SetWindowTextSel(CEdit &wnd, const CString &str)
+{
+	int start, end;
+	wnd.GetSel(start, end);
+	wnd.SetWindowText(str);
+	wnd.SetSel(start, end, TRUE);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // CFastBitmap 8-bit output / 4-bit input
 // useful for lots of small blits with color mapping

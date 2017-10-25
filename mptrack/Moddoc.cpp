@@ -3332,6 +3332,22 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		else
 			m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 		if(m_chatDlg) m_chatDlg->Update();
+	} else if(type == Networking::ChannelSettingsMsg)
+	{
+		// Change some channel's settings
+		CHANNELINDEX chn, sourceChn;
+		ModChannelSettings settings;
+		inArchive >> chn;
+		inArchive >> sourceChn;
+		inArchive >> settings;
+		if(chn < MAX_BASECHANNELS)
+		{
+			if(sourceChn == CHANNELINDEX_INVALID) sourceChn = chn;
+			bool muted = m_SndFile.ChnSettings[sourceChn].dwFlags[CHN_MUTE];	// Preserve user's mute status
+			m_SndFile.ChnSettings[chn] = settings;
+			m_SndFile.ChnSettings[chn].dwFlags.set(CHN_MUTE, muted);
+			hint = GeneralHint(chn).Channels();
+		}
 	} else if(type == Networking::UserJoinedMsg)
 	{
 		// Add new user to collaborator list

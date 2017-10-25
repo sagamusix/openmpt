@@ -1358,8 +1358,8 @@ void CCtrlInstruments::UpdateView(UpdateHint hint, CObject *pObj)
 
 		if (pIns)
 		{
-			m_EditName.SetWindowText(mpt::ToCString(m_sndFile.GetCharsetInternal(), pIns->name));
-			m_EditFileName.SetWindowText(mpt::ToCString(m_sndFile.GetCharsetInternal(), pIns->filename));
+			SetWindowTextSel(m_EditName, mpt::ToCString(m_sndFile.GetCharsetInternal(), pIns->name));
+			SetWindowTextSel(m_EditFileName, mpt::ToCString(m_sndFile.GetCharsetInternal(), pIns->filename));
 			// Fade Out Volume
 			SetDlgItemInt(IDC_EDIT7, pIns->nFadeOut);
 			// Global Volume

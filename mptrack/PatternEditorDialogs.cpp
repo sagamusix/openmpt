@@ -20,6 +20,7 @@
 #include "../soundlib/mod_specifications.h"
 #include "../common/StringFixer.h"
 #include "PatternTransaction.h"
+#include "GlobalsTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -1313,6 +1314,7 @@ void QuickChannelProperties::OnVolChanged()
 	uint16 volume = static_cast<uint16>(GetDlgItemInt(IDC_EDIT1));
 	if(volume >= 0 && volume <= 64)
 	{
+		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 		PrepareUndo();
 		document->SetChannelGlobalVolume(channel, volume);
 		volSlider.SetPos(volume);
@@ -1331,6 +1333,7 @@ void QuickChannelProperties::OnPanChanged()
 	uint16 panning = static_cast<uint16>(GetDlgItemInt(IDC_EDIT2));
 	if(panning >= 0 && panning <= 256)
 	{
+		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 		PrepareUndo();
 		document->SetChannelDefaultPan(channel, panning);
 		panSlider.SetPos(panning / 4u);
@@ -1354,6 +1357,7 @@ void QuickChannelProperties::OnHScroll(UINT, UINT, CScrollBar *bar)
 	if(bar == reinterpret_cast<CScrollBar *>(&volSlider))
 	{
 		uint16 pos = static_cast<uint16>(volSlider.GetPos());
+		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 		PrepareUndo();
 		if(document->SetChannelGlobalVolume(channel, pos))
 		{
@@ -1365,6 +1369,7 @@ void QuickChannelProperties::OnHScroll(UINT, UINT, CScrollBar *bar)
 	if(bar == reinterpret_cast<CScrollBar *>(&panSlider))
 	{
 		uint16 pos = static_cast<uint16>(panSlider.GetPos());
+		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 		PrepareUndo();
 		if(document->SetChannelDefaultPan(channel, pos * 4u))
 		{
@@ -1400,6 +1405,7 @@ void QuickChannelProperties::OnSurroundChanged()
 		return;
 	}
 
+	ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 	PrepareUndo();
 	document->SurroundChannel(channel, IsDlgButtonChecked(IDC_CHECK2) != BST_UNCHECKED);
 	document->UpdateAllViews(nullptr, GeneralHint(channel).Channels());
@@ -1421,6 +1427,7 @@ void QuickChannelProperties::OnNameChanged()
 
 	if(newName != settings.szName)
 	{
+		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
 		PrepareUndo();
 		mpt::String::Copy(settings.szName, newName);
 		document->SetModified();

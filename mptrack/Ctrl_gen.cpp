@@ -292,8 +292,8 @@ void CCtrlGeneral::UpdateView(UpdateHint hint, CObject *pHint)
 	{
 		if (!m_bEditsLocked)
 		{
-			m_EditTitle.SetWindowText(mpt::ToCString(m_sndFile.GetCharsetInternal(), m_sndFile.GetTitle()));
-			::SetWindowTextW(m_EditArtist.m_hWnd, mpt::ToWide(m_sndFile.m_songArtist).c_str());
+			SetWindowTextSel(m_EditTitle, mpt::ToCString(m_sndFile.GetCharsetInternal(), m_sndFile.GetTitle()));
+			SetWindowTextSel(m_EditArtist, mpt::ToCString(m_sndFile.m_songArtist));
 			m_EditTempo.SetTempoValue(m_sndFile.m_nDefaultTempo);
 			SetDlgItemInt(IDC_EDIT_SPEED, m_sndFile.m_nDefaultSpeed, FALSE);
 			SetDlgItemInt(IDC_EDIT_GLOBALVOL, m_sndFile.m_nDefaultGlobalVolume / GetGlobalVolumeFactor(), FALSE);
