@@ -2256,9 +2256,19 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 
 LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 {
-	if(modDoc)
+	CModDoc *doc = reinterpret_cast<CModDoc *>(modDoc);
+	CDocTemplate *pDocTmpl = theApp.GetModDocTemplate();
+	if(pDocTmpl)
 	{
-		reinterpret_cast<CModDoc *>(modDoc)->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(hint));
+		POSITION pos = pDocTmpl->GetFirstDocPosition();
+		CDocument *pDoc;
+		while((pos != nullptr) && ((pDoc = pDocTmpl->GetNextDoc(pos)) != nullptr))
+		{
+			if(static_cast<CModDoc *>(pDoc) == doc)
+			{
+				doc->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(hint));
+			}
+		}
 	}
 	return 0;
 }
@@ -2266,9 +2276,19 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 
 LRESULT CMainFrame::OnSetModified(WPARAM modDoc, LPARAM modified)
 {
-	if(modDoc)
+	CModDoc *doc = reinterpret_cast<CModDoc *>(modDoc);
+	CDocTemplate *pDocTmpl = theApp.GetModDocTemplate();
+	if(pDocTmpl)
 	{
-		reinterpret_cast<CModDoc *>(modDoc)->SetModified(modified ? TRUE : FALSE);
+		POSITION pos = pDocTmpl->GetFirstDocPosition();
+		CDocument *pDoc;
+		while((pos != nullptr) && ((pDoc = pDocTmpl->GetNextDoc(pos)) != nullptr))
+		{
+			if(static_cast<CModDoc *>(pDoc) == doc)
+			{
+				doc->SetModified(modified ? TRUE : FALSE);
+			}
+		}
 	}
 	return 0;
 }
