@@ -218,15 +218,15 @@ static MPT_NOINLINE void TestVersion()
 {
 	//Verify that macros and functions work.
 	{
-		VERIFY_EQUAL( MptVersion::ToNum(MptVersion::ToStr(MptVersion::num)), MptVersion::num );
-		VERIFY_EQUAL( MptVersion::ToStr(MptVersion::ToNum(MptVersion::str)), MptVersion::str );
-		VERIFY_EQUAL( MptVersion::ToStr(18285096), "1.17.02.28" );
-		VERIFY_EQUAL( MptVersion::ToNum("1.17.02.28"), MptVersion::VersionNum(18285096) );
-		VERIFY_EQUAL( MptVersion::ToNum("1.fe.02.28"), MptVersion::VersionNum(0x01fe0228) );
-		VERIFY_EQUAL( MptVersion::ToNum("01.fe.02.28"), MptVersion::VersionNum(0x01fe0228) );
-		VERIFY_EQUAL( MptVersion::ToNum("1.22"), MptVersion::VersionNum(0x01220000) );
-		VERIFY_EQUAL( MptVersion::ToNum(MptVersion::str), MptVersion::num );
-		VERIFY_EQUAL( MptVersion::ToStr(MptVersion::num), MptVersion::str );
+		VERIFY_EQUAL( MptVersion::ToNum(MptVersion::ToUString(MptVersion::num)), MptVersion::num );
+		VERIFY_EQUAL( MptVersion::ToUString(MptVersion::ToNum(std::string(MptVersion::str))), MptVersion::AsUString() );
+		VERIFY_EQUAL( MptVersion::ToUString(18285096), MPT_USTRING("1.17.02.28") );
+		VERIFY_EQUAL( MptVersion::ToNum(std::string("1.17.02.28")), MptVersion::VersionNum(18285096) );
+		VERIFY_EQUAL( MptVersion::ToNum(std::string("1.fe.02.28")), MptVersion::VersionNum(0x01fe0228) );
+		VERIFY_EQUAL( MptVersion::ToNum(std::string("01.fe.02.28")), MptVersion::VersionNum(0x01fe0228) );
+		VERIFY_EQUAL( MptVersion::ToNum(std::string("1.22")), MptVersion::VersionNum(0x01220000) );
+		VERIFY_EQUAL( MptVersion::ToNum(std::string(MptVersion::str)), MptVersion::num );
+		VERIFY_EQUAL( MptVersion::ToUString(MptVersion::num), MptVersion::AsUString() );
 		VERIFY_EQUAL( MptVersion::RemoveBuildNumber(MAKE_VERSION_NUMERIC(1,19,02,00)), MAKE_VERSION_NUMERIC(1,19,02,00));
 		VERIFY_EQUAL( MptVersion::RemoveBuildNumber(MAKE_VERSION_NUMERIC(1,18,03,20)), MAKE_VERSION_NUMERIC(1,18,03,00));
 		VERIFY_EQUAL( MptVersion::IsTestBuild(MAKE_VERSION_NUMERIC(1,18,01,13)), true);
@@ -394,8 +394,8 @@ static void TestFloatFormat(double x, const char * format, mpt::FormatFlags f, s
 #ifdef MODPLUG_TRACKER
 	std::string str_sprintf = StringFormat(format, x);
 #endif
-	std::string str_iostreams = mpt::FormatSpec().SetFlags(f).SetWidth(width).SetPrecision(precision).ToString(x);
-	std::string str_parsed = mpt::FormatSpec().ParsePrintf(format).ToString(x);
+	std::string str_iostreams = mpt::fmt::fmt(x, mpt::FormatSpec().SetFlags(f).SetWidth(width).SetPrecision(precision));
+	std::string str_parsed = mpt::fmt::fmt(x, mpt::FormatSpec().ParsePrintf(format));
 	//Log("%s", str_sprintf.c_str());
 	//Log("%s", str_iostreams.c_str());
 	//Log("%s", str_iostreams.c_str());
@@ -494,7 +494,7 @@ static MPT_NOINLINE void TestStringFormatting()
 		VERIFY_EQUAL(true, false);
 	}
 	VERIFY_EQUAL(mpt::fmt::val(58.65403492763), "58.654");
-	VERIFY_EQUAL(mpt::FormatSpec("%3.1f").ToString(23.42), "23.4");
+	VERIFY_EQUAL(mpt::fmt::fmt(23.42, mpt::FormatSpec("%3.1f")), "23.4");
 	VERIFY_EQUAL(mpt::fmt::f("%3.1f", 23.42), "23.4");
 
 	VERIFY_EQUAL(ConvertStrTo<uint32>("586"), 586u);
@@ -538,7 +538,7 @@ static MPT_NOINLINE void TestStringFormatting()
 	TestFloatFormats(1234567890000000.0);
 	TestFloatFormats(0.0000001234567890);
 
-	VERIFY_EQUAL(mpt::FormatSpec().ParsePrintf("%7.3f").ToString(6.12345), "  6.123");
+	VERIFY_EQUAL(mpt::fmt::fmt(6.12345, mpt::FormatSpec().ParsePrintf("%7.3f")), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::f("%7.3f", 6.12345), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::flt(6.12345, 7, 3), "  6.123");
 	VERIFY_EQUAL(mpt::fmt::fix(6.12345, 7, 3), "  6.123");
