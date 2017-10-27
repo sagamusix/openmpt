@@ -23,64 +23,64 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Networking
 {
 
-struct NetworkMessage
+// Create a network message ID
+constexpr uint32 NetMsg(const char(&id)[5])
 {
-	char type[4];
+	return static_cast<uint32>(
+		  (static_cast<uint8>(id[3]) << 24)
+		| (static_cast<uint8>(id[2]) << 16)
+		| (static_cast<uint8>(id[1]) << 8)
+		| (static_cast<uint8>(id[0]) << 0));
+}
 
-	NetworkMessage(const char(&id)[5] = "\0\0\0\0")
-	{
-		memcpy(type, id, 4);
-	}
+// Network message IDs
+enum NetworkMessage : uint32
+{
+	ListMsg = NetMsg("LIST"),	// Get a list of shared documents from the server
 
-	bool operator== (const NetworkMessage &other) { return !memcmp(type, other.type, 4); }
+	ConnectMsg = NetMsg("CONN"),	// Join a document
+	ConnectOKMsg = NetMsg("!OK!"),	// It is okay to join the document
+	DocNotFoundMsg = NetMsg("404!"),	// Unknown document
+	WrongPasswordMsg = NetMsg("403!"),	// Invalid password
+	NoMoreClientsMsg = NetMsg("FULL"),	// No more clients can join this document
 
-	template<class Archive>
-	void serialize(Archive &archive)
-	{
-		archive(type);
-	}
+	UserJoinedMsg = NetMsg("USRJ"),	// A user joins a shared document
+	UserQuitMsg = NetMsg("USRQ"),	// A user leaves a shared document
+
+	EnvelopeTransactionMsg = NetMsg("ENTR"),	// Modification of a single envelope of a single instrument
+	InstrumentTransactionMsg = NetMsg("INTR"),	// Modification of a single instrument
+
+	SamplePropertyTransactionMsg = NetMsg("SATR"),	// Modification of sample propreties of a single sample
+	SampleDataTransactionMsg = NetMsg("SDTR"),	// Modification of a single sample's data
+
+	PatternTransactionMsg = NetMsg("PATR"),	// Modification of a single pattern
+	PatternResizeMsg = NetMsg("PSTR"),	// Resizing of a single pattern
+	EditPosMsg = NetMsg("EDPS"),	// Tell other clients about current edit position
+
+	SequenceTransactionMsg = NetMsg("SQTR"),	// Modification of an order list (sequence)
+
+	ChannelSettingsMsg = NetMsg("CHST"),	// Modification of channel settings
+
+	PluginDataTransactionMsg = NetMsg("PLTR"),	// Automation of a single plugin
+
+	ReturnValTransactionMsg = NetMsg("RETV"),	// Message with return type (one of the following messages)
+
+	InsertPatternMsg = NetMsg("INPA"),	// Request to insert a new pattern
+	InsertSampleMsg = NetMsg("INSA"),	// Request to insert a new sample
+	InsertInstrumentMsg = NetMsg("ININ"),	// Request to insert a new instrument
+	ConvertInstrumentsMsg = NetMsg("CNVI"),	// Request to convert all samples to instruments
+
+	SendAnnotationMsg = NetMsg("ANNO"),	// Add/change/remove an annoation at a given pattern position
+	PatternLockMsg = NetMsg("LOCK"),	// Add/remove a pattern lock
+
+	ChatMsg = NetMsg("CHAT"),	// Send a chat message
+
+	QuitMsg = NetMsg("QUIT"),	// Close connection
 };
 
-const NetworkMessage ListMsg("LIST");	// Get a list of shared documents from the server
 
-const NetworkMessage ConnectMsg("CONN");	// Join a document
-const NetworkMessage ConnectOKMsg("!OK!");	// It is okay to join the document
-const NetworkMessage DocNotFoundMsg("404!");	// Unknown document
-const NetworkMessage WrongPasswordMsg("403!");	// Invalid password
-const NetworkMessage NoMoreClientsMsg("FULL");	// No more clients can join this document
 
-const NetworkMessage UserJoinedMsg("USRJ");	// A user joins a shared document
-const NetworkMessage UserQuitMsg("USRQ");	// A user leaves a shared document
 
-const NetworkMessage EnvelopeTransactionMsg("ENTR");	// Modification of a single envelope of a single instrument
-const NetworkMessage InstrumentTransactionMsg("INTR");	// Modification of a single instrument
-
-const NetworkMessage SamplePropertyTransactionMsg("SATR");	// Modification of sample propreties of a single sample
-const NetworkMessage SampleDataTransactionMsg("SDTR");	// Modification of a single sample's data
-
-const NetworkMessage PatternTransactionMsg("PATR");	// Modification of a single pattern
-const NetworkMessage PatternResizeMsg("PSTR");	// Resizing of a single pattern
-const NetworkMessage EditPosMsg("EDPS");	// Tell other clients about current edit position
-
-const NetworkMessage SequenceTransactionMsg("SQTR");	// Modification of an order list (sequence)
-
-const NetworkMessage ChannelSettingsMsg("CHST");	// Modification of channel settings
-
-const NetworkMessage PluginDataTransactionMsg("PLTR");	// Automation of a single plugin
-
-const NetworkMessage ReturnValTransactionMsg("RETV");	// Message with return type (one of the following messages)
-
-const NetworkMessage InsertPatternMsg("INPA");	// Request to insert a new pattern
-const NetworkMessage InsertSampleMsg("INSA");	// Request to insert a new sample
-const NetworkMessage InsertInstrumentMsg("ININ");	// Request to insert a new instrument
-const NetworkMessage ConvertInstrumentsMsg("CNVI");	// Request to convert all samples to instruments
-
-const NetworkMessage SendAnnotationMsg("ANNO");	// Add/change/remove an annoation at a given pattern position
-const NetworkMessage PatternLockMsg("LOCK");	// Add/remove a pattern lock
-
-const NetworkMessage ChatMsg("CHAT");	// Send a chat message
-
-const NetworkMessage QuitMsg("QUIT");	// Close connection
 
 struct DocumentInfo
 {

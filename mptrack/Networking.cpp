@@ -384,7 +384,9 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);
 
-	if(type == ListMsg)
+	switch(type)
+	{
+	case ListMsg:
 	{
 		WelcomeMsg welcome;
 		welcome.version = MptVersion::str;
@@ -405,7 +407,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		ar(ListMsg);
 		ar(welcome);
 		source->Write(sso.str());
-	} else if(type == ConnectMsg)
+		break;
+	}
+
+	case ConnectMsg:
 	{
 		JoinMsg join;
 		inArchive >> join;
@@ -468,20 +473,26 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 							c->Write(s);
 						}
 					}
-				} else
+				}
+				else
 				{
 					ar(NoMoreClientsMsg);
 				}
-			} else
+			}
+			else
 			{
 				ar(WrongPasswordMsg);
 			}
-		} else
+		}
+		else
 		{
 			ar(DocNotFoundMsg);
 		}
 		source->Write(sso.str());
-	} else if(type == ChatMsg)
+		break;
+	}
+
+	case ChatMsg:
 	{
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
@@ -498,7 +509,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				c->Write(s);
 			}
 		}
-	} else if(type == UserQuitMsg)
+		break;
+	}
+
+	case UserQuitMsg:
 	{
 		// A collaborator or spectator leaves the document
 		auto *modDoc = source->m_modDoc;
@@ -519,16 +533,25 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			}
 		}
 		return false;
-	} else if(source->m_accessType == JoinMsg::ACCESS_COLLABORATOR)
+	}
+
+	default:
 	{
 		// Document operation
+		if(source->m_accessType != JoinMsg::ACCESS_COLLABORATOR)
+		{
+			break;
+		}
+
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
 			ar(type);
 			auto &doc = m_documents.at(modDoc);
 			auto &sndFile = modDoc->GetrSoundFile();
-			if(type == PatternTransactionMsg)
+			switch(type)
+			{
+			case PatternTransactionMsg:
 			{
 				PatternEditMsg patMsg;
 				inArchive >> patMsg;
@@ -544,7 +567,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
-			} else if(type == SamplePropertyTransactionMsg)
+				break;
+			}
+
+			case SamplePropertyTransactionMsg:
 			{
 				SamplePropertyEditMsg msg;
 				inArchive >> msg;
@@ -560,7 +586,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
-			} else if(type == SampleDataTransactionMsg)
+				break;
+			}
+
+			case SampleDataTransactionMsg:
 			{
 				SamplePropertyEditMsg msg;
 				inArchive >> msg;
@@ -568,7 +597,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> size;
 				std::vector<int8> data(static_cast<size_t>(size));
 				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(size)));
-				
+
 				// Send back to all clients
 				ar(msg);
 				ar(data);
@@ -577,7 +606,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == InstrumentTransactionMsg)
+				break;
+			}
+
+			case InstrumentTransactionMsg:
 			{
 				INSTRUMENTINDEX id;
 				ModInstrument instr;
@@ -594,7 +626,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
-			} else if(type == EnvelopeTransactionMsg)
+				break;
+			}
+
+			case EnvelopeTransactionMsg:
 			{
 				INSTRUMENTINDEX id;
 				EnvelopeType envType;
@@ -614,7 +649,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						c->Write(s);
 					}
 				}
-			} else if(type == PluginDataTransactionMsg)
+				break;
+			}
+
+			case PluginDataTransactionMsg:
 			{
 				PluginEditMsg plugMsg;
 				inArchive >> plugMsg;
@@ -632,7 +670,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == PatternResizeMsg)
+				break;
+			}
+
+			case PatternResizeMsg:
 			{
 				PATTERNINDEX pat;
 				ROWINDEX rows;
@@ -648,8 +689,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
+				break;
 			}
-			else if(type == SequenceTransactionMsg)
+
+			case SequenceTransactionMsg:
 			{
 				SequenceMsg msg;
 				inArchive >> msg;
@@ -664,7 +707,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == EditPosMsg)
+				break;
+			}
+
+			case EditPosMsg:
 			{
 				// Update edit pos of this client
 				Networking::SetCursorPosMsg msg;
@@ -678,7 +724,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == SendAnnotationMsg)
+				break;
+			}
+
+			case SendAnnotationMsg:
 			{
 				Networking::AnnotationMsg msg;
 				inArchive >> msg;
@@ -690,7 +739,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == ChannelSettingsMsg)
+				break;
+			}
+
+			case ChannelSettingsMsg:
 			{
 				CHANNELINDEX chn, sourceChn;
 				ModChannelSettings settings;
@@ -706,7 +758,13 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					c->Write(s);
 				}
-			} else if(type == ReturnValTransactionMsg)
+				break;
+			}
+
+			case PatternLockMsg:
+				break;
+
+			case ReturnValTransactionMsg:
 			{
 				uint64 handle;
 				std::string msg;
@@ -719,7 +777,9 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				ar(handle);
 				std::string retVal;
 				// Request to insert pattern
-				if(retType == InsertPatternMsg)
+				switch(retType)
+				{
+				case InsertPatternMsg:
 				{
 					ROWINDEX rows;
 					inArchiveRet >> rows;
@@ -738,11 +798,17 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						}
 					}
 					retVal = mpt::ToString(pat);
-				} else if(retType == InsertSampleMsg)
+					break;
+				}
+
+				case InsertSampleMsg:
 				{
 					SAMPLEINDEX smp = modDoc->InsertSample(true);
 					retVal = mpt::ToString(smp);
-				} else if(retType == InsertInstrumentMsg)
+					break;
+				}
+
+				case InsertInstrumentMsg:
 				{
 					INSTRUMENTINDEX ins = modDoc->GetrSoundFile().GetNextFreeInstrument();
 					if(ins != INSTRUMENTINDEX_INVALID)
@@ -758,16 +824,25 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						}
 					}
 					retVal = mpt::ToString(ins);
-				} else if(retType == ConvertInstrumentsMsg)
+					break;
+				}
+
+				case ConvertInstrumentsMsg:
 				{
 					retVal = mpt::ToString(modDoc->ConvertSamplesToInstruments());
 					CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(&modDoc), UpdateHint().ModType().AsLPARAM());
+					break;
+				}
 				}
 				// Notify the blocked caller
 				ar(std::move(retVal));
 				source->Write(sso.str());
+				break;
 			}
+			}
+			break;
 		}
+	}
 	}
 	return true;
 }

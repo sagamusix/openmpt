@@ -3133,7 +3133,9 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	UpdateHint hint;
 	bool modified = true;
 
-	if(type == Networking::PatternTransactionMsg)
+	switch(type)
+	{
+	case Networking::PatternTransactionMsg:
 	{
 		// Receive updated pattern data
 		Networking::PatternEditMsg msg;
@@ -3144,7 +3146,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			msg.Apply(m_SndFile.Patterns[msg.pattern]);
 		}
 		hint = PatternHint(msg.pattern).Names().Data();
-	} else if(type == Networking::SamplePropertyTransactionMsg)
+		break;
+	}
+
+	case Networking::SamplePropertyTransactionMsg:
 	{
 		// Receive updated sample properties
 		Networking::SamplePropertyEditMsg msg;
@@ -3159,7 +3164,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			msg.Apply(m_SndFile, msg.id);
 		}
 		hint = SampleHint(msg.id).Names().Info();
-	} else if(type == Networking::SampleDataTransactionMsg)
+		break;
+	}
+
+	case Networking::SampleDataTransactionMsg:
 	{
 		// Receive updated sample data
 		Networking::SamplePropertyEditMsg msg;
@@ -3189,7 +3197,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 
 		hint = SampleHint(msg.id).Names().Info().Data();
-	} else if(type == Networking::InstrumentTransactionMsg)
+		break;
+	}
+
+	case Networking::InstrumentTransactionMsg:
 	{
 		// Receive updated instrument
 		INSTRUMENTINDEX id;
@@ -3210,7 +3221,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(id).Names().Envelope().Info();
 		if(!hadInstruments)
 			hint.ModType();
-	} else if(type == Networking::EnvelopeTransactionMsg)
+		break;
+	}
+
+	case Networking::EnvelopeTransactionMsg:
 	{
 		// Receive updated instrument envelope
 		INSTRUMENTINDEX id;
@@ -3233,7 +3247,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(id).Names().Envelope();
 		if(!hadInstruments)
 			hint.ModType();
-	} else if(type == Networking::PatternResizeMsg)
+		break;
+	}
+
+	case Networking::PatternResizeMsg:
 	{
 		// Receive new pattern size
 		PATTERNINDEX pat;
@@ -3246,12 +3263,16 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_SndFile.Patterns.IsValidPat(pat))
 		{
 			m_SndFile.Patterns[pat].Resize(rows, false, atEnd);
-		} else
+		}
+		else
 		{
 			m_SndFile.Patterns.Insert(pat, rows);
 		}
 		hint = PatternHint(pat).Data();
-	} else if(type == Networking::SequenceTransactionMsg)
+		break;
+	}
+
+	case Networking::SequenceTransactionMsg:
 	{
 		// Receive updated order list
 		Networking::SequenceMsg msg;
@@ -3262,7 +3283,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(msg.seq < m_SndFile.Order.GetNumSequences())
 			msg.Apply(m_SndFile.Order(msg.seq));
 		hint = SequenceHint(msg.seq).Names().Data();
-	} else if(type == Networking::EditPosMsg)
+		break;
+	}
+
+	case Networking::EditPosMsg:
 	{
 		// Receive some client's pattern edit position
 		Networking::ClientID id;
@@ -3290,7 +3314,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = RowHint(msg.row);
 		modified = false;
 		// TODO: For spectators, allow to follow cursors automatically
-	} else if(type == Networking::InsertPatternMsg)
+		break;
+	}
+
+	case Networking::InsertPatternMsg:
 	{
 		// Receive request to insert a new specified pattern
 		PATTERNINDEX pat;
@@ -3299,14 +3326,20 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> rows;
 		m_SndFile.Patterns.Insert(pat, rows);
 		hint = PatternHint(pat).Names().Data();
-	} else if(type == Networking::InsertInstrumentMsg)
+		break;
+	}
+
+	case Networking::InsertInstrumentMsg:
 	{
 		// Receive request to insert a specified instrument
 		INSTRUMENTINDEX ins;
 		inArchive >> ins;
 		m_SndFile.AllocateInstrument(ins);
 		hint = InstrumentHint(ins).Envelope().Info().Names();
-	} else if(type == Networking::ReturnValTransactionMsg)
+		break;
+	}
+
+	case Networking::ReturnValTransactionMsg:
 	{
 		// Receive result of a transaction message
 		uint64 handle;
@@ -3315,7 +3348,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive >> retVal;
 		reinterpret_cast<std::promise<std::string> *>(handle)->set_value(retVal);
 		modified = false;
-	} else if(type == Networking::ChatMsg)
+		break;
+	}
+
+	case Networking::ChatMsg:
 	{
 		// Receive chat message
 		if(m_chatDlg)
@@ -3326,7 +3362,11 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			m_chatDlg->AddMessage(from, message);
 		}
 		modified = false;
-	} else if(type == Networking::SendAnnotationMsg)
+		break;
+	}
+
+
+	case Networking::SendAnnotationMsg:
 	{
 		// Add / remove annotation
 		Networking::AnnotationMsg msg;
@@ -3337,7 +3377,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		else
 			m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 		if(m_chatDlg) m_chatDlg->Update();
-	} else if(type == Networking::ChannelSettingsMsg)
+		break;
+	}
+
+	case Networking::ChannelSettingsMsg:
 	{
 		// Change some channel's settings
 		CHANNELINDEX chn, sourceChn;
@@ -3353,7 +3396,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			m_SndFile.ChnSettings[chn].dwFlags.set(CHN_MUTE, muted);
 			hint = GeneralHint(chn).Channels();
 		}
-	} else if(type == Networking::UserJoinedMsg)
+		break;
+	}
+
+	case Networking::UserJoinedMsg:
 	{
 		// Add new user to collaborator list
 		Networking::ClientID id;
@@ -3363,7 +3409,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
 		if(m_chatDlg) m_chatDlg->Update();
 		modified = false;
-	} else if(type == Networking::UserQuitMsg)
+		break;
+	}
+
+	case Networking::UserQuitMsg:
 	{
 		// Remove user from collaborator list
 		Networking::ClientID id;
@@ -3371,6 +3420,8 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		m_collabNames.erase(id);
 		if(m_chatDlg) m_chatDlg->Update();
 		return false;
+	}
+
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
