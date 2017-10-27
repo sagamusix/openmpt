@@ -32,7 +32,6 @@ struct NetworkMessage
 		memcpy(type, id, 4);
 	}
 
-	bool operator== (const char(&other)[5]) { return !memcmp(type, other, 4); }
 	bool operator== (const NetworkMessage &other) { return !memcmp(type, other.type, 4); }
 
 	template<class Archive>
@@ -77,6 +76,7 @@ const NetworkMessage InsertInstrumentMsg("ININ");	// Request to insert a new ins
 const NetworkMessage ConvertInstrumentsMsg("CNVI");	// Request to convert all samples to instruments
 
 const NetworkMessage SendAnnotationMsg("ANNO");	// Add/change/remove an annoation at a given pattern position
+const NetworkMessage PatternLockMsg("LOCK");	// Add/remove a pattern lock
 
 const NetworkMessage ChatMsg("CHAT");	// Send a chat message
 

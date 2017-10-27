@@ -3289,6 +3289,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 		hint = RowHint(msg.row);
 		modified = false;
+		// TODO: For spectators, allow to follow cursors automatically
 	} else if(type == Networking::InsertPatternMsg)
 	{
 		// Receive request to insert a new specified pattern
