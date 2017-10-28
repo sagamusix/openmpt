@@ -428,6 +428,7 @@ protected:
 	afx_msg void OnSetQuantize();
 	afx_msg void OnLockPatternRows();
 	afx_msg void OnAddAnnotation();
+	afx_msg void OnLockPattern();
 	afx_msg BOOL OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -503,7 +504,7 @@ private:
 	ModCommand &GetModCommand(CSoundFile &sndFile, const ModCommandPos &pos);
 
 	// Returns true if pattern editing is enabled.
-	bool IsEditingEnabled() const { return m_Status[psRecordingEnabled]; }
+	bool IsEditingEnabled() const;
 
 	// Like IsEditingEnabled(), but shows some notification when editing is not enabled.
 	bool IsEditingEnabled_bmsg();

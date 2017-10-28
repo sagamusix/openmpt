@@ -3133,6 +3133,9 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	UpdateHint hint;
 	bool modified = true;
 
+
+	// TODO: add the action log here?
+
 	switch(type)
 	{
 	case Networking::PatternTransactionMsg:
@@ -3205,8 +3208,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive updated instrument
 		INSTRUMENTINDEX id;
 		ModInstrument instr;
-		inArchive >> id;
-		inArchive >> instr;
+		inArchive(id, instr);
 		CriticalSection cs;
 		bool hadInstruments = GetNumInstruments() > 0;
 		if(id > 0 && id < MAX_INSTRUMENTS)
@@ -3230,9 +3232,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		INSTRUMENTINDEX id;
 		EnvelopeType envType;
 		InstrumentEnvelope env;
-		inArchive >> id;
-		inArchive >> envType;
-		inArchive >> env;
+		inArchive(id, envType, env);
 		CriticalSection cs;
 		bool hadInstruments = GetNumInstruments() > 0;
 		if(id > 0 && id < MAX_INSTRUMENTS)
@@ -3256,9 +3256,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		PATTERNINDEX pat;
 		ROWINDEX rows;
 		bool atEnd;
-		inArchive >> pat;
-		inArchive >> rows;
-		inArchive >> atEnd;
+		inArchive(pat, rows, atEnd);
 		CriticalSection cs;
 		if(m_SndFile.Patterns.IsValidPat(pat))
 		{
@@ -3276,7 +3274,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Receive updated order list
 		Networking::SequenceMsg msg;
-		inArchive >> msg;
+		inArchive(msg);
 		CriticalSection cs;
 		while(msg.seq >= m_SndFile.Order.GetNumSequences() && msg.seq < MAX_SEQUENCES)
 			m_SndFile.Order.AddSequence(false);
@@ -3291,8 +3289,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive some client's pattern edit position
 		Networking::ClientID id;
 		Networking::SetCursorPosMsg msg;
-		inArchive >> id;
-		inArchive >> msg;
+		inArchive(id, msg);
 		ROWINDEX oldRow = ROWINDEX_INVALID;
 		PATTERNINDEX oldPat = PATTERNINDEX_INVALID;
 		ORDERINDEX oldOrd = ORDERINDEX_INVALID;
@@ -3322,8 +3319,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive request to insert a new specified pattern
 		PATTERNINDEX pat;
 		ROWINDEX rows;
-		inArchive >> pat;
-		inArchive >> rows;
+		inArchive(pat, rows);
 		m_SndFile.Patterns.Insert(pat, rows);
 		hint = PatternHint(pat).Names().Data();
 		break;
@@ -3333,9 +3329,12 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Receive request to insert a specified instrument
 		INSTRUMENTINDEX ins;
-		inArchive >> ins;
+		inArchive(ins);
+		bool firstInstr = m_SndFile.GetNumInstruments() == 0;
 		m_SndFile.AllocateInstrument(ins);
 		hint = InstrumentHint(ins).Envelope().Info().Names();
+		if(firstInstr)
+			hint.ModType();
 		break;
 	}
 
@@ -3344,8 +3343,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive result of a transaction message
 		uint64 handle;
 		std::string retVal;
-		inArchive >> handle;
-		inArchive >> retVal;
+		inArchive(handle, retVal);
 		reinterpret_cast<std::promise<std::string> *>(handle)->set_value(retVal);
 		modified = false;
 		break;
@@ -3357,8 +3355,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_chatDlg)
 		{
 			mpt::ustring from, message;
-			inArchive >> from;
-			inArchive >> message;
+			inArchive(from, message);
 			m_chatDlg->AddMessage(from, message);
 		}
 		modified = false;
@@ -3385,9 +3382,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Change some channel's settings
 		CHANNELINDEX chn, sourceChn;
 		ModChannelSettings settings;
-		inArchive >> chn;
-		inArchive >> sourceChn;
-		inArchive >> settings;
+		inArchive(chn, sourceChn, settings);
 		if(chn < MAX_BASECHANNELS)
 		{
 			if(sourceChn == CHANNELINDEX_INVALID) sourceChn = chn;
@@ -3399,13 +3394,25 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		break;
 	}
 
+	case Networking::PatternLockMsg:
+	{
+		Networking::ClientID id;
+		PATTERNINDEX pat;
+		bool enable;
+		inArchive(id, pat, enable);
+		if(enable)
+			m_collabLockedPatterns[pat] = id;
+		else
+			m_collabLockedPatterns.erase(pat);
+		break;
+	}
+
 	case Networking::UserJoinedMsg:
 	{
 		// Add new user to collaborator list
 		Networking::ClientID id;
 		std::string name;
-		inArchive >> id;
-		inArchive >> name;
+		inArchive(id, name);
 		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
 		if(m_chatDlg) m_chatDlg->Update();
 		modified = false;
@@ -3416,8 +3423,17 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Remove user from collaborator list
 		Networking::ClientID id;
-		inArchive >> id;
+		inArchive(id);
 		m_collabNames.erase(id);
+
+		for(auto it = m_collabLockedPatterns.begin(); it != m_collabLockedPatterns.end();)
+		{
+			if(it->second == id)
+				it = m_collabLockedPatterns.erase(it);
+			else
+				it++;
+		}
+
 		if(m_chatDlg) m_chatDlg->Update();
 		return false;
 	}
@@ -3465,6 +3481,12 @@ COLORREF CModDoc::GetUserColor(uint32 user) const
 }
 
 
+mpt::ustring CModDoc::GetUserName(uint32 user) const
+{
+	return m_collabNames.count(user) ? m_collabNames.at(user) : MPT_USTRING("<unknown>");
+}
+
+
 uint32 CModDoc::GetCollabUserID() const
 {
 	if(m_collabClient)
@@ -3481,5 +3503,26 @@ void CModDoc::OnNetworkingChat()
 	}
 }
 
+
+void CModDoc::RequestPatternLock(PATTERNINDEX pat)
+{
+	if(m_collabClient)
+	{
+		bool newState = true;
+		if(m_collabLockedPatterns.count(pat))
+		{
+			if(m_collabLockedPatterns.at(pat) != GetCollabUserID())
+			{
+				Reporting::Error(MPT_USTRING("This pattern is already being edited by ") + GetUserName(m_collabLockedPatterns.at(pat)));
+				return;
+			}
+			newState = false;
+		}
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::PatternLockMsg, GetCollabUserID(), pat, newState);
+		m_collabClient->Write(ss.str());
+	}
+}
 
 OPENMPT_NAMESPACE_END

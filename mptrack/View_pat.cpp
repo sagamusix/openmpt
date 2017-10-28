@@ -128,7 +128,8 @@ BEGIN_MESSAGE_MAP(CViewPattern, CModScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO,			OnUpdateRedo)
 	ON_COMMAND_RANGE(ID_PLUGSELECT, ID_PLUGSELECT+MAX_MIXPLUGINS, OnSelectPlugin) //rewbs.patPlugName
 	
-	ON_COMMAND(ID_ADD_ANNOTATION,	OnAddAnnotation)
+	ON_COMMAND(ID_ADD_ANNOTATION,		OnAddAnnotation)
+	ON_COMMAND(ID_LOCK_PATTERN_COLLAB,	OnLockPattern)
 	ON_NOTIFY_EX(TTN_NEEDTEXT, 0,	OnToolTipText)
 
 	//}}AFX_MSG_MAP
@@ -1480,7 +1481,16 @@ void CViewPattern::OnRButtonDown(UINT flags, CPoint pt)
 
 		if(pModDoc->m_collabClient)
 		{
-			AppendMenu(hMenu, MF_STRING, ID_ADD_ANNOTATION, _T("Add Ann&otation"));
+			AppendMenu(hMenu, MF_STRING, ID_ADD_ANNOTATION, _T("Edit Ann&otation"));
+			UINT locked = 0;
+			PATTERNINDEX pat = GetCurrentPattern();
+			if(pModDoc->m_collabLockedPatterns.count(pat)
+				&& pModDoc->m_collabLockedPatterns.at(pat) == pModDoc->GetCollabUserID())
+			{
+				locked = MF_CHECKED;
+			}
+
+			AppendMenu(hMenu, MF_STRING | locked, ID_LOCK_PATTERN_COLLAB, _T("Lock Pattern"));
 		}
 
 		ClientToScreen(&pt);
@@ -6268,6 +6278,23 @@ void CViewPattern::TogglePendingMute(CHANNELINDEX nChn)
 }
 
 
+bool CViewPattern::IsEditingEnabled() const
+{
+	if(!m_Status[psRecordingEnabled])
+		return false;
+	const CModDoc &modDoc = *GetDocument();
+	PATTERNINDEX pat = GetCurrentPattern();
+	if(modDoc.m_collabLockedPatterns.count(pat)
+		&& modDoc.m_collabLockedPatterns.at(pat) != modDoc.GetCollabUserID())
+	{
+		auto id = modDoc.m_collabLockedPatterns.at(pat);
+		Reporting::Error(MPT_USTRING("This pattern is currently being edited by ") + modDoc.GetUserName(id));
+		return false;
+	}
+	return true;
+}
+
+
 // Check if editing is enabled, and if it's not, prompt the user to enable editing.
 bool CViewPattern::IsEditingEnabled_bmsg()
 {
@@ -6681,6 +6708,12 @@ void CViewPattern::OnAddAnnotation()
 	CPoint pt = GetPointFromPosition(m_Cursor);
 	ClientToScreen(&pt);
 	m_annotation->Show(pt, GetCurrentPattern(), GetCurrentRow(), GetCurrentChannel(), static_cast<uint32>(m_Cursor.GetColumnType()));
+}
+
+
+void CViewPattern::OnLockPattern()
+{
+	GetDocument()->RequestPatternLock(GetCurrentPattern());
 }
 
 

@@ -378,7 +378,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	cereal::BinaryInputArchive inArchive(inMsg);
 	NetworkMessage type;
 
-	inArchive >> type;
+	inArchive(type);
 	//Log(std::string(type.type, 4).c_str());
 
 	std::ostringstream sso;
@@ -413,7 +413,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	case ConnectMsg:
 	{
 		JoinMsg join;
-		inArchive >> join;
+		inArchive(join);
 		CModDoc *modDoc = reinterpret_cast<CModDoc *>(join.id);
 		if(m_documents.count(modDoc))
 		{
@@ -499,7 +499,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		{
 			ar(type);
 			mpt::ustring message;
-			inArchive >> message;
+			inArchive(message);
 			// Send back to all clients
 			ar(source->m_userName);
 			ar(message);
@@ -550,7 +550,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case PatternTransactionMsg:
 			{
 				PatternEditMsg patMsg;
-				inArchive >> patMsg;
+				inArchive(patMsg);
 				CriticalSection cs;
 				if(sndFile.Patterns.IsValidPat(patMsg.pattern))
 				{
@@ -565,7 +565,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case SamplePropertyTransactionMsg:
 			{
 				SamplePropertyEditMsg msg;
-				inArchive >> msg;
+				inArchive(msg);
 				if(msg.id > 0 && msg.id <= sndFile.GetNumSamples())
 				{
 					CriticalSection cs;
@@ -580,15 +580,13 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case SampleDataTransactionMsg:
 			{
 				SamplePropertyEditMsg msg;
-				inArchive >> msg;
 				cereal::size_type size;
-				inArchive >> size;
+				inArchive(msg, size);
 				std::vector<int8> data(static_cast<size_t>(size));
 				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(size)));
 
 				// Send back to all clients
-				ar(msg);
-				ar(data);
+				ar(msg, data);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -597,13 +595,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				INSTRUMENTINDEX id;
 				ModInstrument instr;
-				inArchive >> id;
-				inArchive >> instr;
+				inArchive(id, instr);
 				if(id > 0)
 				{
 					// Send back to all clients
-					ar(id);
-					ar(instr);
+					ar(id, instr);
 					SendToAll(doc, sso);
 				}
 				break;
@@ -614,15 +610,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				INSTRUMENTINDEX id;
 				EnvelopeType envType;
 				InstrumentEnvelope env;
-				inArchive >> id;
-				inArchive >> envType;
-				inArchive >> env;
+				inArchive(id, envType, env);
 				if(id > 0)
 				{
 					// Send back to all clients
-					ar(id);
-					ar(envType);
-					ar(env);
+					ar(id, envType, env);
 					SendToAll(doc, sso);
 				}
 				break;
@@ -631,7 +623,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case PluginDataTransactionMsg:
 			{
 				PluginEditMsg plugMsg;
-				inArchive >> plugMsg;
+				inArchive(plugMsg);
 				CriticalSection  cs;
 				if(sndFile.m_MixPlugins[plugMsg.plugin].pMixPlugin)
 				{
@@ -650,12 +642,8 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				PATTERNINDEX pat;
 				ROWINDEX rows;
 				bool atEnd;
-				inArchive >> pat;
-				inArchive >> rows;
-				inArchive >> atEnd;
-				ar(pat);
-				ar(rows);
-				ar(atEnd);
+				inArchive(pat, rows, atEnd);
+				ar(pat, rows, atEnd);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -663,7 +651,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case SequenceTransactionMsg:
 			{
 				SequenceMsg msg;
-				inArchive >> msg;
+				inArchive(msg);
 				while(msg.seq >= sndFile.Order.GetNumSequences() && msg.seq < MAX_SEQUENCES)
 					sndFile.Order.AddSequence(false);
 				if(msg.seq < sndFile.Order.GetNumSequences())
@@ -678,11 +666,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				// Update edit pos of this client
 				Networking::SetCursorPosMsg msg;
-				inArchive >> msg;
+				inArchive(msg);
 				//source->m_editPos = msg;
 				// Send back to clients
-				ar(source->m_id);
-				ar(msg);
+				ar(source->m_id, msg);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -690,7 +677,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case SendAnnotationMsg:
 			{
 				Networking::AnnotationMsg msg;
-				inArchive >> msg;
+				inArchive(msg);
 				// Send back to clients
 				ar(msg);
 				SendToAll(doc, sso);
@@ -701,13 +688,9 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				CHANNELINDEX chn, sourceChn;
 				ModChannelSettings settings;
-				inArchive >> chn;
-				inArchive >> sourceChn;
-				inArchive >> settings;
+				inArchive(chn, sourceChn, settings);
 				// Send back to clients
-				ar(chn);
-				ar(sourceChn);
-				ar(settings);
+				ar(chn, sourceChn, settings);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -717,8 +700,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Lock or unlock kpattern
 				PATTERNINDEX pat;
 				bool enable;
-				inArchive >> pat;
-				inArchive >> enable;
+				inArchive(pat, enable);
 
 				if(modDoc->m_collabLockedPatterns.count(pat) && enable)
 				{
@@ -727,9 +709,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				}
 
 				// Not locked yet, send back to clients
-				ar(source->m_id);
-				ar(pat);
-				ar(enable);
+				ar(source->m_id, pat, enable);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -738,12 +718,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				uint64 handle;
 				std::string msg;
-				inArchive >> handle;
-				inArchive >> msg;
+				inArchive(handle, msg);
 				std::istringstream retMsg(msg);
 				cereal::BinaryInputArchive inArchiveRet(retMsg);
 				NetworkMessage retType;
-				inArchiveRet >> retType;
+				inArchiveRet(retType);
 				ar(handle);
 				std::string retVal;
 				// Request to insert pattern
@@ -752,15 +731,13 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				case InsertPatternMsg:
 				{
 					ROWINDEX rows;
-					inArchiveRet >> rows;
+					inArchiveRet(rows);
 					PATTERNINDEX pat = sndFile.Patterns.InsertAny(rows, true);
 					if(pat != PATTERNINDEX_INVALID)
 					{
 						std::ostringstream ssoRet;
 						cereal::BinaryOutputArchive arRet(ssoRet);
-						arRet(InsertPatternMsg);
-						arRet(pat);
-						arRet(rows);
+						arRet(InsertPatternMsg, pat, rows);
 						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(pat);
@@ -781,8 +758,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					{
 						std::ostringstream ssoRet;
 						cereal::BinaryOutputArchive arRet(ssoRet);
-						arRet(InsertInstrumentMsg);
-						arRet(ins);
+						arRet(InsertInstrumentMsg, ins);
 						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(ins);

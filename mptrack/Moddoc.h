@@ -161,7 +161,9 @@ public:
 	std::unique_ptr<Networking::ChatDlg> m_chatDlg;
 	void SetCollabEditPos(uint32 seq, uint32 ord, uint32 pat, uint32 row, uint32 chn, uint32 col);
 	COLORREF GetUserColor(uint32 user) const;
+	mpt::ustring GetUserName(uint32 user) const;
 	/*Networking::ClientID*/ uint32 GetCollabUserID() const;
+	void RequestPatternLock(PATTERNINDEX pat);
 
 protected: // create from serialization only
 	CModDoc();
