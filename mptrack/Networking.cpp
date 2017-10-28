@@ -714,7 +714,23 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 			case PatternLockMsg:
 			{
+				// Lock or unlock kpattern
+				PATTERNINDEX pat;
+				bool enable;
+				inArchive >> pat;
+				inArchive >> enable;
 
+				if(modDoc->m_collabLockedPatterns.count(pat) && enable)
+				{
+					// Ignore, this pattern is already locked
+					break;
+				}
+
+				// Not locked yet, send back to clients
+				ar(source->m_id);
+				ar(pat);
+				ar(enable);
+				SendToAll(doc, sso);
 				break;
 			}
 
