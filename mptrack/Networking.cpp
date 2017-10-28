@@ -526,11 +526,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		{
 			ar(type);
 			ar(source->m_id);
-			const std::string s = sso.str();
-			for(auto &c : m_documents.at(modDoc).m_connections)
-			{
-				c->Write(s);
-			}
+			SendToAll(m_documents.at(modDoc), sso);
 		}
 		return false;
 	}
@@ -561,11 +557,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					patMsg.Apply(sndFile.Patterns[patMsg.pattern]);
 					// Send back to all clients
 					ar(patMsg);
-					const std::string s = sso.str();
-					for(auto &c : doc.m_connections)
-					{
-						c->Write(s);
-					}
+					SendToAll(doc, sso);
 				}
 				break;
 			}
@@ -580,11 +572,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					msg.Apply(sndFile, msg.id);
 					// Send back to all clients
 					ar(msg);
-					const std::string s = sso.str();
-					for(auto &c : doc.m_connections)
-					{
-						c->Write(s);
-					}
+					SendToAll(doc, sso);
 				}
 				break;
 			}
@@ -601,11 +589,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Send back to all clients
 				ar(msg);
 				ar(data);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -620,11 +604,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					// Send back to all clients
 					ar(id);
 					ar(instr);
-					const std::string s = sso.str();
-					for(auto &c : doc.m_connections)
-					{
-						c->Write(s);
-					}
+					SendToAll(doc, sso);
 				}
 				break;
 			}
@@ -643,11 +623,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(id);
 					ar(envType);
 					ar(env);
-					const std::string s = sso.str();
-					for(auto &c : doc.m_connections)
-					{
-						c->Write(s);
-					}
+					SendToAll(doc, sso);
 				}
 				break;
 			}
@@ -665,11 +641,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					}
 				}
 				ar(plugMsg);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -684,11 +656,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				ar(pat);
 				ar(rows);
 				ar(atEnd);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -702,11 +670,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					msg.Apply(sndFile.Order(msg.seq));
 				// Send back to clients
 				ar(msg);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -719,11 +683,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Send back to clients
 				ar(source->m_id);
 				ar(msg);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -733,12 +693,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive >> msg;
 				// Send back to clients
 				ar(msg);
-
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
@@ -753,16 +708,15 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				ar(chn);
 				ar(sourceChn);
 				ar(settings);
-				const std::string s = sso.str();
-				for(auto &c : doc.m_connections)
-				{
-					c->Write(s);
-				}
+				SendToAll(doc, sso);
 				break;
 			}
 
 			case PatternLockMsg:
+			{
+
 				break;
+			}
 
 			case ReturnValTransactionMsg:
 			{
@@ -791,11 +745,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						arRet(InsertPatternMsg);
 						arRet(pat);
 						arRet(rows);
-						const std::string s = ssoRet.str();
-						for(auto &c : doc.m_connections)
-						{
-							c->Write(s);
-						}
+						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(pat);
 					break;
@@ -817,11 +767,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						cereal::BinaryOutputArchive arRet(ssoRet);
 						arRet(InsertInstrumentMsg);
 						arRet(ins);
-						const std::string s = ssoRet.str();
-						for(auto &c : doc.m_connections)
-						{
-							c->Write(s);
-						}
+						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(ins);
 					break;
@@ -845,6 +791,16 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	}
 	}
 	return true;
+}
+
+
+void CollabServer::SendToAll(NetworkedDocument &doc, const std::ostringstream &sso)
+{
+	const std::string s = sso.str();
+	for(auto &c : doc.m_connections)
+	{
+		c->Write(s);
+	}
 }
 
 
