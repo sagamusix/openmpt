@@ -431,6 +431,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(ConnectOKMsg);
 					ar(sndFile);
 					ar(mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()));
+					ar(source->m_id);
 					doc.m_connections.push_back(source);
 					current++;
 					source->m_modDoc = modDoc;

@@ -215,9 +215,9 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	auto modDoc = static_cast<CModDoc *>(pTemplate->CreateNewDocument());
 	modDoc->OnNewDocument();
 	CSoundFile &sndFile = modDoc->GetrSoundFile();
-	inArchive >> sndFile;
 	std::string title;
-	inArchive >> title;
+	inArchive(sndFile, title, m_client->GetConnection()->m_id);
+
 	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
 	
 	uint32 numPositions;
@@ -226,8 +226,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	{
 		ClientID id;
 		SetCursorPosMsg msg;
-		inArchive >> id;
-		inArchive >> msg;
+		inArchive(id, msg);
 		modDoc->m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
 	}
 
@@ -236,7 +235,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	for(uint32 i = 0; i < numAnnotations; i++)
 	{
 		AnnotationMsg msg;
-		inArchive >> msg;
+		inArchive(msg);
 		CModDoc::NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
 		modDoc->m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 	}
@@ -247,8 +246,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	{
 		ClientID id;
 		decltype(CollabConnection::m_userName) name;
-		inArchive >> id;
-		inArchive >> name;
+		inArchive(id, name);
 		modDoc->m_collabNames[id] = name;
 	}
 

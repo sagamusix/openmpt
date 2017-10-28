@@ -54,7 +54,7 @@ public:
 	int32 m_accessType;
 	uint32 m_origSize;
 	std::promise<std::string> m_promise;
-	const ClientID m_id;
+	ClientID m_id;
 	static ClientID m_nextId;
 
 public:

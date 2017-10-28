@@ -3520,7 +3520,7 @@ void CModDoc::RequestPatternLock(PATTERNINDEX pat)
 		}
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
-		ar(Networking::PatternLockMsg, GetCollabUserID(), pat, newState);
+		ar(Networking::PatternLockMsg, pat, newState);
 		m_collabClient->Write(ss.str());
 	}
 }
