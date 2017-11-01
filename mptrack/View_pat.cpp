@@ -31,8 +31,10 @@
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include <algorithm>
+
 #include "PatternTransaction.h"
 #include "NetworkAnnotation.h"
+#include "BalloonMsg.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -6288,7 +6290,10 @@ bool CViewPattern::IsEditingEnabled() const
 		&& modDoc.m_collabLockedPatterns.at(pat) != modDoc.GetCollabUserID())
 	{
 		auto id = modDoc.m_collabLockedPatterns.at(pat);
-		Reporting::Error(MPT_USTRING("This pattern is currently being edited by ") + modDoc.GetUserName(id));
+		CPoint pt = GetPointFromPosition(m_Cursor);
+		ClientToScreen(&pt);
+		CBalloonMsg::RequestCloseAll();
+		CBalloonMsg::Show(_T("Editing not possible"), _T("This pattern is currently locked by ") + mpt::ToCString(modDoc.GetUserName(id)), &pt, HICON(TTI_INFO));
 		return false;
 	}
 	return true;

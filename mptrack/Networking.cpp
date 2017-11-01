@@ -428,10 +428,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					CSoundFile &sndFile = modDoc->GetrSoundFile();
 					sndFile.SaveMixPlugins();
-					ar(ConnectOKMsg);
-					ar(sndFile);
-					ar(mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()));
-					ar(source->m_id);
+					ar(ConnectOKMsg, sndFile, mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()), source->m_id);
 					doc.m_connections.push_back(source);
 					current++;
 					source->m_modDoc = modDoc;
@@ -442,9 +439,8 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(numPositions);
 					for(const auto &editPos : modDoc->m_collabEditPositions)
 					{
-						ar(editPos.first);
 						SetCursorPosMsg msg{ editPos.second.sequence, editPos.second.order, editPos.second.pattern, editPos.second.row, editPos.second.channel, editPos.second.column };
-						ar(msg);
+						ar(editPos.first, msg);
 					}
 					uint32 numAnnotations = mpt::saturate_cast<uint32>(modDoc->m_collabAnnotations.size());
 					ar(numAnnotations);
@@ -457,8 +453,14 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					ar(numNames);
 					for(const auto &conn : doc.m_connections)
 					{
-						ar(conn->m_id);
-						ar(conn->m_userName);
+						ar(conn->m_id, conn->m_userName);
+					}
+
+					uint32 numLocks = mpt::saturate_cast<uint32>(modDoc->m_collabLockedPatterns.size());
+					ar(numLocks);
+					for(const auto &lock : modDoc->m_collabLockedPatterns)
+					{
+						ar(lock.first, lock.second);
 					}
 
 					{
