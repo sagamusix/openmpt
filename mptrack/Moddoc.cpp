@@ -3404,7 +3404,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		std::string s;
 		inArchive(s);
 		Networking::DeserializeTunings(m_SndFile, s);
-		hint = InstrumentHint().Info().ModType();
+		hint = GeneralHint().Tunings();
 		break;
 	}
 
