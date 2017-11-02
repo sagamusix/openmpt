@@ -1309,8 +1309,8 @@ void CSoundFile::InstrumentChange(ModChannel *pChn, uint32 instr, bool bPorta, b
 	if(sampleChanged && bPorta)
 	{
 		// IT compatibility: No sample change (also within multi-sample instruments) during portamento when using Compatible Gxx.
-		// Test case: PortaInsNumCompat.it, PortaSampleCompat.it
-		if(m_playBehaviour[kITPortamentoInstrument] && m_SongFlags[SONG_ITCOMPATGXX])
+		// Test case: PortaInsNumCompat.it, PortaSampleCompat.it, PortaCutCompat.it
+		if(m_playBehaviour[kITPortamentoInstrument] && m_SongFlags[SONG_ITCOMPATGXX] && pChn->nLength != 0)
 		{
 			pSmp = pChn->pModSample;
 		}
@@ -2440,8 +2440,9 @@ bool CSoundFile::ProcessEffects()
 			triggerNote = false;
 		} else if(m_playBehaviour[kRowDelayWithNoteDelay] && nStartTick > 0 && tickCount == nStartTick)
 		{
-			// IT compatibility: Delayed notes (using SDx) that are on the same row as a Row Delay effect are retriggered. Scream Tracker 3 / FastTracker 2 do the same.
-			// Test case: PatternDelay-NoteDelay.it, PatternDelay-NoteDelay.xm
+			// IT compatibility: Delayed notes (using SDx) that are on the same row as a Row Delay effect are retriggered.
+			// ProTracker / Scream Tracker 3 / FastTracker 2 do the same.
+			// Test case: PatternDelay-NoteDelay.it, PatternDelay-NoteDelay.xm, PatternDelaysRetrig.mod
 			triggerNote = true;
 		}
 

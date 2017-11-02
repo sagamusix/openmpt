@@ -737,10 +737,7 @@ SAMPLEINDEX CModDoc::InsertSample(bool forceLocal)
 	
 	m_SndFile.ResetSamplePath(i);
 
-	if(!forceLocal)
-		SetModified();
-	else
-		CMainFrame::GetMainFrame()->ThreadSafeSetModified(this);
+	SetModified();
 	return i;
 }
 

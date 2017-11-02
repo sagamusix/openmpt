@@ -30,7 +30,6 @@
 #include "InputHandler.h"
 #include "globals.h"
 #include "ChannelManagerDlg.h"
-#include <direct.h>
 #include "../common/version.h"
 #include "Ctrl_pat.h"
 #include "UpdateCheck.h"
@@ -202,7 +201,6 @@ CMainFrame::CMainFrame()
 
 	m_SoundCardOptionsDialog = nullptr;
 
-	m_pJustModifiedDoc = nullptr;
 	m_hWndMidi = NULL;
 	m_pSndFile = nullptr;
 	m_dwTimeSec = 0;
@@ -474,7 +472,7 @@ void CMainFrame::OnDropFiles(HDROP hDropInfo)
 		if(::DragQueryFileW(hDropInfo, f, fileName.data(), size))
 		{
 			const mpt::PathString file = mpt::PathString::FromNative(fileName.data());
-			theApp.OpenDocumentFile(file);
+			theApp.OpenDocumentFile(file.ToCString());
 		}
 	}
 	::DragFinish(hDropInfo);
@@ -1843,9 +1841,6 @@ void CMainFrame::OnDocumentClosed(CModDoc *pModDoc)
 {
 	if (pModDoc == GetModPlaying()) PauseMod();
 
-	// Make sure that OnTimer() won't try to set the closed document modified anymore.
-	if (pModDoc == m_pJustModifiedDoc) m_pJustModifiedDoc = nullptr;
-
 	m_wndTree.OnDocumentClosed(pModDoc);
 }
 
@@ -2024,15 +2019,6 @@ void CMainFrame::OnTimerGUI()
 		}
 	}
 
-	// Ensure the modified flag gets set in the WinMain thread, even if modification
-	// originated from Audio Thread (access to CWnd is not thread safe).
-	// Flaw: if 2 docs are modified in between Timer ticks (very rare), one mod will be lost.
-	if (m_pJustModifiedDoc)
-	{
-		m_pJustModifiedDoc->SetModified(true);
-		m_pJustModifiedDoc = NULL;
-	}
-
 	if(m_SoundCardOptionsDialog)
 	{
 		m_SoundCardOptionsDialog->UpdateStatistics();
@@ -2190,7 +2176,7 @@ void CMainFrame::OpenMenuItemFile(const UINT nId, const bool isTemplateFile)
 		theApp.OpenModulesDialog(files, isTemplateFile ? theApp.GetConfigPath() + MPT_PATHSTRING("TemplateModules") : theApp.GetAppDirPath() + MPT_PATHSTRING("ExampleSongs"));
 		for(const auto &file : files)
 		{
-			theApp.OpenDocumentFile(file);
+			theApp.OpenDocumentFile(file.ToCString());
 		}
 	}
 }
@@ -2211,7 +2197,7 @@ void CMainFrame::OnExampleSong(UINT nId)
 void CMainFrame::OnOpenMRUItem(UINT nId)
 {
 	mpt::PathString file = TrackerSettings::Instance().mruFiles[nId - ID_MRU_LIST_FIRST];
-	theApp.OpenDocumentFile(file);
+	theApp.OpenDocumentFile(file.ToCString());
 }
 
 
@@ -2274,19 +2260,20 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 }
 
 
-LRESULT CMainFrame::OnSetModified(WPARAM modDoc, LPARAM modified)
+LRESULT CMainFrame::OnSetModified(WPARAM modDoc, LPARAM)
 {
 	CModDoc *doc = reinterpret_cast<CModDoc *>(modDoc);
 	CDocTemplate *pDocTmpl = theApp.GetModDocTemplate();
 	if(pDocTmpl)
 	{
+		// Since this message is potentially posted, we first need to verify if the document still exists
 		POSITION pos = pDocTmpl->GetFirstDocPosition();
 		CDocument *pDoc;
 		while((pos != nullptr) && ((pDoc = pDocTmpl->GetNextDoc(pos)) != nullptr))
 		{
 			if(static_cast<CModDoc *>(pDoc) == doc)
 			{
-				doc->SetModified(modified ? TRUE : FALSE);
+				doc->UpdateFrameCounts();
 			}
 		}
 	}

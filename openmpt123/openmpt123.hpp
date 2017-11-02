@@ -303,6 +303,7 @@ struct commandlineflags {
 	std::string output_extension;
 	bool force_overwrite;
 	bool paused;
+	std::string warnings;
 	void apply_default_buffer_sizes() {
 		if ( ui_redraw_interval == default_high ) {
 			ui_redraw_interval = 50;
@@ -403,7 +404,7 @@ struct commandlineflags {
 		shuffle = false;
 		restart = false;
 		playlist_index = 0;
-		output_extension = "wav";
+		output_extension = "auto";
 		force_overwrite = false;
 		paused = false;
 	}
@@ -484,11 +485,20 @@ struct commandlineflags {
 		if ( samplerate < 0 ) {
 			samplerate = commandlineflags().samplerate;
 		}
-		if ( !output_filename.empty() ) {
+		if ( output_extension == "auto" ) {
+			output_extension = "";
+		}
+		if ( mode != ModeRender && !output_extension.empty() ) {
+			throw args_error_exception();
+		}
+		if ( mode == ModeRender && !output_filename.empty() ) {
+			throw args_error_exception();
+		}
+		if ( mode != ModeRender && !output_filename.empty() ) {
 			output_extension = get_extension( output_filename );
 		}
-		if ( mode == ModeRender && output_extension.empty() ) {
-			throw args_error_exception();
+		if ( output_extension.empty() ) {
+			output_extension = "wav";
 		}
 	}
 };

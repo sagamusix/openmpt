@@ -295,7 +295,6 @@ protected:
 	UINT_PTR m_nTimer;
 	UINT m_nAvgMixChn, m_nMixChn;
 	// Misc
-	CModDoc* m_pJustModifiedDoc;
 	class COptionsSoundcard *m_SoundCardOptionsDialog;
 	DWORD helpCookie;
 	bool m_bOptionsLocked;
@@ -381,7 +380,6 @@ public:
 	bool m_bModTreeHasFocus;
 	CWnd *m_pNoteMapHasFocus;
 	CWnd* m_pOrderlistHasFocus;
-	void ThreadSafeSetModified(CModDoc* modified) { InterlockedExchangePointer(reinterpret_cast<void **>(&m_pJustModifiedDoc), modified); }
 	void SetElapsedTime(double t) { m_dwTimeSec = static_cast<CSoundFile::samplecount_t>(t); }
 
 	CModTree *GetUpperTreeview() { return m_wndTree.m_pModTree; }
@@ -514,7 +512,7 @@ protected:
 	afx_msg BOOL OnInternetLink(UINT nID);
 	afx_msg LRESULT OnUpdatePosition(WPARAM, LPARAM lParam);
 	afx_msg LRESULT OnUpdateViews(WPARAM modDoc, LPARAM hint);
-	afx_msg LRESULT OnSetModified(WPARAM modDoc, LPARAM modified);
+	afx_msg LRESULT OnSetModified(WPARAM modDoc, LPARAM);
 	afx_msg void OnOpenTemplateModule(UINT nId);
 	afx_msg void OnExampleSong(UINT nId);
 	afx_msg void OnOpenMRUItem(UINT nId);

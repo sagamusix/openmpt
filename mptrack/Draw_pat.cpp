@@ -103,7 +103,7 @@ static COLORREF mixcolor(COLORREF c0, COLORREF c1)
 void CViewPattern::UpdateColors()
 {
 	const auto &colors = TrackerSettings::Instance().rgbCustomColors;
-	m_Dib.SetAllColors(0, MAX_MODCOLORS, colors);
+	m_Dib.SetAllColors(0, MAX_MODCOLORS, colors.data());
 
 	m_Dib.SetColor(MODCOLOR_2NDHIGHLIGHT, mixcolor(colors[MODCOLOR_BACKHILIGHT], colors[MODCOLOR_BACKNORMAL]));
 	m_Dib.SetColor(MODCOLOR_DEFAULTVOLUME, mixcolor(colors[MODCOLOR_VOLUME], colors[MODCOLOR_BACKNORMAL]));

@@ -1177,6 +1177,8 @@ static constexpr struct
 	{ MPT_ULITERAL("Impulse Tracker Samples (*.its)"), MPT_ULITERAL("*.its") },
 	{ MPT_ULITERAL("ScreamTracker Samples (*.s3i,*.smp)"), MPT_ULITERAL("*.s3i;*.smp") },
 	{ MPT_ULITERAL("GF1 Patches (*.pat)"), MPT_ULITERAL("*.pat") },
+	{ MPT_ULITERAL("Wave64 Files (*.w64)"), MPT_ULITERAL("*.w64") },
+	{ MPT_ULITERAL("CAF Files (*.wav)"), MPT_ULITERAL("*.caf") },
 	{ MPT_ULITERAL("AIFF Files (*.aiff,*.8svx)"), MPT_ULITERAL("*.aif;*.aiff;*.iff;*.8sv;*.8svx;*.svx") },
 	{ MPT_ULITERAL("Sun Audio (*.au,*.snd)"), MPT_ULITERAL("*.au;*.snd") },
 };
@@ -3390,7 +3392,7 @@ CCtrlSamples::SampleSelectionPoints CCtrlSamples::GetSelectionPoints()
 	SAMPLEVIEWSTATE viewstate;
 	const ModSample &sample = m_sndFile.GetSample(m_nSample);
 
-	MemsetZero(viewstate);
+	Clear(viewstate);
 	SendViewMessage(VIEWMSG_SAVESTATE, (LPARAM)&viewstate);
 	points.nStart = viewstate.dwBeginSel;
 	points.nEnd = viewstate.dwEndSel;
@@ -3416,7 +3418,7 @@ void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd)
 	Limit(nEnd, SmpLength(0), sample.nLength);
 
 	SAMPLEVIEWSTATE viewstate;
-	MemsetZero(viewstate);
+	Clear(viewstate);
 	SendViewMessage(VIEWMSG_SAVESTATE, (LPARAM)&viewstate);
 
 	viewstate.dwBeginSel = nStart;

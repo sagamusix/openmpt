@@ -172,11 +172,14 @@ CModDoc::~CModDoc()
 }
 
 
-void CModDoc::SetModifiedFlag(BOOL bModified)
+void CModDoc::SetModified(bool modified)
 {
-	bool changed = (!!bModified != IsModified());
-	CDocument::SetModifiedFlag(bModified);
-	if (changed) UpdateFrameCounts();
+	STATIC_ASSERT(sizeof(long) == sizeof(m_bModified));
+	if(!!InterlockedExchange(reinterpret_cast<long *>(&m_bModified), modified ? TRUE : FALSE) != modified)
+	{
+		// Update window titles in GUI thread
+		CMainFrame::GetMainFrame()->SendNotifyMessage(WM_MOD_SETMODIFIED, reinterpret_cast<WPARAM>(this), 0);
+	}
 }
 
 
@@ -192,13 +195,15 @@ BOOL CModDoc::OnNewDocument()
 
 	ReinitRecordState();
 	InitializeMod();
-	SetModifiedFlag(FALSE);
+	SetModified(false);
 	return TRUE;
 }
 
 
-BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
+BOOL CModDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
+	const mpt::PathString filename = lpszPathName ? mpt::PathString::FromCString(lpszPathName) : mpt::PathString();
+
 	ScopedLogCapturer logcapturer(*this);
 
 	if(filename.empty()) return OnNewDocument();
@@ -210,7 +215,7 @@ BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
 	{
 		FileReader file = GetFileReader(f);
 		ASSERT(GetPathNameMpt() == mpt::PathString());
-		SetPathName(filename, FALSE);	// Path is not set yet, but ITP loader needs this for relative paths.
+		SetPathNameMpt(filename, FALSE);	// Path is not set yet, but ITP loader needs this for relative paths.
 		m_SndFile.Create(file, CSoundFile::loadCompleteModule, this);
 	}
 
@@ -266,7 +271,7 @@ BOOL CModDoc::OnOpenDocument(const mpt::PathString &filename)
 			MptVersion::AsUString()));
 	}
 
-	SetModifiedFlag(FALSE);
+	SetModified(false);
 	m_bHasValidPath = true;
 
 	// Check if there are any missing samples, and if there are, show a dialog to relocate them.
@@ -309,7 +314,7 @@ BOOL CModDoc::OnSaveDocument(const mpt::PathString &filename, const bool bTempla
 		if (!bTemplateFile)
 		{
 			// Set new path for this file, unless we are saving a template, in which case we want to keep the old file path.
-			SetPathName(filename);
+			SetPathNameMpt(filename);
 		}
 		logcapturer.ShowLog(true);
 		if (bTemplateFile)
@@ -419,31 +424,10 @@ void CModDoc::DeleteContents()
 }
 
 
-#ifndef UNICODE
-BOOL CModDoc::DoFileSave()
+BOOL CModDoc::DoSave(LPCTSTR lpszPathName, BOOL)
 {
-	// Completely replaces MFC implementation.
-	DWORD dwAttrib = GetFileAttributesW(mpt::PathString::TunnelOutofCString(m_strPathName).AsNative().c_str());
-	if(dwAttrib & FILE_ATTRIBUTE_READONLY)
-	{
-		if(!DoSave(mpt::PathString()))
-		{
-			return FALSE;
-		}
-	} else
-	{
-		if(!DoSave(mpt::PathString::TunnelOutofCString(m_strPathName)))
-		{
-			return FALSE;
-		}
-	}
-	return TRUE;
-}
-#endif
+	const mpt::PathString filename = lpszPathName ? mpt::PathString::FromCString(lpszPathName) : mpt::PathString();
 
-
-BOOL CModDoc::DoSave(const mpt::PathString &filename, BOOL)
-{
 	const mpt::PathString docFileName = GetPathNameMpt();
 	const std::string defaultExtension = m_SndFile.GetModSpecifications().fileExtension;
 
@@ -513,7 +497,7 @@ BOOL CModDoc::DoSave(const mpt::PathString &filename, BOOL)
 	}
 	if(OnSaveDocument(saveFileName))
 	{
-		SetModified(FALSE);
+		SetModified(false);
 		m_bHasValidPath=true;
 		m_ShowSavedialog = false;
 		CMainFrame::GetMainFrame()->UpdateTree(this, GeneralHint().General()); // Update treeview (e.g. filename might have changed).
@@ -884,7 +868,7 @@ void CModDoc::ProcessMIDI(uint32 midiData, INSTRUMENTINDEX ins, IMixPlugin *plug
 			&& event != MIDIEvents::evPitchBend
 			&& m_SndFile.GetModSpecifications().supportsPlugins)
 		{
-			CMainFrame::GetMainFrame()->ThreadSafeSetModified(this);
+			SetModified();
 		}
 	}
 }
@@ -1139,7 +1123,7 @@ bool CModDoc::MuteChannel(CHANNELINDEX nChn, bool doMute)
 	const bool success = UpdateChannelMuteStatus(nChn);
 	if(success && MuteToggleModifiesDocument())
 	{
-		CMainFrame::GetMainFrame()->ThreadSafeSetModified(this);
+		SetModified();
 	}
 
 	return success;
@@ -2609,7 +2593,7 @@ void CModDoc::ChangeFileExtension(MODTYPE nNewType)
 		//unnotified file overwriting may occur.
 		m_ShowSavedialog = true;
 
-		SetPathName(newPath, FALSE);
+		SetPathNameMpt(newPath, FALSE);
 	}
 
 	UpdateAllViews(NULL, UpdateHint().ModType());

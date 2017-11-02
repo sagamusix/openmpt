@@ -1678,7 +1678,7 @@ BOOL CModTree::OpenTreeItem(HTREEITEM hItem)
 	switch(modItem.type)
 	{
 	case MODITEM_INSLIB_SONG:
-		theApp.OpenDocumentFile(InsLibGetFullPath(hItem));
+		theApp.OpenDocumentFile(InsLibGetFullPath(hItem).ToCString());
 		break;
 	case MODITEM_HDR_INSTRUMENTLIB:
 		CTrackApp::OpenDirectory(m_InstrLibPath);
@@ -1698,10 +1698,12 @@ BOOL CModTree::OpenMidiInstrument(DWORD dwItem)
 	FileDialog dlg = OpenFileDialog()
 		.EnableAudioPreview()
 		.ExtensionFilter(
-			"All Instruments and Banks|*.xi;*.pat;*.iti;*.sfz;*.wav;*.aif;*.aiff;*.sf2;*.sbk;*.dls;*.mss;*.flac;*.opus;*.ogg;*.oga;*.mp1;*.mp2;*.mp3" + ToFilterOnlyString(mediaFoundationTypes, true).ToLocale() + "|"
+			"All Instruments and Banks|*.xi;*.pat;*.iti;*.sfz;*.wav;*.w64;*.caf;*.aif;*.aiff;*.sf2;*.sbk;*.dls;*.mss;*.flac;*.opus;*.ogg;*.oga;*.mp1;*.mp2;*.mp3" + ToFilterOnlyString(mediaFoundationTypes, true).ToLocale() + "|"
 			"FastTracker II Instruments (*.xi)|*.xi|"
 			"GF1 Patches (*.pat)|*.pat|"
 			"Wave Files (*.wav)|*.wav|"
+			"Wave64 Files (*.w64)|*.w64|"
+			"CAF Files (*.caf)|*.caf|"
 	#ifdef MPT_WITH_FLAC
 			"FLAC Files (*.flac,*.oga)|*.flac;*.oga|"
 	#endif // MPT_WITH_FLAC
@@ -1827,7 +1829,7 @@ void CModTree::FillInstrumentLibrary(const WCHAR *selectedItem)
 		{
 			auto modExts = CSoundFile::GetSupportedExtensions(false);
 			auto instrExts = { "xi", "iti", "sfz", "sf2", "sbk", "dls", "mss", "pat" };
-			auto sampleExts = { "wav", "flac", "ogg", "opus", "mp1", "mp2", "mp3", "smp", "raw", "s3i", "its", "aif", "aiff", "au", "snd", "svx", "voc", "8sv", "8svx", "16sv", "16svx" };
+			auto sampleExts = { "wav", "flac", "ogg", "opus", "mp1", "mp2", "mp3", "smp", "raw", "s3i", "its", "aif", "aiff", "au", "snd", "svx", "voc", "8sv", "8svx", "16sv", "16svx", "w64", "caf" };
 			auto allExtsBlacklist = { "txt", "diz", "nfo", "doc", "ini", "pdf", "zip", "rar", "lha", "exe", "dll", "mol" };
 
 			do
@@ -2941,7 +2943,7 @@ void CModTree::OnEndDrag(DWORD dwMask)
 				{
 					if (dropinfo.dwDropType == DRAGONDROP_SONG)
 					{
-						theApp.OpenDocumentFile(fullPath);
+						theApp.OpenDocumentFile(fullPath.ToCString());
 					} else
 					{
 						::SendMessage(m_hDropWnd, WM_MOD_DRAGONDROPPING, TRUE, (LPARAM)&dropinfo);
@@ -3974,7 +3976,7 @@ void CModTree::OnDropFiles(HDROP hDropInfo)
 				} else
 				{
 					// Pass message on
-					theApp.OpenDocumentFile(file);
+					theApp.OpenDocumentFile(file.ToCString());
 				}
 			}
 		}

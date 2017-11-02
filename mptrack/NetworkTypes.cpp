@@ -140,7 +140,7 @@ void SamplePropertyEditMsg::Apply(CSoundFile &sndFile, SAMPLEINDEX smp)
 	modSample.nVibRate = sample.nVibRate;
 	modSample.rootNote = sample.rootNote;
 	mpt::String::Copy(modSample.filename, sample.filename);
-	MemCopy(modSample.cues, sample.cues);
+	memcpy(&modSample.cues, &sample.cues, sizeof(sample.cues));
 	mpt::String::Copy(sndFile.m_szNames[smp], name);
 }
 

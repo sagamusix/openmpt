@@ -727,7 +727,7 @@ public:
 			return target;
 		} else
 		{
-			return 0.0f;
+			return 0.0;
 		}
 	}
 
@@ -741,7 +741,7 @@ public:
 			return target;
 		} else
 		{
-			return 0.0f;
+			return 0.0;
 		}
 	}
 
@@ -756,7 +756,7 @@ public:
 			return true;
 		} else
 		{
-			MemsetZero(target);
+			Clear(target);
 			return false;
 		}
 	}
@@ -921,7 +921,7 @@ public:
 			return true;
 		} else
 		{
-			MemsetZero(destArray);
+			Clear(destArray);
 			return false;
 		}
 	}
