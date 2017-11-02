@@ -2896,7 +2896,7 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 		CriticalSection cs;
 		PrepareUndo("Set Tuning");
 		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
-		instr->SetTuning(&tc->GetTuning(sel));
+		instr->SetTuning(&m_sndFile.GetTuneSpecificTunings().GetTuning(sel));
 		cs.Leave();
 
 		SetModified(InstrumentHint().Info(), true);
