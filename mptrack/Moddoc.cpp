@@ -3300,11 +3300,11 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
 		if((msg.row != oldRow && oldRow != ROWINDEX_INVALID) || (msg.pattern != oldPat && oldPat != PATTERNINDEX_INVALID))
 		{
-			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), RowHint(oldRow).AsLPARAM());
+			UpdateAllViews(RowHint(oldRow));
 		}
 		if(msg.order != oldOrd && oldOrd != ORDERINDEX_INVALID)
 		{
-			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), SequenceHint().Data().AsLPARAM());
+			UpdateAllViews(SequenceHint().Data());
 		}
 		hint = RowHint(msg.row);
 		modified = false;
@@ -3457,11 +3457,11 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)
 	{
-		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(this), hint.AsLPARAM());
+		UpdateAllViews(hint);
 	}
 	if(modified)
 	{
-		CMainFrame::GetMainFrame()->PostMessage(WM_MOD_SETMODIFIED, reinterpret_cast<WPARAM>(this), true);
+		SetModified();
 	}
 
 	return true;

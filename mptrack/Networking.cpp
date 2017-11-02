@@ -777,7 +777,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				case ConvertInstrumentsMsg:
 				{
 					retVal = mpt::ToString(modDoc->ConvertSamplesToInstruments());
-					CMainFrame::GetMainFrame()->PostMessage(WM_MOD_UPDATEVIEWS, reinterpret_cast<WPARAM>(&modDoc), UpdateHint().ModType().AsLPARAM());
+					modDoc->UpdateAllViews(UpdateHint().ModType());
 					break;
 				}
 				}

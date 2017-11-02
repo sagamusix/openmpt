@@ -2244,6 +2244,7 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 	CDocTemplate *pDocTmpl = theApp.GetModDocTemplate();
 	if(pDocTmpl)
 	{
+		// Since this message is potentially posted, we first need to verify if the document still exists
 		POSITION pos = pDocTmpl->GetFirstDocPosition();
 		CDocument *pDoc;
 		while((pos != nullptr) && ((pDoc = pDocTmpl->GetNextDoc(pos)) != nullptr))
@@ -2251,6 +2252,7 @@ LRESULT CMainFrame::OnUpdateViews(WPARAM modDoc, LPARAM hint)
 			if(static_cast<CModDoc *>(pDoc) == doc)
 			{
 				doc->UpdateAllViews(nullptr, UpdateHint::FromLPARAM(hint));
+				break;
 			}
 		}
 	}
