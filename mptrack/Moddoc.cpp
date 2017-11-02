@@ -47,6 +47,7 @@
 #include "Networking.h"
 #include "NetworkTypes.h"
 #include "NetworkingDlg.h"
+#include "../soundlib/tuningcollection.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -3190,21 +3191,28 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	case Networking::InstrumentTransactionMsg:
 	{
 		// Receive updated instrument
-		INSTRUMENTINDEX id;
-		ModInstrument instr;
-		inArchive(id, instr);
+		Networking::InstrumentEditMsg msg;
+		inArchive(msg);
 		CriticalSection cs;
 		bool hadInstruments = GetNumInstruments() > 0;
-		if(id > 0 && id < MAX_INSTRUMENTS)
+		if(msg.id > 0 && msg.id < MAX_INSTRUMENTS)
 		{
-			if(id > GetNumInstruments() || m_SndFile.Instruments[id] == nullptr)
+			if(msg.id > GetNumInstruments() || m_SndFile.Instruments[msg.id] == nullptr)
 			{
-				if(m_SndFile.AllocateInstrument(id) == nullptr)
+				if(m_SndFile.AllocateInstrument(msg.id) == nullptr)
 					return true;
 			}
-			*m_SndFile.Instruments[id] = instr;
+			*m_SndFile.Instruments[msg.id] = msg.instr;
+			m_SndFile.Instruments[msg.id]->pTuning = nullptr;
+			for(auto &tuning : m_SndFile.GetTuneSpecificTunings())
+			{
+				if(tuning->GetName() == msg.tuningName)
+				{
+					m_SndFile.Instruments[msg.id]->pTuning = tuning.get();
+				}
+			}
 		}
-		hint = InstrumentHint(id).Names().Envelope().Info();
+		hint = InstrumentHint(msg.id).Names().Envelope().Info();
 		if(!hadInstruments)
 			hint.ModType();
 		break;
@@ -3388,6 +3396,13 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			m_collabLockedPatterns[pat] = id;
 		else
 			m_collabLockedPatterns.erase(pat);
+		break;
+	}
+
+	case Networking::TuningTransactionMsg:
+	{
+		uint32 numTunings;
+		inArchive(numTunings);
 		break;
 	}
 

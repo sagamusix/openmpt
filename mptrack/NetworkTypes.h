@@ -238,6 +238,20 @@ struct SamplePropertyEditMsg
 };
 
 
+struct InstrumentEditMsg
+{
+	INSTRUMENTINDEX id;
+	ModInstrument instr;
+	std::string tuningName;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(id, instr, tuningName);
+	}
+};
+
+
 struct PluginParam
 {
 	PlugParamIndex param;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Moddoc.h"
+#include "../soundlib/tuning.h"
 #include "Networking.h"
 #include "InstrumentTransaction.h"
 #include "NetworkTypes.h"
@@ -70,30 +71,20 @@ InstrumentTransaction::~InstrumentTransaction()
 			{
 				if(volEnv)
 				{
-					ar(Networking::EnvelopeTransactionMsg);
-					ar(m_instr);
-					ar(ENV_VOLUME);
-					ar(instr->VolEnv);
+					ar(Networking::EnvelopeTransactionMsg, m_instr, ENV_VOLUME, instr->VolEnv);
 				}
 				if(panEnv)
 				{
-					ar(Networking::EnvelopeTransactionMsg);
-					ar(m_instr);
-					ar(ENV_PANNING);
-					ar(instr->PanEnv);
+					ar(Networking::EnvelopeTransactionMsg, m_instr, ENV_PANNING, instr->PanEnv);
 				}
 				if(pitchEnv)
 				{
-					ar(Networking::EnvelopeTransactionMsg);
-					ar(m_instr);
-					ar(ENV_PITCH);
-					ar(instr->PitchEnv);
+					ar(Networking::EnvelopeTransactionMsg, m_instr, ENV_PITCH, instr->PitchEnv);
 				}
 			} else
 			{
-				ar(Networking::InstrumentTransactionMsg);
-				ar(m_instr);
-				ar(*instr);
+				Networking::InstrumentEditMsg msg{ m_instr, *instr, instr->pTuning ? instr->pTuning->GetName() : std::string() };
+				ar(Networking::InstrumentTransactionMsg, msg);
 			}
 			modDoc->m_collabClient->Write(ss.str());
 		}

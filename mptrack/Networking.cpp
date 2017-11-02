@@ -596,15 +596,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 			case InstrumentTransactionMsg:
 			{
-				INSTRUMENTINDEX id;
-				ModInstrument instr;
-				inArchive(id, instr);
-				if(id > 0)
-				{
-					// Send back to all clients
-					ar(id, instr);
-					SendToAll(doc, sso);
-				}
+				InstrumentEditMsg msg;
+				inArchive(msg);
+				// Send back to all clients
+				ar(msg);
+				SendToAll(doc, sso);
 				break;
 			}
 
