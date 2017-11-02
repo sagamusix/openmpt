@@ -2272,6 +2272,7 @@ LRESULT CMainFrame::OnSetModified(WPARAM modDoc, LPARAM)
 			if(static_cast<CModDoc *>(pDoc) == doc)
 			{
 				doc->UpdateFrameCounts();
+				break;
 			}
 		}
 	}
