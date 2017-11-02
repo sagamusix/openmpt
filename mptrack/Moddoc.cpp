@@ -3312,6 +3312,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		PATTERNINDEX pat;
 		ROWINDEX rows;
 		inArchive(pat, rows);
+		CriticalSection cs;
 		m_SndFile.Patterns.Insert(pat, rows);
 		hint = PatternHint(pat).Names().Data();
 		break;
@@ -3322,6 +3323,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive request to insert a specified instrument
 		INSTRUMENTINDEX ins;
 		inArchive(ins);
+		CriticalSection cs;
 		bool firstInstr = m_SndFile.GetNumInstruments() == 0;
 		m_SndFile.AllocateInstrument(ins);
 		hint = InstrumentHint(ins).Envelope().Info().Names();
@@ -3361,6 +3363,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		Networking::AnnotationMsg msg;
 		inArchive >> msg;
 		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
+		CriticalSection cs;
 		if(msg.message.empty())
 			m_collabAnnotations.erase(pos);
 		else
@@ -3377,6 +3380,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive(chn, sourceChn, settings);
 		if(chn < MAX_BASECHANNELS)
 		{
+			CriticalSection cs;
 			if(sourceChn == CHANNELINDEX_INVALID) sourceChn = chn;
 			bool muted = m_SndFile.ChnSettings[sourceChn].dwFlags[CHN_MUTE];	// Preserve user's mute status
 			m_SndFile.ChnSettings[chn] = settings;
@@ -3392,6 +3396,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		PATTERNINDEX pat;
 		bool enable;
 		inArchive(id, pat, enable);
+		CriticalSection cs;
 		if(enable)
 			m_collabLockedPatterns[pat] = id;
 		else
@@ -3403,6 +3408,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		std::string s;
 		inArchive(s);
+		CriticalSection cs;
 		Networking::DeserializeTunings(m_SndFile, s);
 		hint = GeneralHint().Tunings();
 		break;
@@ -3414,6 +3420,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		Networking::ClientID id;
 		std::string name;
 		inArchive(id, name);
+		CriticalSection cs;
 		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
 		if(m_chatDlg) m_chatDlg->Update();
 		modified = false;
@@ -3425,6 +3432,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Remove user from collaborator list
 		Networking::ClientID id;
 		inArchive(id);
+		CriticalSection cs;
 		m_collabNames.erase(id);
 
 		for(auto it = m_collabLockedPatterns.begin(); it != m_collabLockedPatterns.end();)
