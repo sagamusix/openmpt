@@ -679,7 +679,7 @@ BOOL CViewPattern::PreTranslateMessage(MSG *pMsg)
 			KeyEventType kT = ih->GetKeyEventType(nFlags);
 			InputTargetContext ctx = (InputTargetContext)(kCtxViewPatterns + 1 + m_Cursor.GetColumnType());
 			// If editing is disabled, preview notes no matter which column we are in
-			if(!IsEditingEnabled() && TrackerSettings::Instance().patternNoEditPopup) ctx = kCtxViewPatternsNote;
+			if(!IsEditingEnabled(true) && TrackerSettings::Instance().patternNoEditPopup) ctx = kCtxViewPatternsNote;
 
 			if (ih->KeyEvent(ctx, nChar, nRepCnt, nFlags, kT) != kcNull)
 			{
@@ -6280,11 +6280,11 @@ void CViewPattern::TogglePendingMute(CHANNELINDEX nChn)
 }
 
 
-bool CViewPattern::IsEditingEnabled() const
+bool CViewPattern::IsEditingEnabled(bool silent) const
 {
 	if(!m_Status[psRecordingEnabled])
 		return false;
-	return !IsPatternLocked();
+	return !IsPatternLocked(silent);
 }
 
 
@@ -6292,9 +6292,7 @@ bool CViewPattern::IsEditingEnabled() const
 bool CViewPattern::IsEditingEnabled_bmsg()
 {
 	if(m_Status[psRecordingEnabled])
-		return true;
-	if(IsPatternLocked())
-		return false;
+		return !IsPatternLocked();
 	if(TrackerSettings::Instance().patternNoEditPopup)
 		return false;
 
@@ -6315,18 +6313,21 @@ bool CViewPattern::IsEditingEnabled_bmsg()
 }
 
 
-bool CViewPattern::IsPatternLocked() const
+bool CViewPattern::IsPatternLocked(bool silent) const
 {
 	const CModDoc &modDoc = *GetDocument();
 	PATTERNINDEX pat = GetCurrentPattern();
 	if(modDoc.m_collabLockedPatterns.count(pat)
 		&& modDoc.m_collabLockedPatterns.at(pat) != modDoc.GetCollabUserID())
 	{
-		auto id = modDoc.m_collabLockedPatterns.at(pat);
-		CPoint pt = GetPointFromPosition(m_Cursor);
-		ClientToScreen(&pt);
-		CBalloonMsg::RequestCloseAll();
-		CBalloonMsg::Show(_T("Editing not possible"), _T("This pattern is currently locked by ") + mpt::ToCString(modDoc.GetUserName(id)), &pt, HICON(TTI_INFO));
+		if(!silent)
+		{
+			auto id = modDoc.m_collabLockedPatterns.at(pat);
+			CPoint pt = GetPointFromPosition(m_Cursor);
+			ClientToScreen(&pt);
+			CBalloonMsg::RequestCloseAll();
+			CBalloonMsg::Show(_T("Editing not possible"), _T("This pattern is currently locked by ") + mpt::ToCString(modDoc.GetUserName(id)), &pt, HICON(TTI_INFO));
+		}
 		return true;
 	}
 	return false;

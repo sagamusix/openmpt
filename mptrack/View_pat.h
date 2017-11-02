@@ -504,12 +504,12 @@ private:
 	ModCommand &GetModCommand(CSoundFile &sndFile, const ModCommandPos &pos);
 
 	// Returns true if pattern editing is enabled.
-	bool IsEditingEnabled() const;
+	bool IsEditingEnabled(bool silent = false) const;
 
 	// Like IsEditingEnabled(), but shows some notification when editing is not enabled.
 	bool IsEditingEnabled_bmsg();
 
-	bool IsPatternLocked() const;
+	bool IsPatternLocked(bool silent = false) const;
 
 	// Play one pattern row and stop ("step mode")
 	void PatternStep(ROWINDEX row = ROWINDEX_INVALID);
