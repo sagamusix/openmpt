@@ -509,6 +509,8 @@ private:
 	// Like IsEditingEnabled(), but shows some notification when editing is not enabled.
 	bool IsEditingEnabled_bmsg();
 
+	bool IsPatternLocked() const;
+
 	// Play one pattern row and stop ("step mode")
 	void PatternStep(ROWINDEX row = ROWINDEX_INVALID);
 

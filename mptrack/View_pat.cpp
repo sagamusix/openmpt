@@ -6284,27 +6284,19 @@ bool CViewPattern::IsEditingEnabled() const
 {
 	if(!m_Status[psRecordingEnabled])
 		return false;
-	const CModDoc &modDoc = *GetDocument();
-	PATTERNINDEX pat = GetCurrentPattern();
-	if(modDoc.m_collabLockedPatterns.count(pat)
-		&& modDoc.m_collabLockedPatterns.at(pat) != modDoc.GetCollabUserID())
-	{
-		auto id = modDoc.m_collabLockedPatterns.at(pat);
-		CPoint pt = GetPointFromPosition(m_Cursor);
-		ClientToScreen(&pt);
-		CBalloonMsg::RequestCloseAll();
-		CBalloonMsg::Show(_T("Editing not possible"), _T("This pattern is currently locked by ") + mpt::ToCString(modDoc.GetUserName(id)), &pt, HICON(TTI_INFO));
-		return false;
-	}
-	return true;
+	return !IsPatternLocked();
 }
 
 
 // Check if editing is enabled, and if it's not, prompt the user to enable editing.
 bool CViewPattern::IsEditingEnabled_bmsg()
 {
-	if(IsEditingEnabled()) return true;
-	if(TrackerSettings::Instance().patternNoEditPopup) return false;
+	if(m_Status[psRecordingEnabled])
+		return true;
+	if(IsPatternLocked())
+		return false;
+	if(TrackerSettings::Instance().patternNoEditPopup)
+		return false;
 
 	HMENU hMenu;
 
@@ -6319,6 +6311,24 @@ bool CViewPattern::IsEditingEnabled_bmsg()
 
 	::DestroyMenu(hMenu);
 
+	return false;
+}
+
+
+bool CViewPattern::IsPatternLocked() const
+{
+	const CModDoc &modDoc = *GetDocument();
+	PATTERNINDEX pat = GetCurrentPattern();
+	if(modDoc.m_collabLockedPatterns.count(pat)
+		&& modDoc.m_collabLockedPatterns.at(pat) != modDoc.GetCollabUserID())
+	{
+		auto id = modDoc.m_collabLockedPatterns.at(pat);
+		CPoint pt = GetPointFromPosition(m_Cursor);
+		ClientToScreen(&pt);
+		CBalloonMsg::RequestCloseAll();
+		CBalloonMsg::Show(_T("Editing not possible"), _T("This pattern is currently locked by ") + mpt::ToCString(modDoc.GetUserName(id)), &pt, HICON(TTI_INFO));
+		return true;
+	}
 	return false;
 }
 
