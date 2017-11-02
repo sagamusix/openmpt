@@ -63,6 +63,8 @@ enum NetworkMessage : uint32
 
 	PluginDataTransactionMsg = NetMsg("PLTR"),	// Automation of a single plugin
 
+	TuningTransactionMsg = NetMsg("TUNI"),	// Re-send tuning cllection
+
 	ReturnValTransactionMsg = NetMsg("RETV"),	// Message with return type (one of the following messages)
 
 	InsertPatternMsg = NetMsg("INPA"),	// Request to insert a new pattern
