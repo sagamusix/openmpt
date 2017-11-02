@@ -713,6 +713,16 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				break;
 			}
 
+			case TuningTransactionMsg:
+			{
+				std::string s;
+				inArchive(s);
+				// Send back to clients
+				ar(s);
+				SendToAll(doc, sso);
+				break;
+			}
+
 			case ReturnValTransactionMsg:
 			{
 				uint64 handle;

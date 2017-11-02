@@ -49,6 +49,7 @@ public:
 	
 	bool Remove(const std::size_t i);
 	bool Remove(const CTuning *pT);
+	void RemoveAll();
 
 	CTuning& GetTuning(size_t i) {return *m_Tunings.at(i).get();}
 	const CTuning& GetTuning(size_t i) const {return *m_Tunings.at(i).get();}

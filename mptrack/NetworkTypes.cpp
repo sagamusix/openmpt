@@ -44,6 +44,7 @@ void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 	std::istringstream is(s);
 	cereal::BinaryInputArchive ar(is);
 	auto &tunings = sndFile.GetTuneSpecificTunings();
+	tunings.RemoveAll();
 	{
 		std::string ts;
 		ar(ts);

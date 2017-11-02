@@ -222,6 +222,12 @@ bool CTuningCollection::Remove(const std::size_t i)
 }
 
 
+void CTuningCollection::RemoveAll()
+{
+	m_Tunings.clear();
+}
+
+
 bool CTuningCollection::AddTuning(CTuning *pT)
 {
 	if(m_Tunings.size() >= s_nMaxTuningCount)

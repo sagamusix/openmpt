@@ -3401,8 +3401,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 
 	case Networking::TuningTransactionMsg:
 	{
-		uint32 numTunings;
-		inArchive(numTunings);
+		std::string s;
+		inArchive(s);
+		Networking::DeserializeTunings(m_SndFile, s);
+		hint = InstrumentHint().Info().ModType();
 		break;
 	}
 

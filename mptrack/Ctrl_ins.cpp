@@ -2906,6 +2906,7 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 	td.DoModal();
 	if(td.GetModifiedStatus(&m_sndFile.GetTuneSpecificTunings()))
 	{
+		InstrumentTransaction::SendTunings(m_sndFile);
 		m_modDoc.SetModified();
 	}
 

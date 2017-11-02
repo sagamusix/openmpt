@@ -7,7 +7,7 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
-InstrumentTransaction::InstrumentTransaction(CSoundFile &sndFile, INSTRUMENTINDEX instr)
+InstrumentTransaction::InstrumentTransaction(const CSoundFile &sndFile, INSTRUMENTINDEX instr)
 	: m_sndFile(sndFile)
 	, m_origInstr(sndFile.Instruments[instr] != nullptr ? *sndFile.Instruments[instr] : ModInstrument(0))
 	, m_instr(instr)
@@ -88,6 +88,19 @@ InstrumentTransaction::~InstrumentTransaction()
 			}
 			modDoc->m_collabClient->Write(ss.str());
 		}
+	}
+}
+
+
+void InstrumentTransaction::SendTunings(const CSoundFile &sndFile)
+{
+	auto *modDoc = sndFile.GetpModDoc();
+	if(modDoc->m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::TuningTransactionMsg, Networking::SerializeTunings(sndFile));
+		modDoc->m_collabClient->Write(ss.str());
 	}
 }
 

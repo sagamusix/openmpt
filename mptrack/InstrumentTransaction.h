@@ -5,14 +5,16 @@ OPENMPT_NAMESPACE_BEGIN
 class InstrumentTransaction
 {
 	//CriticalSection cs;	// TODO
-	CSoundFile &m_sndFile;
+	const CSoundFile &m_sndFile;
 	const ModInstrument m_origInstr;
 	INSTRUMENTINDEX m_instr;
 	bool m_instrExisted;
 
 public:
-	InstrumentTransaction(CSoundFile &sndFile, INSTRUMENTINDEX instr);
+	InstrumentTransaction(const CSoundFile &sndFile, INSTRUMENTINDEX instr);
 	~InstrumentTransaction();
+
+	static void SendTunings(const CSoundFile &sndFile);
 };
 
 OPENMPT_NAMESPACE_END
