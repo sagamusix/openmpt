@@ -28,12 +28,21 @@ std::string SerializeTunings(const CSoundFile &sndFile)
 		sndFile.GetTuneSpecificTunings().Serialize(tss, "Tune specific");
 		ar(tss.str());
 	}
+	std::map<CTuning *, uint32> tuningMap;
+	uint32 numTunings = 0;
+	for(const auto &tuning : sndFile.GetTuneSpecificTunings())
+	{
+		tuningMap[tuning.get()] = ++numTunings;
+	}
+
 	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
 	{
-		if(sndFile.Instruments[i] && sndFile.Instruments[i]->pTuning)
-			ar(sndFile.Instruments[i]->pTuning->GetName());
-		else
-			ar(std::string());
+		uint32 tuning = 0;
+		if(sndFile.Instruments[i] && tuningMap.count(sndFile.Instruments[i]->pTuning))
+		{
+			tuning = tuningMap.at(sndFile.Instruments[i]->pTuning);
+		}
+		ar(tuning);
 	}
 	return ss.str();
 }
@@ -54,18 +63,14 @@ void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 	}
 	for(INSTRUMENTINDEX i = 1; i <= sndFile.GetNumInstruments(); i++)
 	{
-		std::string tuning;
+		uint32 tuning;
 		ar(tuning);
-		if(sndFile.Instruments[i] && !tuning.empty())
+		if(sndFile.Instruments[i])
 		{
-			for(const auto &tun : tunings)
-			{
-				if(tun->GetName() == tuning)
-				{
-					sndFile.Instruments[i]->pTuning = tun.get();
-					break;
-				}
-			}
+			if(tuning == 0 || tuning > tunings.GetNumTunings())
+				sndFile.Instruments[i]->pTuning = nullptr;
+			else
+				sndFile.Instruments[i]->pTuning = &tunings.GetTuning(tuning - 1);
 		}
 	}
 }

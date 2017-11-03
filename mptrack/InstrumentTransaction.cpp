@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Moddoc.h"
 #include "../soundlib/tuning.h"
+#include "../soundlib/tuningcollection.h"
 #include "Networking.h"
 #include "InstrumentTransaction.h"
 #include "NetworkTypes.h"
@@ -83,7 +84,20 @@ InstrumentTransaction::~InstrumentTransaction()
 				}
 			} else
 			{
-				Networking::InstrumentEditMsg msg{ m_instr, *instr, instr->pTuning ? instr->pTuning->GetName() : std::string() };
+				uint32 tuningID = 0;
+				if(instr->pTuning)
+				{
+					for(const auto &tuning : m_sndFile.GetTuneSpecificTunings())
+					{
+						tuningID++;
+						if(tuning.get() == instr->pTuning)
+						{
+							break;
+						}
+					}
+				}
+
+				Networking::InstrumentEditMsg msg{ m_instr, *instr, tuningID };
 				ar(Networking::InstrumentTransactionMsg, msg);
 			}
 			modDoc->m_collabClient->Write(ss.str());

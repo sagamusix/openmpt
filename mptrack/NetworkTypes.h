@@ -242,12 +242,12 @@ struct InstrumentEditMsg
 {
 	INSTRUMENTINDEX id;
 	ModInstrument instr;
-	std::string tuningName;
+	uint32 tuningID;
 
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(id, instr, tuningName);
+		archive(id, instr, tuningID);
 	}
 };
 

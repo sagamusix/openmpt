@@ -3211,14 +3211,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 					return true;
 			}
 			*m_SndFile.Instruments[msg.id] = msg.instr;
-			m_SndFile.Instruments[msg.id]->pTuning = nullptr;
-			for(auto &tuning : m_SndFile.GetTuneSpecificTunings())
-			{
-				if(tuning->GetName() == msg.tuningName)
-				{
-					m_SndFile.Instruments[msg.id]->pTuning = tuning.get();
-				}
-			}
+			if(msg.tuningID > 0 && msg.tuningID <= m_SndFile.GetTuneSpecificTunings().GetNumTunings())
+				m_SndFile.Instruments[msg.id]->pTuning = &m_SndFile.GetTuneSpecificTunings().GetTuning(msg.tuningID - 1);
+			else
+				m_SndFile.Instruments[msg.id]->pTuning = nullptr;
 		}
 		hint = InstrumentHint(msg.id).Names().Envelope().Info();
 		if(!hadInstruments)
