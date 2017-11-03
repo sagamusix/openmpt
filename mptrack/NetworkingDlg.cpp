@@ -15,6 +15,7 @@
 #include "dlg_misc.h"
 #include "Mptrack.h"
 #include "Moddoc.h"
+#include "ModDocTemplate.h"
 #include "Mainfrm.h"
 #include "Childfrm.h"
 #include "View_tre.h"

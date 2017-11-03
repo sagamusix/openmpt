@@ -320,14 +320,11 @@ int CBalloonMsgWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-BOOL CBalloonMsgWnd::OnToolTipText( UINT id, NMHDR* pNMHDR, LRESULT* pResult )
+BOOL CBalloonMsgWnd::OnToolTipText( UINT /*id*/, NMHDR* pNMHDR, LRESULT* pResult )
 {
-	DWORD				dwMsgPos = 0;
 	CPoint				ptMouse;
 	TOOLTIPTEXTA*		pTTTA = (TOOLTIPTEXTA*)pNMHDR; // For ANSI versions of the msg
 	TOOLTIPTEXTW*		pTTTW = (TOOLTIPTEXTW*)pNMHDR; // For Wide versions of the msg
-	int					nItem = -1;
-	int					nSubItem = -1;
 	BOOL				bResult = FALSE;
 	//
 
@@ -409,7 +406,7 @@ BOOL CBalloonMsgWnd::PreTranslateMessage(MSG* pMsg)
 	return CWnd::PreTranslateMessage(pMsg);
 }
 
-BOOL CBalloonMsgWnd::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+BOOL CBalloonMsgWnd::OnSetCursor(CWnd* /*pWnd*/, UINT /*nHitTest*/, UINT /*message*/)
 {
 	::SetCursor( ::AfxGetApp()->LoadStandardCursor(IDC_ARROW) );
 	return TRUE;

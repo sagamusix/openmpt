@@ -930,6 +930,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		do
 		{
 			int x, bk_col, tx_col, col_sel, fx_col;
+			int collab_sel = selectedColsCollab[col] & COLUMN_BITS_ALL;
+			int anno_sel = selectedColsAnnotation[col] & COLUMN_BITS_ALL;
 
 			const ModCommand *m = pattern.GetpModCommand(row, static_cast<CHANNELINDEX>(col));
 
@@ -963,8 +965,6 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 			selectedCols[col] |= COLUMN_BITS_SKIP;
 			col_sel = 0;
 			if (bRowSel) col_sel = selectedCols[col] & COLUMN_BITS_ALL;
-			int collab_sel = selectedColsCollab[col] & COLUMN_BITS_ALL;
-			int anno_sel = selectedColsAnnotation[col] & COLUMN_BITS_ALL;
 			tx_col = row_col;
 			bk_col = row_bkcol;
 			if (col_sel)
