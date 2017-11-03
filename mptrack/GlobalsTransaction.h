@@ -8,6 +8,15 @@ OPENMPT_NAMESPACE_BEGIN
 
 class CSoundFile;
 
+class GlobalSettingsTransaction
+{
+	CSoundFile &m_sndFile;
+
+public:
+	GlobalSettingsTransaction(CSoundFile &sndFile);
+	~GlobalSettingsTransaction();
+};
+
 class ChannelSettingsTransaction
 {
 	CSoundFile &m_sndFile;

@@ -3122,7 +3122,6 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
 	inArchive >> type;
-	//OutputDebugStringA(std::string(type.type, 4).c_str());
 	UpdateHint hint;
 	bool modified = true;
 
@@ -3168,8 +3167,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive updated sample data
 		Networking::SamplePropertyEditMsg msg;
 		cereal::size_type size;
-		inArchive >> msg;
-		inArchive >> cereal::make_size_tag(size);
+		inArchive(msg, cereal::make_size_tag(size));
 
 		if(msg.id > 0 && msg.id < MAX_SAMPLES)
 		{

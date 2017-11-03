@@ -6,6 +6,18 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
+GlobalSettingsTransaction::GlobalSettingsTransaction(CSoundFile &sndFile)
+	: m_sndFile(sndFile)
+{
+
+}
+
+GlobalSettingsTransaction::~GlobalSettingsTransaction()
+{
+
+}
+
+
 ChannelSettingsTransaction::ChannelSettingsTransaction(CSoundFile &sndFile, CHANNELINDEX chn, CHANNELINDEX sourceChn)
 	: m_sndFile(sndFile)
 	, m_settings(sndFile.ChnSettings[chn])
