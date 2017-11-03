@@ -13,14 +13,12 @@
 #include "MainFrm.h"
 #include "InputHandler.h"
 #include "ChildFrm.h"
-#include "moddoc.h"
-#include "globals.h"
-#include "Dlsbank.h"
-#include "commctrl.h"
+#include "Moddoc.h"
+#include "ModDocTemplate.h"
+#include "Globals.h"
+#include "../soundlib/Dlsbank.h"
 #include "../common/version.h"
 #include "../test/test.h"
-#include <afxadv.h>
-#include <shlwapi.h>
 #include "UpdateCheck.h"
 #include "../common/StringFixer.h"
 #include "ExceptionHandler.h"
@@ -66,119 +64,6 @@ STATIC_ASSERT(CountOf(szSpecialNoteShortDesc) == CountOf(szSpecialNoteNamesMPT))
 
 const char *szHexChar = "0123456789ABCDEF";
 
-CDocument *CModDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL addToMru, BOOL makeVisible)
-{
-	const mpt::PathString filename = (lpszPathName ? mpt::PathString::FromCString(lpszPathName) : mpt::PathString());
-
-	if(filename.IsDirectory())
-	{
-		CDocument *pDoc = nullptr;
-		mpt::PathString path = filename;
-		path.EnsureTrailingSlash();
-		HANDLE hFind;
-		WIN32_FIND_DATAW wfd;
-		MemsetZero(wfd);
-		if((hFind = FindFirstFileW((path + MPT_PATHSTRING("*.*")).AsNative().c_str(), &wfd)) != INVALID_HANDLE_VALUE)
-		{
-			do
-			{
-				if(wcscmp(wfd.cFileName, L"..") && wcscmp(wfd.cFileName, L"."))
-				{
-					pDoc = OpenDocumentFile((path + mpt::PathString::FromNative(wfd.cFileName)).ToCString(), addToMru, makeVisible);
-				}
-			} while (FindNextFileW(hFind, &wfd));
-			FindClose(hFind);
-		}
-		return pDoc;
-	}
-
-	if(!mpt::PathString::CompareNoCase(filename.GetFileExt(), MPT_PATHSTRING(".dll")))
-	{
-		CVstPluginManager *pPluginManager = theApp.GetPluginManager();
-		if(pPluginManager && pPluginManager->AddPlugin(filename) != nullptr)
-		{
-			return nullptr;
-		}
-	}
-
-	// First, remove document from MRU list.
-	if(addToMru)
-	{
-		theApp.RemoveMruItem(filename);
-	}
-
-	CDocument *pDoc = CMultiDocTemplate::OpenDocumentFile(filename.empty() ? NULL : filename.ToCString().GetString(), addToMru, makeVisible);
-	if(pDoc)
-	{
-		CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
-		if (pMainFrm) pMainFrm->OnDocumentCreated(static_cast<CModDoc *>(pDoc));
-	} else //Case: pDoc == 0, opening document failed.
-	{
-		if(!filename.empty())
-		{
-			if(CMainFrame::GetMainFrame() && addToMru)
-			{
-				CMainFrame::GetMainFrame()->UpdateMRUList();
-			}
-			if(!filename.IsFile())
-			{
-				Reporting::Error(L"Unable to open \"" + filename.ToWide() + L"\": file does not exist.");
-			}
-			else //Case: Valid path but opening fails.
-			{
-				const int numDocs = theApp.GetOpenDocumentCount();
-				Reporting::Notification(mpt::format(L"Opening \"%1\" failed. This can happen if "
-					L"no more modules can be opened or if the file type was not "
-					L"recognised. If the former is true, it is "
-					L"recommended to close some modules as otherwise a crash is likely"
-					L" (currently there %2 %3 document%4 open).")(
-					filename, (numDocs == 1) ? L"is" : L"are", numDocs, (numDocs == 1) ? L"" : L"s"));
-			}
-		}
-	}
-	return pDoc;
-}
-
-
-CDocument* CModDocTemplate::OpenTemplateFile(const mpt::PathString &filename, bool isExampleTune)
-{
-	CDocument *doc = OpenDocumentFile(filename.ToCString(), isExampleTune ? TRUE : FALSE, TRUE);
-	if(doc)
-	{
-		CModDoc *modDoc = static_cast<CModDoc *>(doc);
-		// Clear path so that saving will not take place in templates/examples folder.
-		modDoc->ClearFilePath();
-		if(!isExampleTune)
-		{
-			CMultiDocTemplate::SetDefaultTitle(modDoc);
-			m_nUntitledCount++;
-			// Name has changed...
-			CMainFrame::GetMainFrame()->UpdateTree(modDoc, GeneralHint().General());
-
-			// Reset edit history for template files
-			CSoundFile &sndFile = modDoc->GetrSoundFile();
-			sndFile.GetFileHistory().clear();
-			sndFile.m_dwCreatedWithVersion = MptVersion::num;
-			sndFile.m_dwLastSavedWithVersion = 0;
-			sndFile.m_madeWithTracker.clear();
-			sndFile.m_songArtist = TrackerSettings::Instance().defaultArtist;
-			sndFile.m_playBehaviour = sndFile.GetDefaultPlaybackBehaviour(sndFile.GetType());
-			doc->UpdateAllViews(nullptr, UpdateHint().ModType().AsLPARAM());
-		} else
-		{
-			// Remove extension from title, so that saving the file will not suggest a filename like e.g. "example.it.it".
-			const CString title = modDoc->GetTitle();
-			const int dotPos = title.ReverseFind('.');
-			if(dotPos >= 0)
-			{
-				modDoc->SetTitle(title.Left(dotPos));
-			}
-		}
-	}
-	return doc;
-}
-
-
 #ifdef _DEBUG
 #define DDEDEBUG
 #endif
@@ -203,17 +88,19 @@ BOOL CModDocManager::OnDDECommand(LPTSTR lpszCommand)
 	// for example of parsing the DDE command string.
 	bResult = FALSE;
 	bActivate = FALSE;
-	if ((lpszCommand) && (*lpszCommand) && (theApp.m_pMainWnd))
+	if ((lpszCommand) && lpszCommand[0] && (theApp.m_pMainWnd))
 	{
-		TCHAR s[_MAX_PATH], *pszCmd, *pszData;
-		std::size_t len;
+		std::size_t len = _tcslen(lpszCommand);
+		std::vector<TCHAR> s(lpszCommand, lpszCommand + len + 1);
 
-		mpt::WinStringBuf(s) = lpszCommand;
-		len = _tcslen(s) - 1;
-		while ((len > 0) && (_tcschr(_T("(){}[]\'\" "), s[len]))) s[len--] = 0;
-		pszCmd = s;
+		len--;
+		while((len > 0) && _tcschr(_T("(){}[]\'\" "), s[len]))
+		{
+			s[len--] = 0;
+		}
+		TCHAR *pszCmd = s.data();
 		while (pszCmd[0] == _T('[')) pszCmd++;
-		pszData = pszCmd;
+		TCHAR *pszData = pszCmd;
 		while ((pszData[0] != _T('(')) && (pszData[0]))
 		{
 			if (((BYTE)pszData[0]) <= (BYTE)0x20) *pszData = 0;
@@ -621,11 +508,11 @@ CTrackApp::CTrackApp()
 	, m_pTrackerSettings(nullptr)
 	, m_pComponentManagerSettings(nullptr)
 	, m_pPluginCache(nullptr)
+	, m_pModTemplate(nullptr)
+	, m_pPluginManager(nullptr)
+	, m_pSoundDevicesManager(nullptr)
+	, m_bPortableMode(false)
 {
-	m_bPortableMode = false;
-	m_pModTemplate = NULL;
-	m_pPluginManager = NULL;
-	m_pSoundDevicesManager = nullptr;
 }
 
 
@@ -2095,7 +1982,7 @@ BOOL CTrackApp::InitializeDXPlugins()
 			if(plugPath == failedPlugin)
 			{
 				GetSettings().Remove("VST Plugins", "FailedPlugin");
-				const std::wstring text = L"The following plugin has previously crashed OpenMPT during initialisation:\n\n" + failedPlugin.ToWide() + L"\n\nDo you still want to load it?";
+				const CString text = _T("The following plugin has previously crashed OpenMPT during initialisation:\n\n") + failedPlugin.ToCString() + _T("\n\nDo you still want to load it?");
 				if(Reporting::Confirm(text, false, true, &pluginScanDlg) == cnfNo)
 				{
 					continue;

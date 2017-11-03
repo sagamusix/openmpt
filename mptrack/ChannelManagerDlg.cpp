@@ -158,13 +158,13 @@ BOOL CChannelManagerDlg::OnInitDialog()
 	TCITEM tie;
 	tie.mask = TCIF_TEXT | TCIF_IMAGE;
 	tie.iImage = -1;
-	tie.pszText = _T("Solo/Mute");
+	tie.pszText = const_cast<LPTSTR>(_T("Solo/Mute"));
 	TabCtrl_InsertItem(menu, 0, &tie);
-	tie.pszText = _T("Record select");
+	tie.pszText = const_cast<LPTSTR>(_T("Record select"));
 	TabCtrl_InsertItem(menu, 1, &tie);
-	tie.pszText = _T("Plugins");
+	tie.pszText = const_cast<LPTSTR>(_T("Plugins"));
 	TabCtrl_InsertItem(menu, 2, &tie);
-	tie.pszText = _T("Reorder/Remove");
+	tie.pszText = const_cast<LPTSTR>(_T("Reorder/Remove"));
 	TabCtrl_InsertItem(menu, 3, &tie);
 	m_currentTab = 0;
 
@@ -702,7 +702,7 @@ void CChannelManagerDlg::OnPaint()
 		CHANNELINDEX nThisChn = pattern[nChn];
 
 		CString fmt = (sndFile.ChnSettings[nThisChn].szName[0] != '\0') ? _T("%1: %2") : _T("Channel %1");
-		s = mpt::format(fmt)(nThisChn + 1, mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.ChnSettings[nThisChn].szName));
+		s = mpt::cformat(fmt)(nThisChn + 1, mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.ChnSettings[nThisChn].szName));
 
 		const int borderX = MulDiv(3, dpiX, 96), borderY = MulDiv(3, dpiY, 96);
 		CRect btn;
