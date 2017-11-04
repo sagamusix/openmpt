@@ -73,9 +73,13 @@ protected:
 
 class ChatDlg : public CDialog
 {
+	CImageList m_Icons;
 	CEdit m_History, m_Input;
-	CListBox m_Users, m_Annotations;
+	CListCtrl m_Users;
+	CListBox m_Annotations;
 	CModDoc &m_ModDoc;
+	std::map<ClientID, int> m_UserToIcon;
+	int m_iconSize;
 
 public:
 	ChatDlg(CModDoc &modDoc);

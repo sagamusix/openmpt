@@ -356,6 +356,12 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 	: m_ModDoc(modDoc)
 {
 	Create(IDD_NETWORKCHAT, CMainFrame::GetMainFrame());
+	m_iconSize = Util::ScalePixels(10, m_hWnd);
+	m_Icons.Create(m_iconSize, m_iconSize, ILC_COLOR32, 0, 1);
+	CRect rect;
+	m_Users.SetImageList(&m_Icons, LVSIL_SMALL);
+	m_Users.GetViewRect(rect);
+	m_Users.InsertColumn(0, _T("Users"), LVCFMT_LEFT, rect.Width());
 	ShowWindow(SW_SHOW);
 	Update();
 }
@@ -363,6 +369,7 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 
 ChatDlg::~ChatDlg()
 {
+	m_Icons.DeleteImageList();
 	DestroyWindow();
 }
 
@@ -406,10 +413,18 @@ void ChatDlg::Update()
 LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	m_Users.SetRedraw(FALSE);
-	m_Users.ResetContent();
+	m_Users.DeleteAllItems();
+	int i = 0;
 	for(const auto &user : m_ModDoc.m_collabNames)
 	{
-		m_Users.AddString(mpt::ToCString(user.second));
+		if(!m_UserToIcon.count(user.first))
+		{
+			CBitmap bmp;
+			std::vector<COLORREF> bits(m_iconSize * m_iconSize, m_ModDoc.GetUserColor(user.first));
+			bmp.CreateBitmap(m_iconSize, m_iconSize, 1, 32, bits.data());
+			m_UserToIcon[user.first] = m_Icons.Add(&bmp, nullptr);
+		}
+		m_Users.InsertItem(i++, mpt::ToCString(user.second), m_UserToIcon[user.first]);
 	}
 	m_Users.SetRedraw(TRUE);
 
