@@ -753,7 +753,8 @@ void COrderList::OnPaint()
 			for(const auto &pos : m_pModDoc.m_collabEditPositions)
 			{
 				if(pos.second.sequence == sndFile.Order.GetCurrentSequenceIndex()
-					&& pos.second.order == nIndex)
+					&& pos.second.order == nIndex
+					&& pos.first != m_pModDoc.GetCollabUserID())
 				{
 					user = pos.first;
 				}

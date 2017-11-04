@@ -823,7 +823,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 			const auto &pos = sel.second;
 			if(pos.sequence == GetDocument()->GetrSoundFile().Order.GetCurrentSequenceIndex()
 				&& pos.pattern == nPattern
-				&& pos.row == row)
+				&& pos.row == row
+				&& sel.first != GetDocument()->GetCollabUserID())
 			{
 				selectedColsCollab[pos.channel] |= (1 << pos.column);
 				selectedColsCollabColor[pos.channel][pos.column] = static_cast<uint8>(MAX_MODPALETTECOLORS + sel.first);
@@ -959,6 +960,8 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 					if ((m->volcmd == mold->volcmd && (m->volcmd == VOLCMD_NONE || m->vol == mold->vol) && !drawDefaultVolume && !drawOldDefaultVolume) || (m_nDetailLevel < PatternCursor::volumeColumn)) dwSpeedUpMask |= COLUMN_BITS_VOLUME;
 					if ((m->command == mold->command) || (m_nDetailLevel < PatternCursor::effectColumn)) dwSpeedUpMask |= (m->command != CMD_NONE) ? COLUMN_BITS_FXCMD : COLUMN_BITS_FXCMDANDPARAM;
 				}
+				dwSpeedUpMask &= ~collab_sel;
+				dwSpeedUpMask &= ~anno_sel;
 				if (dwSpeedUpMask == COLUMN_BITS_ALLCOLUMNS) goto DoBlit;
 			}
 
