@@ -652,9 +652,10 @@ bool PatternClipboard::HandlePaste(CSoundFile &sndFile, ModCommandPos &pastePos,
 		while((pos + 11 < data.size()) && (data[pos] == '|'))
 		{
 			pos++;
+			bool canEditPattern = !modDoc.m_collabLockedPatterns.count(pattern) || modDoc.m_collabLockedPatterns.at(pattern) == modDoc.GetCollabUserID();
 			// Handle pasting large pattern into smaller pattern (e.g. 128-row pattern into MOD, which only allows 64 rows)
 			ModCommand dummy;
-			ModCommand &m = curRow < sndFile.Patterns[pattern].GetNumRows() ? patData[col] : dummy;
+			ModCommand &m = curRow < sndFile.Patterns[pattern].GetNumRows() && canEditPattern ? patData[col] : dummy;
 
 			// Check valid paste condition. Paste will be skipped if
 			// - col is not a valid channelindex or
