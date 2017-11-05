@@ -583,13 +583,13 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			case SampleDataTransactionMsg:
 			{
 				SamplePropertyEditMsg msg;
-				cereal::size_type size;
-				inArchive(msg, size);
-				std::vector<int8> data(static_cast<size_t>(size));
-				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(size)));
+				cereal::size_type modificationStart, modificationLength;
+				inArchive(msg, modificationStart, modificationLength);
+				std::vector<int8> data(static_cast<size_t>(modificationLength));
+				inArchive(cereal::binary_data(data.data(), static_cast<size_t>(modificationLength)));
 
 				// Send back to all clients
-				ar(msg, data);
+				ar(msg, modificationStart, modificationLength, cereal::binary_data(data.data(), data.size()));
 				SendToAll(doc, sso);
 				break;
 			}

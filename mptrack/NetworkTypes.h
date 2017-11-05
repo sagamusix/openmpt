@@ -82,6 +82,7 @@ enum NetworkMessage : uint32
 };
 
 
+// "Optional" value that knows if it has been modified.
 template<typename T>
 struct opt
 {

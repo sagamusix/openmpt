@@ -76,19 +76,57 @@ SampleDataTransaction::~SampleDataTransaction()
 {
 	ModSample &smp = m_sndFile.GetSample(m_sample);
 	auto newData = mpt::as_span(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
-	if(m_force || mpt::as_span(m_oldData) != newData)
+	cereal::size_type modificationStart = 0, modificationLength = newData.size();
+	bool modified = m_force;
+	if(!modified)
+	{
+		if(newData.size() != m_oldData.size())
+		{
+			modified = true;
+		} else
+		{
+			auto p1 = newData.cbegin();
+			auto p2 = m_oldData.cbegin();
+			while(p1 != newData.cend())
+			{
+				if(*p1 != *p2)
+				{
+					modificationStart = std::distance(newData.cbegin(), p1);
+					modified = true;
+					break;
+				}
+				p1++;
+				p2++;
+			}
+
+			auto p3 = newData.cend();
+			auto p4 = m_oldData.cend();
+			while(p1 != p3)
+			{
+				p3--;
+				p4--;
+				if(*p3 != *p4)
+				{
+					modificationLength = std::distance(p1, p3) + 1;
+					break;
+				}
+			}
+
+		}
+	}
+
+	if(modified)
 	{
 		auto *modDoc = m_sndFile.GetpModDoc();
 		if(modDoc->m_collabClient)
 		{
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
-			ar(Networking::SampleDataTransactionMsg);
 			Networking::SamplePropertyEditMsg msg{ m_sample, smp };
 			mpt::String::Copy(msg.name, m_sndFile.m_szNames[m_sample]);
-			ar(msg);
-			ar(cereal::make_size_tag(static_cast<cereal::size_type>(newData.size())));
-			ar(cereal::binary_data(newData.data(), newData.size() * sizeof(newData[0])));
+			ar(Networking::SampleDataTransactionMsg, msg);
+			ar(modificationStart, modificationLength);
+			ar(cereal::binary_data(newData.data() + modificationStart, static_cast<size_t>(modificationLength)));
 			modDoc->m_collabClient->Write(ss.str());
 		}
 	}
