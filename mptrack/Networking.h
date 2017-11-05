@@ -90,7 +90,7 @@ class RemoteCollabConnection : public CollabConnection
 	mpt::thread m_thread;
 	std::atomic<bool> m_threadRunning = true;
 
-	//mutable mpt::mutex m_mutex;
+	mutable mpt::mutex m_mutex;
 
 public:
 	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);

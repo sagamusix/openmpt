@@ -419,7 +419,9 @@ LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 		if(!m_UserToIcon.count(user.first))
 		{
 			CBitmap bmp;
-			std::vector<COLORREF> bits(m_iconSize * m_iconSize, m_ModDoc.GetUserColor(user.first));
+			COLORREF userColor = m_ModDoc.GetUserColor(user.first);
+			uint32 color = RGB(GetBValue(userColor), GetGValue(userColor), GetRValue(userColor));
+			std::vector<uint32> bits(m_iconSize * m_iconSize, color);
 			bmp.CreateBitmap(m_iconSize, m_iconSize, 1, 32, bits.data());
 			m_UserToIcon[user.first] = m_Icons.Add(&bmp, nullptr);
 		}

@@ -431,9 +431,9 @@ void CCtrlGeneral::OnTitleChanged()
 
 	CString title;
 	m_EditTitle.GetWindowText(title);
+	GlobalSettingsTransaction tr(m_sndFile);
 	if(m_sndFile.SetTitle(mpt::ToCharset(m_sndFile.GetCharsetInternal(), title)))
 	{
-		GlobalSettingsTransaction tr(m_sndFile);
 		m_EditTitle.SetModify(FALSE);
 		m_modDoc.SetModified();
 		m_modDoc.UpdateAllViews(nullptr, GeneralHint().General(), this);
@@ -599,6 +599,7 @@ void CCtrlGeneral::OnRestartPosChanged()
 			if (n != m_sndFile.Order().GetRestartPos())
 			{
 				// TODO Networking
+
 				m_EditRestartPos.SetModify(FALSE);
 				m_sndFile.Order().SetRestartPos(n);
 				m_modDoc.SetModified();

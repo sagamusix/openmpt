@@ -30,6 +30,7 @@
 #include "../common/FileReader.h"
 #include "FileDialog.h"
 #include "InstrumentTransaction.h"
+#include "SampleTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -1565,6 +1566,12 @@ bool CCtrlInstruments::OpenInstrument(const mpt::PathString &fileName)
 		if (!m_nInstrument) m_nInstrument = 1;
 		ScopedLogCapturer log(m_modDoc, "Instrument Import", this);
 		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		std::vector<SampleDataTransaction> sampleTransactions;
+		sampleTransactions.reserve(MAX_SAMPLES);
+		for(SAMPLEINDEX i = 0; i < MAX_SAMPLES; i++)
+		{
+			sampleTransactions.push_back(SampleDataTransaction(m_modDoc.GetrSoundFile(), i));
+		}
 		PrepareUndo("Replace Instrument");
 		if (m_sndFile.ReadInstrumentFromFile(m_nInstrument, file, TrackerSettings::Instance().m_MayNormalizeSamplesOnLoad))
 		{

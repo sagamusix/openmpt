@@ -223,9 +223,9 @@ std::string CollabConnection::WriteWithResult(const std::string &message)
 
 void RemoteCollabConnection::Send(const std::string &message)
 {
-	//MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	//asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
-	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
+	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
+	asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
+	/*auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
 	m_strand.dispatch([that, message]()
 	{
 		that->m_outMessages.push_back({ message, message.size(), 0 });
@@ -235,7 +235,7 @@ void RemoteCollabConnection::Send(const std::string &message)
 			return;
 		}
 		that->WriteImpl();
-	});
+	})*/;
 }
 
 
