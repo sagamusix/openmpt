@@ -21,6 +21,7 @@
 #include "../common/misc_util.h"
 #include "../soundlib/mod_specifications.h"
 #include "NetworkingDlg.h"
+#include "GlobalsTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -339,6 +340,7 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 			const TEMPO tempo = tempoMax - TEMPO(m_SliderTempo.GetPos(), 0);
 			if ((tempo >= m_sndFile.GetModSpecifications().GetTempoMin()) && (tempo <= m_sndFile.GetModSpecifications().GetTempoMax()) && (tempo != m_sndFile.m_nDefaultTempo))
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_sndFile.m_nDefaultTempo = m_sndFile.m_PlayState.m_nMusicTempo = tempo;
 				m_modDoc.SetModified();
 				m_modDoc.UpdateAllViews(nullptr, GeneralHint().General(), this);
@@ -351,6 +353,7 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 			const UINT gv = MAX_SLIDER_GLOBAL_VOL - m_SliderGlobalVol.GetPos();
 			if ((gv >= 0) && (gv <= MAX_SLIDER_GLOBAL_VOL) && (gv != m_sndFile.m_nDefaultGlobalVolume))
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_sndFile.m_PlayState.m_nGlobalVolume = gv;
 				m_sndFile.m_nDefaultGlobalVolume = gv;
 				m_modDoc.SetModified();
@@ -364,6 +367,7 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 			const UINT spa = MAX_SLIDER_SAMPLE_VOL - m_SliderSamplePreAmp.GetPos();
 			if ((spa >= 0) && (spa <= MAX_SLIDER_SAMPLE_VOL) && (spa != m_sndFile.m_nSamplePreAmp))
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_sndFile.m_nSamplePreAmp = spa;
 				if(m_sndFile.GetType() != MOD_TYPE_MOD)
 					m_modDoc.SetModified();
@@ -377,6 +381,7 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 			const UINT vv = MAX_SLIDER_VSTI_VOL - m_SliderVSTiVol.GetPos();
 			if ((vv >= 0) && (vv <= MAX_SLIDER_VSTI_VOL) && (vv != m_sndFile.m_nVSTiVolume))
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_sndFile.m_nVSTiVolume = vv;
 				m_sndFile.RecalculateGainForAllPlugs();
 				m_modDoc.SetModified();
@@ -390,6 +395,7 @@ void CCtrlGeneral::OnVScroll(UINT code, UINT pos, CScrollBar *pscroll)
 			int pos32 = m_SpinTempo.GetPos32();
 			if(pos32 != 0)
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				TEMPO newTempo;
 				if(m_sndFile.GetModSpecifications().hasFractionalTempo)
 				{
@@ -427,6 +433,7 @@ void CCtrlGeneral::OnTitleChanged()
 	m_EditTitle.GetWindowText(title);
 	if(m_sndFile.SetTitle(mpt::ToCharset(m_sndFile.GetCharsetInternal(), title)))
 	{
+		GlobalSettingsTransaction tr(m_sndFile);
 		m_EditTitle.SetModify(FALSE);
 		m_modDoc.SetModified();
 		m_modDoc.UpdateAllViews(nullptr, GeneralHint().General(), this);
@@ -441,6 +448,7 @@ void CCtrlGeneral::OnArtistChanged()
 	mpt::ustring artist = GetWindowTextUnicode(m_EditArtist);
 	if(artist != m_sndFile.m_songArtist)
 	{
+		GlobalSettingsTransaction tr(m_sndFile);
 		m_EditArtist.SetModify(FALSE);
 		m_sndFile.m_songArtist = artist;
 		m_modDoc.SetModified();
@@ -458,6 +466,7 @@ void CCtrlGeneral::OnTempoChanged()
 		if(!m_sndFile.GetModSpecifications().hasFractionalTempo) tempo.Set(tempo.GetInt());
 		if (tempo != m_sndFile.m_nDefaultTempo)
 		{
+			GlobalSettingsTransaction tr(m_sndFile);
 			m_bEditsLocked=true;
 			m_EditTempo.SetModify(FALSE);
 			m_sndFile.m_nDefaultTempo = tempo;
@@ -482,6 +491,7 @@ void CCtrlGeneral::OnSpeedChanged()
 			n = Clamp(n, m_sndFile.GetModSpecifications().speedMin, m_sndFile.GetModSpecifications().speedMax);
 			if (n != m_sndFile.m_nDefaultSpeed)
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_bEditsLocked=true;
 				m_EditSpeed.SetModify(FALSE);
 				m_sndFile.m_nDefaultSpeed = n;
@@ -509,6 +519,7 @@ void CCtrlGeneral::OnVSTiVolChanged()
 			Limit(n, 0u, 2000u);
 			if (n != m_sndFile.m_nVSTiVolume)
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_bEditsLocked=true;
 				m_sndFile.m_nVSTiVolume = n;
 				m_sndFile.RecalculateGainForAllPlugs();
@@ -533,6 +544,7 @@ void CCtrlGeneral::OnSamplePAChanged()
 			Limit(n, 0u, 2000u);
 			if (n != m_sndFile.m_nSamplePreAmp)
 			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_bEditsLocked=true;
 				m_sndFile.m_nSamplePreAmp = n;
 				m_modDoc.SetModified();
@@ -555,7 +567,8 @@ void CCtrlGeneral::OnGlobalVolChanged()
 			UINT n = ConvertStrTo<ORDERINDEX>(s) * GetGlobalVolumeFactor();
 			Limit(n, 0u, 256u);
 			if (n != m_sndFile.m_nDefaultGlobalVolume)
-			{ 
+			{
+				GlobalSettingsTransaction tr(m_sndFile);
 				m_bEditsLocked = true;
 				m_EditGlobalVol.SetModify(FALSE);
 				m_sndFile.m_nDefaultGlobalVolume = n;
@@ -585,6 +598,7 @@ void CCtrlGeneral::OnRestartPosChanged()
 
 			if (n != m_sndFile.Order().GetRestartPos())
 			{
+				// TODO Networking
 				m_EditRestartPos.SetModify(FALSE);
 				m_sndFile.Order().SetRestartPos(n);
 				m_modDoc.SetModified();

@@ -60,6 +60,7 @@ enum NetworkMessage : uint32
 	SequenceTransactionMsg = NetMsg("SQTR"),	// Modification of an order list (sequence)
 
 	ChannelSettingsMsg = NetMsg("CHST"),	// Modification of channel settings
+	GlobalSettingsMsg = NetMsg("GLOB"),	// Modification of global settings
 
 	PluginDataTransactionMsg = NetMsg("PLTR"),	// Automation of a single plugin
 
@@ -81,7 +82,36 @@ enum NetworkMessage : uint32
 };
 
 
+template<typename T>
+struct opt
+{
+protected:
+	T m_value;
+	bool m_set = false;
 
+public:
+	opt() : m_value() {}
+	opt(const opt<T> &) = default;
+	opt(opt<T> &&) = default;
+	opt<T>& operator=(const T &v) { m_value = v; m_set = true; return *this; }
+	opt<T>& operator=(T &&v) { m_value = std::move(v); m_set = true; return *this; }
+
+	explicit operator T() const { return m_value; }
+	bool operator==(const T &other) const { return m_value == other; }
+	bool operator==(const opt<T> &other) const { return m_value == other.m_value; }
+	bool operator!=(const T &other) const { return m_value != other; }
+	bool operator!=(const opt<T> &other) const { return m_value != other.m_value; }
+	
+	T get() const { return m_value; }
+	bool is_set() const { return m_set; }
+	void set_if(T &other) { if(m_set) other = m_value; }
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(m_value, m_set);
+	}
+};
 
 
 struct DocumentInfo
@@ -278,6 +308,7 @@ struct PluginEditMsg
 	}
 };
 
+
 struct AnnotationMsg
 {
 	uint32 pattern, row, channel, column;
@@ -289,6 +320,31 @@ struct AnnotationMsg
 		archive(pattern, row, channel, column, message);
 	}
 };
+
+
+struct GlobalEditMsg
+{
+	opt<std::string> name, artist;
+	opt<TEMPO> tempo;
+	opt<uint32> speed;
+	opt<uint32> globalVol;
+	opt<uint32> sampleVol;
+	opt<uint32> pluginVol;
+	opt<uint32> resampling;
+	opt<uint32> mixLevels;
+	opt<uint32> flags;
+	opt<uint32> tempoMode;
+	opt<ROWINDEX> rpb;
+	opt<ROWINDEX> rpm;
+	opt<TempoSwing> swing;
+
+	template<class Archive>
+	void serialize(Archive &archive)
+	{
+		archive(name, artist, tempo, speed, globalVol, sampleVol, pluginVol, resampling, mixLevels, flags, tempoMode, rpm, rpm, swing);
+	}
+};
+
 
 std::string SerializeTunings(const CSoundFile &sndFile);
 void DeserializeTunings(CSoundFile &sndFile, const std::string &s);

@@ -683,6 +683,16 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				break;
 			}
 
+			case GlobalSettingsMsg:
+			{
+				GlobalEditMsg msg;
+				inArchive(msg);
+				// Send back to clients
+				ar(msg);
+				SendToAll(doc, sso);
+				break;
+			}
+
 			case ChannelSettingsMsg:
 			{
 				CHANNELINDEX chn, sourceChn;

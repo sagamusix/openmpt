@@ -3363,7 +3363,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Add / remove annotation
 		Networking::AnnotationMsg msg;
-		inArchive >> msg;
+		inArchive(msg);
 		NetworkAnnotationPos pos{ msg.pattern, msg.row, msg.channel, msg.column };
 		CriticalSection cs;
 		if(msg.message.empty())
@@ -3371,6 +3371,35 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		else
 			m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 		if(m_chatDlg) m_chatDlg->Update();
+		break;
+	}
+
+	case Networking::GlobalSettingsMsg:
+	{
+		// Global settings were modified
+		Networking::GlobalEditMsg msg;
+		inArchive(msg);
+
+		msg.name.set_if(m_SndFile.m_songName);
+		if(msg.artist.is_set())
+			m_SndFile.m_songArtist = mpt::ToUnicode(mpt::CharsetUTF8, msg.artist.get());
+		msg.tempo.set_if(m_SndFile.m_nDefaultTempo);
+		msg.speed.set_if(m_SndFile.m_nDefaultSpeed);
+		msg.globalVol.set_if(m_SndFile.m_nDefaultGlobalVolume);
+		msg.sampleVol.set_if(m_SndFile.m_nSamplePreAmp);
+		msg.pluginVol.set_if(m_SndFile.m_nVSTiVolume);
+		if(msg.resampling.is_set())
+			m_SndFile.m_nResampling = static_cast<ResamplingMode>(msg.resampling.get());
+		if(msg.mixLevels.is_set())
+			m_SndFile.SetMixLevels(static_cast<MixLevels>(msg.mixLevels.get()));
+		if(msg.flags.is_set())
+			m_SndFile.m_SongFlags = static_cast<SongFlags>(msg.flags.get());
+		if(msg.tempo.is_set())
+			m_SndFile.m_nTempoMode = static_cast<TempoMode>(msg.tempoMode.get());
+		msg.rpb.set_if(m_SndFile.m_nDefaultRowsPerBeat);
+		msg.rpm.set_if(m_SndFile.m_nDefaultRowsPerMeasure);
+		msg.swing.set_if(m_SndFile.m_tempoSwing);
+		hint = GeneralHint().General();
 		break;
 	}
 

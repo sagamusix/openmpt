@@ -261,10 +261,9 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		modDoc->m_collabLockedPatterns[pat] = id;
 	}
 
-
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
-	// TODO Tunings
+
 	auto pChildFrm = static_cast<CChildFrame *>(pTemplate->CreateNewFrame(modDoc, nullptr));
 	if(pChildFrm != nullptr)
 	{

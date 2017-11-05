@@ -7,10 +7,12 @@
 OPENMPT_NAMESPACE_BEGIN
 
 class CSoundFile;
+namespace Networking { struct GlobalEditMsg; }
 
 class GlobalSettingsTransaction
 {
 	CSoundFile &m_sndFile;
+	std::unique_ptr<Networking::GlobalEditMsg> m_state;
 
 public:
 	GlobalSettingsTransaction(CSoundFile &sndFile);
