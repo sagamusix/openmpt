@@ -821,8 +821,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 		for(const auto &sel : GetDocument()->m_collabEditPositions)
 		{
 			const auto &pos = sel.second;
-			if(pos.sequence == GetDocument()->GetrSoundFile().Order.GetCurrentSequenceIndex()
-				&& pos.pattern == nPattern
+			if(pos.pattern == nPattern
 				&& pos.row == row
 				&& sel.first != GetDocument()->GetCollabUserID())
 			{
