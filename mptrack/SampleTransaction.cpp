@@ -9,7 +9,7 @@ OPENMPT_NAMESPACE_BEGIN
 
 SamplePropertyTransaction::SamplePropertyTransaction(CSoundFile &sndFile, SAMPLEINDEX sample)
 	: m_sndFile(sndFile)
-	, m_origSample(sndFile.GetSample(sample))
+	, m_origSample(sample <= sndFile.GetNumSamples() ? sndFile.GetSample(sample) : ModSample())
 	, m_origName(sndFile.m_szNames[sample])
 	, m_sample(sample)
 {
@@ -18,7 +18,8 @@ SamplePropertyTransaction::SamplePropertyTransaction(CSoundFile &sndFile, SAMPLE
 
 SamplePropertyTransaction::~SamplePropertyTransaction()
 {
-	const ModSample &sample = m_sndFile.GetSample(m_sample);
+	static const ModSample defaultSample = ModSample();
+	const ModSample &sample = m_sample <= m_sndFile.GetNumSamples() ? m_sndFile.GetSample(m_sample) : defaultSample;
 
 	bool modified =
 		   sample.nLength != m_origSample.nLength
@@ -64,7 +65,8 @@ SampleDataTransaction::SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sa
 	, m_sample(sample)
 	, m_force(force)
 {
-	ModSample &smp = sndFile.GetSample(sample);
+	static const ModSample defaultSample = ModSample();
+	const ModSample &smp = m_sample <= m_sndFile.GetNumSamples() ? m_sndFile.GetSample(m_sample) : defaultSample;
 	if(smp.HasSampleData() && !force)
 	{
 		m_oldData.assign(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
@@ -74,7 +76,8 @@ SampleDataTransaction::SampleDataTransaction(CSoundFile &sndFile, SAMPLEINDEX sa
 
 SampleDataTransaction::~SampleDataTransaction()
 {
-	ModSample &smp = m_sndFile.GetSample(m_sample);
+	static const ModSample defaultSample = ModSample();
+	const ModSample &smp = m_sample <= m_sndFile.GetNumSamples() ? m_sndFile.GetSample(m_sample) : defaultSample;
 	auto newData = mpt::as_span(smp.pSample8, smp.pSample8 + smp.GetSampleSizeInBytes());
 	cereal::size_type modificationStart = 0, modificationLength = newData.size();
 	bool modified = m_force;

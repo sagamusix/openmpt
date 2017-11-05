@@ -2109,7 +2109,7 @@ BOOL CViewInstrument::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 				{
 					CriticalSection cs;
 					pModDoc->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Replace Instrument");
-					InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
+					InstrumentReplaceTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 					bCanDrop = dlsbank.ExtractInstrument(sndFile, m_nInstrument, nIns, nRgn);
 				}
 				bUpdate = true;
@@ -2140,7 +2140,7 @@ BOOL CViewInstrument::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 			CriticalSection cs;
 
 			pModDoc->GetInstrumentUndo().PrepareUndo(m_nInstrument, "Replace Instrument");
-			InstrumentTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
+			InstrumentReplaceTransaction transaction(GetDocument()->GetrSoundFile(), m_nInstrument);
 			bCanDrop = pDLSBank->ExtractInstrument(sndFile, m_nInstrument, nIns, nRgn);
 			bUpdate = true;
 		}

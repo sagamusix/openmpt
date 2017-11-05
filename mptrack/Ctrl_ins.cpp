@@ -30,11 +30,9 @@
 #include "../common/FileReader.h"
 #include "FileDialog.h"
 #include "InstrumentTransaction.h"
-#include "SampleTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
-
 
 #pragma warning(disable:4244) //conversion from 'type1' to 'type2', possible loss of data
 
@@ -1565,13 +1563,7 @@ bool CCtrlInstruments::OpenInstrument(const mpt::PathString &fileName)
 		}
 		if (!m_nInstrument) m_nInstrument = 1;
 		ScopedLogCapturer log(m_modDoc, "Instrument Import", this);
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
-		std::vector<SampleDataTransaction> sampleTransactions;
-		sampleTransactions.reserve(MAX_SAMPLES);
-		for(SAMPLEINDEX i = 0; i < MAX_SAMPLES; i++)
-		{
-			sampleTransactions.push_back(SampleDataTransaction(m_modDoc.GetrSoundFile(), i));
-		}
+		InstrumentReplaceTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
 		PrepareUndo("Replace Instrument");
 		if (m_sndFile.ReadInstrumentFromFile(m_nInstrument, file, TrackerSettings::Instance().m_MayNormalizeSamplesOnLoad))
 		{
@@ -1652,7 +1644,7 @@ bool CCtrlInstruments::OpenInstrument(CSoundFile &sndFile, INSTRUMENTINDEX nInst
 		first = true;
 	}
 	PrepareUndo("Replace Instrument");
-	InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+	InstrumentReplaceTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
 	m_sndFile.ReadInstrumentFromSong(m_nInstrument, sndFile, nInstr);
 
 	cs.Leave();

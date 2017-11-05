@@ -1,6 +1,10 @@
 #pragma once
+#include "../soundlib/Snd_defs.h"
 
 OPENMPT_NAMESPACE_BEGIN
+
+class CSoundFile;
+struct ModSample;
 
 class SamplePropertyTransaction
 {

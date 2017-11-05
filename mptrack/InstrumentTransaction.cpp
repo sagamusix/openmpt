@@ -118,4 +118,25 @@ void InstrumentTransaction::SendTunings(const CSoundFile &sndFile)
 	}
 }
 
+
+
+InstrumentReplaceTransaction::InstrumentReplaceTransaction(CSoundFile &sndFile, INSTRUMENTINDEX instr)
+	: m_instrTransation(sndFile, instr)
+{
+	m_sampleDataTransactions.reserve(MAX_SAMPLES);
+	m_samplePropTransactions.reserve(MAX_SAMPLES);
+	for(SAMPLEINDEX i = 0; i < MAX_SAMPLES; i++)
+	{
+		m_sampleDataTransactions.push_back(SampleDataTransaction(sndFile, i));
+		m_samplePropTransactions.push_back(SamplePropertyTransaction(sndFile, i));
+	}
+}
+
+InstrumentReplaceTransaction::~InstrumentReplaceTransaction()
+{
+	// Force correct order of sending the messages
+	m_samplePropTransactions.clear();
+	m_sampleDataTransactions.clear();
+}
+
 OPENMPT_NAMESPACE_END
