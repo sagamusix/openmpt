@@ -3462,7 +3462,11 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		inArchive(id, name);
 		CriticalSection cs;
 		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
-		if(m_chatDlg) m_chatDlg->Update();
+		if(m_chatDlg)
+		{
+			m_chatDlg->Update();
+			m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" joined"));
+		}
 		modified = false;
 		break;
 	}
@@ -3472,6 +3476,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Remove user from collaborator list
 		Networking::ClientID id;
 		inArchive(id);
+		if(m_chatDlg) m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" joined"));
 		CriticalSection cs;
 		m_collabNames.erase(id);
 

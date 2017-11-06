@@ -85,7 +85,7 @@ public:
 	ChatDlg(CModDoc &modDoc);
 	~ChatDlg();
 
-	void AddMessage(const mpt::ustring &sender, const mpt::ustring message);
+	void AddMessage(const mpt::ustring &sender, const mpt::ustring &message);
 	void Update();
 	ClientID GetFollowUser();
 

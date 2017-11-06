@@ -395,11 +395,14 @@ void ChatDlg::OnOK()
 }
 
 
-void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring message)
+void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring &message)
 {
 	auto len = m_History.GetWindowTextLength();
 	m_History.SetSel(len, len);
-	m_History.ReplaceSel(mpt::ToCString(MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ") + message + MPT_ULITERAL("\r\n")));
+	mpt::ustring prefix;
+	if(!sender.empty())
+		prefix = MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ");
+	m_History.ReplaceSel(mpt::ToCString(prefix + message + MPT_ULITERAL("\r\n")));
 }
 
 
