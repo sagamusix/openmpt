@@ -452,6 +452,15 @@ void ChatDlg::OnGotoAnnotation()
 }
 
 
+ClientID ChatDlg::GetFollowUser()
+{
+	if(m_Users.GetSelectionMark() < 0)
+		return uint32_max;
+	else
+		return static_cast<ClientID>(m_Users.GetItemData(m_Users.GetSelectionMark()));
+}
+
+
 }
 
 OPENMPT_NAMESPACE_END

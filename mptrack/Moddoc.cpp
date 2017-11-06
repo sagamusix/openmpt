@@ -3305,7 +3305,13 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 		hint = RowHint(msg.row);
 		modified = false;
-		// TODO: For spectators, allow to follow cursors automatically
+		
+		if(m_chatDlg)
+		{
+			// TODO only do this for spectators
+			PostMessageToAllViews(WM_MOD_VIEWMSG, VIEWMSG_FOLLOWCOLLABCURSOR, m_chatDlg->GetFollowUser());
+		}
+
 		break;
 	}
 

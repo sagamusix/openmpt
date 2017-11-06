@@ -87,6 +87,7 @@ public:
 
 	void AddMessage(const mpt::ustring &sender, const mpt::ustring message);
 	void Update();
+	ClientID GetFollowUser();
 
 protected:
 	void DoDataExchange(CDataExchange* pDX) override;

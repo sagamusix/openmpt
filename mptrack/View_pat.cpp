@@ -3788,6 +3788,20 @@ LRESULT CViewPattern::OnModViewMsg(WPARAM wParam, LPARAM lParam)
 		OnMouseWheel(0, static_cast<short>(lParam), CPoint(0, 0));
 		break;
 
+	case VIEWMSG_FOLLOWCOLLABCURSOR:
+		if(lParam != -1 && GetDocument()->m_collabEditPositions.count(lParam))
+		{
+			auto pos = GetDocument()->m_collabEditPositions.at(lParam);
+			// TODO Sequence mismatch
+			if(pos.pattern != GetCurrentPattern() || pos.order != GetCurrentOrder())
+			{
+				SendCtrlMessage(CTRLMSG_SETCURRENTORDER, pos.order);
+				SetCurrentPattern(static_cast<PATTERNINDEX>(pos.pattern), static_cast<ROWINDEX>(pos.row));
+			}
+			PatternCursor cursor(static_cast<ROWINDEX>(pos.row), static_cast<CHANNELINDEX>(pos.channel), static_cast<PatternCursor::Columns>(pos.column));
+			SetCursorPosition(cursor, false);
+		}
+		break;
 
 	default:
 		return CModScrollView::OnModViewMsg(wParam, lParam);
