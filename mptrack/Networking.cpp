@@ -45,7 +45,6 @@ IOService::IOService()
 	m_thread = std::move(mpt::thread([this]()
 	{
 		io_service.run();
-		Log("Closing ioservice thread");
 	}));
 }
 
@@ -124,7 +123,6 @@ void RemoteCollabConnection::Read()
 			auto length = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)), ec);
 			if(ec)
 			{
-				//if(collabServer) collabServer->Receive(that, quitmsg?!)
 				break;
 			}
 
@@ -145,7 +143,13 @@ void RemoteCollabConnection::Read()
 				break;
 			}
 		}
-		Log("Closing remote thread");
+		if(collabServer)
+		{
+			std::stringstream sso;
+			cereal::BinaryOutputArchive ar(sso);
+			ar(UserQuitMsg);
+			collabServer->Receive(that, sso);
+		}
 	});
 }
 
@@ -532,17 +536,25 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		auto conn = std::find(connections.begin(), connections.end(), source);
 		if(conn != connections.end())
 		{
-			Log("erasing conn");
 			connections.erase(conn);
+
+			if(m_documents.count(modDoc))
+			{
+				auto &doc = m_documents.at(modDoc);
+				switch(source->m_accessType)
+				{
+				case JoinMsg::ACCESS_COLLABORATOR:
+					if(doc.m_collaborators > 0) doc.m_collaborators--;
+					break;
+				case JoinMsg::ACCESS_SPECTATOR:
+					if(doc.m_spectators > 0) doc.m_spectators--;
+					break;
+				}
+				ar(type);
+				ar(source->m_id);
+				SendToAll(m_documents.at(modDoc), sso);
+			}
 		}
-		if(m_documents.count(modDoc))
-		{
-			Log("sendtoall %d", m_documents.at(modDoc).m_connections.size());
-			ar(type);
-			ar(source->m_id);
-			SendToAll(m_documents.at(modDoc), sso);
-		}
-		Log("return");
 		return false;
 	}
 
