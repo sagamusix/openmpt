@@ -45,6 +45,7 @@ IOService::IOService()
 	m_thread = std::move(mpt::thread([this]()
 	{
 		io_service.run();
+		Log("Closing ioservice thread");
 	}));
 }
 
@@ -61,6 +62,12 @@ void IOService::Run()
 {
 	if(ioService == nullptr || !ioService->m_thread.joinable())
 		ioService = mpt::make_unique<IOService>();
+}
+
+
+void IOService::Stop()
+{
+	ioService = nullptr;
 }
 
 
@@ -117,6 +124,7 @@ void RemoteCollabConnection::Read()
 			auto length = asio::read(that->m_socket, asio::buffer(&that->m_inMessage[0], sizeof(MsgHeader)), ec);
 			if(ec)
 			{
+				//if(collabServer) collabServer->Receive(that, quitmsg?!)
 				break;
 			}
 
@@ -223,10 +231,11 @@ std::string CollabConnection::WriteWithResult(const std::string &message)
 
 void RemoteCollabConnection::Send(const std::string &message)
 {
+	//m_strand.post(bind(&RemoteCollabConnection::WriteImpl, this, ))
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
 	asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
 	/*auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
-	m_strand.dispatch([that, message]()
+	m_strand.post([that, message]()
 	{
 		that->m_outMessages.push_back({ message, message.size(), 0 });
 		if(that->m_outMessages.size() > 1)
@@ -235,7 +244,7 @@ void RemoteCollabConnection::Send(const std::string &message)
 			return;
 		}
 		that->WriteImpl();
-	})*/;
+	});*/
 }
 
 
@@ -247,12 +256,16 @@ RemoteCollabConnection::~RemoteCollabConnection()
 
 void RemoteCollabConnection::Close()
 {
+	Log("Closing remote collab connection...");
 	m_socket.close();
 	m_threadRunning = false;
+	Log("Trying to join...");
 	if(m_thread.joinable())
 	{
+		Log("Thread is joinable");
 		m_thread.join();
 	}
+	Log("Done...");
 }
 
 
@@ -260,7 +273,7 @@ void RemoteCollabConnection::WriteImpl()
 {
 	auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
 	const Message &message = that->m_outMessages.front();
-	asio::async_write(m_socket, asio::buffer(message.msg.data() + message.written, std::min(size_t(8192), message.remain)),
+	asio::async_write(m_socket, asio::buffer(message.msg.data(), message.remain),
 		m_strand.wrap([that](std::error_code error, const size_t written)
 	{
 		if(error)
@@ -379,7 +392,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	NetworkMessage type;
 
 	inArchive(type);
-	//Log(std::string(type.type, 4).c_str());
+	Log(std::string((char*)&type, ((char*)&type)+4).c_str());
 
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);
@@ -506,11 +519,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			// Send back to all clients
 			ar(source->m_userName);
 			ar(message);
-			const std::string s = sso.str();
-			for(auto &c : m_documents.at(modDoc).m_connections)
-			{
-				c->Write(s);
-			}
+			SendToAll(m_documents.at(modDoc), sso);
 		}
 		break;
 	}
@@ -523,14 +532,17 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		auto conn = std::find(connections.begin(), connections.end(), source);
 		if(conn != connections.end())
 		{
+			Log("erasing conn");
 			connections.erase(conn);
 		}
 		if(m_documents.count(modDoc))
 		{
+			Log("sendtoall %d", m_documents.at(modDoc).m_connections.size());
 			ar(type);
 			ar(source->m_id);
 			SendToAll(m_documents.at(modDoc), sso);
 		}
+		Log("return");
 		return false;
 	}
 
@@ -820,7 +832,9 @@ void CollabClient::Quit()
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);
 	ar(UserQuitMsg);
+	Log("Write quit message");
 	Write(sso.str());
+	Log("Closing connection");
 	m_connection->Close();
 }
 
@@ -852,6 +866,7 @@ bool RemoteCollabClient::Connect()
 
 void RemoteCollabClient::Write(const std::string &msg)
 {
+	Log("Remote write");
 	m_connection->Write(msg);
 }
 
@@ -885,6 +900,7 @@ LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
 
 void LocalCollabClient::Write(const std::string &msg)
 {
+	Log("Local write");
 	std::stringstream ss(msg);
 	collabServer->Receive(m_connection, ss);
 }

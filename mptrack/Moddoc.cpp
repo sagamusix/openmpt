@@ -165,11 +165,14 @@ CModDoc::~CModDoc()
 	}
 	if(m_collabClient)
 	{
+		Log("Quitting collab client...");
 		m_collabClient->Quit();
 	}
 	if(Networking::collabServer != nullptr)
 	{
+		Log("Closing Document...");
 		Networking::collabServer->CloseDocument(*this);
+		Log("Done.");
 	}
 }
 
@@ -3475,7 +3478,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Remove user from collaborator list
 		Networking::ClientID id;
 		inArchive(id);
-		if(m_chatDlg) m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" joined"));
+		if(m_chatDlg) m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" left"));
 		CriticalSection cs;
 		m_collabNames.erase(id);
 

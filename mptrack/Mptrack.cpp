@@ -1255,8 +1255,11 @@ int CTrackApp::ExitInstance()
 
 int CTrackApp::ExitInstanceImpl()
 {
+	Log("Closing server...");
 	Networking::collabServer = nullptr;
-	Networking::ioService = nullptr;
+	Log("Stopping service...");
+	Networking::IOService::Stop();
+	Log("Done.");
 
 	delete m_pSoundDevicesManager;
 	m_pSoundDevicesManager = nullptr;

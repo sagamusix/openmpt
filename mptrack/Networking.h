@@ -40,6 +40,7 @@ public:
 	~IOService();
 
 	static void Run();
+	static void Stop();
 };
 
 
