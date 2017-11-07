@@ -51,7 +51,7 @@ public:
 	std::weak_ptr<Listener> m_listener;
 	CModDoc *m_modDoc;
 	mpt::ustring m_userName;
-	int32 m_accessType;
+	uint32 m_accessType;
 	uint32 m_origSize;
 	std::promise<std::string> m_promise;
 	ClientID m_id;

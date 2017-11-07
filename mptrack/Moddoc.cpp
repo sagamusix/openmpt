@@ -3308,9 +3308,8 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = RowHint(msg.row);
 		modified = false;
 		
-		if(m_chatDlg)
+		if(m_chatDlg && m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR)
 		{
-			// TODO only do this for spectators
 			PostMessageToAllViews(WM_MOD_VIEWMSG, VIEWMSG_FOLLOWCOLLABCURSOR, m_chatDlg->GetFollowUser());
 		}
 

@@ -154,7 +154,7 @@ struct JoinMsg
 	uint64 id;
 	std::string userName;
 	std::string password;
-	int32 accessType;
+	uint32 accessType;
 
 	template<class Archive>
 	void serialize(Archive &archive)
