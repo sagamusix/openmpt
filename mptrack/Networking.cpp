@@ -529,6 +529,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	{
 		// A collaborator or spectator leaves the document
 		auto *modDoc = source->m_modDoc;
+		if(!m_documents.count(modDoc))
+		{
+			break;
+		}
 		auto &connections = m_documents.at(modDoc).m_connections;
 		auto conn = std::find(connections.begin(), connections.end(), source);
 		if(conn != connections.end())
