@@ -171,6 +171,7 @@ protected:
 	afx_msg void OnLockPlayback();
 	afx_msg void OnUnlockPlayback();
 	afx_msg BOOL OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnLockPattern();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

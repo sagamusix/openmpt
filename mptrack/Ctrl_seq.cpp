@@ -90,6 +90,7 @@ BEGIN_MESSAGE_MAP(COrderList, CWnd)
 	ON_MESSAGE(WM_MOD_DRAGONDROPPING,			OnDragonDropping)
 	ON_MESSAGE(WM_HELPHITTEST,					OnHelpHitTest)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,				OnCustomKeyMsg)
+	ON_COMMAND(ID_LOCK_PATTERN_COLLAB,			OnLockPattern)
 	ON_NOTIFY_EX(TTN_NEEDTEXT, 0, OnToolTipText)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -1073,6 +1074,17 @@ void COrderList::OnRButtonDown(UINT nFlags, CPoint pt)
 			if(sndFile.GetModSpecifications().hasRestartPos)
 				AppendMenu(hMenu, MF_STRING | greyed | ((Order().GetRestartPos() == m_nScrollPos) ? MF_CHECKED : 0), ID_SETRESTARTPOS, _T("R&estart Position"));
 		}
+		if(m_pModDoc.m_collabClient)
+		{
+			UINT locked = 0;
+			PATTERNINDEX pat = GetCurrentPattern();
+			if(m_pModDoc.m_collabLockedPatterns.count(pat)
+				&& m_pModDoc.m_collabLockedPatterns.at(pat) == m_pModDoc.GetCollabUserID())
+			{
+				locked = MF_CHECKED;
+			}
+			AppendMenu(hMenu, MF_STRING | locked, ID_LOCK_PATTERN_COLLAB, _T("L&ock Pattern"));
+		}
 		if (sndFile.GetModSpecifications().sequencesMax > 1)
 		{
 			AppendMenu(hMenu, MF_SEPARATOR, NULL, _T(""));
@@ -1588,6 +1600,12 @@ BOOL COrderList::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+
+void COrderList::OnLockPattern()
+{
+	m_pModDoc.RequestPatternLock(GetCurrentPattern());
 }
 
 

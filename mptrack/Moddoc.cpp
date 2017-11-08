@@ -3566,7 +3566,7 @@ void CModDoc::RequestPatternLock(PATTERNINDEX pat)
 		{
 			if(m_collabLockedPatterns.at(pat) != GetCollabUserID())
 			{
-				Reporting::Error(MPT_USTRING("This pattern is already being edited by ") + GetUserName(m_collabLockedPatterns.at(pat)));
+				Reporting::Error(mpt::uformat(MPT_USTRING("Pattern %1 is already being edited by %2"))(pat, GetUserName(m_collabLockedPatterns.at(pat))));
 				return;
 			}
 			newState = false;

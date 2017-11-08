@@ -556,6 +556,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				SendToAll(m_documents.at(modDoc), sso);
 			}
 		}
+		conn = std::find(m_connections.begin(), m_connections.end(), source);
+		if(conn != m_connections.end())
+		{
+			m_connections.erase(conn);
+		}
 		return false;
 	}
 

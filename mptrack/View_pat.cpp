@@ -1492,7 +1492,7 @@ void CViewPattern::OnRButtonDown(UINT flags, CPoint pt)
 				locked = MF_CHECKED;
 			}
 
-			AppendMenu(hMenu, MF_STRING | locked, ID_LOCK_PATTERN_COLLAB, _T("Lock Pattern"));
+			AppendMenu(hMenu, MF_STRING | locked, ID_LOCK_PATTERN_COLLAB, _T("L&ock Pattern"));
 		}
 
 		ClientToScreen(&pt);
