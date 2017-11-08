@@ -89,10 +89,11 @@ CollabConnection::CollabConnection(std::shared_ptr<Listener> listener)
 }
 
 
-RemoteCollabConnection::RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener)
+RemoteCollabConnection::RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener, bool isOnServer)
 	: CollabConnection(listener)
 	, m_socket(std::move(socket))
 	, m_strand(io_service)
+	, m_isOnServer(isOnServer)
 {
 }
 
@@ -143,7 +144,7 @@ void RemoteCollabConnection::Read()
 				break;
 			}
 		}
-		if(collabServer)
+		if(that->m_isOnServer && collabServer)
 		{
 			std::stringstream sso;
 			cereal::BinaryOutputArchive ar(sso);
@@ -260,16 +261,12 @@ RemoteCollabConnection::~RemoteCollabConnection()
 
 void RemoteCollabConnection::Close()
 {
-	Log("Closing remote collab connection...");
 	m_socket.close();
 	m_threadRunning = false;
-	Log("Trying to join...");
 	if(m_thread.joinable())
 	{
-		Log("Thread is joinable");
 		m_thread.join();
 	}
-	Log("Done...");
 }
 
 
@@ -380,7 +377,7 @@ void CollabServer::StartAccept()
 	{
 		if(!ec)
 		{
-			that->m_connections.push_back(std::make_shared<RemoteCollabConnection>(std::move(that->m_socket), that));
+			that->m_connections.push_back(std::make_shared<RemoteCollabConnection>(std::move(that->m_socket), that, true));
 			that->m_connections.back()->Read();
 			that->StartAccept();
 		}
@@ -396,7 +393,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 	NetworkMessage type;
 
 	inArchive(type);
-	Log(std::string((char*)&type, ((char*)&type)+4).c_str());
+	//Log(std::string((char*)&type, ((char*)&type)+4).c_str());
 
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);
@@ -844,9 +841,7 @@ void CollabClient::Quit()
 	std::ostringstream sso;
 	cereal::BinaryOutputArchive ar(sso);
 	ar(UserQuitMsg);
-	Log("Write quit message");
 	Write(sso.str());
-	Log("Closing connection");
 	m_connection->Close();
 }
 
@@ -868,7 +863,7 @@ bool RemoteCollabClient::Connect()
 	{
 		return false;
 	}
-	m_connection = std::make_shared<RemoteCollabConnection>(std::move(m_socket), shared_from_this());
+	m_connection = std::make_shared<RemoteCollabConnection>(std::move(m_socket), shared_from_this(), false);
 	m_connection->Read();
 
 	IOService::Run();
@@ -878,7 +873,6 @@ bool RemoteCollabClient::Connect()
 
 void RemoteCollabClient::Write(const std::string &msg)
 {
-	Log("Remote write");
 	m_connection->Write(msg);
 }
 
@@ -912,7 +906,6 @@ LocalCollabClient::LocalCollabClient(CModDoc &modDoc)
 
 void LocalCollabClient::Write(const std::string &msg)
 {
-	Log("Local write");
 	std::stringstream ss(msg);
 	collabServer->Receive(m_connection, ss);
 }

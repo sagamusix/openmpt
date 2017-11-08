@@ -165,14 +165,11 @@ CModDoc::~CModDoc()
 	}
 	if(m_collabClient)
 	{
-		Log("Quitting collab client...");
 		m_collabClient->Quit();
 	}
 	if(Networking::collabServer != nullptr)
 	{
-		Log("Closing Document...");
 		Networking::collabServer->CloseDocument(*this);
-		Log("Done.");
 	}
 }
 

@@ -90,11 +90,12 @@ class RemoteCollabConnection : public CollabConnection
 	asio::io_service::strand m_strand;
 	mpt::thread m_thread;
 	std::atomic<bool> m_threadRunning = true;
+	const bool m_isOnServer;
 
 	mutable mpt::mutex m_mutex;
 
 public:
-	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener);
+	RemoteCollabConnection(asio::ip::tcp::socket socket, std::shared_ptr<Listener> listener, bool isOnServer);
 	RemoteCollabConnection(const RemoteCollabConnection &) = delete;
 	RemoteCollabConnection(RemoteCollabConnection &&) = default;
 	~RemoteCollabConnection();
