@@ -221,15 +221,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 
 	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
 	
-	uint32 numPositions;
-	inArchive >> numPositions;
-	for(uint32 i = 0; i < numPositions; i++)
-	{
-		ClientID id;
-		SetCursorPosMsg msg;
-		inArchive(id, msg);
-		modDoc->m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
-	}
+	inArchive(modDoc->m_collabEditPositions);
 
 	uint32 numAnnotations;
 	inArchive >> numAnnotations;
@@ -251,15 +243,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 		modDoc->m_collabNames[id] = name;
 	}
 
-	uint32 numLocks;
-	inArchive >> numLocks;
-	for(uint32 i = 0; i < numLocks; i++)
-	{
-		PATTERNINDEX pat;
-		ClientID id;
-		inArchive(pat, id);
-		modDoc->m_collabLockedPatterns[pat] = id;
-	}
+	inArchive(modDoc->m_collabLockedPatterns);
 
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);

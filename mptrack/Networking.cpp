@@ -449,13 +449,8 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					source->m_userName = mpt::ToUnicode(mpt::CharsetUTF8, join.userName);
 					source->m_accessType = join.accessType;
 
-					uint32 numPositions = mpt::saturate_cast<uint32>(modDoc->m_collabEditPositions.size());
-					ar(numPositions);
-					for(const auto &editPos : modDoc->m_collabEditPositions)
-					{
-						SetCursorPosMsg msg{ editPos.second.sequence, editPos.second.order, editPos.second.pattern, editPos.second.row, editPos.second.channel, editPos.second.column };
-						ar(editPos.first, msg);
-					}
+					ar(modDoc->m_collabEditPositions);
+
 					uint32 numAnnotations = mpt::saturate_cast<uint32>(modDoc->m_collabAnnotations.size());
 					ar(numAnnotations);
 					for(const auto &anno : modDoc->m_collabAnnotations)
@@ -470,12 +465,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						ar(conn->m_id, conn->m_userName);
 					}
 
-					uint32 numLocks = mpt::saturate_cast<uint32>(modDoc->m_collabLockedPatterns.size());
-					ar(numLocks);
-					for(const auto &lock : modDoc->m_collabLockedPatterns)
-					{
-						ar(lock.first, lock.second);
-					}
+					ar(modDoc->m_collabLockedPatterns);
 
 					{
 						// Tell everyone that this user joined

@@ -144,14 +144,20 @@ public:
 	struct NetworkCursorPos
 	{
 		uint32 sequence, order, pattern, row, channel, column;
+
+		template<class Archive>
+		void serialize(Archive &archive)
+		{
+			archive(sequence, order, pattern, row, channel, column);
+		}
 	};
 	struct NetworkAnnotationPos
 	{
-		uint32 pattern, row, channel, column/*, id*/;
+		uint32 pattern, row, channel, column;
 
 		bool operator<(const NetworkAnnotationPos &r) const
 		{
-			return std::tie(pattern, row, channel, column/*, id*/) < std::tie(r.pattern, r.row, r.channel, r.column/*, r.id*/);
+			return std::tie(pattern, row, channel, column) < std::tie(r.pattern, r.row, r.channel, r.column);
 		}
 	};
 	std::map<uint32 /*Networking::ClientID*/, NetworkCursorPos> m_collabEditPositions;

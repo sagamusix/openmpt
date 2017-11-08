@@ -14,6 +14,7 @@
 #include <cereal/types/bitset.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
+#include <cereal/types/map.hpp>
 #include <cereal/archives/binary.hpp>
 
 #include "../soundlib/Sndfile.h"
