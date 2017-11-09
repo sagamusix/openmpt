@@ -3123,12 +3123,11 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 {
 	cereal::BinaryInputArchive inArchive(inMsg);
 	Networking::NetworkMessage type;
-	inArchive >> type;
+	Networking::ClientID sourceID;
+	inArchive(type, sourceID);
 	UpdateHint hint;
 	bool modified = true;
-
-
-	// TODO: add the action log here?
+	mpt::tstring actionLog;
 
 	switch(type)
 	{
@@ -3136,13 +3135,14 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Receive updated pattern data
 		Networking::PatternEditMsg msg;
-		inArchive >> msg;
+		inArchive(msg);
 		CriticalSection cs;
 		if(m_SndFile.Patterns.IsValidPat(msg.pattern))
 		{
 			msg.Apply(m_SndFile.Patterns[msg.pattern]);
 		}
 		hint = PatternHint(msg.pattern).Names().Data();
+		actionLog = mpt::tformat(_T("edited pattern %1"))(msg.pattern);
 		break;
 	}
 
@@ -3150,7 +3150,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		// Receive updated sample properties
 		Networking::SamplePropertyEditMsg msg;
-		inArchive >> msg;
+		inArchive(msg);
 		CriticalSection cs;
 		if(msg.id > 0 && msg.id < MAX_SAMPLES)
 		{
@@ -3161,6 +3161,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			msg.Apply(m_SndFile, msg.id);
 		}
 		hint = SampleHint(msg.id).Names().Info();
+		actionLog = mpt::tformat(_T("edited sample %1"))(msg.id);
 		break;
 	}
 
@@ -3194,6 +3195,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 
 		hint = SampleHint(msg.id).Names().Info().Data();
+		actionLog = mpt::tformat(_T("edited sample data of sample %1"))(msg.id);
 		break;
 	}
 
@@ -3220,6 +3222,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(msg.id).Names().Envelope().Info();
 		if(!hadInstruments)
 			hint.ModType();
+		actionLog = mpt::tformat(_T("edited instrument %1"))(msg.id);
 		break;
 	}
 
@@ -3244,6 +3247,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(id).Names().Envelope();
 		if(!hadInstruments)
 			hint.ModType();
+		actionLog = mpt::tformat(_T("edited instrument %1"))(id);
 		break;
 	}
 
@@ -3258,12 +3262,12 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(m_SndFile.Patterns.IsValidPat(pat))
 		{
 			m_SndFile.Patterns[pat].Resize(rows, false, atEnd);
-		}
-		else
+		} else
 		{
 			m_SndFile.Patterns.Insert(pat, rows);
 		}
 		hint = PatternHint(pat).Data();
+		actionLog = mpt::tformat(_T("resized pattern %1"))(pat);
 		break;
 	}
 
@@ -3278,25 +3282,25 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(msg.seq < m_SndFile.Order.GetNumSequences())
 			msg.Apply(m_SndFile.Order(msg.seq));
 		hint = SequenceHint(msg.seq).Names().Data();
+		actionLog = mpt::tformat(_T("edited sequence %1"))(msg.seq);
 		break;
 	}
 
 	case Networking::EditPosMsg:
 	{
 		// Receive some client's pattern edit position
-		Networking::ClientID id;
 		Networking::SetCursorPosMsg msg;
-		inArchive(id, msg);
+		inArchive(msg);
 		ROWINDEX oldRow = ROWINDEX_INVALID;
 		PATTERNINDEX oldPat = PATTERNINDEX_INVALID;
 		ORDERINDEX oldOrd = ORDERINDEX_INVALID;
-		if(m_collabEditPositions.count(id))
+		if(m_collabEditPositions.count(sourceID))
 		{
-			oldRow = m_collabEditPositions[id].row;
-			oldPat = static_cast<PATTERNINDEX>(m_collabEditPositions[id].pattern);
-			oldOrd = static_cast<ORDERINDEX>(m_collabEditPositions[id].order);
+			oldRow = m_collabEditPositions[sourceID].row;
+			oldPat = static_cast<PATTERNINDEX>(m_collabEditPositions[sourceID].pattern);
+			oldOrd = static_cast<ORDERINDEX>(m_collabEditPositions[sourceID].order);
 		}
-		m_collabEditPositions[id] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
+		m_collabEditPositions[sourceID] = { msg.sequence, msg.order, msg.pattern, msg.row, msg.channel, msg.column };
 		if((msg.row != oldRow && oldRow != ROWINDEX_INVALID) || (msg.pattern != oldPat && oldPat != PATTERNINDEX_INVALID))
 		{
 			UpdateAllViews(RowHint(oldRow));
@@ -3330,6 +3334,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			else
 				m_SndFile.Patterns[pat].Shrink();
 			hint = PatternHint(pat).Data();
+			actionLog = mpt::tformat(_T("%1 pattern %2"))(expand ? _T("expanded") : _T("shrunk"), pat);
 		} else
 		{
 			modified = false;
@@ -3346,6 +3351,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		CriticalSection cs;
 		m_SndFile.Patterns.Insert(pat, rows);
 		hint = PatternHint(pat).Names().Data();
+		actionLog = mpt::tformat(_T("inserted pattern %1"))(pat);
 		break;
 	}
 
@@ -3360,6 +3366,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		hint = InstrumentHint(ins).Envelope().Info().Names();
 		if(firstInstr)
 			hint.ModType();
+		actionLog = mpt::tformat(_T("inserted instrument %1"))(ins);
 		break;
 	}
 
@@ -3379,9 +3386,9 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		// Receive chat message
 		if(m_chatDlg)
 		{
-			mpt::ustring from, message;
-			inArchive(from, message);
-			m_chatDlg->AddMessage(from, message);
+			mpt::ustring message;
+			inArchive(message);
+			m_chatDlg->AddMessage(m_collabNames[sourceID], message);
 		}
 		modified = false;
 		break;
@@ -3400,6 +3407,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		else
 			m_collabAnnotations[pos] = mpt::ToUnicode(mpt::CharsetUTF8, msg.message);
 		if(m_chatDlg) m_chatDlg->Update();
+		actionLog = mpt::tformat(_T("added an annotation in pattern %1"))(msg.pattern);
 		break;
 	}
 
@@ -3429,6 +3437,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		msg.rpm.set_if(m_SndFile.m_nDefaultRowsPerMeasure);
 		msg.swing.set_if(m_SndFile.m_tempoSwing);
 		hint = GeneralHint().General();
+		actionLog = _T("modified global settings");
 		break;
 	}
 
@@ -3447,20 +3456,21 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			m_SndFile.ChnSettings[chn].dwFlags.set(CHN_MUTE, muted);
 			hint = GeneralHint(chn).Channels();
 		}
+		actionLog = mpt::tformat(_T("edited settings of channel %1"))(chn + 1);
 		break;
 	}
 
 	case Networking::PatternLockMsg:
 	{
-		Networking::ClientID id;
 		PATTERNINDEX pat;
 		bool enable;
-		inArchive(id, pat, enable);
+		inArchive(pat, enable);
 		CriticalSection cs;
 		if(enable)
-			m_collabLockedPatterns[pat] = id;
+			m_collabLockedPatterns[pat] = sourceID;
 		else
 			m_collabLockedPatterns.erase(pat);
+		actionLog = mpt::tformat(_T("%1locked pattern %2"))(enable ? _T("") : _T("un"), pat);
 		break;
 	}
 
@@ -3471,21 +3481,21 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		CriticalSection cs;
 		Networking::DeserializeTunings(m_SndFile, s);
 		hint = GeneralHint().Tunings();
+		actionLog = _T("edited tunings");
 		break;
 	}
 
 	case Networking::UserJoinedMsg:
 	{
 		// Add new user to collaborator list
-		Networking::ClientID id;
 		std::string name;
-		inArchive(id, name);
+		inArchive(name);
 		CriticalSection cs;
-		m_collabNames[id] = mpt::ToUnicode(mpt::CharsetUTF8, name);
+		m_collabNames[sourceID] = mpt::ToUnicode(mpt::CharsetUTF8, name);
 		if(m_chatDlg)
 		{
 			m_chatDlg->Update();
-			m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" joined"));
+			m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[sourceID] + MPT_USTRING(" joined"));
 		}
 		modified = false;
 		break;
@@ -3494,15 +3504,13 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	case Networking::UserQuitMsg:
 	{
 		// Remove user from collaborator list
-		Networking::ClientID id;
-		inArchive(id);
-		if(m_chatDlg) m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[id] + MPT_USTRING(" left"));
+		if(m_chatDlg) m_chatDlg->AddMessage(mpt::ustring(), MPT_USTRING("* ") + m_collabNames[sourceID] + MPT_USTRING(" left"));
 		CriticalSection cs;
-		m_collabNames.erase(id);
+		m_collabNames.erase(sourceID);
 
 		for(auto it = m_collabLockedPatterns.begin(); it != m_collabLockedPatterns.end();)
 		{
-			if(it->second == id)
+			if(it->second == sourceID)
 				it = m_collabLockedPatterns.erase(it);
 			else
 				it++;
@@ -3521,6 +3529,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	if(modified)
 	{
 		SetModified();
+	}
+	if(!actionLog.empty() && m_chatDlg)
+	{
+		m_chatDlg->AddAction(sourceID, actionLog);
 	}
 
 	return true;

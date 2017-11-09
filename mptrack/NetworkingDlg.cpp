@@ -318,7 +318,9 @@ void SharingDlg::OnOK()
 BEGIN_MESSAGE_MAP(ChatDlg, CDialog)
 	//{{AFX_MSG_MAP(ChatDlg)
 	ON_LBN_SELCHANGE(IDC_LIST2, OnGotoAnnotation)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, OnTabSelchange)
 	ON_MESSAGE(WM_USER + 101, OnUpdate)
+	ON_MESSAGE(WM_USER + 102, OnAddAction)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -331,6 +333,8 @@ void ChatDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT2, m_Input);
 	DDX_Control(pDX, IDC_LIST1, m_Users);
 	DDX_Control(pDX, IDC_LIST2, m_Annotations);
+	DDX_Control(pDX, IDC_LIST4, m_ActionLog);
+	DDX_Control(pDX, IDC_TAB1, m_Tabs);
 	//}}AFX_DATA_MAP
 }
 
@@ -341,10 +345,16 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 	Create(IDD_NETWORKCHAT, CMainFrame::GetMainFrame());
 	m_iconSize = Util::ScalePixels(10, m_hWnd);
 	m_Icons.Create(m_iconSize, m_iconSize, ILC_COLOR32, 0, 1);
+	
 	CRect rect;
 	m_Users.SetImageList(&m_Icons, LVSIL_SMALL);
 	m_Users.GetViewRect(rect);
 	m_Users.InsertColumn(0, _T("Users"), LVCFMT_LEFT, rect.Width());
+
+	m_Tabs.InsertItem(0, _T("Annotations"));
+	m_Tabs.InsertItem(1, _T("Action Log"));
+	m_ActionLog.ShowWindow(SW_HIDE);
+
 	ShowWindow(SW_SHOW);
 	Update();
 }
@@ -381,12 +391,28 @@ void ChatDlg::OnOK()
 
 void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring &message)
 {
-	auto len = m_History.GetWindowTextLength();
-	m_History.SetSel(len, len);
-	mpt::ustring prefix;
-	if(!sender.empty())
-		prefix = MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ");
-	m_History.ReplaceSel(mpt::ToCString(prefix + message + MPT_ULITERAL("\r\n")));
+	if(m_hWnd)
+	{
+		auto len = m_History.GetWindowTextLength();
+		m_History.SetSel(len, len);
+		mpt::ustring prefix;
+		if(!sender.empty())
+			prefix = MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ");
+		m_History.ReplaceSel(mpt::ToCString(prefix + message + MPT_ULITERAL("\r\n")));
+	}
+}
+
+
+void ChatDlg::AddAction(ClientID sender, const mpt::tstring &message)
+{
+	if(m_LastUserAction[sender] != message)
+	{
+		m_LastUserAction[sender] = message;
+		if(m_hWnd)
+		{
+			PostMessage(WM_USER + 102, sender);
+		}
+	}
 }
 
 
@@ -427,6 +453,15 @@ LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 }
 
 
+LRESULT ChatDlg::OnAddAction(WPARAM id, LPARAM /*lParam*/)
+{
+	m_ActionLog.AddString(CTime::GetCurrentTime().Format("%H:%M:%S ") + mpt::ToCString(m_ModDoc.m_collabNames[id]) + _T(" ") + m_LastUserAction[id].c_str());
+	m_ActionLog.SendMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	m_ActionLog.UpdateWindow();
+	return 0;
+}
+
+
 void ChatDlg::OnGotoAnnotation()
 {
 	int sel = m_Annotations.GetCurSel();
@@ -445,6 +480,15 @@ ClientID ChatDlg::GetFollowUser()
 		return uint32_max;
 	else
 		return static_cast<ClientID>(m_Users.GetItemData(m_Users.GetSelectionMark()));
+}
+
+
+void ChatDlg::OnTabSelchange(NMHDR * /*pNMHDR*/, LRESULT *pResult)
+{
+	int sel = m_Tabs.GetCurSel();
+	m_Annotations.ShowWindow(sel == 0 ? SW_SHOW : SW_HIDE);
+	m_ActionLog.ShowWindow(sel == 1 ? SW_SHOW : SW_HIDE);
+	if(pResult) *pResult = 0;
 }
 
 

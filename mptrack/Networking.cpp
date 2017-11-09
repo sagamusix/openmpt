@@ -471,14 +471,8 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 						// Tell everyone that this user joined
 						std::ostringstream ssoj;
 						cereal::BinaryOutputArchive arj(ssoj);
-						arj(UserJoinedMsg);
-						arj(source->m_id);
-						arj(join.userName);
-						const std::string s = ssoj.str();
-						for(auto &c : doc.m_connections)
-						{
-							c->Write(s);
-						}
+						arj(UserJoinedMsg, source->m_id, join.userName);
+						SendToAll(doc, ssoj);
 					}
 				} else
 				{
@@ -503,12 +497,10 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
-			ar(type);
 			mpt::ustring message;
 			inArchive(message);
 			// Send back to all clients
-			ar(source->m_userName);
-			ar(message);
+			ar(type, source->m_id, message);
 			SendToAll(m_documents.at(modDoc), sso);
 		}
 		break;
@@ -540,8 +532,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					if(doc.m_spectators > 0) doc.m_spectators--;
 					break;
 				}
-				ar(type);
-				ar(source->m_id);
+				ar(type, source->m_id);
 				SendToAll(m_documents.at(modDoc), sso);
 			}
 		}
@@ -564,7 +555,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		auto *modDoc = source->m_modDoc;
 		if(m_documents.count(modDoc))
 		{
-			ar(type);
+			ar(type, source->m_id);
 			auto &doc = m_documents.at(modDoc);
 			auto &sndFile = modDoc->GetrSoundFile();
 			switch(type)
@@ -737,7 +728,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				}
 
 				// Not locked yet, send back to clients
-				ar(source->m_id, pat, enable);
+				ar(pat, enable);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -775,7 +766,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					{
 						std::ostringstream ssoRet;
 						cereal::BinaryOutputArchive arRet(ssoRet);
-						arRet(ExpandOrShrinkPatternMsg, pat, expand);
+						arRet(ExpandOrShrinkPatternMsg, source->m_id, pat, expand);
 						SendToAll(doc, ssoRet);
 						retVal = mpt::ToString(true);
 					} else
@@ -795,7 +786,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					{
 						std::ostringstream ssoRet;
 						cereal::BinaryOutputArchive arRet(ssoRet);
-						arRet(InsertPatternMsg, pat, rows);
+						arRet(InsertPatternMsg, source->m_id, pat, rows);
 						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(pat);
@@ -816,7 +807,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					{
 						std::ostringstream ssoRet;
 						cereal::BinaryOutputArchive arRet(ssoRet);
-						arRet(InsertInstrumentMsg, ins);
+						arRet(InsertInstrumentMsg, source->m_id, ins);
 						SendToAll(doc, ssoRet);
 					}
 					retVal = mpt::ToString(ins);

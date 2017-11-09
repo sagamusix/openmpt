@@ -76,9 +76,11 @@ class ChatDlg : public CDialog
 	CImageList m_Icons;
 	CEdit m_History, m_Input;
 	CListCtrl m_Users;
-	CListBox m_Annotations;
+	CListBox m_Annotations, m_ActionLog;
+	CTabCtrl m_Tabs;
 	CModDoc &m_ModDoc;
 	std::map<ClientID, int> m_UserToIcon;
+	std::map<ClientID, mpt::tstring> m_LastUserAction;
 	int m_iconSize;
 
 public:
@@ -86,6 +88,7 @@ public:
 	~ChatDlg();
 
 	void AddMessage(const mpt::ustring &sender, const mpt::ustring &message);
+	void AddAction(ClientID sender, const mpt::tstring &message);
 	void Update();
 	ClientID GetFollowUser();
 
@@ -95,6 +98,8 @@ protected:
 	
 	afx_msg void OnGotoAnnotation();
 	afx_msg LRESULT OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/);
+	afx_msg LRESULT OnAddAction(WPARAM id, LPARAM /*lParam*/);
+	afx_msg void OnTabSelchange(NMHDR *pNMHDR, LRESULT *pResult);
 
 	DECLARE_MESSAGE_MAP()
 };
