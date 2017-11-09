@@ -804,9 +804,8 @@ void CViewPattern::OnGrowSelection()
 	m_Selection.Sanitize(pSndFile->Patterns[m_nPattern].GetNumRows(), pSndFile->GetNumChannels());
 	const PatternCursor startSel = m_Selection.GetUpperLeft();
 	const PatternCursor endSel = m_Selection.GetLowerRight();
-	PatternTransaction transaction(*pSndFile, m_nPattern, startSel, PatternCursor(pSndFile->Patterns[m_nPattern].GetNumRows(), endSel), "Grow Selection");
-
 	const ROWINDEX finalDest = m_Selection.GetStartRow() + (m_Selection.GetNumRows() - 1) * 2;
+	PatternTransaction transaction(*pSndFile, m_nPattern, startSel, PatternCursor(m_Selection.GetStartRow() + finalDest, endSel), "Grow Selection");
 	for(int row = finalDest; row > (int)startSel.GetRow(); row -= 2)
 	{
 		if(ROWINDEX(row) >= pSndFile->Patterns[m_nPattern].GetNumRows())

@@ -9,6 +9,8 @@ OPENMPT_NAMESPACE_BEGIN
 void PatternTransaction::Init(const char *description)
 {
 	CModDoc *pModDoc = m_sndFile.GetpModDoc();
+	const auto &pat = m_sndFile.Patterns[m_pattern];
+	m_rect.Sanitize(pat.GetNumRows(), pat.GetNumChannels());
 	CHANNELINDEX chnBeg = m_rect.GetStartChannel(), chnEnd = m_rect.GetEndChannel();
 	ROWINDEX rowBeg = m_rect.GetStartRow(), rowEnd = m_rect.GetEndRow();
 
@@ -20,7 +22,6 @@ void PatternTransaction::Init(const char *description)
 		pModDoc->GetPatternUndo().PrepareUndo(m_pattern, chnBeg, rowBeg, m_rect.GetNumChannels(), m_rect.GetNumRows(), description);
 	}
 	m_data.reserve(m_rect.GetNumChannels() * m_rect.GetNumRows());
-	const auto &pat = m_sndFile.Patterns[m_pattern];
 	for(ROWINDEX r = rowBeg; r <= rowEnd; r++)
 	{
 		m_data.insert(m_data.end(), pat.GetpModCommand(r, chnBeg), pat.GetpModCommand(r, chnEnd) + 1);
