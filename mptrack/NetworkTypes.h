@@ -73,6 +73,7 @@ enum NetworkMessage : uint32
 	InsertSampleMsg = NetMsg("INSA"),	// Request to insert a new sample
 	InsertInstrumentMsg = NetMsg("ININ"),	// Request to insert a new instrument
 	ConvertInstrumentsMsg = NetMsg("CNVI"),	// Request to convert all samples to instruments
+	ExpandOrShrinkPatternMsg = NetMsg("EXPP"),	// Request to shrink or expand a pattern
 
 	SendAnnotationMsg = NetMsg("ANNO"),	// Add/change/remove an annoation at a given pattern position
 	PatternLockMsg = NetMsg("LOCK"),	// Add/remove a pattern lock

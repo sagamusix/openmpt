@@ -19,6 +19,7 @@ public:
 	PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, const PatternCursor &start, const PatternCursor &end, const char *description = nullptr);
 	PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, const PatternCursor &cursor, const char *description = nullptr);
 	PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, const PatternRect &rect, const char *description = nullptr);
+	PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, const char *description = nullptr);
 	~PatternTransaction();
 };
 

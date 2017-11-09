@@ -53,6 +53,14 @@ PatternTransaction::PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern
 	Init(description);
 }
 
+PatternTransaction::PatternTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, const char *description)
+	: m_sndFile(sndFile)
+	, m_rect(PatternRect(PatternCursor(0, 0), PatternCursor(sndFile.Patterns[pattern].GetNumRows() - 1, sndFile.GetNumChannels() - 1, PatternCursor::lastColumn)))
+	, m_pattern(pattern)
+{
+	Init(description);
+}
+
 PatternTransaction::~PatternTransaction()
 {
 	// Build the difference mask
@@ -102,8 +110,7 @@ PatternTransaction::~PatternTransaction()
 		{
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
-			ar(Networking::PatternTransactionMsg);
-			ar(msg);
+			ar(Networking::PatternTransactionMsg, msg);
 			modDoc->m_collabClient->Write(ss.str());
 		}
 	}
@@ -136,10 +143,7 @@ PatternResizeTransaction::~PatternResizeTransaction()
 			// TODO: we probably need to synchronize all clients here
 			std::ostringstream ss;
 			cereal::BinaryOutputArchive ar(ss);
-			ar(Networking::PatternResizeMsg);
-			ar(m_pattern);
-			ar(newRows);
-			ar(m_resizeAtEnd);
+			ar(Networking::PatternResizeMsg, m_pattern, newRows, m_resizeAtEnd);
 			modDoc->m_collabClient->Write(ss.str());
 		}
 	}

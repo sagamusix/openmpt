@@ -3316,6 +3316,27 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		break;
 	}
 
+	case Networking::ExpandOrShrinkPatternMsg:
+	{
+		// Receive request to expand or shrink a pattern
+		PATTERNINDEX pat;
+		bool expand;
+		inArchive(pat, expand);
+		CriticalSection cs;
+		if(m_SndFile.Patterns.IsValidPat(pat))
+		{
+			if(expand)
+				m_SndFile.Patterns[pat].Expand();
+			else
+				m_SndFile.Patterns[pat].Shrink();
+			hint = PatternHint(pat).Data();
+		} else
+		{
+			modified = false;
+		}
+		break;
+	}
+
 	case Networking::InsertPatternMsg:
 	{
 		// Receive request to insert a new specified pattern

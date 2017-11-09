@@ -936,6 +936,7 @@ bool CModDoc::RemoveSample(SAMPLEINDEX nSmp)
 	if ((nSmp) && (nSmp <= m_SndFile.GetNumSamples()))
 	{
 		CriticalSection cs;
+		SampleDataTransaction tr(m_SndFile, nSmp);
 
 		m_SndFile.DestroySample(nSmp);
 		m_SndFile.m_szNames[nSmp][0] = 0;
@@ -1017,8 +1018,18 @@ BOOL CModDoc::ExpandPattern(PATTERNINDEX nPattern)
 		return false;
 	}
 
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::ExpandOrShrinkPatternMsg, nPattern, true);
+		return ConvertStrTo<bool>(m_collabClient->WriteWithResult(ss.str()));
+	}
+
 	BeginWaitCursor();
 	CriticalSection cs;
+	PatternTransaction tr(m_SndFile, nPattern);
+	PatternResizeTransaction trR(m_SndFile, nPattern, true);
 	GetPatternUndo().PrepareUndo(nPattern, 0, 0, GetNumChannels(), numRows, "Expand Pattern");
 	bool success = m_SndFile.Patterns[nPattern].Expand();
 	cs.Leave();
@@ -1044,6 +1055,14 @@ BOOL CModDoc::ShrinkPattern(PATTERNINDEX nPattern)
 		|| (numRows = m_SndFile.Patterns[nPattern].GetNumRows()) < m_SndFile.GetModSpecifications().patternRowsMin * 2)
 	{
 		return false;
+	}
+
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::ExpandOrShrinkPatternMsg, nPattern, false);
+		return ConvertStrTo<bool>(m_collabClient->WriteWithResult(ss.str()));
 	}
 
 	BeginWaitCursor();

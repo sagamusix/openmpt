@@ -480,8 +480,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 							c->Write(s);
 						}
 					}
-				}
-				else
+				} else
 				{
 					ar(NoMoreClientsMsg);
 				}
@@ -767,6 +766,26 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Request to insert pattern
 				switch(retType)
 				{
+				case ExpandOrShrinkPatternMsg:
+				{
+					PATTERNINDEX pat;
+					bool expand;
+					inArchiveRet(pat, expand);
+					if(sndFile.Patterns.IsValidPat(pat))
+					{
+						std::ostringstream ssoRet;
+						cereal::BinaryOutputArchive arRet(ssoRet);
+						arRet(ExpandOrShrinkPatternMsg, pat, expand);
+						SendToAll(doc, ssoRet);
+						retVal = mpt::ToString(true);
+					} else
+					{
+						retVal = mpt::ToString(false);
+
+					}
+					break;
+				}
+
 				case InsertPatternMsg:
 				{
 					ROWINDEX rows;
