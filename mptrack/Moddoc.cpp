@@ -156,13 +156,8 @@ CModDoc::CModDoc()
 CModDoc::~CModDoc()
 {
 	ClearLog();
-	if(m_chatDlg && m_chatDlg->m_hWnd)
-	{
-		CriticalSection cs;
-		decltype(m_chatDlg) dlg;
-		dlg.swap(m_chatDlg);
-		dlg->DestroyWindow();
-	}
+	decltype(m_chatDlg) dlg;
+	dlg.swap(m_chatDlg);
 	if(m_collabClient)
 	{
 		m_collabClient->Quit();
@@ -170,6 +165,10 @@ CModDoc::~CModDoc()
 	if(Networking::collabServer != nullptr)
 	{
 		Networking::collabServer->CloseDocument(*this);
+	}
+	if(m_chatDlg && m_chatDlg->m_hWnd)
+	{
+		dlg->DestroyWindow();
 	}
 }
 
