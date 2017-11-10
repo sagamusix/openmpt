@@ -659,6 +659,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 			case SequenceTransactionMsg:
 			{
+				// Modify order list
 				SequenceMsg msg;
 				inArchive(msg);
 				while(msg.seq >= sndFile.Order.GetNumSequences() && msg.seq < MAX_SEQUENCES)
@@ -680,6 +681,16 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				// Send back to clients
 				ar(source->m_id, msg);
 				SendToAll(doc, sso);
+				break;
+			}
+
+			case KeyCommandMsg:
+			{
+				// Send key command like "play song" to spectators
+				int32 cmd;
+				inArchive(cmd);
+				ar(cmd);
+				SendToAll(doc, sso, true);
 				break;
 			}
 
@@ -820,6 +831,15 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					modDoc->UpdateAllViews(UpdateHint().ModType());
 					break;
 				}
+
+				case RearrangeChannelsMsg:
+				{
+					std::vector<CHANNELINDEX> newChannels;
+					inArchive(newChannels);
+					//retVal = modDoc->ReArrangeChannels()
+					break;
+				}
+
 				}
 				// Notify the blocked caller
 				ar(std::move(retVal));
@@ -835,12 +855,15 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 }
 
 
-void CollabServer::SendToAll(NetworkedDocument &doc, const std::ostringstream &sso)
+void CollabServer::SendToAll(NetworkedDocument &doc, const std::ostringstream &sso, bool onlySpectators)
 {
 	const std::string s = sso.str();
 	for(auto &c : doc.m_connections)
 	{
-		c->Write(s);
+		if(!onlySpectators || c->m_accessType == JoinMsg::ACCESS_SPECTATOR)
+		{
+			c->Write(s);
+		}
 	}
 }
 

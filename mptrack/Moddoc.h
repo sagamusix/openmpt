@@ -170,6 +170,7 @@ public:
 	mpt::ustring GetUserName(uint32 user) const;
 	/*Networking::ClientID*/ uint32 GetCollabUserID() const;
 	void RequestPatternLock(PATTERNINDEX pat);
+	void SendPlayCommand(int32 cmd);
 
 protected: // create from serialization only
 	CModDoc();

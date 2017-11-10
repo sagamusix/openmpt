@@ -226,7 +226,7 @@ public:
 	int Port() const { return m_port; }
 
 protected:
-	static void SendToAll(NetworkedDocument &doc, const std::ostringstream &sso);
+	static void SendToAll(NetworkedDocument &doc, const std::ostringstream &sso, bool onlySpectators = false);
 };
 
 

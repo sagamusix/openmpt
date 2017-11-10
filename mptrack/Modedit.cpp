@@ -164,6 +164,14 @@ CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrde
 	const CHANNELINDEX newNumChannels = static_cast<CHANNELINDEX>(newOrder.size()), oldNumChannels = GetNumChannels();
 	auto &specs = m_SndFile.GetModSpecifications();
 
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::RearrangeChannelsMsg, newOrder);
+		return ConvertStrTo<CHANNELINDEX>(m_collabClient->WriteWithResult(ss.str()));
+	}
+
 	if(newNumChannels > specs.channelsMax || newNumChannels < specs.channelsMin)
 	{
 		CString str;
@@ -690,8 +698,7 @@ PATTERNINDEX CModDoc::InsertPattern(ROWINDEX rows, ORDERINDEX ord)
 	{
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
-		ar(Networking::InsertPatternMsg);
-		ar(rows);
+		ar(Networking::InsertPatternMsg, rows);
 		pat = ConvertStrTo<PATTERNINDEX>(m_collabClient->WriteWithResult(ss.str()));
 	} else
 	{

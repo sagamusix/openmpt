@@ -1974,6 +1974,7 @@ void CModDoc::OnPlayerPlay()
 		m_SndFile.m_SongFlags.reset(SONG_STEP | SONG_PAUSED | SONG_PATTERNLOOP);
 		pMainFrm->PlayMod(this);
 	}
+	SendPlayCommand(kcPlayPauseSong);
 }
 
 
@@ -2020,6 +2021,7 @@ void CModDoc::OnPlayerPause()
 			pMainFrm->PauseMod();
 		}
 	}
+	SendPlayCommand(kcPauseSong);
 }
 
 
@@ -2027,6 +2029,7 @@ void CModDoc::OnPlayerStop()
 {
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
 	if (pMainFrm) pMainFrm->StopMod();
+	SendPlayCommand(kcStopSong);
 }
 
 
@@ -2054,6 +2057,7 @@ void CModDoc::OnPlayerPlayFromStart()
 
 		pMainFrm->PlayMod(this);
 	}
+	SendPlayCommand(kcPlaySongFromStart);
 }
 
 
@@ -2345,6 +2349,7 @@ void CModDoc::OnPatternRestart(bool loop)
 		}
 	}
 	//SwitchToView();
+	SendPlayCommand(loop ? kcPlayPatternFromStart : kcPlaySongFromPattern);
 }
 
 void CModDoc::OnPatternPlay()
@@ -2398,6 +2403,7 @@ void CModDoc::OnPatternPlay()
 		}
 	}
 	//SwitchToView();
+	SendPlayCommand(kcPlayPatternFromCursor);
 
 }
 
@@ -2454,6 +2460,7 @@ void CModDoc::OnPatternPlayNoLoop()
 		}
 	}
 	//SwitchToView();
+	SendPlayCommand(kcPlaySongFromCursor);
 }
 
 
@@ -3319,6 +3326,17 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		break;
 	}
 
+	case Networking::KeyCommandMsg:
+	{
+		int32 id;
+		inArchive(id);
+		if(m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR)
+		{
+			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_KEYCOMMAND, id, 0);
+		}
+		return true;
+	}
+
 	case Networking::ExpandOrShrinkPatternMsg:
 	{
 		// Receive request to expand or shrink a pattern
@@ -3606,6 +3624,18 @@ void CModDoc::RequestPatternLock(PATTERNINDEX pat)
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
 		ar(Networking::PatternLockMsg, pat, newState);
+		m_collabClient->Write(ss.str());
+	}
+}
+
+
+void CModDoc::SendPlayCommand(int32 cmd)
+{
+	if(m_collabClient && m_collabClient->GetConnection()->m_accessType != Networking::JoinMsg::ACCESS_SPECTATOR)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		ar(Networking::KeyCommandMsg, cmd);
 		m_collabClient->Write(ss.str());
 	}
 }
