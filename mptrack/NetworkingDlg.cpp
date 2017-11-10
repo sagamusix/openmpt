@@ -198,7 +198,9 @@ bool NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream
 		Reporting::Error("The password was incorrect.");
 	} else if(type == NoMoreClientsMsg)
 	{
-		Reporting::Error("No more clients can join this shared song.");
+		uint32 accessType;
+		inArchive(accessType);
+		Reporting::Error(mpt::format("No more %1 can join this shared song.")(accessType == JoinMsg::ACCESS_COLLABORATOR ? "collaborators" : "spectators"));
 	} else if(type == ConnectOKMsg)
 	{
 		// Need to do this in GUI thread
@@ -217,14 +219,15 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	modDoc->OnNewDocument();
 	CSoundFile &sndFile = modDoc->GetrSoundFile();
 	std::string title;
-	inArchive(sndFile, title, m_client->GetConnection()->m_id);
+	uint32 accessType;
+	inArchive(accessType, sndFile, title, m_client->GetConnection()->m_id);
 
 	modDoc->SetTitle(mpt::ToCString(mpt::CharsetUTF8, title));
 	
 	inArchive(modDoc->m_collabEditPositions);
 
 	uint32 numAnnotations;
-	inArchive >> numAnnotations;
+	inArchive(numAnnotations);
 	for(uint32 i = 0; i < numAnnotations; i++)
 	{
 		AnnotationMsg msg;
@@ -234,7 +237,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	}
 
 	uint32 numNames;
-	inArchive >> numNames;
+	inArchive(numNames);
 	for(uint32 i = 0; i < numNames; i++)
 	{
 		ClientID id;
@@ -245,6 +248,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 
 	inArchive(modDoc->m_collabLockedPatterns);
 
+	m_client->GetConnection()->m_accessType = accessType;
 	m_client->SetListener(modDoc->m_listener);
 	modDoc->m_collabClient = std::move(m_client);
 

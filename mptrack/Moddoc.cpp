@@ -3315,7 +3315,10 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		{
 			UpdateAllViews(SequenceHint().Data());
 		}
-		hint = RowHint(msg.row);
+		if(sourceID != GetCollabUserID())
+		{
+			hint = RowHint(msg.row);
+		}
 		modified = false;
 		
 		if(m_chatDlg && m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR)

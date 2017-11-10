@@ -442,7 +442,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					CSoundFile &sndFile = modDoc->GetrSoundFile();
 					sndFile.SaveMixPlugins();
-					ar(ConnectOKMsg, sndFile, mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()), source->m_id);
+					ar(ConnectOKMsg, join.accessType, sndFile, mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()), source->m_id);
 					doc.m_connections.push_back(source);
 					current++;
 					source->m_modDoc = modDoc;
@@ -476,7 +476,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					}
 				} else
 				{
-					ar(NoMoreClientsMsg);
+					ar(NoMoreClientsMsg, join.accessType);
 				}
 			}
 			else
