@@ -179,7 +179,7 @@ void CViewSample::SetModified(SampleHint hint, bool updateAll, bool waveformModi
 	if(waveformModified)
 	{
 		// Update on-disk sample status in tree
-		ModSample &sample = pModDoc->GetrSoundFile().GetSample(m_nSample);
+		ModSample &sample = pModDoc->GetSoundFile().GetSample(m_nSample);
 		if(sample.uFlags[SMP_KEEPONDISK] && !sample.uFlags[SMP_MODIFIED]) hint.Names();
 		sample.uFlags.set(SMP_MODIFIED);
 	}
@@ -199,7 +199,7 @@ void CViewSample::UpdateScrollSize(int newZoom, bool forceRefresh, SmpLength cen
 	m_nZoom = newZoom;
 
 	GetClientRect(&m_rcClient);
-	const CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	const CSoundFile &sndFile = pModDoc->GetSoundFile();
 	SIZE sizePage, sizeLine;
 	SmpLength dwLen = 0;
 
@@ -354,7 +354,7 @@ void CViewSample::SetCurSel(SmpLength nBegin, SmpLength nEnd)
 	if(GetDocument() == nullptr)
 		return;
 
-	CSoundFile &sndFile = GetDocument()->GetrSoundFile();
+	CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	const ModSample &sample = sndFile.GetSample(m_nSample);
 
 	// Snap to grid
@@ -448,7 +448,7 @@ int32 CViewSample::SampleToScreen(SmpLength pos) const
 	CModDoc *pModDoc = GetDocument();
 	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
 	{
-		SmpLength nLen = pModDoc->GetrSoundFile().GetSample(m_nSample).nLength;
+		SmpLength nLen = pModDoc->GetSoundFile().GetSample(m_nSample).nLength;
 		if (!nLen) return 0;
 
 		if(m_nZoom > 0)
@@ -469,7 +469,7 @@ SmpLength CViewSample::ScreenToSample(int32 x) const
 
 	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
 	{
-		SmpLength nLen = pModDoc->GetrSoundFile().GetSample(m_nSample).nLength;
+		SmpLength nLen = pModDoc->GetSoundFile().GetSample(m_nSample).nLength;
 		if (!nLen) return 0;
 
 		if(m_nZoom > 0)
@@ -556,7 +556,7 @@ void CViewSample::UpdateView(UpdateHint hint, CObject *pObj)
 	}
 	if(hintType[HINT_SAMPLEINFO])
 	{
-		if(!GetDocument()->GetrSoundFile().GetSample(m_nSample).HasSampleData())
+		if(!GetDocument()->GetSoundFile().GetSample(m_nSample).HasSampleData())
 		{
 			// Disable sample drawing if we cannot actually draw anymore.
 			m_dwStatus.reset(SMPSTATUS_DRAWING);
@@ -1055,7 +1055,7 @@ void CViewSample::OnDraw(CDC *pDC)
 
 	if ((!pModDoc) || (!pDC)) return;
 
-	const CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	const CSoundFile &sndFile = pModDoc->GetSoundFile();
 	const ModSample &sample = sndFile.GetSample((m_nSample <= sndFile.GetNumSamples()) ? m_nSample : 0);
 	
 	// Create off-screen image
@@ -1210,7 +1210,7 @@ void CViewSample::OnDraw(CDC *pDC)
 
 void CViewSample::DrawPositionMarks()
 {
-	if(GetDocument()->GetrSoundFile().GetSample(m_nSample).pSample == nullptr)
+	if(GetDocument()->GetSoundFile().GetSample(m_nSample).pSample == nullptr)
 	{
 		return;
 	}
@@ -1536,7 +1536,7 @@ void CViewSample::OnMouseMove(UINT, CPoint point)
 		if (pMainFrm) pMainFrm->SetHelpText(_T(""));
 	}
 	if (!pModDoc) return;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	if (m_rcClient.PtInRect(point))
 	{
 		CString s;
@@ -1644,7 +1644,7 @@ void CViewSample::OnLButtonDown(UINT, CPoint point)
 	CModDoc *pModDoc = GetDocument();
 
 	if(m_dwStatus[SMPSTATUS_MOUSEDRAG] || (!pModDoc)) return;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	ModSample &sample = sndFile.GetSample(m_nSample);
 
 	if (!sample.nLength)
@@ -1695,7 +1695,7 @@ void CViewSample::OnLButtonUp(UINT, CPoint)
 {
 	if(m_dwStatus[SMPSTATUS_DRAWING])
 	{
-		SampleDataTransaction transaction(GetDocument()->GetrSoundFile(), m_nSample, true);
+		SampleDataTransaction transaction(GetDocument()->GetSoundFile(), m_nSample, true);
 	}
 	if(m_dwStatus[SMPSTATUS_MOUSEDRAG])
 	{
@@ -1712,7 +1712,7 @@ void CViewSample::OnLButtonDblClk(UINT, CPoint)
 
 	if (pModDoc)
 	{
-		SmpLength len = pModDoc->GetrSoundFile().GetSample(m_nSample).nLength;
+		SmpLength len = pModDoc->GetSoundFile().GetSample(m_nSample).nLength;
 		if (len && !m_dwStatus[SMPSTATUS_DRAWING]) SetCurSel(0, len);
 	}
 }
@@ -1723,7 +1723,7 @@ void CViewSample::OnRButtonDown(UINT, CPoint pt)
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		const CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		const CSoundFile &sndFile = pModDoc->GetSoundFile();
 		const ModSample &sample = sndFile.GetSample(m_nSample);
 		HMENU hMenu = ::CreatePopupMenu();
 		CInputHandler* ih = CMainFrame::GetInputHandler();
@@ -1941,7 +1941,7 @@ void CViewSample::OnSetLoop()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if ((m_dwEndSel > m_dwBeginSel + 15) && (m_dwEndSel <= sample.nLength))
 		{
@@ -1962,7 +1962,7 @@ void CViewSample::OnSetSustainLoop()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if ((m_dwEndSel > m_dwBeginSel + 15) && (m_dwEndSel <= sample.nLength))
 		{
@@ -1983,7 +1983,7 @@ void CViewSample::OnEditSelectAll()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		SmpLength len = pModDoc->GetrSoundFile().GetSample(m_nSample).nLength;
+		SmpLength len = pModDoc->GetSoundFile().GetSample(m_nSample).nLength;
 		if (len) SetCurSel(0, len);
 	}
 }
@@ -1996,7 +1996,7 @@ void CViewSample::OnEditDelete()
 	updateHint.Info().Data();
 
 	if (!pModDoc) return;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	ModSample &sample = sndFile.GetSample(m_nSample);
 	if ((!sample.pSample) || (!sample.nLength)) return;
 	if (m_dwEndSel > sample.nLength) m_dwEndSel = sample.nLength;
@@ -2038,7 +2038,7 @@ void CViewSample::OnEditCopy()
 		return;
 	}
 
-	const CSoundFile &sndFile = GetDocument()->GetrSoundFile();
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	const ModSample &sample = sndFile.GetSample(m_nSample);
 
 	bool addLoopInfo = true;
@@ -2185,10 +2185,10 @@ void CViewSample::DoPaste(PasteMode pasteMode)
 
 		if ((hCpy) && ((p = (LPBYTE)GlobalLock(hCpy)) != NULL))
 		{
-			SampleDataTransaction transaction(pModDoc->GetrSoundFile(), m_nSample);
+			SampleDataTransaction transaction(pModDoc->GetSoundFile(), m_nSample);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Paste");
 
-			CSoundFile &sndFile = pModDoc->GetrSoundFile();
+			CSoundFile &sndFile = pModDoc->GetSoundFile();
 			ModSample &sample = sndFile.GetSample(m_nSample);
 
 			if(sample.pSample == nullptr)
@@ -2361,7 +2361,7 @@ void CViewSample::On8BitConvert()
 	BeginWaitCursor();
 	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if(sample.uFlags[CHN_16BIT] && sample.pSample != nullptr && sample.nLength != 0)
 		{
@@ -2386,7 +2386,7 @@ void CViewSample::On16BitConvert()
 	BeginWaitCursor();
 	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if(!sample.uFlags[CHN_16BIT] && sample.pSample != nullptr && sample.nLength != 0)
 		{
@@ -2412,7 +2412,7 @@ void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
 	BeginWaitCursor();
 	if(pModDoc != nullptr && (m_nSample <= pModDoc->GetNumSamples()))
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if(sample.GetNumChannels() > 1 && sample.pSample != nullptr && sample.nLength != 0)
 		{
@@ -2485,7 +2485,7 @@ void CViewSample::TrimSample(bool trimToLoopEnd)
 	//nothing loaded or invalid sample slot.
 	if(!pModDoc || m_nSample > pModDoc->GetNumSamples()) return;
 
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	ModSample &sample = sndFile.GetSample(m_nSample);
 
 	if(trimToLoopEnd)
@@ -2564,7 +2564,7 @@ void CViewSample::PlayNote(ModCommand::NOTE note, const SmpLength nStartPos, int
 
 			m_dwStatus.set(SMPSTATUS_KEYDOWN);
 
-			CSoundFile &sndFile = pModDoc->GetrSoundFile();
+			CSoundFile &sndFile = pModDoc->GetSoundFile();
 			ModSample &sample = sndFile.GetSample(m_nSample);
 			uint32 freq = sndFile.GetFreqFromPeriod(sndFile.GetPeriodFromNote(note + (sndFile.GetType() == MOD_TYPE_XM ? sample.RelativeTone : 0), sample.nFineTune, sample.nC5Speed), sample.nC5Speed, 0);
 
@@ -2580,7 +2580,7 @@ void CViewSample::PlayNote(ModCommand::NOTE note, const SmpLength nStartPos, int
 
 void CViewSample::NoteOff(ModCommand::NOTE note)
 {
-	CSoundFile &sndFile = GetDocument()->GetrSoundFile();
+	CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	ModChannel &chn = sndFile.m_PlayState.Chn[noteChannel[note - NOTE_MIN]];
 	sndFile.KeyOff(&chn);
 	chn.dwFlags.set(CHN_NOTEFADE);
@@ -2617,7 +2617,7 @@ BOOL CViewSample::OnDragonDrop(BOOL bDoDrop, const DRAGONDROP *lpDropInfo)
 	BOOL bCanDrop = FALSE, bUpdate;
 
 	if ((!lpDropInfo) || (!pModDoc)) return FALSE;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	switch(lpDropInfo->dwDropType)
 	{
 	case DRAGONDROP_SAMPLE:
@@ -2780,7 +2780,7 @@ void CViewSample::OnSetLoopStart()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		SmpLength loopEnd = (sample.nLoopEnd > 0) ? sample.nLoopEnd : sample.nLength;
 		if ((m_dwMenuParam + 4 <= loopEnd) && (sample.nLoopStart != m_dwMenuParam))
@@ -2799,7 +2799,7 @@ void CViewSample::OnSetLoopEnd()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if ((m_dwMenuParam >= sample.nLoopStart + 4) && (sample.nLoopEnd != m_dwMenuParam))
 		{
@@ -2817,7 +2817,7 @@ void CViewSample::OnSetSustainStart()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		SmpLength sustainEnd = (sample.nSustainEnd > 0) ? sample.nSustainEnd : sample.nLength;
 		if ((m_dwMenuParam + 4 <= sustainEnd) && (sample.nSustainStart != m_dwMenuParam))
@@ -2836,7 +2836,7 @@ void CViewSample::OnSetSustainEnd()
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if ((m_dwMenuParam >= sample.nSustainStart + 4) && (sample.nSustainEnd != m_dwMenuParam))
 		{
@@ -2855,7 +2855,7 @@ void CViewSample::OnSetCuePoint(UINT nID)
 	CModDoc *pModDoc = GetDocument();
 	if (pModDoc)
 	{
-		CSoundFile &sndFile = pModDoc->GetrSoundFile();
+		CSoundFile &sndFile = pModDoc->GetSoundFile();
 		ModSample &sample = sndFile.GetSample(m_nSample);
 
 		SamplePropertyTransaction transaction(sndFile, m_nSample);
@@ -2882,7 +2882,7 @@ void CViewSample::OnDrawingToggle()
 {
 	const CModDoc *pModDoc = GetDocument();
 	if(!pModDoc) return;
-	const CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	const CSoundFile &sndFile = pModDoc->GetSoundFile();
 
 	const ModSample &sample = sndFile.GetSample(m_nSample);
 	if(sample.pSample == nullptr)
@@ -2903,7 +2903,7 @@ void CViewSample::OnAddSilence()
 {
 	CModDoc *pModDoc = GetDocument();
 	if (!pModDoc) return;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 
 	ModSample &sample = sndFile.GetSample(m_nSample);
 
@@ -2979,7 +2979,7 @@ LRESULT CViewSample::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 	uint8 midibyte1 = MIDIEvents::GetDataByte1FromEvent(dwMidiData);
 	uint8 midibyte2 = MIDIEvents::GetDataByte2FromEvent(dwMidiData);
 
-	CSoundFile *pSndFile = (pModDoc) ? pModDoc->GetSoundFile() : nullptr;
+	CSoundFile *pSndFile = (pModDoc) ? &pModDoc->GetSoundFile() : nullptr;
 	if (!pSndFile) return 0;
 
 	uint8 nNote = midibyte1 + NOTE_MIN;
@@ -3067,7 +3067,7 @@ LRESULT CViewSample::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 
 	CModDoc *pModDoc = GetDocument();
 	if (!pModDoc) return NULL;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 
 	switch(wParam)
 	{
@@ -3204,7 +3204,7 @@ void CViewSample::OnSampleSlice()
 {
 	CModDoc *pModDoc = GetDocument();
 	if(pModDoc == nullptr) return;
-	CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	ModSample &sample = sndFile.GetSample(m_nSample);
 	if(!sample.HasSampleData()) return;
 
@@ -3294,7 +3294,7 @@ int CViewSample::GetZoomLevel(SmpLength length) const
 
 void CViewSample::DoZoom(int direction, const CPoint &zoomPoint)
 {
-	const CSoundFile &sndFile = GetDocument()->GetrSoundFile();
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	// zoomOrder: Biggest to smallest zoom order.
 	int zoomOrder[(-MIN_ZOOM - 1) + (MAX_ZOOM + 1)];
 	for(int i = 2; i < -MIN_ZOOM + 1; ++i)
@@ -3367,7 +3367,7 @@ void CViewSample::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
 
 void CViewSample::OnChangeGridSize()
 {
-	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetrSoundFile().GetSample(m_nSample).nLength);
+	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetSoundFile().GetSample(m_nSample).nLength);
 	if(dlg.DoModal() == IDOK)
 	{
 		m_nGridSegments = dlg.m_nSegments;

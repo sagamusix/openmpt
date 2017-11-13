@@ -466,7 +466,7 @@ LRESULT CCtrlSamples::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
 		{
 			const DRAGONDROP *pDropInfo = (const DRAGONDROP *)lParam;
 			CSoundFile *pSndFile = (CSoundFile *)(pDropInfo->lDropParam);
-			if (pDropInfo->pModDoc) pSndFile = pDropInfo->pModDoc->GetSoundFile();
+			if (pDropInfo->pModDoc) pSndFile = &pDropInfo->pModDoc->GetSoundFile();
 			if (pSndFile) return OpenSample(*pSndFile, (SAMPLEINDEX)pDropInfo->dwDropItem) ? TRUE : FALSE;
 		}
 		break;
@@ -1117,7 +1117,7 @@ bool CCtrlSamples::InsertSample(bool duplicate, int8 *confirm)
 	if(smp != SAMPLEINDEX_INVALID)
 	{
 		SAMPLEINDEX nOldSmp = m_nSample;
-		CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+		CSoundFile &sndFile = m_modDoc.GetSoundFile();
 		SetCurrentSample(smp);
 
 		if(duplicate && nOldSmp >= 1 && nOldSmp <= sndFile.GetNumSamples())
@@ -2106,7 +2106,7 @@ public:
 
 	TimeStretchPitchShiftResult TimeStretch()
 	{
-		ModSample &sample = m_modDoc.GetrSoundFile().GetSample(m_sample);
+		ModSample &sample = m_modDoc.GetSoundFile().GetSample(m_sample);
 		const uint32 nSampleRate = sample.GetSampleRate(m_modDoc.GetModType());
 
 		if(!sample.HasSampleData()) return kAbort;
@@ -2293,7 +2293,7 @@ public:
 			MPT_ASSERT(soundtouch_isEmpty(handleSt) != 0);
 			MPT_ASSERT(nNewSampleLength >= outPos);
 
-			CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+			CSoundFile &sndFile = m_modDoc.GetSoundFile();
 			SampleDataTransaction transaction(sndFile, m_sample);
 			m_parent.PrepareUndo("Time Stretch", sundo_replace);
 			// Swap sample buffer pointer to new buffer, update song + sample data & free old sample buffer
@@ -2326,7 +2326,7 @@ public:
 
 	TimeStretchPitchShiftResult PitchShift()
 	{
-		ModSample &sample = m_modDoc.GetrSoundFile().GetSample(m_sample);
+		ModSample &sample = m_modDoc.GetSoundFile().GetSample(m_sample);
 
 		if(!sample.HasSampleData() || m_ratio < 0.5f || m_ratio > 2.0f)
 		{
@@ -2464,9 +2464,9 @@ public:
 
 		if(!m_abort)
 		{
-			SampleDataTransaction transaction(m_modDoc.GetrSoundFile(), m_sample);
+			SampleDataTransaction transaction(m_modDoc.GetSoundFile(), m_sample);
 			m_parent.PrepareUndo("Pitch Shift", sundo_replace);
-			ctrlSmp::ReplaceSample(sample, pNewSample, sample.nLength, m_modDoc.GetrSoundFile());
+			ctrlSmp::ReplaceSample(sample, pNewSample, sample.nLength, m_modDoc.GetSoundFile());
 		}
 
 		// Restore mouse cursor

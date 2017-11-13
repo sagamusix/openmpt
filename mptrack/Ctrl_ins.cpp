@@ -136,7 +136,7 @@ void CNoteMapWnd::SetCurrentInstrument(INSTRUMENTINDEX nIns)
 		if (nIns < MAX_INSTRUMENTS) m_nInstrument = nIns;
 
 		// create missing instrument if needed
-		CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+		CSoundFile &sndFile = m_modDoc.GetSoundFile();
 		if(m_nInstrument > 0 && m_nInstrument <= sndFile.GetNumInstruments() && sndFile.Instruments[m_nInstrument] == nullptr)
 		{
 			InstrumentTransaction tr(sndFile, m_nInstrument);
@@ -185,7 +185,7 @@ void CNoteMapWnd::OnPaint()
 	}
 	dc.IntersectClipRect(&rcClient);
 
-	const CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+	const CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	if (m_cxFont > 0 && m_cyFont > 0)
 	{
 		bool bFocus = (::GetFocus() == m_hWnd);
@@ -323,7 +323,7 @@ void CNoteMapWnd::OnRButtonDown(UINT, CPoint pt)
 	TCHAR s[64];
 	CInputHandler* ih = CMainFrame::GetInputHandler();
 
-	CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+	CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
 	if (pIns)
 	{
@@ -387,13 +387,13 @@ BOOL CNoteMapWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 void CNoteMapWnd::OnMapCopyNote()
 {
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 	if (pIns)
 	{
 		m_undo = true;
 		bool bModified = false;
 		auto n = pIns->NoteMap[m_nNote];
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		for (auto &key : pIns->NoteMap) if (key != n)
 		{
 			if(!bModified)
@@ -413,13 +413,13 @@ void CNoteMapWnd::OnMapCopyNote()
 
 void CNoteMapWnd::OnMapCopySample()
 {
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 	if (pIns)
 	{
 		m_undo = true;
 		bool bModified = false;
 		auto n = pIns->Keyboard[m_nNote];
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		for (auto &sample : pIns->Keyboard) if (sample != n)
 		{
 			if(!bModified)
@@ -440,12 +440,12 @@ void CNoteMapWnd::OnMapCopySample()
 
 void CNoteMapWnd::OnMapReset()
 {
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 	if (pIns)
 	{
 		m_undo = true;
 		bool bModified = false;
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		for (size_t i = 0; i < CountOf(pIns->NoteMap); i++) if (pIns->NoteMap[i] != i + 1)
 		{
 			if(!bModified)
@@ -466,12 +466,12 @@ void CNoteMapWnd::OnMapReset()
 
 void CNoteMapWnd::OnMapRemove()
 {
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 	if (pIns)
 	{
 		m_undo = true;
 		bool bModified = false;
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		for (auto &sample: pIns->Keyboard) if (sample != 0)
 		{
 			if(!bModified)
@@ -506,7 +506,7 @@ void CNoteMapWnd::MapTranspose(int nAmount)
 {
 	if(nAmount == 0 || m_modDoc.GetModType() == MOD_TYPE_XM) return;
 
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 	if((nAmount == 12 || nAmount == -12))
 	{
 		// Special case for instrument-specific tunings
@@ -517,7 +517,7 @@ void CNoteMapWnd::MapTranspose(int nAmount)
 	if (pIns)
 	{
 		bool bModified = false;
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		for(NOTEINDEXTYPE i = 0; i < NOTE_MAX; i++)
 		{
 			int n = pIns->NoteMap[i];
@@ -571,7 +571,7 @@ LRESULT CNoteMapWnd::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		return NULL;
 
 	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
-	ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+	ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 
 	// Handle notes
 
@@ -620,7 +620,7 @@ LRESULT CNoteMapWnd::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 
 void CNoteMapWnd::EnterNote(UINT note)
 {
-	CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+	CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
 	if ((pIns) && (m_nNote < NOTE_MAX))
 	{
@@ -651,7 +651,7 @@ void CNoteMapWnd::EnterNote(UINT note)
 
 bool CNoteMapWnd::HandleChar(WPARAM c)
 {
-	CSoundFile &sndFile = m_modDoc.GetrSoundFile();
+	CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	ModInstrument *pIns = sndFile.Instruments[m_nInstrument];
 	if ((pIns) && (m_nNote < NOTE_MAX))
 	{
@@ -674,7 +674,7 @@ bool CNoteMapWnd::HandleChar(WPARAM c)
 					PrepareUndo("Enter Instrument");
 					m_undo = false;
 				}
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->Keyboard[m_nNote] = static_cast<SAMPLEINDEX>(n);
 				m_pParent.SetModified(InstrumentHint().Info(), false);
 				InvalidateRect(NULL, FALSE);
@@ -713,7 +713,7 @@ bool CNoteMapWnd::HandleChar(WPARAM c)
 					m_undo = false;
 				}
 
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->NoteMap[m_nNote] = static_cast<ModCommand::NOTE>(n);
 				m_pParent.SetModified(InstrumentHint().Info(), false);
 				InvalidateRect(NULL, FALSE);
@@ -773,7 +773,7 @@ bool CNoteMapWnd::HandleNav(WPARAM k)
 // 		return true;
 	case VK_RETURN:
 		{
-			ModInstrument *pIns = m_modDoc.GetrSoundFile().Instruments[m_nInstrument];
+			ModInstrument *pIns = m_modDoc.GetSoundFile().Instruments[m_nInstrument];
 			if(pIns)
 			{
 				if (m_bIns)
@@ -1203,7 +1203,7 @@ LRESULT CCtrlInstruments::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
 		{
 			const DRAGONDROP *pDropInfo = (const DRAGONDROP *)lParam;
 			CSoundFile *pSndFile = (CSoundFile *)(pDropInfo->lDropParam);
-			if (pDropInfo->pModDoc) pSndFile = pDropInfo->pModDoc->GetSoundFile();
+			if (pDropInfo->pModDoc) pSndFile = &pDropInfo->pModDoc->GetSoundFile();
 			if (pSndFile) return OpenInstrument(*pSndFile, static_cast<INSTRUMENTINDEX>(pDropInfo->dwDropItem));
 		}
 		break;
@@ -1563,7 +1563,7 @@ bool CCtrlInstruments::OpenInstrument(const mpt::PathString &fileName)
 		}
 		if (!m_nInstrument) m_nInstrument = 1;
 		ScopedLogCapturer log(m_modDoc, "Instrument Import", this);
-		InstrumentReplaceTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentReplaceTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		PrepareUndo("Replace Instrument");
 		if (m_sndFile.ReadInstrumentFromFile(m_nInstrument, file, TrackerSettings::Instance().m_MayNormalizeSamplesOnLoad))
 		{
@@ -1644,7 +1644,7 @@ bool CCtrlInstruments::OpenInstrument(CSoundFile &sndFile, INSTRUMENTINDEX nInst
 		first = true;
 	}
 	PrepareUndo("Replace Instrument");
-	InstrumentReplaceTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+	InstrumentReplaceTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 	m_sndFile.ReadInstrumentFromSong(m_nInstrument, sndFile, nInstr);
 
 	cs.Leave();
@@ -2090,7 +2090,7 @@ void CCtrlInstruments::OnNameChanged()
 		if ((pIns) && (s != pIns->name))
 		{
 			if(!m_startedEdit) PrepareUndo("Set Name");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			mpt::String::Copy(pIns->name, s);
 			SetModified(InstrumentHint().Names(), false);
 		}
@@ -2109,7 +2109,7 @@ void CCtrlInstruments::OnFileNameChanged()
 		if ((pIns) && (s != pIns->filename))
 		{
 			if(!m_startedEdit) PrepareUndo("Set Filename");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			mpt::String::Copy(pIns->filename, s);
 			SetModified(InstrumentHint().Names(), false);
 		}
@@ -2130,7 +2130,7 @@ void CCtrlInstruments::OnFadeOutVolChanged()
 		if(nVol != (int)pIns->nFadeOut)
 		{
 			if(!m_startedEdit) PrepareUndo("Set Fade Out");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nFadeOut = nVol;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2148,7 +2148,7 @@ void CCtrlInstruments::OnGlobalVolChanged()
 		if (nVol != (int)pIns->nGlobalVol)
 		{
 			if(!m_startedEdit) PrepareUndo("Set Global Volume");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			// Live-adjust volume
 			pIns->nGlobalVol = nVol;
 			for(auto &chn : m_sndFile.m_PlayState.Chn)
@@ -2172,7 +2172,7 @@ void CCtrlInstruments::OnSetPanningChanged()
 		const bool b = m_CheckPanning.GetCheck() != BST_UNCHECKED;
 
 		PrepareUndo("Toggle Panning");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		pIns->dwFlags.set(INS_SETPANNING, b);
 
 		if(b && m_sndFile.GetType() & (MOD_TYPE_IT|MOD_TYPE_MPT))
@@ -2224,7 +2224,7 @@ void CCtrlInstruments::OnPanningChanged()
 		if (nPan != (int)pIns->nPan)
 		{
 			if(!m_startedEdit) PrepareUndo("Set Panning");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nPan = nPan;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2240,7 +2240,7 @@ void CCtrlInstruments::OnNNAChanged()
 		if (pIns->nNNA != m_ComboNNA.GetCurSel())
 		{
 			PrepareUndo("Set New Note Action");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nNNA = static_cast<uint8>(m_ComboNNA.GetCurSel());
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2256,7 +2256,7 @@ void CCtrlInstruments::OnDCTChanged()
 		if (pIns->nDCT != m_ComboDCT.GetCurSel())
 		{
 			PrepareUndo("Set Duplicate Check Type");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nDCT = static_cast<uint8>(m_ComboDCT.GetCurSel());
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2272,7 +2272,7 @@ void CCtrlInstruments::OnDCAChanged()
 		if (pIns->nDNA != m_ComboDCA.GetCurSel())
 		{
 			PrepareUndo("Set Duplicate Check Action");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nDNA = static_cast<uint8>(m_ComboDCA.GetCurSel());
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2291,7 +2291,7 @@ void CCtrlInstruments::OnMPRChanged()
 			if (pIns->nMidiProgram != n)
 			{
 				if(!m_startedEdit) PrepareUndo("Set MIDI Program");
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->nMidiProgram = static_cast<uint8>(n);
 				SetModified(InstrumentHint().Info(), false);
 			}
@@ -2338,7 +2338,7 @@ void CCtrlInstruments::OnMBKChanged()
 		if(w >= 0 && w <= 16384 && pIns->wMidiBank != w)
 		{
 			if(!m_startedEdit) PrepareUndo("Set MIDI Bank");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->wMidiBank = w;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2362,7 +2362,7 @@ void CCtrlInstruments::OnMCHChanged()
 		if(pIns->nMidiChannel != ch)
 		{
 			PrepareUndo("Set MIDI Channel");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nMidiChannel = ch;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2378,7 +2378,7 @@ void CCtrlInstruments::OnResamplingChanged()
 		if (pIns->nResampling != n)
 		{
 			PrepareUndo("Set Resampling");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nResampling = n;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2406,7 +2406,7 @@ void CCtrlInstruments::OnMixPlugChanged()
 			if (active && pIns->nMixPlug != nPlug)
 			{
 				PrepareUndo("Set Plugin");
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->nMixPlug = nPlug;
 				SetModified(InstrumentHint().Info(), false);
 			}
@@ -2494,7 +2494,7 @@ void CCtrlInstruments::OnPPSChanged()
 			if (pIns->nPPS != (signed char)n)
 			{
 				if(!m_startedEdit) PrepareUndo("Set Pitch/Pan Separation");
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->nPPS = (signed char)n;
 				SetModified(InstrumentHint().Info(), false);
 			}
@@ -2514,7 +2514,7 @@ void CCtrlInstruments::OnPPCChanged()
 			if (pIns->nPPC != n)
 			{
 				PrepareUndo("Set Pitch/Pan Center");
-				InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+				InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 				pIns->nPPC = n;
 				SetModified(InstrumentHint().Info(), false);
 			}
@@ -2536,7 +2536,7 @@ void CCtrlInstruments::OnAttackChanged()
 		if(pIns->nVolRampUp != newRamp)
 		{
 			if(!m_startedEdit) PrepareUndo("Set Ramping");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nVolRampUp = newRamp;
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -2558,7 +2558,7 @@ void CCtrlInstruments::OnEnableCutOff()
 	if (pIns)
 	{
 		PrepareUndo("Toggle Cutoff");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		pIns->SetCutoff(pIns->GetCutoff(), bCutOff);
 		for(auto &chn : m_sndFile.m_PlayState.Chn)
 		{
@@ -2585,7 +2585,7 @@ void CCtrlInstruments::OnEnableResonance()
 	if (pIns)
 	{
 		PrepareUndo("Toggle Resonance");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		pIns->SetResonance(pIns->GetResonance(), bReso);
 		for(auto &chn : m_sndFile.m_PlayState.Chn)
 		{
@@ -2613,7 +2613,7 @@ void CCtrlInstruments::OnFilterModeChanged()
 		if(pIns->nFilterMode != instFiltermode)
 		{
 			PrepareUndo("Set Filter Mode");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->nFilterMode = instFiltermode;
 			SetModified(InstrumentHint().Info(), false);
 
@@ -2664,7 +2664,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Ramping");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->nVolRampUp = n;
 					SetDlgItemInt(IDC_EDIT2,n);
 					SetModified(InstrumentHint().Info(), false);
@@ -2681,7 +2681,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Volume Random Variation");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->nVolSwing = static_cast<uint8>(n);
 					SetModified(InstrumentHint().Info(), false);
 				}
@@ -2697,7 +2697,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Panning Random Variation");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->nPanSwing = static_cast<uint8>(n);
 					SetModified(InstrumentHint().Info(), false);
 				}
@@ -2713,7 +2713,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Cutoff Random Variation");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->nCutSwing = static_cast<uint8>(n);
 					SetModified(InstrumentHint().Info(), false);
 				}
@@ -2729,7 +2729,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Resonance Random Variation");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->nResSwing = static_cast<uint8>(n);
 					SetModified(InstrumentHint().Info(), false);
 				}
@@ -2745,7 +2745,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Cutoff");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->SetCutoff(static_cast<uint8>(n), pIns->IsCutoffEnabled());
 					SetModified(InstrumentHint().Info(), false);
 					UpdateFilterText();
@@ -2763,7 +2763,7 @@ void CCtrlInstruments::OnHScroll(UINT nCode, UINT nPos, CScrollBar *pSB)
 						PrepareUndo("Set Resonance");
 						m_startedHScroll = true;
 					}
-					InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+					InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 					pIns->SetResonance(static_cast<uint8>(n), pIns->IsResonanceEnabled());
 					SetModified(InstrumentHint().Info(), false);
 					UpdateFilterText();
@@ -2880,7 +2880,7 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 	{
 		CriticalSection cs;
 		PrepareUndo("Reset Tuning");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		instr->SetTuning(nullptr);
 		cs.Leave();
 
@@ -2894,7 +2894,7 @@ void CCtrlInstruments::OnCbnSelchangeCombotuning()
 	{
 		CriticalSection cs;
 		PrepareUndo("Set Tuning");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		instr->SetTuning(&m_sndFile.GetTuneSpecificTunings().GetTuning(sel));
 		cs.Leave();
 
@@ -2960,7 +2960,7 @@ void CCtrlInstruments::OnPluginVelocityHandlingChanged()
 		if(n != pIns->nPluginVelocityHandling)
 		{
 			PrepareUndo("Set Velocity Handling");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			if(n == PLUGIN_VELOCITYHANDLING_VOLUME && m_CbnPluginVolumeHandling.GetCurSel() == PLUGIN_VOLUMEHANDLING_IGNORE)
 			{
 				// This combination doesn't make sense.
@@ -2983,7 +2983,7 @@ void CCtrlInstruments::OnPluginVolumeHandlingChanged()
 		if(n != pIns->nPluginVolumeHandling)
 		{
 			PrepareUndo("Set Volume Handling");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 
 			if(velocityStyle.GetCheck() == BST_UNCHECKED && n == PLUGIN_VOLUMEHANDLING_IGNORE)
 			{
@@ -3010,7 +3010,7 @@ void CCtrlInstruments::OnPitchWheelDepthChanged()
 		if(pwd != pIns->midiPWD)
 		{
 			if(!m_startedEdit) PrepareUndo("Set Pitch Wheel Depth");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			pIns->midiPWD = static_cast<int8>(pwd);
 			SetModified(InstrumentHint().Info(), false);
 		}
@@ -3052,7 +3052,7 @@ void CCtrlInstruments::OnBnClickedCheckPitchtempolock()
 		if(m_sndFile.Instruments[i] != nullptr && (m_sndFile.Instruments[i]->pitchToTempoLock.GetRaw() == 0) == isZero)
 		{
 			m_modDoc.GetInstrumentUndo().PrepareUndo(i, "Set Pitch/Tempo Lock");
-			InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+			InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 			m_sndFile.Instruments[i]->pitchToTempoLock = ptl;
 			m_modDoc.SetModified();
 		}
@@ -3072,7 +3072,7 @@ void CCtrlInstruments::OnEnChangeEditPitchTempoLock()
 	if(m_sndFile.Instruments[m_nInstrument]->pitchToTempoLock != ptlTempo)
 	{
 		if(!m_startedEdit) PrepareUndo("Set Pitch/Tempo Lock");
-		InstrumentTransaction transaction(m_modDoc.GetrSoundFile(), m_nInstrument);
+		InstrumentTransaction transaction(m_modDoc.GetSoundFile(), m_nInstrument);
 		m_sndFile.Instruments[m_nInstrument]->pitchToTempoLock = ptlTempo;
 		m_modDoc.SetModified();	// Only update other views after killing focus
 	}

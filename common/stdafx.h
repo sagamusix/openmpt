@@ -60,9 +60,9 @@ struct IUnknown;
 // this will be available everywhere
 
 #include "../common/typedefs.h"
+// <limits>
 // <memory>
 // <new>
-// <climits>
 // <cstddef>
 // <cstdint>
 // <stdint.h>

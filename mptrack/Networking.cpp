@@ -440,7 +440,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 				if(current < maximum)
 				{
-					CSoundFile &sndFile = modDoc->GetrSoundFile();
+					CSoundFile &sndFile = modDoc->GetSoundFile();
 					sndFile.SaveMixPlugins();
 					ar(ConnectOKMsg, join.accessType, sndFile, mpt::ToCharset(mpt::CharsetUTF8, modDoc->GetTitle()), source->m_id);
 					doc.m_connections.push_back(source);
@@ -557,7 +557,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 		{
 			ar(type, source->m_id);
 			auto &doc = m_documents.at(modDoc);
-			auto &sndFile = modDoc->GetrSoundFile();
+			auto &sndFile = modDoc->GetSoundFile();
 			switch(type)
 			{
 			case PatternTransactionMsg:
@@ -813,7 +813,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 
 				case InsertInstrumentMsg:
 				{
-					INSTRUMENTINDEX ins = modDoc->GetrSoundFile().GetNextFreeInstrument();
+					INSTRUMENTINDEX ins = modDoc->GetSoundFile().GetNextFreeInstrument();
 					if(ins != INSTRUMENTINDEX_INVALID)
 					{
 						std::ostringstream ssoRet;

@@ -533,7 +533,7 @@ void CViewPattern::OnDraw(CDC *pDC)
 	HPEN oldpen = SelectPen(hdc, CMainFrame::penDarkGray);
 	CHANNELINDEX xofs = static_cast<CHANNELINDEX>(GetXScrollPos());
 	ROWINDEX yofs = static_cast<ROWINDEX>(GetYScrollPos());
-	const CSoundFile &sndFile = pModDoc->GetrSoundFile();
+	const CSoundFile &sndFile = pModDoc->GetSoundFile();
 	UINT nColumnWidth = m_szCell.cx;
 	UINT ncols = sndFile.GetNumChannels();
 	int xpaint = m_szHeader.cx;
@@ -764,7 +764,7 @@ void CViewPattern::DrawPatternData(HDC hdc, PATTERNINDEX nPattern, bool selEnabl
 	uint8 selectedColsCollabColor[MAX_BASECHANNELS][PatternCursor::lastColumn + 1];
 	static_assert(PatternCursor::lastColumn <= 7, "Columns are used as bitmasks here.");
 
-	const CSoundFile &sndFile = GetDocument()->GetrSoundFile();
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	if(!sndFile.Patterns.IsValidPat(nPattern))
 	{
 		return;

@@ -390,7 +390,8 @@ static std::string StringFormat(const char *format, T x)
 
 #endif
 
-static void TestFloatFormat(double x, const char * format, mpt::FormatFlags f, std::size_t width = 0, int precision = -1)
+template <typename Tfloat>
+static void TestFloatFormat(Tfloat x, const char * format, mpt::FormatFlags f, std::size_t width = 0, int precision = -1)
 {
 #ifdef MODPLUG_TRACKER
 	std::string str_sprintf = StringFormat(format, x);
@@ -407,7 +408,8 @@ static void TestFloatFormat(double x, const char * format, mpt::FormatFlags f, s
 }
 
 
-static void TestFloatFormats(double x)
+template <typename Tfloat>
+static void TestFloatFormats(Tfloat x)
 {
 
 	TestFloatFormat(x, "%g", mpt::fmt::NotaNrm | mpt::fmt::FillOff);
@@ -533,6 +535,17 @@ static MPT_NOINLINE void TestStringFormatting()
 	TestFloatFormats(0.0000000001f);
 	TestFloatFormats(-0.0000000001f);
 	TestFloatFormats(6.12345f);
+
+	TestFloatFormats(0.0);
+	TestFloatFormats(1.0);
+	TestFloatFormats(-1.0);
+	TestFloatFormats(0.1);
+	TestFloatFormats(-0.1);
+	TestFloatFormats(1000000000.0);
+	TestFloatFormats(-1000000000.0);
+	TestFloatFormats(0.0000000001);
+	TestFloatFormats(-0.0000000001);
+	TestFloatFormats(6.12345);
 
 	TestFloatFormats(42.1234567890);
 	TestFloatFormats(0.1234567890);
@@ -678,10 +691,10 @@ static MPT_NOINLINE void TestMisc1()
 	VERIFY_EQUAL(DecodeIEEE754binary32(0x3f800000u),  1.0f);
 	VERIFY_EQUAL(IEEE754binary32LE(1.0f).GetInt32(), 0x3f800000u);
 	VERIFY_EQUAL(IEEE754binary32BE(1.0f).GetInt32(), 0x3f800000u);
-	VERIFY_EQUAL(IEEE754binary32LE(0x00,0x00,0x80,0x3f), 1.0f);
-	VERIFY_EQUAL(IEEE754binary32BE(0x3f,0x80,0x00,0x00), 1.0f);
-	VERIFY_EQUAL(IEEE754binary32LE(1.0f), IEEE754binary32LE(0x00,0x00,0x80,0x3f));
-	VERIFY_EQUAL(IEEE754binary32BE(1.0f), IEEE754binary32BE(0x3f,0x80,0x00,0x00));
+	VERIFY_EQUAL(IEEE754binary32LE(mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x80),mpt::as_byte(0x3f)), 1.0f);
+	VERIFY_EQUAL(IEEE754binary32BE(mpt::as_byte(0x3f),mpt::as_byte(0x80),mpt::as_byte(0x00),mpt::as_byte(0x00)), 1.0f);
+	VERIFY_EQUAL(IEEE754binary32LE(1.0f), IEEE754binary32LE(mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x80),mpt::as_byte(0x3f)));
+	VERIFY_EQUAL(IEEE754binary32BE(1.0f), IEEE754binary32BE(mpt::as_byte(0x3f),mpt::as_byte(0x80),mpt::as_byte(0x00),mpt::as_byte(0x00)));
 
 	VERIFY_EQUAL(EncodeIEEE754binary64(1.0), 0x3ff0000000000000ull);
 	VERIFY_EQUAL(EncodeIEEE754binary64(-1.0), 0xbff0000000000000ull);
@@ -695,10 +708,10 @@ static MPT_NOINLINE void TestMisc1()
 	VERIFY_EQUAL(DecodeIEEE754binary64(0x3ff0000000000000ull),  1.0);
 	VERIFY_EQUAL(IEEE754binary64LE(1.0).GetInt64(), 0x3ff0000000000000ull);
 	VERIFY_EQUAL(IEEE754binary64BE(1.0).GetInt64(), 0x3ff0000000000000ull);
-	VERIFY_EQUAL(IEEE754binary64LE(0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x3f), 1.0);
-	VERIFY_EQUAL(IEEE754binary64BE(0x3f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00), 1.0);
-	VERIFY_EQUAL(IEEE754binary64LE(1.0), IEEE754binary64LE(0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x3f));
-	VERIFY_EQUAL(IEEE754binary64BE(1.0), IEEE754binary64BE(0x3f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00));
+	VERIFY_EQUAL(IEEE754binary64LE(mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0xf0),mpt::as_byte(0x3f)), 1.0);
+	VERIFY_EQUAL(IEEE754binary64BE(mpt::as_byte(0x3f),mpt::as_byte(0xf0),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00)), 1.0);
+	VERIFY_EQUAL(IEEE754binary64LE(1.0), IEEE754binary64LE(mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0xf0),mpt::as_byte(0x3f)));
+	VERIFY_EQUAL(IEEE754binary64BE(1.0), IEEE754binary64BE(mpt::as_byte(0x3f),mpt::as_byte(0xf0),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00),mpt::as_byte(0x00)));
 
 	// Packed integers with defined endianness
 	{
@@ -1303,7 +1316,7 @@ static MPT_NOINLINE void TestMisc2()
 	mpt::byte uuiddata[16];
 	for(std::size_t i = 0; i < 16; ++i)
 	{
-		uuiddata[i] = static_cast<uint8>(i);
+		uuiddata[i] = mpt::byte_cast<mpt::byte>(static_cast<uint8>(i));
 	}
 	STATIC_ASSERT(sizeof(mpt::UUID) == 16);
 	UUIDbin uuid2;
@@ -1732,10 +1745,10 @@ static MPT_NOINLINE void TestMisc2()
 
 	{
 		std::vector<mpt::byte> data;
-		data.push_back(0);
-		data.push_back(255);
-		data.push_back(1);
-		data.push_back(2);
+		data.push_back(mpt::as_byte(0));
+		data.push_back(mpt::as_byte(255));
+		data.push_back(mpt::as_byte(1));
+		data.push_back(mpt::as_byte(2));
 		mpt::PathString fn = GetTempFilenameBase() + MPT_PATHSTRING("lazy");
 		RemoveFile(fn);
 		mpt::LazyFileRef f(fn);
@@ -3321,9 +3334,9 @@ static mpt::PathString GetTempFilenameBase()
 
 typedef CModDoc *TSoundFileContainer;
 
-static CSoundFile &GetrSoundFile(TSoundFileContainer &sndFile)
+static CSoundFile &GetSoundFile(TSoundFileContainer &sndFile)
 {
-	return sndFile->GetrSoundFile();
+	return sndFile->GetSoundFile();
 }
 
 
@@ -3378,7 +3391,7 @@ static mpt::PathString GetTempFilenameBase()
 
 typedef std::shared_ptr<CSoundFile> TSoundFileContainer;
 
-static CSoundFile &GetrSoundFile(TSoundFileContainer &sndFile)
+static CSoundFile &GetSoundFile(TSoundFileContainer &sndFile)
 {
 	return *sndFile.get();
 }
@@ -3440,11 +3453,11 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBaseSrc + MPT_PATHSTRING("mptm"));
 
-		TestLoadMPTMFile(GetrSoundFile(sndFileContainer));
+		TestLoadMPTMFile(GetSoundFile(sndFileContainer));
 
 		#ifndef MODPLUG_NO_FILESAVE
 			// Test file saving
-			GetrSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
+			GetSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
 			SaveIT(sndFileContainer, filenameBase + MPT_PATHSTRING("saved.mptm"));
 		#endif
 
@@ -3456,7 +3469,7 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBase + MPT_PATHSTRING("saved.mptm"));
 
-		TestLoadMPTMFile(GetrSoundFile(sndFileContainer));
+		TestLoadMPTMFile(GetSoundFile(sndFileContainer));
 
 		DestroySoundFileContainer(sndFileContainer);
 
@@ -3468,19 +3481,19 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBaseSrc + MPT_PATHSTRING("xm"));
 
-		TestLoadXMFile(GetrSoundFile(sndFileContainer));
+		TestLoadXMFile(GetSoundFile(sndFileContainer));
 
 		// In OpenMPT 1.20 (up to revision 1459), there was a bug in the XM saver
 		// that would create broken XMs if the sample map contained samples that
 		// were only referenced below C-1 or above B-8 (such samples should not
 		// be written). Let's insert a sample there and check if re-loading the
 		// file still works.
-		GetrSoundFile(sndFileContainer).m_nSamples++;
-		GetrSoundFile(sndFileContainer).Instruments[1]->Keyboard[110] = GetrSoundFile(sndFileContainer).GetNumSamples();
+		GetSoundFile(sndFileContainer).m_nSamples++;
+		GetSoundFile(sndFileContainer).Instruments[1]->Keyboard[110] = GetSoundFile(sndFileContainer).GetNumSamples();
 
 		#ifndef MODPLUG_NO_FILESAVE
 			// Test file saving
-			GetrSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
+			GetSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
 			SaveXM(sndFileContainer, filenameBase + MPT_PATHSTRING("saved.xm"));
 		#endif
 
@@ -3492,7 +3505,7 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBase + MPT_PATHSTRING("saved.xm"));
 
-		TestLoadXMFile(GetrSoundFile(sndFileContainer));
+		TestLoadXMFile(GetSoundFile(sndFileContainer));
 
 		DestroySoundFileContainer(sndFileContainer);
 
@@ -3504,11 +3517,11 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBaseSrc + MPT_PATHSTRING("s3m"));
 
-		TestLoadS3MFile(GetrSoundFile(sndFileContainer), false);
+		TestLoadS3MFile(GetSoundFile(sndFileContainer), false);
 
 		#ifndef MODPLUG_NO_FILESAVE
 			// Test file saving
-			GetrSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
+			GetSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
 			SaveS3M(sndFileContainer, filenameBase + MPT_PATHSTRING("saved.s3m"));
 		#endif
 
@@ -3520,7 +3533,7 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBase + MPT_PATHSTRING("saved.s3m"));
 
-		TestLoadS3MFile(GetrSoundFile(sndFileContainer), true);
+		TestLoadS3MFile(GetSoundFile(sndFileContainer), true);
 
 		DestroySoundFileContainer(sndFileContainer);
 
@@ -3574,7 +3587,7 @@ static MPT_NOINLINE void TestEditing()
 {
 #ifdef MODPLUG_TRACKER
 	auto modDoc = static_cast<CModDoc *>(theApp.GetModDocTemplate()->CreateNewDocument());
-	auto &sndFile = modDoc->GetrSoundFile();
+	auto &sndFile = modDoc->GetSoundFile();
 	sndFile.Create(FileReader(), CSoundFile::loadCompleteModule, modDoc);
 	sndFile.m_nChannels = 4;
 	sndFile.ChangeModTypeTo(MOD_TYPE_MPT);
@@ -4186,10 +4199,10 @@ static MPT_NOINLINE void TestSampleConversion()
 		for(size_t i = 0; i < 65536; i++)
 		{
 			IEEE754binary32BE floatbits = IEEE754binary32BE((static_cast<float>(i) / 65536.0f) - 0.5f);
-			source32[i * 4 + 0] = floatbits.GetByte(0);
-			source32[i * 4 + 1] = floatbits.GetByte(1);
-			source32[i * 4 + 2] = floatbits.GetByte(2);
-			source32[i * 4 + 3] = floatbits.GetByte(3);
+			source32[i * 4 + 0] = mpt::byte_cast<uint8>(floatbits.GetByte(0));
+			source32[i * 4 + 1] = mpt::byte_cast<uint8>(floatbits.GetByte(1));
+			source32[i * 4 + 2] = mpt::byte_cast<uint8>(floatbits.GetByte(2));
+			source32[i * 4 + 3] = mpt::byte_cast<uint8>(floatbits.GetByte(3));
 		}
 
 		int16 *truncated16 = static_cast<int16 *>(targetBuf);

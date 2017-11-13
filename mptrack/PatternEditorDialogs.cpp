@@ -119,7 +119,7 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 	CComboBox *combo;
 	CDialog::OnInitDialog();
 	combo = (CComboBox *)GetDlgItem(IDC_COMBO1);
-	const CSoundFile &sndFile = modDoc.GetrSoundFile();
+	const CSoundFile &sndFile = modDoc.GetSoundFile();
 
 	if(m_nPattern < sndFile.Patterns.Size() && combo)
 	{
@@ -177,7 +177,7 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 
 void CPatternPropertiesDlg::OnHalfRowNumber()
 {
-	const CSoundFile &sndFile = modDoc.GetrSoundFile();
+	const CSoundFile &sndFile = modDoc.GetSoundFile();
 
 	UINT nRows = GetDlgItemInt(IDC_COMBO1, NULL, FALSE);
 	nRows /= 2;
@@ -189,7 +189,7 @@ void CPatternPropertiesDlg::OnHalfRowNumber()
 
 void CPatternPropertiesDlg::OnDoubleRowNumber()
 {
-	const CSoundFile &sndFile = modDoc.GetrSoundFile();
+	const CSoundFile &sndFile = modDoc.GetSoundFile();
 
 	UINT nRows = GetDlgItemInt(IDC_COMBO1, NULL, FALSE);
 	nRows *= 2;
@@ -203,13 +203,13 @@ void CPatternPropertiesDlg::OnOverrideSignature()
 {
 	GetDlgItem(IDC_ROWSPERBEAT)->EnableWindow(IsDlgButtonChecked(IDC_CHECK1));
 	GetDlgItem(IDC_ROWSPERMEASURE)->EnableWindow(IsDlgButtonChecked(IDC_CHECK1));
-	GetDlgItem(IDC_BUTTON1)->EnableWindow(IsDlgButtonChecked(IDC_CHECK1) && modDoc.GetrSoundFile().m_nTempoMode == tempoModeModern);
+	GetDlgItem(IDC_BUTTON1)->EnableWindow(IsDlgButtonChecked(IDC_CHECK1) && modDoc.GetSoundFile().m_nTempoMode == tempoModeModern);
 }
 
 
 void CPatternPropertiesDlg::OnTempoSwing()
 {
-	CPattern &pat = modDoc.GetrSoundFile().Patterns[m_nPattern];
+	CPattern &pat = modDoc.GetSoundFile().Patterns[m_nPattern];
 	const ROWINDEX oldRPB = pat.GetRowsPerBeat();
 	const ROWINDEX oldRPM = pat.GetRowsPerMeasure();
 
@@ -219,7 +219,7 @@ void CPatternPropertiesDlg::OnTempoSwing()
 	pat.SetSignature(newRPB, newRPM);
 
 	m_tempoSwing.resize(newRPB, TempoSwing::Unity);
-	CTempoSwingDlg dlg(this, m_tempoSwing, modDoc.GetrSoundFile(), m_nPattern);
+	CTempoSwingDlg dlg(this, m_tempoSwing, modDoc.GetSoundFile(), m_nPattern);
 	if(dlg.DoModal() == IDOK)
 	{
 		m_tempoSwing = dlg.m_tempoSwing;
@@ -230,7 +230,7 @@ void CPatternPropertiesDlg::OnTempoSwing()
 
 void CPatternPropertiesDlg::OnOK()
 {
-	CSoundFile &sndFile = modDoc.GetrSoundFile();
+	CSoundFile &sndFile = modDoc.GetSoundFile();
 	CPattern &pattern = sndFile.Patterns[m_nPattern];
 	// Update pattern signature if necessary
 	if(sndFile.GetModSpecifications().hasPatternSignatures)
@@ -1272,7 +1272,7 @@ void QuickChannelProperties::UpdateDisplay()
 {
 	// Set up channel properties
 	visible = false;
-	const ModChannelSettings &settings = document->GetSoundFile()->ChnSettings[channel];
+	const ModChannelSettings &settings = document->GetSoundFile().ChnSettings[channel];
 	SetDlgItemInt(IDC_EDIT1, settings.nVolume, FALSE);
 	SetDlgItemInt(IDC_EDIT2, settings.nPan, FALSE);
 	volSlider.SetPos(settings.nVolume);
@@ -1284,7 +1284,7 @@ void QuickChannelProperties::UpdateDisplay()
 	wsprintf(description, _T("Channel %d:"), channel + 1);
 	SetDlgItemText(IDC_STATIC_CHANNEL_NAME, description);
 	nameEdit.LimitText(MAX_CHANNELNAME - 1);
-	nameEdit.SetWindowText(mpt::ToCString(document->GetSoundFile()->GetCharsetInternal(), settings.szName));
+	nameEdit.SetWindowText(mpt::ToCString(document->GetSoundFile().GetCharsetInternal(), settings.szName));
 
 	settingsChanged = false;
 	visible = true;
@@ -1314,7 +1314,7 @@ void QuickChannelProperties::OnVolChanged()
 	uint16 volume = static_cast<uint16>(GetDlgItemInt(IDC_EDIT1));
 	if(volume >= 0 && volume <= 64)
 	{
-		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+		ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 		PrepareUndo();
 		document->SetChannelGlobalVolume(channel, volume);
 		volSlider.SetPos(volume);
@@ -1333,7 +1333,7 @@ void QuickChannelProperties::OnPanChanged()
 	uint16 panning = static_cast<uint16>(GetDlgItemInt(IDC_EDIT2));
 	if(panning >= 0 && panning <= 256)
 	{
-		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+		ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 		PrepareUndo();
 		document->SetChannelDefaultPan(channel, panning);
 		panSlider.SetPos(panning / 4u);
@@ -1357,7 +1357,7 @@ void QuickChannelProperties::OnHScroll(UINT, UINT, CScrollBar *bar)
 	if(bar == reinterpret_cast<CScrollBar *>(&volSlider))
 	{
 		uint16 pos = static_cast<uint16>(volSlider.GetPos());
-		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+		ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 		PrepareUndo();
 		if(document->SetChannelGlobalVolume(channel, pos))
 		{
@@ -1369,7 +1369,7 @@ void QuickChannelProperties::OnHScroll(UINT, UINT, CScrollBar *bar)
 	if(bar == reinterpret_cast<CScrollBar *>(&panSlider))
 	{
 		uint16 pos = static_cast<uint16>(panSlider.GetPos());
-		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+		ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 		PrepareUndo();
 		if(document->SetChannelDefaultPan(channel, pos * 4u))
 		{
@@ -1405,7 +1405,7 @@ void QuickChannelProperties::OnSurroundChanged()
 		return;
 	}
 
-	ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+	ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 	PrepareUndo();
 	document->SurroundChannel(channel, IsDlgButtonChecked(IDC_CHECK2) != BST_UNCHECKED);
 	document->UpdateAllViews(nullptr, GeneralHint(channel).Channels());
@@ -1420,14 +1420,14 @@ void QuickChannelProperties::OnNameChanged()
 		return;
 	}
 	
-	ModChannelSettings &settings = document->GetrSoundFile().ChnSettings[channel];
+	ModChannelSettings &settings = document->GetSoundFile().ChnSettings[channel];
 	CString newNameTmp;
 	nameEdit.GetWindowText(newNameTmp);
-	std::string newName = mpt::ToCharset(document->GetrSoundFile().GetCharsetInternal(), newNameTmp);
+	std::string newName = mpt::ToCharset(document->GetSoundFile().GetCharsetInternal(), newNameTmp);
 
 	if(newName != settings.szName)
 	{
-		ChannelSettingsTransaction tr(document->GetrSoundFile(), channel);
+		ChannelSettingsTransaction tr(document->GetSoundFile(), channel);
 		PrepareUndo();
 		mpt::String::Copy(settings.szName, newName);
 		document->SetModified();

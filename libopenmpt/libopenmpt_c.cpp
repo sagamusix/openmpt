@@ -50,10 +50,7 @@ public:
 	logfunc_logger( openmpt_log_func func, void * user ) : m_logfunc(func), m_user(user) {
 		return;
 	}
-	virtual ~logfunc_logger() {
-		return;
-	}
-	virtual void log( const std::string & message ) const {
+	void log( const std::string & message ) const override  {
 		if ( m_logfunc ) {
 			m_logfunc( message.c_str(), m_user );
 		} else {
@@ -71,7 +68,7 @@ public:
 	{
 		return;
 	}
-	virtual ~invalid_module_pointer() throw() {
+	virtual ~invalid_module_pointer() noexcept {
 		return;
 	}
 };
@@ -83,7 +80,7 @@ public:
 	{
 		return;
 	}
-	virtual ~argument_null_pointer() throw() {
+	virtual ~argument_null_pointer() noexcept {
 		return;
 	}
 };
@@ -244,7 +241,7 @@ static void do_report_exception( const char * const function, openmpt_log_func c
 				openmpt_log_func_default( message.c_str(), NULL );
 			}
 		} catch ( ... ) {
-			fprintf( stderr, "openmpt: %s:%i: UNKNOWN INTERNAL ERROR in error handling: function='%s', logfunc=%p, loguser=%p, errfunc=%p, erruser=%p, impl=%p\n", __FILE__, static_cast<int>( __LINE__ ), function ? function : "", logfunc, loguser, errfunc, erruser, impl );
+			fprintf( stderr, "openmpt: %s:%i: UNKNOWN INTERNAL ERROR in error handling: function='%s', logfunc=%p, loguser=%p, errfunc=%p, erruser=%p, impl=%p\n", __FILE__, static_cast<int>( __LINE__ ), function ? function : "", reinterpret_cast<void*>( logfunc ), loguser, reinterpret_cast<void*>( errfunc ), erruser, static_cast<void*>( impl ) );
 			fflush( stderr );
 		}
 	}

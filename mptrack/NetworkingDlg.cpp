@@ -217,7 +217,7 @@ LRESULT NetworkingDlg::OnOpenDocument(WPARAM wParam, LPARAM /*lParam*/)
 	auto pTemplate = theApp.GetModDocTemplate();
 	auto modDoc = static_cast<CModDoc *>(pTemplate->CreateNewDocument());
 	modDoc->OnNewDocument();
-	CSoundFile &sndFile = modDoc->GetrSoundFile();
+	CSoundFile &sndFile = modDoc->GetSoundFile();
 	std::string title;
 	uint32 accessType;
 	inArchive(accessType, sndFile, title, m_client->GetConnection()->m_id);

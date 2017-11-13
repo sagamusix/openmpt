@@ -17,6 +17,7 @@
 #include "../common/mptTypeTraits.h"
 #include "../common/Endianness.h"
 #include <algorithm>
+#include <array>
 #include <iosfwd>
 #include <limits>
 #include <cstring>
@@ -207,12 +208,29 @@ inline bool WritePartial(Tfile & f, const T & v, size_t size = sizeof(T))
 	return IO::WriteRaw(f, mpt::as_raw_memory(v), size);
 }
 
+template <typename Tfile>
+inline bool ReadByte(Tfile & f, mpt::byte & v)
+{
+	bool result = false;
+	mpt::byte byte = mpt::as_byte(0);
+	const IO::Offset readResult = IO::ReadRaw(f, &byte, sizeof(mpt::byte));
+	if(readResult < 0)
+	{
+		result = false;
+	} else
+	{
+		result = (static_cast<uint64>(readResult) == sizeof(mpt::byte));
+	}
+	v = byte;
+	return result;
+}
+
 template <typename T, typename Tfile>
 inline bool ReadBinaryTruncatedLE(Tfile & f, T & v, std::size_t size)
 {
 	bool result = false;
 	MPT_STATIC_ASSERT(std::numeric_limits<T>::is_integer);
-	mpt::byte bytes[sizeof(T)];
+	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
 	const IO::Offset readResult = IO::ReadRaw(f, bytes, std::min(size, sizeof(T)));
 	if(readResult < 0)
@@ -234,7 +252,7 @@ inline bool ReadIntLE(Tfile & f, T & v)
 {
 	bool result = false;
 	STATIC_ASSERT(std::numeric_limits<T>::is_integer);
-	mpt::byte bytes[sizeof(T)];
+	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
 	const IO::Offset readResult = IO::ReadRaw(f, bytes, sizeof(T));
 	if(readResult < 0)
@@ -255,7 +273,7 @@ inline bool ReadIntBE(Tfile & f, T & v)
 {
 	bool result = false;
 	STATIC_ASSERT(std::numeric_limits<T>::is_integer);
-	mpt::byte bytes[sizeof(T)];
+	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
 	const IO::Offset readResult = IO::ReadRaw(f, bytes, sizeof(T));
 	if(readResult < 0)
@@ -275,17 +293,17 @@ template <typename Tfile>
 inline bool ReadAdaptiveInt16LE(Tfile & f, uint16 & v)
 {
 	bool result = true;
-	mpt::byte byte = 0;
+	uint8 byte = 0;
 	std::size_t additionalBytes = 0;
 	v = 0;
 	byte = 0;
-	if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+	if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 	additionalBytes = (byte & 0x01);
 	v = byte >> 1;
 	for(std::size_t i = 0; i < additionalBytes; ++i)
 	{
 		byte = 0;
-		if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+		if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 		v |= (static_cast<uint16>(byte) << (((i+1)*8) - 1));
 	}
 	return result;
@@ -295,17 +313,17 @@ template <typename Tfile>
 inline bool ReadAdaptiveInt32LE(Tfile & f, uint32 & v)
 {
 	bool result = true;
-	mpt::byte byte = 0;
+	uint8 byte = 0;
 	std::size_t additionalBytes = 0;
 	v = 0;
 	byte = 0;
-	if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+	if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 	additionalBytes = (byte & 0x03);
 	v = byte >> 2;
 	for(std::size_t i = 0; i < additionalBytes; ++i)
 	{
 		byte = 0;
-		if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+		if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 		v |= (static_cast<uint32>(byte) << (((i+1)*8) - 2));
 	}
 	return result;
@@ -315,17 +333,17 @@ template <typename Tfile>
 inline bool ReadAdaptiveInt64LE(Tfile & f, uint64 & v)
 {
 	bool result = true;
-	mpt::byte byte = 0;
+	uint8 byte = 0;
 	std::size_t additionalBytes = 0;
 	v = 0;
 	byte = 0;
-	if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+	if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 	additionalBytes = (1 << (byte & 0x03)) - 1;
 	v = byte >> 2;
 	for(std::size_t i = 0; i < additionalBytes; ++i)
 	{
 		byte = 0;
-		if(!IO::ReadIntLE<mpt::byte>(f, byte)) result = false;
+		if(!IO::ReadIntLE<uint8>(f, byte)) result = false;
 		v |= (static_cast<uint64>(byte) << (((i+1)*8) - 2));
 	}
 	return result;
@@ -554,9 +572,9 @@ class IFileDataContainer {
 public:
 	typedef std::size_t off_t;
 protected:
-	IFileDataContainer() { }
+	IFileDataContainer() = default;
 public:
-	virtual ~IFileDataContainer() { }
+	virtual ~IFileDataContainer() = default;
 public:
 	virtual bool IsValid() const = 0;
 	virtual bool HasFastGetLength() const = 0;
@@ -594,33 +612,32 @@ public:
 class FileDataContainerDummy : public IFileDataContainer {
 public:
 	FileDataContainerDummy() { }
-	virtual ~FileDataContainerDummy() { }
 public:
-	bool IsValid() const
+	bool IsValid() const override
 	{
 		return false;
 	}
 
-	bool HasFastGetLength() const
+	bool HasFastGetLength() const override
 	{
 		return true;
 	}
 
-	bool HasPinnedView() const
+	bool HasPinnedView() const override
 	{
 		return true;
 	}
 
-	const mpt::byte *GetRawData() const
+	const mpt::byte *GetRawData() const override
 	{
 		return nullptr;
 	}
 
-	off_t GetLength() const
+	off_t GetLength() const override
 	{
 		return 0;
 	}
-	off_t Read(mpt::byte * /*dst*/, off_t /*pos*/, off_t /*count*/) const
+	off_t Read(mpt::byte * /*dst*/, off_t /*pos*/, off_t /*count*/) const override
 	{
 		return 0;
 	}
@@ -635,27 +652,28 @@ private:
 	const off_t dataLength;
 public:
 	FileDataContainerWindow(std::shared_ptr<const IFileDataContainer> src, off_t off, off_t len) : data(src), dataOffset(off), dataLength(len) { }
-	virtual ~FileDataContainerWindow() { }
 
-	bool IsValid() const
+	bool IsValid() const override
 	{
 		return data->IsValid();
 	}
-	bool HasFastGetLength() const
+	bool HasFastGetLength() const override
 	{
 		return data->HasFastGetLength();
 	}
-	bool HasPinnedView() const
+	bool HasPinnedView() const override
 	{
 		return data->HasPinnedView();
 	}
-	const mpt::byte *GetRawData() const {
+	const mpt::byte *GetRawData() const override
+	{
 		return data->GetRawData() + dataOffset;
 	}
-	off_t GetLength() const {
+	off_t GetLength() const override
+	{
 		return dataLength;
 	}
-	off_t Read(mpt::byte *dst, off_t pos, off_t count) const
+	off_t Read(mpt::byte *dst, off_t pos, off_t count) const override
 	{
 		if(pos >= dataLength)
 		{
@@ -663,7 +681,8 @@ public:
 		}
 		return data->Read(dst, dataOffset + pos, std::min(count, dataLength - pos));
 	}
-	bool CanRead(off_t pos, off_t length) const {
+	bool CanRead(off_t pos, off_t length) const override
+	{
 		if((pos == dataLength) && (length == 0))
 		{
 			return true;
@@ -674,7 +693,7 @@ public:
 		}
 		return (length <= dataLength - pos);
 	}
-	off_t GetReadableLength(off_t pos, off_t length) const
+	off_t GetReadableLength(off_t pos, off_t length) const override
 	{
 		if(pos >= dataLength)
 		{
@@ -697,7 +716,6 @@ private:
 protected:
 
 	FileDataContainerSeekable(off_t length);
-	virtual ~FileDataContainerSeekable();
 
 private:
 	
@@ -705,12 +723,12 @@ private:
 
 public:
 
-	bool IsValid() const;
-	bool HasFastGetLength() const;
-	bool HasPinnedView() const;
-	const mpt::byte *GetRawData() const;
-	off_t GetLength() const;
-	off_t Read(mpt::byte *dst, off_t pos, off_t count) const;
+	bool IsValid() const override;
+	bool HasFastGetLength() const override;
+	bool HasPinnedView() const override;
+	const mpt::byte *GetRawData() const override;
+	off_t GetLength() const override;
+	off_t Read(mpt::byte *dst, off_t pos, off_t count) const override;
 
 private:
 
@@ -728,14 +746,13 @@ private:
 public:
 
 	FileDataContainerStdStreamSeekable(std::istream *s);
-	virtual ~FileDataContainerStdStreamSeekable();
 
 	static bool IsSeekable(std::istream *stream);
 	static off_t GetLength(std::istream *stream);
 
 private:
 
-	off_t InternalRead(mpt::byte *dst, off_t pos, off_t count) const;
+	off_t InternalRead(mpt::byte *dst, off_t pos, off_t count) const override;
 
 };
 
@@ -751,7 +768,6 @@ private:
 protected:
 
 	FileDataContainerUnseekable();
-	virtual ~FileDataContainerUnseekable();
 
 private:
 
@@ -768,14 +784,14 @@ private:
 
 public:
 
-	bool IsValid() const;
-	bool HasFastGetLength() const;
-	bool HasPinnedView() const;
-	const mpt::byte *GetRawData() const;
-	off_t GetLength() const;
-	off_t Read(mpt::byte *dst, off_t pos, off_t count) const;
-	bool CanRead(off_t pos, off_t length) const;
-	off_t GetReadableLength(off_t pos, off_t length) const;
+	bool IsValid() const override;
+	bool HasFastGetLength() const override;
+	bool HasPinnedView() const override;
+	const mpt::byte *GetRawData() const override;
+	off_t GetLength() const override;
+	off_t Read(mpt::byte *dst, off_t pos, off_t count) const override;
+	bool CanRead(off_t pos, off_t length) const override;
+	off_t GetReadableLength(off_t pos, off_t length) const override;
 
 private:
 
@@ -794,12 +810,11 @@ private:
 public:
 
 	FileDataContainerStdStream(std::istream *s);
-	virtual ~FileDataContainerStdStream();
 
 private:
 
-	bool InternalEof() const;
-	off_t InternalRead(mpt::byte *dst, off_t count) const;
+	bool InternalEof() const override;
+	off_t InternalRead(mpt::byte *dst, off_t count) const override;
 
 };
 
@@ -827,9 +842,8 @@ public:
 	static bool IsSeekable(CallbackStream stream);
 	static off_t GetLength(CallbackStream stream);
 	FileDataContainerCallbackStreamSeekable(CallbackStream s);
-	virtual ~FileDataContainerCallbackStreamSeekable();
 private:
-	off_t InternalRead(mpt::byte *dst, off_t pos, off_t count) const;
+	off_t InternalRead(mpt::byte *dst, off_t pos, off_t count) const override;
 };
 
 
@@ -840,10 +854,9 @@ private:
 	mutable bool eof_reached;
 public:
 	FileDataContainerCallbackStream(CallbackStream s);
-	virtual ~FileDataContainerCallbackStream();
 private:
-	bool InternalEof() const;
-	off_t InternalRead(mpt::byte *dst, off_t count) const;
+	bool InternalEof() const override;
+	off_t InternalRead(mpt::byte *dst, off_t count) const override;
 };
 
 
@@ -859,6 +872,12 @@ class FileDataContainerMemory
 #endif
 {
 
+#if defined(MPT_FILEREADER_STD_ISTREAM)
+#define MPT_FILEDATACONTAINERMEMORY_OVERRIDE override
+#else
+#define MPT_FILEDATACONTAINERMEMORY_OVERRIDE
+#endif
+
 #if !defined(MPT_FILEREADER_STD_ISTREAM)
 public:
 	typedef std::size_t off_t;
@@ -872,39 +891,35 @@ private:
 public:
 	FileDataContainerMemory() : streamData(nullptr), streamLength(0) { }
 	FileDataContainerMemory(mpt::const_byte_span data) : streamData(data.data()), streamLength(data.size()) { }
-#if defined(MPT_FILEREADER_STD_ISTREAM)
-	virtual
-#endif
-		~FileDataContainerMemory() { }
 
 public:
 
-	bool IsValid() const
+	bool IsValid() const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		return streamData != nullptr;
 	}
 
-	bool HasFastGetLength() const
+	bool HasFastGetLength() const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		return true;
 	}
 
-	bool HasPinnedView() const
+	bool HasPinnedView() const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		return true;
 	}
 
-	const mpt::byte *GetRawData() const
+	const mpt::byte *GetRawData() const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		return streamData;
 	}
 
-	off_t GetLength() const
+	off_t GetLength() const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		return streamLength;
 	}
 
-	off_t Read(mpt::byte *dst, off_t pos, off_t count) const
+	off_t Read(mpt::byte *dst, off_t pos, off_t count) const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		if(pos >= streamLength)
 		{
@@ -915,7 +930,7 @@ public:
 		return avail;
 	}
 
-	bool CanRead(off_t pos, off_t length) const
+	bool CanRead(off_t pos, off_t length) const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		if((pos == streamLength) && (length == 0))
 		{
@@ -928,7 +943,7 @@ public:
 		return (length <= streamLength - pos);
 	}
 
-	off_t GetReadableLength(off_t pos, off_t length) const
+	off_t GetReadableLength(off_t pos, off_t length) const MPT_FILEDATACONTAINERMEMORY_OVERRIDE
 	{
 		if(pos >= streamLength)
 		{

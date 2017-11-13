@@ -118,15 +118,17 @@ struct GetLengthTarget
 	ROWINDEX startRow;
 	ORDERINDEX startOrder;
 	SEQUENCEINDEX sequence;
+	
+	struct pos_type
+	{
+		ROWINDEX row;
+		ORDERINDEX order;
+	};
 
 	union
 	{
 		double time;
-		struct
-		{
-			ROWINDEX row;
-			ORDERINDEX order;
-		} pos;
+		pos_type pos;
 	};
 
 	enum Mode
@@ -256,7 +258,7 @@ struct TimingInfo
 class IAudioReadTarget
 {
 protected:
-	virtual ~IAudioReadTarget() { }
+	virtual ~IAudioReadTarget() = default;
 public:
 	virtual void DataCallback(int *MixSoundBuffer, std::size_t channels, std::size_t countChunk) = 0;
 };
