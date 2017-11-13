@@ -767,7 +767,7 @@ void CEffectVis::MakeChange(ROWINDEX row, int y)
 		return;
 
 	PatternTransaction transaction(m_SndFile, m_nPattern, PatternCursor(row, m_nChan));
-	ModCommand &m = m_SndFile.Patterns[m_nPattern].GetpModCommand(row, m_nChan);
+	ModCommand &m = *m_SndFile.Patterns[m_nPattern].GetpModCommand(row, m_nChan);
 
 	switch (m_nAction)
 	{

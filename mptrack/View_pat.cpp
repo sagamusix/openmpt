@@ -3277,7 +3277,7 @@ LRESULT CViewPattern::OnRecordPlugParamChange(WPARAM plugSlot, LPARAM paramIndex
 		// only overwrite existing PC Notes
 		if(pRow->IsEmpty() || pRow->IsPcNote())
 		{
-			PatternTransaction transaction(*pSndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
+			PatternTransaction transaction(sndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
 
 			pRow->Set(NOTE_PCS, static_cast<ModCommand::INSTR>(plugSlot + 1), static_cast<uint16>(paramIndex), static_cast<uint16>(pPlug->GetParameter(paramIndex) * ModCommand::maxColumnValue));
 			InvalidateRow(nRow);
@@ -3305,7 +3305,7 @@ LRESULT CViewPattern::OnRecordPlugParamChange(WPARAM plugSlot, LPARAM paramIndex
 				sndFile.m_PlayState.Chn[nChn].nActiveMacro = static_cast<uint8>(foundMacro);
 				if (pRow->command == CMD_NONE || pRow->command == CMD_SMOOTHMIDI || pRow->command == CMD_MIDI) //we overwrite existing Zxx and \xx only.
 				{
-					PatternTransaction transaction(*pSndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
+					PatternTransaction transaction(sndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
 
 					pRow->command = CMD_S3MCMDEX;
 					if(!sndFile.GetModSpecifications().HasCommand(CMD_S3MCMDEX)) pRow->command = CMD_MODCMDEX;
@@ -3319,7 +3319,7 @@ LRESULT CViewPattern::OnRecordPlugParamChange(WPARAM plugSlot, LPARAM paramIndex
 		// Write the data, but we only overwrite if the command is a macro anyway.
 		if(pRow->command == CMD_NONE || pRow->command == CMD_SMOOTHMIDI || pRow->command == CMD_MIDI)
 		{
-			PatternTransaction transaction(*pSndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
+			PatternTransaction transaction(sndFile, nPattern, PatternCursor(nRow, nChn), "Automation Entry");
 
 			pRow->command = CMD_SMOOTHMIDI;
 			PlugParamValue param = pPlug->GetParameter(paramIndex);
