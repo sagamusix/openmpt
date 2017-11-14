@@ -223,9 +223,7 @@ std::string CollabConnection::WriteWithResult(const std::string &message)
 	
 	std::ostringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
-	ar(ReturnValTransactionMsg);
-	ar(reinterpret_cast<uint64>(&m_promise));
-	ar(message);
+	ar(ReturnValTransactionMsg, reinterpret_cast<uint64>(&m_promise), message);
 
 	auto future = m_promise.get_future();
 	Write(ss.str());
@@ -679,7 +677,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				inArchive(msg);
 				//source->m_editPos = msg;
 				// Send back to clients
-				ar(source->m_id, msg);
+				ar(msg);
 				SendToAll(doc, sso);
 				break;
 			}
@@ -835,7 +833,13 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				case RearrangeChannelsMsg:
 				{
 					std::vector<CHANNELINDEX> newChannels;
-					inArchive(newChannels);
+					inArchiveRet(newChannels);
+					{
+						std::ostringstream ssoRet;
+						cereal::BinaryOutputArchive arRet(ssoRet);
+						arRet(RearrangeChannelsMsg, source->m_id, newChannels);
+						SendToAll(doc, ssoRet);
+					}
 					//retVal = modDoc->ReArrangeChannels()
 					break;
 				}
@@ -949,11 +953,8 @@ std::string LocalCollabClient::WriteWithResult(const std::string &msg)
 
 	std::stringstream ss;
 	cereal::BinaryOutputArchive ar(ss);
-	ar(ReturnValTransactionMsg);
-	ar(reinterpret_cast<uint64>(&m_connection->m_promise));
-	ar(msg);
+	ar(ReturnValTransactionMsg, reinterpret_cast<uint64>(&m_connection->m_promise), msg);
 
-	std::string result;
 	auto future = m_connection->m_promise.get_future();
 	collabServer->Receive(m_connection, ss);
 	//future.wait();

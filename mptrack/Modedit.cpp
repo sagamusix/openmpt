@@ -154,23 +154,24 @@ bool CModDoc::RemoveChannels(const std::vector<bool> &keepMask, bool verbose)
 
 // Base code for adding, removing, moving and duplicating channels. Returns new number of channels on success, CHANNELINDEX_INVALID otherwise.
 // The new channel vector can contain CHANNELINDEX_INVALID for adding new (empty) channels.
-CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrder, const bool createUndoPoint)
+CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrder, const bool createUndoPoint, bool forceLocal)
 {
 	//newOrder[i] tells which current channel should be placed to i:th position in
 	//the new order, or if i is not an index of current channels, then new channel is
 	//added to position i. If index of some current channel is missing from the
 	//newOrder-vector, then the channel gets removed.
 
-	const CHANNELINDEX newNumChannels = static_cast<CHANNELINDEX>(newOrder.size()), oldNumChannels = GetNumChannels();
-	auto &specs = m_SndFile.GetModSpecifications();
-
-	if(m_collabClient)
+	if(m_collabClient && !forceLocal)
 	{
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
 		ar(Networking::RearrangeChannelsMsg, newOrder);
-		return ConvertStrTo<CHANNELINDEX>(m_collabClient->WriteWithResult(ss.str()));
+		m_collabClient->WriteWithResult(ss.str());
+		return GetNumChannels();
 	}
+
+	const CHANNELINDEX newNumChannels = static_cast<CHANNELINDEX>(newOrder.size()), oldNumChannels = GetNumChannels();
+	auto &specs = m_SndFile.GetModSpecifications();
 
 	if(newNumChannels > specs.channelsMax || newNumChannels < specs.channelsMin)
 	{
@@ -186,7 +187,7 @@ CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrde
 	}
 
 	CriticalSection cs;
-	std::vector<PatternTransaction> patternTransactions;
+	/*std::vector<PatternTransaction> patternTransactions;
 	patternTransactions.reserve(m_SndFile.Patterns.Size());
 	for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
 	{
@@ -201,7 +202,7 @@ CHANNELINDEX CModDoc::ReArrangeChannels(const std::vector<CHANNELINDEX> &newOrde
 	for(CHANNELINDEX chn = 0; chn < newNumChannels; chn++)
 	{
 		channelTransactions.push_back(ChannelSettingsTransaction(m_SndFile, chn, newOrder[chn]));
-	}
+	}*/
 
 	if(oldNumChannels == newNumChannels)
 	{

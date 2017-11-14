@@ -240,7 +240,7 @@ public:
 
 	bool ChangeNumChannels(CHANNELINDEX nNewChannels, const bool showCancelInRemoveDlg = true);
 	bool RemoveChannels(const std::vector<bool> &keepMask, bool verbose = false);
-	CHANNELINDEX ReArrangeChannels(const std::vector<CHANNELINDEX> &fromToArray, const bool createUndoPoint = true);
+	CHANNELINDEX ReArrangeChannels(const std::vector<CHANNELINDEX> &fromToArray, const bool createUndoPoint = true, bool forceLocal = false);
 	void CheckUsedChannels(std::vector<bool> &usedMask, CHANNELINDEX maxRemoveCount = MAX_BASECHANNELS) const;
 
 	SAMPLEINDEX ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder);

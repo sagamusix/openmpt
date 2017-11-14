@@ -103,7 +103,7 @@ bool CPatternUndo::PrepareBuffer(undobuf_t &buffer, PATTERNINDEX pattern, CHANNE
 
 	buffer.push_back(std::move(undo));
 
-	modDoc.UpdateAllViews(nullptr, UpdateHint().Undo());
+	modDoc.UpdateAllViews(UpdateHint().Undo());
 	return true;
 }
 

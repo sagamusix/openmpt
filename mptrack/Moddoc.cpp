@@ -3505,6 +3505,17 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		break;
 	}
 
+	case Networking::RearrangeChannelsMsg:
+	{
+		std::vector<CHANNELINDEX> newChannels;
+		inArchive(newChannels);
+		CriticalSection cs;
+		ReArrangeChannels(newChannels, true, true);
+		actionLog = _T("rearranged the channels");
+		hint = PatternHint().Data().ModType();
+		break;
+	}
+
 	case Networking::UserJoinedMsg:
 	{
 		// Add new user to collaborator list
