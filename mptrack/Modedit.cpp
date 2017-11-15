@@ -445,16 +445,7 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 		}
 	} else
 	{
-		std::vector<PatternTransaction> transactions;
-		transactions.reserve(m_SndFile.Patterns.Size());
-		for(PATTERNINDEX pat = 0; pat < m_SndFile.Patterns.Size(); pat++)
-		{
-			if(m_SndFile.Patterns[pat].IsValid())
-			{
-				transactions.push_back(PatternTransaction(m_SndFile, pat, PatternCursor(0, 0), PatternCursor(m_SndFile.Patterns[pat].GetNumRows() - 1, GetNumChannels() - 1)));
-			}
-		}
-
+		MultiPatternTransaction transactions(m_SndFile);
 		PrepareUndoForAllPatterns(false, "Rearrange Samples");
 		m_SndFile.Patterns.ForEachModCommand([&newIndex] (ModCommand &m)
 		{

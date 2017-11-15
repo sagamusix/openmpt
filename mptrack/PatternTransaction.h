@@ -23,6 +23,14 @@ public:
 };
 
 
+class MultiPatternTransaction
+{
+	std::vector<PatternTransaction> m_transactions;
+public:
+	MultiPatternTransaction(CSoundFile &sndFile);
+};
+
+
 class PatternResizeTransaction
 {
 	CSoundFile &m_sndFile;

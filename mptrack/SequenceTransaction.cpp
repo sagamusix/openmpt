@@ -7,9 +7,9 @@
 OPENMPT_NAMESPACE_BEGIN
 
 
-SequenceTransaction::SequenceTransaction(CSoundFile &sndFile)
+SequenceTransaction::SequenceTransaction(CSoundFile &sndFile, SEQUENCEINDEX seq)
 	: m_sndFile(sndFile)
-	, m_seq(sndFile.Order.GetCurrentSequenceIndex())
+	, m_seq(seq != SEQUENCEINDEX_INVALID ? seq : sndFile.Order.GetCurrentSequenceIndex())
 	, m_data(sndFile.Order())
 {
 }

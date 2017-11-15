@@ -118,6 +118,16 @@ PatternTransaction::~PatternTransaction()
 }
 
 
+MultiPatternTransaction::MultiPatternTransaction(CSoundFile &sndFile)
+{
+	m_transactions.reserve(sndFile.Patterns.GetNumPatterns());
+	for(PATTERNINDEX pat = 0; pat < sndFile.Patterns.GetNumPatterns(); pat++)
+	{
+		m_transactions.push_back(PatternTransaction(sndFile, pat));
+	}
+}
+
+
 PatternResizeTransaction::PatternResizeTransaction(CSoundFile &sndFile, PATTERNINDEX pattern, bool resizeAtEnd)
 	: m_sndFile(sndFile)
 	, m_pattern(pattern)

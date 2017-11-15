@@ -44,6 +44,11 @@
 #include "modsmp_ctrl.h"
 #include "ModConvert.h"
 #include "../soundlib/mod_specifications.h"
+#include "GlobalsTransaction.h"
+#include "PatternTransaction.h"
+#include "SequenceTransaction.h"
+#include "InstrumentTransaction.h"
+#include "SampleTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -117,6 +122,18 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 			nResizedPatterns++;
 	}
 
+	GlobalSettingsTransaction globalTr(m_SndFile);
+	std::vector<SequenceTransaction> sequenceTr;
+	std::vector<SamplePropertyTransaction> sampleTr;
+	std::vector<InstrumentTransaction> instrumentTr;
+	for(SEQUENCEINDEX seq = 0; seq < m_SndFile.Order.GetNumSequences(); seq++)
+		sequenceTr.push_back(SequenceTransaction(m_SndFile, seq));
+	for(SAMPLEINDEX smp = 1; smp <= m_SndFile.GetNumSamples(); smp++)
+		sampleTr.push_back(SamplePropertyTransaction(m_SndFile, smp));
+	for(INSTRUMENTINDEX ins = 1; ins <= m_SndFile.GetNumInstruments(); ins++)
+		instrumentTr.push_back(InstrumentTransaction(m_SndFile, ins));
+
+
 	if((m_SndFile.GetNumInstruments() || nResizedPatterns) && (nNewType & (MOD_TYPE_MOD|MOD_TYPE_S3M)))
 	{
 		if(Reporting::Confirm(
@@ -129,23 +146,30 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 		// Converting instruments to samples
 		if(m_SndFile.GetNumInstruments())
 		{
+			MultiPatternTransaction patternTr(m_SndFile);
 			ConvertInstrumentsToSamples();
 			CHANGEMODTYPE_WARNING(wInstrumentsToSamples);
 		}
 
 		// Resizing all patterns to 64 rows
-		for(auto &pat : m_SndFile.Patterns) if(pat.IsValid() && pat.GetNumRows() != 64)
+		PATTERNINDEX p = 0;
+		for(auto &pat : m_SndFile.Patterns)
 		{
-			ROWINDEX origRows = pat.GetNumRows();
-			pat.Resize(64);
-
-			if(origRows < 64)
+			if(pat.IsValid() && pat.GetNumRows() != 64)
 			{
-				// Try to save short patterns by inserting a pattern break.
-				pat.WriteEffect(EffectWriter(CMD_PATTERNBREAK, 0).Row(origRows - 1).RetryNextRow());
-			}
+				PatternResizeTransaction tr(m_SndFile, p, true);
+				ROWINDEX origRows = pat.GetNumRows();
+				pat.Resize(64);
 
-			CHANGEMODTYPE_WARNING(wResizedPatterns);
+				if(origRows < 64)
+				{
+					// Try to save short patterns by inserting a pattern break.
+					pat.WriteEffect(EffectWriter(CMD_PATTERNBREAK, 0).Row(origRows - 1).RetryNextRow());
+				}
+
+				CHANGEMODTYPE_WARNING(wResizedPatterns);
+			}
+			p++;
 		}
 
 		// Removing all instrument headers from channels
@@ -164,6 +188,8 @@ bool CModDoc::ChangeModType(MODTYPE nNewType)
 		EndWaitCursor();
 	} //End if (((m_SndFile.m_nInstruments) || (b64)) && (nNewType & (MOD_TYPE_MOD|MOD_TYPE_S3M)))
 	BeginWaitCursor();
+
+	MultiPatternTransaction patternTr(m_SndFile);
 
 
 	/////////////////////////////
