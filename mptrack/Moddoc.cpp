@@ -3440,6 +3440,8 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		msg.name.set_if(m_SndFile.m_songName);
 		if(msg.artist.is_set())
 			m_SndFile.m_songArtist = mpt::ToUnicode(mpt::CharsetUTF8, msg.artist.get());
+		if(msg.type.is_set())
+			m_SndFile.m_nType = msg.type.get();
 		msg.tempo.set_if(m_SndFile.m_nDefaultTempo);
 		msg.speed.set_if(m_SndFile.m_nDefaultSpeed);
 		msg.globalVol.set_if(m_SndFile.m_nDefaultGlobalVolume);
@@ -3456,6 +3458,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		msg.rpb.set_if(m_SndFile.m_nDefaultRowsPerBeat);
 		msg.rpm.set_if(m_SndFile.m_nDefaultRowsPerMeasure);
 		msg.swing.set_if(m_SndFile.m_tempoSwing);
+		msg.playBehaviour.set_if(m_SndFile.m_playBehaviour);
 		hint = GeneralHint().General();
 		actionLog = _T("modified global settings");
 		break;

@@ -22,6 +22,7 @@
 #include "../common/version.h"
 #include "../common/StringFixer.h"
 #include "InstrumentTransaction.h"
+#include "GlobalsTransaction.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -359,6 +360,8 @@ void CModTypeDlg::OnOK()
 {
 	if (!VerifyData())
 		return;
+
+	GlobalSettingsTransaction tr(sndFile);
 
 	int sel = m_TypeBox.GetCurSel();
 	if (sel >= 0)

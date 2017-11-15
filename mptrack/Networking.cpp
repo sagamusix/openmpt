@@ -236,7 +236,12 @@ void RemoteCollabConnection::Send(const std::string &message)
 {
 	//m_strand.post(bind(&RemoteCollabConnection::WriteImpl, this, ))
 	MPT_LOCK_GUARD<mpt::mutex> lock(m_mutex);
-	asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
+	try
+	{
+		asio::write(m_socket, asio::buffer(message.c_str(), message.size()));
+	} catch(...)
+	{
+	}
 	/*auto that = std::static_pointer_cast<RemoteCollabConnection>(shared_from_this());
 	m_strand.post([that, message]()
 	{

@@ -12,6 +12,7 @@ GlobalSettingsTransaction::GlobalSettingsTransaction(CSoundFile &sndFile)
 {
 	m_state->name = sndFile.m_songName;
 	m_state->artist = mpt::ToCharset(mpt::CharsetUTF8, sndFile.m_songArtist);
+	m_state->type = sndFile.m_nType;
 	m_state->tempo = sndFile.m_nDefaultTempo;
 	m_state->speed = sndFile.m_nDefaultSpeed;
 	m_state->globalVol = sndFile.m_nDefaultGlobalVolume;
@@ -24,6 +25,7 @@ GlobalSettingsTransaction::GlobalSettingsTransaction(CSoundFile &sndFile)
 	m_state->rpb = sndFile.m_nDefaultRowsPerBeat;
 	m_state->rpm = sndFile.m_nDefaultRowsPerMeasure;
 	m_state->swing = sndFile.m_tempoSwing;
+	m_state->playBehaviour = sndFile.m_playBehaviour;
 }
 
 GlobalSettingsTransaction::~GlobalSettingsTransaction()
@@ -34,6 +36,8 @@ GlobalSettingsTransaction::~GlobalSettingsTransaction()
 	std::string artist = mpt::ToCharset(mpt::CharsetUTF8, m_sndFile.m_songArtist);
 	if(m_state->artist != artist)
 		msg.artist = artist;
+	if(m_state->type != m_sndFile.m_nType)
+		msg.type = m_sndFile.m_nType;
 	if(m_state->tempo != m_sndFile.m_nDefaultTempo)
 		msg.tempo = m_sndFile.m_nDefaultTempo;
 	if(m_state->speed != m_sndFile.m_nDefaultSpeed)
@@ -58,6 +62,8 @@ GlobalSettingsTransaction::~GlobalSettingsTransaction()
 		msg.rpm = m_sndFile.m_nDefaultRowsPerMeasure;
 	if(m_state->swing != m_sndFile.m_tempoSwing)
 		msg.swing = m_sndFile.m_tempoSwing;
+	if(m_state->playBehaviour != m_sndFile.m_playBehaviour)
+		msg.playBehaviour = m_sndFile.m_playBehaviour;
 
 	auto *modDoc = m_sndFile.GetpModDoc();
 	if(modDoc->m_collabClient)

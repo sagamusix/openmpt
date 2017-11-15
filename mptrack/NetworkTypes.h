@@ -331,6 +331,7 @@ struct AnnotationMsg
 struct GlobalEditMsg
 {
 	opt<std::string> name, artist;
+	opt<MODTYPE> type;
 	opt<TEMPO> tempo;
 	opt<uint32> speed;
 	opt<uint32> globalVol;
@@ -343,11 +344,12 @@ struct GlobalEditMsg
 	opt<ROWINDEX> rpb;
 	opt<ROWINDEX> rpm;
 	opt<TempoSwing> swing;
+	opt<PlayBehaviourSet> playBehaviour;
 
 	template<class Archive>
 	void serialize(Archive &archive)
 	{
-		archive(name, artist, tempo, speed, globalVol, sampleVol, pluginVol, resampling, mixLevels, flags, tempoMode, rpm, rpm, swing);
+		archive(name, artist, type, tempo, speed, globalVol, sampleVol, pluginVol, resampling, mixLevels, flags, tempoMode, rpm, rpm, swing, playBehaviour);
 	}
 };
 

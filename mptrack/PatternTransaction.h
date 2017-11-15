@@ -6,7 +6,6 @@ OPENMPT_NAMESPACE_BEGIN
 
 class PatternTransaction
 {
-	//CriticalSection cs;	// TODO
 	CSoundFile &m_sndFile;
 	PatternRect m_rect;
 	PATTERNINDEX m_pattern;
