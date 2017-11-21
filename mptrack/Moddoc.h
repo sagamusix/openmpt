@@ -257,7 +257,7 @@ public:
 	// Create a new pattern and, if order position is specified, inserts it into the order list.
 	PATTERNINDEX InsertPattern(ROWINDEX rows, ORDERINDEX ord = ORDERINDEX_INVALID);
 	SAMPLEINDEX InsertSample(bool forceLocal = false);
-	INSTRUMENTINDEX InsertInstrument(SAMPLEINDEX lSample = SAMPLEINDEX_INVALID, INSTRUMENTINDEX lDuplicate = INSTRUMENTINDEX_INVALID);
+	INSTRUMENTINDEX InsertInstrument(SAMPLEINDEX lSample = SAMPLEINDEX_INVALID, INSTRUMENTINDEX lDuplicate = INSTRUMENTINDEX_INVALID, bool silentConversion = false);
 	INSTRUMENTINDEX InsertInstrumentForPlugin(PLUGINDEX plug);
 	INSTRUMENTINDEX HasInstrumentForPlugin(PLUGINDEX plug) const;
 	void InitializeInstrument(ModInstrument *pIns);

@@ -743,7 +743,7 @@ SAMPLEINDEX CModDoc::InsertSample(bool forceLocal)
 
 // Insert a new instrument assigned to sample nSample or duplicate instrument nDuplicate.
 // If nSample is invalid, an appropriate sample slot is selected. 0 means "no sample".
-INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX nDuplicate)
+INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX nDuplicate, bool silentConversion)
 {
 	if (m_SndFile.GetModSpecifications().instrumentsMax == 0) return INSTRUMENTINDEX_INVALID;
 
@@ -756,12 +756,17 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 	if ((!m_SndFile.GetNumInstruments()) && ((m_SndFile.GetNumSamples() > 1) || (m_SndFile.GetSample(1).pSample)))
 	{
 		if (pDup) return INSTRUMENTINDEX_INVALID;
-		ConfirmAnswer result = Reporting::Confirm("Convert existing samples to instruments first?", true);
-		if (result == cnfCancel)
+		bool doConvert = true;
+		if(!silentConversion)
 		{
-			return INSTRUMENTINDEX_INVALID;
+			ConfirmAnswer result = Reporting::Confirm("Convert existing samples to instruments first?", true);
+			if(result == cnfCancel)
+			{
+				return INSTRUMENTINDEX_INVALID;
+			}
+			doConvert = (result == cnfYes);
 		}
-		if (result == cnfYes)
+		if (doConvert)
 		{
 			if(m_collabClient)
 			{
@@ -796,7 +801,10 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 	
 	if(newins == INSTRUMENTINDEX_INVALID)
 	{
-		ErrorBox(IDS_ERR_TOOMANYINS, CMainFrame::GetMainFrame());
+		if(!silentConversion)
+		{
+			ErrorBox(IDS_ERR_TOOMANYINS, CMainFrame::GetMainFrame());
+		}
 		return INSTRUMENTINDEX_INVALID;
 	} else if(newins > m_SndFile.GetNumInstruments())
 	{
@@ -819,7 +827,7 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 			const SAMPLEINDEX inssmp = InsertSample();
 			if (inssmp != SAMPLEINDEX_INVALID)
 				newsmp = inssmp;
-			else
+			else if(!silentConversion)
 				ErrorBox(IDS_ERR_TOOMANYSMP, CMainFrame::GetMainFrame());
 		}
 	}
@@ -830,7 +838,8 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX nSample, INSTRUMENTINDEX n
 	if(pIns == nullptr)
 	{
 		cs.Leave();
-		ErrorBox(IDS_ERR_OUTOFMEMORY, CMainFrame::GetMainFrame());
+		if(!silentConversion)
+			ErrorBox(IDS_ERR_OUTOFMEMORY, CMainFrame::GetMainFrame());
 		return INSTRUMENTINDEX_INVALID;
 	}
 	InitializeInstrument(pIns);
@@ -857,14 +866,13 @@ void CModDoc::InitializeInstrument(ModInstrument *pIns)
 INSTRUMENTINDEX CModDoc::InsertInstrumentForPlugin(PLUGINDEX plug)
 {
 #ifndef NO_PLUGINS
-	const bool first = (GetNumInstruments() == 0);
-	if(first && !ConvertSamplesToInstruments()) return INSTRUMENTINDEX_INVALID;
-
-	INSTRUMENTINDEX instr = m_SndFile.GetNextFreeInstrument();
+	bool first = GetNumInstruments() == 0;
+	INSTRUMENTINDEX instr = InsertInstrument(0, INSTRUMENTINDEX_INVALID, true);
 	if(instr == INSTRUMENTINDEX_INVALID) return INSTRUMENTINDEX_INVALID;
 
-	ModInstrument *ins = m_SndFile.AllocateInstrument(instr, 0);
+	ModInstrument *ins = m_SndFile.Instruments[instr];
 	if(ins == nullptr) return INSTRUMENTINDEX_INVALID;
+	InstrumentTransaction tr(m_SndFile, instr);
 	InitializeInstrument(ins);
 
 	mpt::String::Copy(ins->name, mpt::format("%1: %2")(plug + 1, m_SndFile.m_MixPlugins[plug].GetName()));
@@ -906,7 +914,7 @@ bool CModDoc::RemoveOrder(SEQUENCEINDEX nSeq, ORDERINDEX nOrd)
 		return false;
 
 	CriticalSection cs;
-	SequenceTransaction tr(m_SndFile);
+	SequenceTransaction tr(m_SndFile, nSeq);
 	m_SndFile.Order(nSeq).Remove(nOrd, nOrd);
 	SetModified();
 
