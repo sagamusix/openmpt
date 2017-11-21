@@ -168,6 +168,10 @@ void CSelectPluginDlg::OnOK()
 			// Now, create the new plugin
 			if(pManager && m_pModDoc)
 			{
+				if(m_pModDoc->m_collabClient)
+				{
+					//LoadPluginMsg
+				}
 				pManager->CreateMixPlugin(*m_pPlugin, m_pModDoc->GetSoundFile());
 				if (m_pPlugin->pMixPlugin)
 				{
@@ -196,6 +200,10 @@ void CSelectPluginDlg::OnOK()
 		m_pPlugin->Destroy();
 		// Clear plugin info
 		MemsetZero(m_pPlugin->Info);
+		if(m_pModDoc->m_collabClient)
+		{
+			//LoadPluginMsg
+		}
 		changed = true;
 	}
 

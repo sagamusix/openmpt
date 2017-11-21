@@ -56,7 +56,7 @@ enum NetworkMessage : uint32
 
 	PatternTransactionMsg = NetMsg("PATR"),	// Modification of a single pattern
 	PatternResizeMsg = NetMsg("PSTR"),	// Resizing of a single pattern
-	
+
 	EditPosMsg = NetMsg("EDPS"),	// Tell other clients about current edit position
 	KeyCommandMsg = NetMsg("KEYC"),	// Send specific key command (e.g. play song)
 
@@ -67,6 +67,7 @@ enum NetworkMessage : uint32
 	RearrangeChannelsMsg = NetMsg("REAR"),	// Rearrange/add/remove channels
 
 	PluginDataTransactionMsg = NetMsg("PLTR"),	// Automation of a single plugin
+	LoadPluginMsg = NetMsg("PLUG"),	// Load/unload a plugin
 
 	TuningTransactionMsg = NetMsg("TUNI"),	// Re-send tuning cllection
 
