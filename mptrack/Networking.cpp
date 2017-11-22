@@ -636,7 +636,7 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 			{
 				PluginEditMsg plugMsg;
 				inArchive(plugMsg);
-				CriticalSection  cs;
+				CriticalSection cs;
 				if(sndFile.m_MixPlugins[plugMsg.plugin].pMixPlugin)
 				{
 					for(auto &param : plugMsg.params)
@@ -645,6 +645,16 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 					}
 				}
 				ar(plugMsg);
+				SendToAll(doc, sso);
+				break;
+			}
+
+			case LoadPluginMsg:
+			{
+				PLUGINDEX id;
+				SNDMIXPLUGIN plugin;
+				inArchive(id, plugin);
+				ar(id, plugin);
 				SendToAll(doc, sso);
 				break;
 			}

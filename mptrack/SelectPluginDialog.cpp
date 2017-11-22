@@ -170,7 +170,7 @@ void CSelectPluginDlg::OnOK()
 			{
 				if(m_pModDoc->m_collabClient)
 				{
-					//LoadPluginMsg
+					m_pModDoc->LoadPlugin(m_nPlugSlot);
 				}
 				pManager->CreateMixPlugin(*m_pPlugin, m_pModDoc->GetSoundFile());
 				if (m_pPlugin->pMixPlugin)

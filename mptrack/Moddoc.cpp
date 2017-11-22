@@ -49,6 +49,7 @@
 #include "NetworkTypes.h"
 #include "NetworkingDlg.h"
 #include "../soundlib/tuningcollection.h"
+#include "../soundlib/plugins/PluginManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -3519,6 +3520,20 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		break;
 	}
 
+	case Networking::LoadPluginMsg:
+	{
+		PLUGINDEX id;
+		SNDMIXPLUGIN plugin;
+		inArchive(id, plugin);
+		if(id < MAX_MIXPLUGINS)
+		{
+			actionLog = mpt::tformat(_T("changed plugin %1"))(id + 1);
+			theApp.GetPluginManager()->CreateMixPlugin(m_SndFile.m_MixPlugins[id], m_SndFile);
+			hint = PluginHint(id + 1).Info().Names();
+		}
+		break;
+	}
+
 	case Networking::UserJoinedMsg:
 	{
 		// Add new user to collaborator list
@@ -3653,6 +3668,24 @@ void CModDoc::SendPlayCommand(int32 cmd)
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);
 		ar(Networking::KeyCommandMsg, cmd);
+		m_collabClient->Write(ss.str());
+	}
+}
+
+
+void CModDoc::LoadPlugin(PLUGINDEX plug)
+{
+	// Get patch data and slot info of given plugin
+	if(m_collabClient)
+	{
+		std::ostringstream ss;
+		cereal::BinaryOutputArchive ar(ss);
+		SNDMIXPLUGIN &plugin = m_SndFile.m_MixPlugins[plug];
+		if(plugin.pMixPlugin != nullptr)
+		{
+			plugin.pMixPlugin->SaveAllParameters();
+		}
+		ar(Networking::LoadPluginMsg, plug, plugin);
 		m_collabClient->Write(ss.str());
 	}
 }

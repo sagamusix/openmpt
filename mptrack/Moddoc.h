@@ -171,6 +171,7 @@ public:
 	/*Networking::ClientID*/ uint32 GetCollabUserID() const;
 	void RequestPatternLock(PATTERNINDEX pat);
 	void SendPlayCommand(int32 cmd);
+	void LoadPlugin(PLUGINDEX plug);
 
 protected: // create from serialization only
 	CModDoc();
