@@ -402,7 +402,7 @@ void ChatDlg::AddMessage(const mpt::ustring &sender, const mpt::ustring &message
 		mpt::ustring prefix;
 		if(!sender.empty())
 			prefix = MPT_ULITERAL("<") + sender + MPT_ULITERAL("> ");
-		m_History.ReplaceSel(mpt::ToCString(prefix + message + MPT_ULITERAL("\r\n")));
+		m_History.ReplaceSel(CTime::GetCurrentTime().Format(_T("%H:%M:%S ")) + mpt::ToCString(prefix + message + MPT_ULITERAL("\r\n")));
 	}
 }
 
@@ -459,7 +459,7 @@ LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 
 LRESULT ChatDlg::OnAddAction(WPARAM id, LPARAM /*lParam*/)
 {
-	m_ActionLog.AddString(CTime::GetCurrentTime().Format("%H:%M:%S ") + mpt::ToCString(m_ModDoc.m_collabNames[id]) + _T(" ") + m_LastUserAction[id].c_str());
+	m_ActionLog.AddString(CTime::GetCurrentTime().Format(_T("%H:%M:%S ")) + mpt::ToCString(m_ModDoc.m_collabNames[id]) + _T(" ") + m_LastUserAction[id].c_str());
 	m_ActionLog.SendMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	m_ActionLog.UpdateWindow();
 	return 0;
