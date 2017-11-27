@@ -230,9 +230,10 @@ struct Entry {
 	const char * Function;
 	const char * File;
 	int          Line;
+	Direction    Direction;
 };
 
-inline bool operator < (const Entry &a, const Entry &b)
+static MPT_FORCEINLINE bool operator < (const Entry &a, const Entry &b) noexcept
 {
 /*
 	return false
@@ -265,7 +266,7 @@ void Enable(std::size_t numEntries)
 	Entries.clear();
 	Entries.resize(numEntries);
 	NextIndex.store(0);
-	g_Enabled = true;
+	g_Enabled = (numEntries > 0);
 }
 
 void Disable()
@@ -277,11 +278,12 @@ void Disable()
 	g_Enabled = false;
 }
 
-MPT_NOINLINE void Trace(const mpt::log::Context & context)
+MPT_NOINLINE void Trace(const mpt::log::Context & context, Direction direction) noexcept
 {
 	// This will get called in realtime contexts and hot paths.
 	// No blocking allowed here.
 	const uint32 index = NextIndex.fetch_add(1);
+	const std::size_t numEntries = Entries.size();
 #if 1
 	LARGE_INTEGER time;
 	time.QuadPart = 0;
@@ -293,13 +295,14 @@ MPT_NOINLINE void Trace(const mpt::log::Context & context)
 	const uint64 timestamp = (static_cast<uint64>(time.dwHighDateTime) << 32) | (static_cast<uint64>(time.dwLowDateTime) << 0);
 #endif
 	const uint32 threadid = static_cast<uint32>(GetCurrentThreadId());
-	mpt::log::Trace::Entry & entry = Entries[index % Entries.size()];
+	mpt::log::Trace::Entry & entry = Entries[index % numEntries];
 	entry.Index = index;
 	entry.ThreadId = threadid;
 	entry.Timestamp = timestamp;
 	entry.Function = context.function;
 	entry.File = context.file;
 	entry.Line = context.line;
+	entry.Direction = direction;
 }
 
 void Seal()
@@ -383,6 +386,7 @@ bool Dump(const mpt::PathString &filename)
 		{
 			f << " " << mpt::fmt::hex0<8>(entry.ThreadId) << " ";
 		}
+		f << (entry.Direction == mpt::log::Trace::Direction::Enter ? ">" : entry.Direction == mpt::log::Trace::Direction::Leave ? "<" : " ") << " ";
 		f << entry.File << "(" << entry.Line << "): " << entry.Function;
 		f << std::endl;
 	}

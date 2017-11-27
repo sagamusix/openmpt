@@ -133,19 +133,17 @@ struct Context
 	const char * const file;
 	const int line;
 	const char * const function;
-	MPT_FORCEINLINE Context(const char *file, int line, const char *function)
+	MPT_CONSTEXPR11_FUN Context(const char *file, int line, const char *function) noexcept
 		: file(file)
 		, line(line)
 		, function(function)
 	{
-		return;
 	}
-	MPT_FORCEINLINE Context(const Context &c)
+	MPT_CONSTEXPR11_FUN Context(const Context &c) noexcept
 		: file(c.file)
 		, line(c.line)
 		, function(c.function)
 	{
-		return;
 	}
 }; // class Context
 
@@ -229,7 +227,14 @@ namespace Trace {
 extern bool volatile g_Enabled;
 static inline bool IsEnabled() { return g_Enabled; }
 
-MPT_NOINLINE void Trace(const mpt::log::Context & contexxt);
+enum class Direction : int8
+{
+	Unknown =  0,
+	Enter   =  1,
+	Leave   = -1,
+};
+
+MPT_NOINLINE void Trace(const mpt::log::Context & context, Direction direction = Direction::Unknown) noexcept;
 
 enum ThreadKind {
 	ThreadKindGUI,
@@ -244,6 +249,33 @@ void SetThreadId(mpt::log::Trace::ThreadKind kind, uint32 id);
 
 void Seal();
 bool Dump(const mpt::PathString &filename);
+
+class Scope
+{
+private:
+	const mpt::log::Context context;
+public:
+	MPT_FORCEINLINE Scope(const mpt::log::Context & context) noexcept
+		: context(context)
+	{
+		if(mpt::log::Trace::g_Enabled)
+		{
+			mpt::log::Trace::Trace(context, mpt::log::Trace::Direction::Enter);
+		}
+	}
+	MPT_FORCEINLINE ~Scope() noexcept
+	{
+		if(mpt::log::Trace::g_Enabled)
+		{
+			mpt::log::Trace::Trace(context, mpt::log::Trace::Direction::Leave);
+		}
+	}
+};
+
+#define MPT_TRACE_CONCAT_HELPER(x, y) x ## y
+#define MPT_TRACE_CONCAT(x, y) MPT_TRACE_CONCAT_HELPER(x, y)
+
+#define MPT_TRACE_SCOPE() mpt::log::Trace::Scope MPT_TRACE_CONCAT(MPT_TRACE_VAR, __LINE__)(MPT_LOG_CURRENTCONTEXT())
 
 #define MPT_TRACE() MPT_DO { if(mpt::log::Trace::g_Enabled) { mpt::log::Trace::Trace(MPT_LOG_CURRENTCONTEXT()); } } MPT_WHILE_0
 
