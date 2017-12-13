@@ -3574,7 +3574,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 
 		if(m_chatDlg) m_chatDlg->Update();
-		return false;
+		return true;
 	}
 
 	}

@@ -151,6 +151,10 @@ void RemoteCollabConnection::Read()
 			ar(UserQuitMsg);
 			collabServer->Receive(that, sso);
 		}
+		if(that.use_count() == 1)
+		{
+			that->m_thread.detach();
+		}
 	});
 }
 
@@ -265,9 +269,9 @@ RemoteCollabConnection::~RemoteCollabConnection()
 void RemoteCollabConnection::Close()
 {
 	m_socket.close();
-	m_threadRunning = false;
 	if(m_thread.joinable())
 	{
+		m_threadRunning = false;
 		m_thread.join();
 	}
 }
@@ -481,13 +485,11 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				{
 					ar(NoMoreClientsMsg, join.accessType);
 				}
-			}
-			else
+			} else
 			{
 				ar(WrongPasswordMsg);
 			}
-		}
-		else
+		} else
 		{
 			ar(DocNotFoundMsg);
 		}
