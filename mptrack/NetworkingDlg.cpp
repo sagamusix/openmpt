@@ -442,7 +442,13 @@ LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 			bmp.CreateBitmap(m_iconSize, m_iconSize, 1, 32, bits.data());
 			m_UserToIcon[user.first] = m_Icons.Add(&bmp, nullptr);
 		}
-		m_Users.InsertItem(i++, mpt::ToCString(user.second), m_UserToIcon[user.first]);
+		m_Users.InsertItem(i, mpt::ToCString(user.second), m_UserToIcon[user.first]);
+		m_Users.SetItemData(i++, user.first);
+	}
+	if(m_ModDoc.IsSpectator())
+	{
+		m_Users.InsertItem(i, _T("<stop following>"), int32_max);
+		m_Users.SetItemData(i++, uint32_max);
 	}
 	m_Users.SetRedraw(TRUE);
 

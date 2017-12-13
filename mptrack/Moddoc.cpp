@@ -139,7 +139,7 @@ CModDoc::CModDoc()
 	, m_PatternUndo(*this)
 	, m_SampleUndo(*this)
 	, m_InstrumentUndo(*this)
-	, bModifiedAutosave(false)
+	, m_modifiedAutosave(false)
 	, m_listener(std::make_shared<Listener>(*this))
 {
 	// Set the creation date of this file (or the load time if we're loading an existing file)
@@ -177,11 +177,19 @@ CModDoc::~CModDoc()
 void CModDoc::SetModified(bool modified)
 {
 	STATIC_ASSERT(sizeof(long) == sizeof(m_bModified));
+	InterlockedExchange(&m_modifiedAutosave, modified);
 	if(!!InterlockedExchange(reinterpret_cast<long *>(&m_bModified), modified ? TRUE : FALSE) != modified)
 	{
 		// Update window titles in GUI thread
 		CMainFrame::GetMainFrame()->SendNotifyMessage(WM_MOD_SETMODIFIED, reinterpret_cast<WPARAM>(this), 0);
 	}
+}
+
+
+// Return "modified since last autosave" status and reset it until the next SetModified() (as this is only used for polling during autosave)
+bool CModDoc::ModifiedSinceLastAutosave()
+{
+	return !!InterlockedExchange(&m_modifiedAutosave, false);
 }
 
 
@@ -3322,7 +3330,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		}
 		modified = false;
 		
-		if(m_chatDlg && m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR)
+		if(m_chatDlg && IsSpectator())
 		{
 			PostMessageToAllViews(WM_MOD_VIEWMSG, VIEWMSG_FOLLOWCOLLABCURSOR, m_chatDlg->GetFollowUser());
 		}
@@ -3334,7 +3342,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 	{
 		int32 id;
 		inArchive(id);
-		if(m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR)
+		if(IsSpectator())
 		{
 			CMainFrame::GetMainFrame()->PostMessage(WM_MOD_KEYCOMMAND, id, 0);
 		}
@@ -3630,6 +3638,12 @@ uint32 CModDoc::GetCollabUserID() const
 }
 
 
+bool CModDoc::IsSpectator() const
+{
+	return m_collabClient && m_collabClient->GetConnection()->m_accessType == Networking::JoinMsg::ACCESS_SPECTATOR;
+}
+
+
 void CModDoc::OnNetworkingChat()
 {
 	if(m_chatDlg)
@@ -3663,7 +3677,7 @@ void CModDoc::RequestPatternLock(PATTERNINDEX pat)
 
 void CModDoc::SendPlayCommand(int32 cmd)
 {
-	if(m_collabClient && m_collabClient->GetConnection()->m_accessType != Networking::JoinMsg::ACCESS_SPECTATOR)
+	if(m_collabClient && !IsSpectator())
 	{
 		std::ostringstream ss;
 		cereal::BinaryOutputArchive ar(ss);

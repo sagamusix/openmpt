@@ -575,7 +575,7 @@ LRESULT CModScrollView::OnReceiveModViewMsg(WPARAM wParam, LPARAM lParam)
 
 void CModScrollView::OnUpdate(CView* pView, LPARAM lHint, CObject*pHint)
 {
-	if (pView != this) UpdateView(UpdateHint::FromLPARAM(lHint), pHint);
+	if (pView != this && m_hWnd) UpdateView(UpdateHint::FromLPARAM(lHint), pHint);
 }
 
 
