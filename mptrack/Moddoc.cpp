@@ -3577,6 +3577,14 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		return true;
 	}
 
+	case Networking::QuitMsg:
+	{
+		if(m_chatDlg)
+			m_chatDlg->PostMessage(WM_CLOSE);
+		m_collabClient = nullptr;
+		return false;
+	}
+
 	}
 
 	if(hint.GetCategory() != HINTCAT_GENERAL || hint.GetType() != HINT_NONE)

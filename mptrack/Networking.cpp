@@ -153,6 +153,7 @@ void RemoteCollabConnection::Read()
 		}
 		if(that.use_count() == 1)
 		{
+			// Avoid resource deadlock if this thread is the only remaining owner of "that"
 			that->m_thread.detach();
 		}
 	});
@@ -368,7 +369,8 @@ void CollabServer::CloseDocument(CModDoc &modDoc)
 		{
 			std::ostringstream sso;
 			cereal::BinaryOutputArchive ar(sso);
-			ar(QuitMsg);
+			ClientID id = 0;
+			ar(QuitMsg, id);
 			conn->Write(sso.str());
 		}
 	}
