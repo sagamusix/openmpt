@@ -3536,6 +3536,8 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 		if(id < MAX_MIXPLUGINS)
 		{
 			actionLog = mpt::tformat(_T("changed plugin %1"))(id + 1);
+			m_SndFile.m_MixPlugins[id].Destroy();
+			m_SndFile.m_MixPlugins[id] = plugin;
 			theApp.GetPluginManager()->CreateMixPlugin(m_SndFile.m_MixPlugins[id], m_SndFile);
 			hint = PluginHint(id + 1).Info().Names();
 		}
