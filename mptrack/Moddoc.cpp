@@ -3574,6 +3574,7 @@ bool CModDoc::Receive(std::shared_ptr<Networking::CollabConnection>, std::string
 			else
 				it++;
 		}
+		m_collabEditPositions.erase(sourceID);
 
 		if(m_chatDlg) m_chatDlg->Update();
 		return true;
