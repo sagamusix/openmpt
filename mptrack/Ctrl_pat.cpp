@@ -799,7 +799,20 @@ void CCtrlPatterns::OnPatternDuplicate()
 		PATTERNINDEX curPat = order[insertFrom + i];
 		if(curPat < patReplaceIndex.size() && patReplaceIndex[curPat] == PATTERNINDEX_INVALID)
 		{
-			PATTERNINDEX newPat = m_sndFile.Patterns.Duplicate(curPat, true);
+			PATTERNINDEX newPat;
+			if(m_modDoc.m_collabClient && m_sndFile.Patterns.IsValidPat(curPat))
+			{
+				newPat = m_modDoc.InsertPattern(m_sndFile.Patterns[curPat].GetNumRows());
+				if(newPat != PATTERNINDEX_INVALID)
+				{
+					PatternTransaction patternTr(m_sndFile, newPat);
+					auto data = m_sndFile.Patterns[curPat].GetData();
+					m_sndFile.Patterns[newPat].SetData(std::move(data));
+				}
+			} else
+			{
+				newPat = m_sndFile.Patterns.Duplicate(curPat, true);
+			}
 			if(newPat != PATTERNINDEX_INVALID)
 			{
 				order.insert(insertWhere + i, 1, newPat);
