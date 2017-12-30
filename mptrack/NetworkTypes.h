@@ -237,6 +237,7 @@ struct PatternEditMsg
 	}
 
 	void Apply(CPattern &pattern);
+	void Revert(CPattern &pattern);
 };
 
 

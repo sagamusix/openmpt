@@ -2144,7 +2144,7 @@ void CViewPattern::OnVisualizeEffect()
 void CViewPattern::Interpolate(PatternCursor::Columns type)
 {
 	CSoundFile *sndFile = GetSoundFile();
-	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern))
+	if(sndFile == nullptr || !sndFile->Patterns.IsValidPat(m_nPattern) || !IsEditingEnabled())
 	{
 		return;
 	}

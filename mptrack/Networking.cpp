@@ -20,7 +20,9 @@
 #include <cereal/cereal.hpp>
 #include <iostream>
 
+#ifdef _DEBUG
 #define MPT_SIMULATE_NETWORK_LAG
+#endif
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -230,10 +232,16 @@ std::string CollabConnection::WriteWithResult(const std::string &message)
 	cereal::BinaryOutputArchive ar(ss);
 	ar(ReturnValTransactionMsg, reinterpret_cast<uint64>(&m_promise), message);
 
-	auto future = m_promise.get_future();
-	Write(ss.str());
-	future.wait();
-	return future.get();
+	if(m_accessType == JoinMsg::ACCESS_COLLABORATOR)
+	{
+		auto future = m_promise.get_future();
+		Write(ss.str());
+		future.wait();
+		return future.get();
+	} else
+	{
+		return std::string();
+	}
 }
 
 
@@ -574,10 +582,19 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				CriticalSection cs;
 				if(sndFile.Patterns.IsValidPat(patMsg.pattern))
 				{
-					patMsg.Apply(sndFile.Patterns[patMsg.pattern]);
-					// Send back to all clients
-					ar(patMsg);
-					SendToAll(doc, sso);
+					if(modDoc->m_collabLockedPatterns.count(patMsg.pattern) && modDoc->m_collabLockedPatterns.at(patMsg.pattern) != source->m_id)
+					{
+						// Someone else has locked the pattern, revert the action
+						patMsg.Revert(sndFile.Patterns[patMsg.pattern]);
+						ar(patMsg);
+						source->Write(sso.str());
+					} else
+					{
+						patMsg.Apply(sndFile.Patterns[patMsg.pattern]);
+						// Send back to all clients
+						ar(patMsg);
+						SendToAll(doc, sso);
+					}
 				}
 				break;
 			}

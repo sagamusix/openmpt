@@ -76,6 +76,7 @@ void DeserializeTunings(CSoundFile &sndFile, const std::string &s)
 }
 
 
+// Apply action to pattern
 void PatternEditMsg::Apply(CPattern &pat)
 {
 	auto mask = commands.begin();
@@ -108,6 +109,36 @@ void PatternEditMsg::Apply(CPattern &pat)
 	}
 	nameChanged = true;
 	name = pat.GetName();
+}
+
+
+// Revert action based on server's pattern data
+void PatternEditMsg::Revert(CPattern &pat)
+{
+	auto mask = commands.begin();
+	for(ROWINDEX r = row; r < row + numRows; r++)
+	{
+		auto m = pat.GetpModCommand(r, channel);
+		for(CHANNELINDEX c = channel; c < channel + numChannels; c++, mask++, m++)
+		{
+			if(mask->mask[ModCommandMask::kNote])
+				mask->m.note = m->note;
+			if(mask->mask[ModCommandMask::kInstr])
+				mask->m.instr = m->instr;
+			if(mask->mask[ModCommandMask::kVolCmd])
+				mask->m.volcmd = m->volcmd;
+			if(mask->mask[ModCommandMask::kVol])
+				mask->m.vol = m->vol;
+			if(mask->mask[ModCommandMask::kCommand])
+				mask->m.command = m->command;
+			if(mask->mask[ModCommandMask::kParam])
+				mask->m.param = m->param;
+		}
+	}
+	if(nameChanged)
+	{
+		name = pat.GetName();
+	}
 }
 
 
