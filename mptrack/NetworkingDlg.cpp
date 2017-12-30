@@ -347,6 +347,7 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 	: m_ModDoc(modDoc)
 {
 	Create(IDD_NETWORKCHAT, CMainFrame::GetMainFrame());
+	SetWindowText(modDoc.GetTitle() + _T(" - Chat"));
 	m_iconSize = Util::ScalePixels(10, m_hWnd);
 	m_Icons.Create(m_iconSize, m_iconSize, ILC_COLOR32, 0, 1);
 	
