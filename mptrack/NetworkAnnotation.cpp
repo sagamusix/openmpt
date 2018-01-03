@@ -31,7 +31,10 @@ void AnnotationEditor::Show(CPoint position, PATTERNINDEX pat, ROWINDEX row, CHA
 	m_column = column;
 
 	CModDoc::NetworkAnnotationPos pos{ m_pattern, m_row, m_channel, m_column };
-	SetDlgItemText(IDC_EDIT1, mpt::ToCString(m_modDoc.m_collabAnnotations[pos]));
+	if(m_modDoc.m_collabAnnotations.count(pos))
+		SetDlgItemText(IDC_EDIT1, mpt::ToCString(m_modDoc.m_collabAnnotations[pos]));
+	else
+		SetDlgItemText(IDC_EDIT1, _T(""));
 	
 	// Center window around annotated point
 	CRect rect;
