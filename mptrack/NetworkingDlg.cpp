@@ -154,12 +154,14 @@ void NetworkingDlg::Join(bool collaborator)
 		ar(ConnectMsg);
 		ar(join);
 		m_client->Write(ss.str());
+		EnableWindow(FALSE);
 	}
 }
 
 
 bool NetworkingDlg::Receive(std::shared_ptr<CollabConnection>, std::stringstream &msg)
 {
+	EnableWindow(TRUE);
 	cereal::BinaryInputArchive inArchive(msg);
 	NetworkMessage type;
 	inArchive >> type;

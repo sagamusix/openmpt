@@ -16,6 +16,14 @@
 OPENMPT_NAMESPACE_BEGIN
 
 
+bool InstrumentEnvelope::operator==(const InstrumentEnvelope &other) const noexcept
+{
+	return dwFlags == other.dwFlags && nLoopStart == other.nLoopStart && nLoopEnd == other.nLoopEnd
+		&& nSustainStart == other.nSustainStart && nSustainEnd == other.nSustainEnd && nReleaseNode == other.nReleaseNode
+		&& static_cast<const std::vector<EnvelopeNode> &>(*this) == static_cast<const std::vector<EnvelopeNode> &>(other);
+}
+
+
 // Convert envelope data between various formats.
 void InstrumentEnvelope::Convert(MODTYPE fromType, MODTYPE toType)
 {

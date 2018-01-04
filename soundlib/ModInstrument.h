@@ -64,6 +64,13 @@ struct InstrumentEnvelope : public std::vector<EnvelopeNode>
 
 	using std::vector<EnvelopeNode>::push_back;
 	void push_back(EnvelopeNode::tick_t tick, EnvelopeNode::value_t value) { push_back(EnvelopeNode(tick, value)); }
+
+	bool operator==(const InstrumentEnvelope &other) const noexcept;
+
+	bool operator!=(const InstrumentEnvelope &other) const noexcept
+	{
+		return !(*this == other);
+	}
 };
 
 // Instrument Struct
