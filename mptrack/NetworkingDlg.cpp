@@ -104,7 +104,13 @@ void NetworkingDlg::OnConnect()
 	if(port == 0)
 		port = DEFAULT_PORT;
 
-	m_client = std::make_shared<RemoteCollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
+	try
+	{
+		m_client = std::make_shared<RemoteCollabClient>(mpt::ToCharset(mpt::CharsetUTF8, server), mpt::ToString(port), dialogInstance);
+	} catch(const std::exception &e)
+	{
+		Reporting::Error(e.what());
+	}
 	if(!m_client->Connect())
 	{
 		Reporting::Error(_T("Unable to connect to ") + server);
@@ -356,6 +362,8 @@ ChatDlg::ChatDlg(CModDoc &modDoc)
 	CRect rect;
 	m_Users.SetImageList(&m_Icons, LVSIL_SMALL);
 	m_Users.GetViewRect(rect);
+	if(rect.Width() == 0)	// Wine workaround
+		m_Users.GetClientRect(rect);
 	m_Users.InsertColumn(0, _T("Users"), LVCFMT_LEFT, rect.Width());
 
 	m_Tabs.InsertItem(0, _T("Annotations"));
