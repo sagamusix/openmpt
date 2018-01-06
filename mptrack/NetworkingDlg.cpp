@@ -425,7 +425,8 @@ void ChatDlg::AddAction(ClientID sender, const mpt::tstring &message)
 		m_LastUserAction[sender] = message;
 		if(m_hWnd)
 		{
-			PostMessage(WM_USER + 102, sender);
+			auto msg = new mpt::ustring(message);
+			PostMessage(WM_USER + 102, sender, reinterpret_cast<LPARAM>(msg));
 		}
 	}
 }
@@ -474,11 +475,13 @@ LRESULT ChatDlg::OnUpdate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 }
 
 
-LRESULT ChatDlg::OnAddAction(WPARAM id, LPARAM /*lParam*/)
+LRESULT ChatDlg::OnAddAction(WPARAM id, LPARAM msg)
 {
-	m_ActionLog.AddString(CTime::GetCurrentTime().Format(_T("%H:%M:%S ")) + mpt::ToCString(m_ModDoc.m_collabNames[id]) + _T(" ") + m_LastUserAction[id].c_str());
+	mpt::ustring *message = reinterpret_cast<mpt::ustring *>(msg);
+	m_ActionLog.AddString(CTime::GetCurrentTime().Format(_T("%H:%M:%S ")) + mpt::ToCString(m_ModDoc.m_collabNames[id]) + _T(" ") + message->c_str());
 	m_ActionLog.SendMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	m_ActionLog.UpdateWindow();
+	delete message;
 	return 0;
 }
 

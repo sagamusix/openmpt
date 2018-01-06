@@ -1346,7 +1346,7 @@ void CViewPattern::OnPatternProperties()
 {
 	CModDoc *pModDoc = GetDocument();
 	PATTERNINDEX pat = m_nPattern;
-	if(pModDoc && pModDoc->GetSoundFile().Patterns.IsValidPat(pat))
+	if(pModDoc && pModDoc->GetSoundFile().Patterns.IsValidPat(pat) && !IsPatternLocked())
 	{
 		CPatternPropertiesDlg dlg(*pModDoc, pat, this);
 		if(dlg.DoModal() == IDOK)
@@ -6745,7 +6745,7 @@ INT_PTR CViewPattern::OnToolHitTest(CPoint point, TOOLINFO *pTI) const
 	{
 		//PatternCursor c = GetPositionFromPoint(point);
 		pTI->hwnd = m_hWnd;
-		pTI->uId = point.x + (point.y << (sizeof(pTI->uId) * 4));
+		pTI->uId = point.x + (UINT_PTR(point.y) << (sizeof(pTI->uId) * 4));
 		CRect rect;
 		GetClientRect(rect);
 		pTI->rect = rect;
@@ -6764,7 +6764,7 @@ BOOL CViewPattern::OnToolTipText(UINT, NMHDR *pNMHDR, LRESULT *)
 	UINT_PTR nID = pNMHDR->idFrom;
 	if(!(pTTT->uFlags & TTF_IDISHWND))
 	{
-		int x = nID & ((1 << (sizeof(nID) * 4)) - 1);
+		int x = nID & ((UINT_PTR(1) << (sizeof(nID) * 4)) - 1);
 		int y = nID >> (sizeof(nID) * 4);
 		if(x >= m_szHeader.cx && y >= m_szHeader.cy)
 		{

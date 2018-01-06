@@ -686,8 +686,39 @@ bool CollabServer::Receive(std::shared_ptr<CollabConnection> source, std::string
 				ROWINDEX rows;
 				bool atEnd;
 				inArchive(pat, rows, atEnd);
-				ar(pat, rows, atEnd);
-				SendToAll(doc, sso);
+				if(modDoc->m_collabLockedPatterns.count(pat) && modDoc->m_collabLockedPatterns.at(pat) != source->m_id)
+				{
+					// Someone else has locked the pattern, revert the action
+					if(sndFile.Patterns.IsValidPat(pat))
+					{
+						const CPattern &pattern = sndFile.Patterns[pat];
+						ar(pat, pattern.GetNumRows(), true);
+						source->Write(sso.str());
+						{
+							PatternEditMsg patMsg(pat, 0, 0, pattern.GetNumRows(), pattern.GetNumChannels());
+							patMsg.commands.reserve(pattern.GetData().size());
+							for(ROWINDEX r = 0; r < pattern.GetNumRows(); r++)
+							{
+								for(CHANNELINDEX c = 0; c < pattern.GetNumChannels(); c++)
+								{
+									ModCommandMask m;
+									m.m = *pattern.GetpModCommand(r, c);
+									m.mask.set();
+									patMsg.commands.push_back(m);
+								}
+							}
+							std::ostringstream ssoRet;
+							cereal::BinaryOutputArchive arRet(ssoRet);
+							arRet(PatternTransactionMsg, source->m_id, patMsg);
+							SendToAll(doc, ssoRet);
+						}
+					}
+				} else
+				{
+					// Send back to all clients
+					ar(pat, rows, atEnd);
+					SendToAll(doc, sso);
+				}
 				break;
 			}
 
