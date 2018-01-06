@@ -541,7 +541,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Share Module for Network Collaboration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "&Join",IDOK,90,60,50,14
+    DEFPUSHBUTTON   "S&hare",IDOK,90,60,50,14
     PUSHBUTTON      "C&ancel",IDCANCEL,144,60,50,14
     LTEXT           "Maximum number of &collaborators:",IDC_STATIC,6,9,114,8
     EDITTEXT        IDC_EDIT1,126,6,36,14,ES_AUTOHSCROLL | ES_NUMBER
