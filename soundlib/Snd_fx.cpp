@@ -312,6 +312,17 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		playState.m_nRow = playState.m_nNextRow;
 		playState.m_nCurrentOrder = playState.m_nNextOrder;
 
+		if(orderList.IsValidPat(playState.m_nCurrentOrder) && playState.m_nRow >= Patterns[orderList[playState.m_nCurrentOrder]].GetNumRows())
+		{
+			playState.m_nRow = 0;
+			if(m_playBehaviour[kFT2LoopE60Restart])
+			{
+				playState.m_nRow = playState.m_nNextPatStartRow;
+				playState.m_nNextPatStartRow = 0;
+			}
+			playState.m_nCurrentOrder = ++playState.m_nNextOrder;
+		}
+
 		// Check if pattern is valid
 		playState.m_nPattern = playState.m_nCurrentOrder < orderList.size() ? orderList[playState.m_nCurrentOrder] : orderList.GetInvalidPatIndex();
 		bool positionJumpOnThisRow = false;
@@ -342,7 +353,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 			playState.m_nNextOrder = playState.m_nCurrentOrder;
 			if((!Patterns.IsValidPat(playState.m_nPattern)) && visitedRows.IsVisited(playState.m_nCurrentOrder, 0, true))
 			{
-				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nNextRow, true))
+				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 				{
 					// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 					break;
@@ -351,13 +362,13 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 					// We haven't found the target row yet, but we found some other unplayed row... continue searching from here.
 					retval.duration = memory.elapsedTime;
 					results.push_back(retval);
-					retval.startRow = playState.m_nNextRow;
+					retval.startRow = playState.m_nRow;
 					retval.startOrder = playState.m_nNextOrder;
 					memory.Reset();
 
-					playState.m_nRow = playState.m_nNextRow;
 					playState.m_nCurrentOrder = playState.m_nNextOrder;
 					playState.m_nPattern = orderList[playState.m_nCurrentOrder];
+					playState.m_nNextRow = playState.m_nRow;
 					break;
 				}
 			}
@@ -374,7 +385,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 			// If there isn't even a tune, we should probably stop here.
 			if(playState.m_nCurrentOrder == orderList.GetRestartPos())
 			{
-				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nNextRow, true))
+				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 				{
 					// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 					break;
@@ -383,9 +394,10 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 					// We haven't found the target row yet, but we found some other unplayed row... continue searching from here.
 					retval.duration = memory.elapsedTime;
 					results.push_back(retval);
-					retval.startRow = playState.m_nNextRow;
+					retval.startRow = playState.m_nRow;
 					retval.startOrder = playState.m_nNextOrder;
 					memory.Reset();
+					playState.m_nNextRow = playState.m_nRow;
 					continue;
 				}
 			}
@@ -405,7 +417,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 
 		if(visitedRows.IsVisited(playState.m_nCurrentOrder, playState.m_nRow, true))
 		{
-			if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nNextRow, true))
+			if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 			{
 				// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 				break;
@@ -414,9 +426,10 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 				// We haven't found the target row yet, but we found some other unplayed row... continue searching from here.
 				retval.duration = memory.elapsedTime;
 				results.push_back(retval);
-				retval.startRow = playState.m_nNextRow;
+				retval.startRow = playState.m_nRow;
 				retval.startOrder = playState.m_nNextOrder;
 				memory.Reset();
+				playState.m_nNextRow = playState.m_nRow;
 				continue;
 			}
 		}
@@ -426,11 +439,6 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 
 		// Update next position
 		playState.m_nNextRow = playState.m_nRow + 1;
-		if(playState.m_nNextRow >= Patterns[playState.m_nPattern].GetNumRows())
-		{
-			playState.m_nNextRow = 0;
-			playState.m_nNextOrder++;
-		}
 
 		// Jumped to invalid pattern row?
 		if(playState.m_nRow >= Patterns[playState.m_nPattern].GetNumRows())
@@ -1188,6 +1196,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		{
 			// Target found, or there is no target (i.e. play whole song)...
 			m_PlayState = std::move(playState);
+			m_PlayState.m_nNextRow = m_PlayState.m_nRow;
 			m_PlayState.m_nFrameDelay = m_PlayState.m_nPatternDelay = 0;
 			m_PlayState.m_nTickCount = Util::MaxValueOfType(m_PlayState.m_nTickCount) - 1;
 			m_PlayState.m_bPositionChanged = true;
@@ -4354,7 +4363,6 @@ void CSoundFile::ExtendedMODCommands(CHANNELINDEX nChn, ModCommand::PARAM param)
 				{
 					pChn->nFineTune = MOD2XMFineTune(param - 8);
 					if(pChn->nPeriod) pChn->nPeriod = GetPeriodFromNote(pChn->nNote, pChn->nFineTune, pChn->nC5Speed);
-
 				}
 				break;
 	// E6x: Pattern Loop
