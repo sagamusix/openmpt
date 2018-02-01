@@ -37,11 +37,7 @@ int main( int argc, char * argv[] ) {
 			throw std::runtime_error( "Usage: libopenmpt_example_cxx SOMEMODULE" );
 		}
 		const std::size_t buffersize = 480;
-#if defined( LIBOPENMPT_QUIRK_NO_CSTDINT )
-		const openmpt::std::int32_t samplerate = 48000;
-#else
 		const std::int32_t samplerate = 48000;
-#endif
 		std::vector<float> left( buffersize );
 		std::vector<float> right( buffersize );
 		const float * const buffers[2] = { left.data(), right.data() };
@@ -69,6 +65,7 @@ int main( int argc, char * argv[] ) {
 		stream.stop();
 	} catch ( const std::bad_alloc & ) {
 		std::cerr << "Error: " << std::string( "out of memory" ) << std::endl;
+		return 1;
 	} catch ( const std::exception & e ) {
 		std::cerr << "Error: " << std::string( e.what() ? e.what() : "unknown error" ) << std::endl;
 		return 1;

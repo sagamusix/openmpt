@@ -922,9 +922,9 @@ void CModTree::UpdateView(ModTreeDocInfo &info, UpdateHint hint)
 		// If there are too many sequences, delete them.
 		for(size_t nSeq = sndFile.Order.GetNumSequences(); nSeq < info.tiSequences.size(); nSeq++) if (info.tiSequences[nSeq])
 		{
-			for(size_t nOrd = 0; nOrd < info.tiOrders[nSeq].size(); nOrd++) if (info.tiOrders[nSeq][nOrd])
+			for(auto &ord : info.tiOrders[nSeq]) if (ord)
 			{
-				DeleteItem(info.tiOrders[nSeq][nOrd]); info.tiOrders[nSeq][nOrd] = nullptr;
+				DeleteItem(ord); ord = nullptr;
 			}
 			DeleteItem(info.tiSequences[nSeq]); info.tiSequences[nSeq] = nullptr;
 		}
@@ -1432,7 +1432,7 @@ BOOL CModTree::PlayItem(HTREEITEM hItem, ModCommand::NOTE nParam, int volume)
 				} else
 				{
 					modDoc->NoteOff(0, true); // cut previous playing samples
-					modDoc->PlayNote(nParam & 0x7F, 0, static_cast<SAMPLEINDEX>(modItemID), volume);
+					modDoc->PlayNote(PlayNoteParam(nParam & 0x7F).Sample(static_cast<SAMPLEINDEX>(modItemID)).Volume(volume));
 				}
 			}
 			return TRUE;
@@ -1449,7 +1449,7 @@ BOOL CModTree::PlayItem(HTREEITEM hItem, ModCommand::NOTE nParam, int volume)
 				} else
 				{
 					modDoc->NoteOff(0, true);
-					modDoc->PlayNote(nParam & 0x7F, static_cast<INSTRUMENTINDEX>(modItemID), 0, volume);
+					modDoc->PlayNote(PlayNoteParam(nParam & 0x7F).Instrument(static_cast<INSTRUMENTINDEX>(modItemID)).Volume(volume));
 				}
 			}
 			return TRUE;
@@ -2108,9 +2108,9 @@ void CModTree::InstrumentLibraryChDir(mpt::PathString dir, bool isSong)
 				}
 				m_InstrLibHighlightPath = MPT_PATHSTRING("..");	// Highlight first entry
 
-				FolderScanner scan(dir, false);
+				FolderScanner scan(dir, FolderScanner::kFilesAndDirectories);
 				mpt::PathString name;
-				if(scan.NextFileOrDirectory(name) && !scan.NextFileOrDirectory(name) && name.IsDirectory())
+				if(scan.Next(name) && !scan.Next(name) && name.IsDirectory())
 				{
 					// There is only one directory and nothing else in the path,
 					// so skip this directory and automatically descend further down into the tree.
@@ -3258,7 +3258,7 @@ void CModTree::InsertOrDupItem(bool insert)
 			{
 				modDoc.SetModified();
 				modDoc.UpdateAllViews(nullptr, SampleHint().Info().Data().Names());
-				modDoc.UpdateAllViews(nullptr, PatternHint());
+				modDoc.UpdateAllViews(nullptr, PatternHint().Data());
 			} else
 			{
 				Reporting::Error("Maximum number of samples reached.");
@@ -3270,7 +3270,7 @@ void CModTree::InsertOrDupItem(bool insert)
 			if(modDoc.ReArrangeInstruments(newOrder) != INSTRUMENTINDEX_INVALID)
 			{
 				modDoc.UpdateAllViews(NULL, InstrumentHint().Info().Envelope().Names());
-				modDoc.UpdateAllViews(nullptr, PatternHint());
+				modDoc.UpdateAllViews(nullptr, PatternHint().Data());
 				modDoc.SetModified();
 			} else
 			{

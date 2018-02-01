@@ -257,7 +257,7 @@ static MPT_NOINLINE void TestVersion()
 		DWORD dwVerInfoSize;
 
 		// Get version information from the application
-		::GetModuleFileNameW(NULL, szFullPath, mpt::size(szFullPath));
+		::GetModuleFileNameW(NULL, szFullPath, mpt::saturate_cast<DWORD>(mpt::size(szFullPath)));
 		dwVerInfoSize = ::GetFileVersionInfoSizeW(szFullPath, &dwVerHnd);
 		if (!dwVerInfoSize)
 			throw std::runtime_error("!dwVerInfoSize is true");
@@ -1555,7 +1555,7 @@ static MPT_NOINLINE void TestMisc2()
 	}
 	
 	{
-		auto TestAdaptive16 = [](uint16 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		auto TestAdaptive16 = [](uint16 value, mpt::IO::Offset expected_size, std::size_t fixedSize, const char * bytes)
 		{
 			mpt::stringstream f;
 			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt16LE(f, value, fixedSize), true);
@@ -1563,7 +1563,7 @@ static MPT_NOINLINE void TestMisc2()
 			if(bytes)
 			{
 				mpt::IO::SeekBegin(f);
-				for(std::size_t i = 0; i < expected_size; ++i)
+				for(mpt::IO::Offset i = 0; i < expected_size; ++i)
 				{
 					uint8 val = 0;
 					mpt::IO::ReadIntLE<uint8>(f, val);
@@ -1575,7 +1575,7 @@ static MPT_NOINLINE void TestMisc2()
 			VERIFY_EQUAL(mpt::IO::ReadAdaptiveInt16LE(f, result), true);
 			VERIFY_EQUAL(result, value);
 		};
-		auto TestAdaptive32 = [](uint32 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		auto TestAdaptive32 = [](uint32 value, mpt::IO::Offset expected_size, std::size_t fixedSize, const char * bytes)
 		{
 			mpt::stringstream f;
 			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt32LE(f, value, fixedSize), true);
@@ -1583,7 +1583,7 @@ static MPT_NOINLINE void TestMisc2()
 			if(bytes)
 			{
 				mpt::IO::SeekBegin(f);
-				for(std::size_t i = 0; i < expected_size; ++i)
+				for(mpt::IO::Offset i = 0; i < expected_size; ++i)
 				{
 					uint8 val = 0;
 					mpt::IO::ReadIntLE<uint8>(f, val);
@@ -1595,7 +1595,7 @@ static MPT_NOINLINE void TestMisc2()
 			VERIFY_EQUAL(mpt::IO::ReadAdaptiveInt32LE(f, result), true);
 			VERIFY_EQUAL(result, value);
 		};
-		auto TestAdaptive64 = [](uint64 value, std::size_t expected_size, std::size_t fixedSize, const char * bytes)
+		auto TestAdaptive64 = [](uint64 value, mpt::IO::Offset expected_size, std::size_t fixedSize, const char * bytes)
 		{
 			mpt::stringstream f;
 			VERIFY_EQUAL(mpt::IO::WriteAdaptiveInt64LE(f, value, fixedSize), true);
@@ -1603,7 +1603,7 @@ static MPT_NOINLINE void TestMisc2()
 			if(bytes)
 			{
 				mpt::IO::SeekBegin(f);
-				for(std::size_t i = 0; i < expected_size; ++i)
+				for(mpt::IO::Offset i = 0; i < expected_size; ++i)
 				{
 					uint8 val = 0;
 					mpt::IO::ReadIntLE<uint8>(f, val);
@@ -2358,26 +2358,26 @@ static MPT_NOINLINE void TestCharsets()
 	// here.
 
 	char src_char[256];
-	wchar_t src_wchar[256];
-	TCHAR src_tchar[256];
+	wchar_t src_wchar_t[256];
+	TCHAR src_TCHAR[256];
 
 	char dst_char[256];
-	wchar_t dst_wchar[256];
-	TCHAR dst_tchar[256];
+	wchar_t dst_wchar_t[256];
+	TCHAR dst_TCHAR[256];
 
 	MemsetZero(src_char);
-	MemsetZero(src_wchar);
-	MemsetZero(src_tchar);
+	MemsetZero(src_wchar_t);
+	MemsetZero(src_TCHAR);
 
 	strcpy(src_char, "ab");
-	wcscpy(src_wchar, L"ab");
-	_tcscpy(src_tchar, _T("ab"));
+	wcscpy(src_wchar_t, L"ab");
+	_tcscpy(src_TCHAR, _T("ab"));
 
 #define MPT_TEST_PRINTF(dst_type, function, format, src_type) \
 	MPT_DO { \
 		MemsetZero(dst_ ## dst_type); \
 		function(dst_ ## dst_type, format, src_ ## src_type); \
-		VERIFY_EQUAL(std::memcmp(dst_ ## dst_type, src_ ## dst_type, 256), 0); \
+		VERIFY_EQUAL(std::char_traits< dst_type >::compare(dst_ ## dst_type, src_ ## dst_type, std::char_traits< dst_type >::length( src_ ## dst_type ) + 1), 0); \
 	} MPT_WHILE_0 \
 /**/
 
@@ -2385,52 +2385,52 @@ static MPT_NOINLINE void TestCharsets()
 	MPT_DO { \
 		MemsetZero(dst_ ## dst_type); \
 		function(dst_ ## dst_type, 255, format, src_ ## src_type); \
-		VERIFY_EQUAL(std::memcmp(dst_ ## dst_type, src_ ## dst_type, 256), 0); \
+		VERIFY_EQUAL(std::char_traits< dst_type >::compare(dst_ ## dst_type, src_ ## dst_type, std::char_traits< dst_type >::length( src_ ## dst_type ) + 1), 0); \
 	} MPT_WHILE_0 \
 /**/
 
 	// CRT narrow
 	MPT_TEST_PRINTF(char, sprintf, "%s", char);
-	MPT_TEST_PRINTF(char, sprintf, "%S", wchar);
+	MPT_TEST_PRINTF(char, sprintf, "%S", wchar_t);
 	MPT_TEST_PRINTF(char, sprintf, "%hs", char);
 	MPT_TEST_PRINTF(char, sprintf, "%hS", char);
-	MPT_TEST_PRINTF(char, sprintf, "%ls", wchar);
-	MPT_TEST_PRINTF(char, sprintf, "%lS", wchar);
-	MPT_TEST_PRINTF(char, sprintf, "%ws", wchar);
-	MPT_TEST_PRINTF(char, sprintf, "%wS", wchar);
+	MPT_TEST_PRINTF(char, sprintf, "%ls", wchar_t);
+	MPT_TEST_PRINTF(char, sprintf, "%lS", wchar_t);
+	MPT_TEST_PRINTF(char, sprintf, "%ws", wchar_t);
+	MPT_TEST_PRINTF(char, sprintf, "%wS", wchar_t);
 
 	// CRT wide
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%s", wchar);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%S", char);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%hs", char);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%hS", char);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%ls", wchar);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%lS", wchar);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%ws", wchar);
-	MPT_TEST_PRINTF_N(wchar, swprintf, L"%wS", wchar);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%s", wchar_t);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%S", char);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%hs", char);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%hS", char);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%ls", wchar_t);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%lS", wchar_t);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%ws", wchar_t);
+	MPT_TEST_PRINTF_N(wchar_t, swprintf, L"%wS", wchar_t);
 
 	// WinAPI TCHAR
-	MPT_TEST_PRINTF(tchar, wsprintf, _T("%s"), tchar);
-	MPT_TEST_PRINTF(tchar, wsprintf, _T("%hs"), char);
-	MPT_TEST_PRINTF(tchar, wsprintf, _T("%hS"), char);
-	MPT_TEST_PRINTF(tchar, wsprintf, _T("%ls"), wchar);
-	MPT_TEST_PRINTF(tchar, wsprintf, _T("%lS"), wchar);
+	MPT_TEST_PRINTF(TCHAR, wsprintf, _T("%s"), TCHAR);
+	MPT_TEST_PRINTF(TCHAR, wsprintf, _T("%hs"), char);
+	MPT_TEST_PRINTF(TCHAR, wsprintf, _T("%hS"), char);
+	MPT_TEST_PRINTF(TCHAR, wsprintf, _T("%ls"), wchar_t);
+	MPT_TEST_PRINTF(TCHAR, wsprintf, _T("%lS"), wchar_t);
 
 	// WinAPI CHAR
 	MPT_TEST_PRINTF(char, wsprintfA, "%s", char);
-	MPT_TEST_PRINTF(char, wsprintfA, "%S", wchar);
+	MPT_TEST_PRINTF(char, wsprintfA, "%S", wchar_t);
 	MPT_TEST_PRINTF(char, wsprintfA, "%hs", char);
 	MPT_TEST_PRINTF(char, wsprintfA, "%hS", char);
-	MPT_TEST_PRINTF(char, wsprintfA, "%ls", wchar);
-	MPT_TEST_PRINTF(char, wsprintfA, "%lS", wchar);
+	MPT_TEST_PRINTF(char, wsprintfA, "%ls", wchar_t);
+	MPT_TEST_PRINTF(char, wsprintfA, "%lS", wchar_t);
 
 	// WinAPI WCHAR
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%s", wchar);
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%S", char);
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%hs", char);
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%hS", char);
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%ls", wchar);
-	MPT_TEST_PRINTF(wchar, wsprintfW, L"%lS", wchar);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%s", wchar_t);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%S", char);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%hs", char);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%hS", char);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%ls", wchar_t);
+	MPT_TEST_PRINTF(wchar_t, wsprintfW, L"%lS", wchar_t);
 
 #undef MPT_TEST_PRINTF
 #undef MPT_TEST_PRINTF_n
@@ -3178,7 +3178,7 @@ static void TestLoadS3MFile(const CSoundFile &sndFile, bool resaved)
 	VERIFY_EQUAL_NONCONT((sndFile.m_SongFlags & SONG_FILE_FLAGS), SONG_FASTVOLSLIDES);
 	VERIFY_EQUAL_NONCONT(sndFile.GetMixLevels(), mixLevelsCompatible);
 	VERIFY_EQUAL_NONCONT(sndFile.m_nTempoMode, tempoModeClassic);
-	VERIFY_EQUAL_NONCONT(sndFile.m_dwLastSavedWithVersion, resaved ? (MptVersion::num & 0xFFFF0000) : MAKE_VERSION_NUMERIC(1, 20, 00, 00));
+	VERIFY_EQUAL_NONCONT(sndFile.m_dwLastSavedWithVersion, resaved ? (MptVersion::num & 0xFFFF0000) : MAKE_VERSION_NUMERIC(1, 27, 00, 00));
 	VERIFY_EQUAL_NONCONT(sndFile.Order().GetRestartPos(), 0);
 
 	// Channels
@@ -3516,12 +3516,29 @@ static MPT_NOINLINE void TestLoadSaveFile()
 	// Test S3M file loading
 	{
 		TSoundFileContainer sndFileContainer = CreateSoundFileContainer(filenameBaseSrc + MPT_PATHSTRING("s3m"));
+		auto &sndFile = GetSoundFile(sndFileContainer);
 
-		TestLoadS3MFile(GetSoundFile(sndFileContainer), false);
+		TestLoadS3MFile(sndFile, false);
+
+		// Test GetLength code, in particular with subsongs
+		sndFile.ChnSettings[1].dwFlags.reset(CHN_MUTE);
+		
+		VERIFY_EQUAL_EPS(sndFile.GetLength(eAdjustSamplePositions, GetLengthTarget(3, 1)).back().duration, 19.237, 0.01);
+		VERIFY_EQUAL_NONCONT(sndFile.GetLength(eAdjustSamplePositions, GetLengthTarget(2, 0).StartPos(0, 1, 0)).back().targetReached, false);
+
+		auto allSubSongs = sndFile.GetLength(eNoAdjust, GetLengthTarget(true));
+		VERIFY_EQUAL_NONCONT(allSubSongs.size(), 3);
+		double totalDuration = 0.0;
+		for(const auto &subSong : allSubSongs)
+		{
+			totalDuration += subSong.duration;
+		}
+		VERIFY_EQUAL_EPS(totalDuration, 3674.38, 1.0);
 
 		#ifndef MODPLUG_NO_FILESAVE
 			// Test file saving
-			GetSoundFile(sndFileContainer).m_dwLastSavedWithVersion = MptVersion::num;
+			sndFile.ChnSettings[1].dwFlags.set(CHN_MUTE);
+			sndFile.m_dwLastSavedWithVersion = MptVersion::num;
 			SaveS3M(sndFileContainer, filenameBase + MPT_PATHSTRING("saved.s3m"));
 		#endif
 

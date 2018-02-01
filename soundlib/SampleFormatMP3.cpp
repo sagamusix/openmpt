@@ -26,9 +26,7 @@
 #include "MPEGFrame.h"
 #endif // MPT_ENABLE_MP3_SAMPLES
 #if defined(MPT_WITH_MINIMP3)
-extern "C" {
 #include <minimp3/minimp3.h>
-}
 #endif // MPT_WITH_MINIMP3
 
 // mpg123 must be last because of mpg123 large file support insanity
@@ -189,9 +187,15 @@ bool CSoundFile::ReadMP3Sample(SAMPLEINDEX sample, FileReader &file, bool mo3Dec
 		return false;
 	}
 
-	mpg123_handle *mh;
-	int err;
-	if((mh = mpg123_new(0, &err)) == nullptr)
+	struct MPG123Handle
+	{
+		mpg123_handle *mh;
+		MPG123Handle() : mh(mpg123_new(0, nullptr)) { }
+		~MPG123Handle() { mpg123_delete(mh); }
+		operator mpg123_handle *() { return mh; }
+	};
+	MPG123Handle mh;
+	if(!mh)
 	{
 		return false;
 	}
@@ -202,38 +206,31 @@ bool CSoundFile::ReadMP3Sample(SAMPLEINDEX sample, FileReader &file, bool mo3Dec
 	// Set up decoder...
 	if(mpg123_param(mh, MPG123_ADD_FLAGS, MPG123_QUIET, 0.0))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	if(mpg123_replace_reader_handle(mh, ComponentMPG123::FileReaderRead, ComponentMPG123::FileReaderLSeek, 0))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	if(mpg123_open_handle(mh, &file))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	if(mpg123_scan(mh))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	if(mpg123_getformat(mh, &rate, &nchannels, &encoding))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	if(!nchannels || nchannels > 2 || (encoding & (MPG123_ENC_16 | MPG123_ENC_SIGNED)) != (MPG123_ENC_16 | MPG123_ENC_SIGNED))
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 	length = mpg123_length(mh);
 	if(length == 0)
 	{
-		mpg123_delete(mh);
 		return false;
 	}
 
@@ -255,7 +252,6 @@ bool CSoundFile::ReadMP3Sample(SAMPLEINDEX sample, FileReader &file, bool mo3Dec
 		mpg123_size_t ndecoded = 0;
 		mpg123_read(mh, static_cast<unsigned char *>(Samples[sample].pSample), Samples[sample].GetSampleSizeInBytes(), &ndecoded);
 	}
-	mpg123_delete(mh);
 
 	if(!mo3Decode)
 	{
@@ -273,39 +269,47 @@ bool CSoundFile::ReadMP3Sample(SAMPLEINDEX sample, FileReader &file, bool mo3Dec
 
 	std::vector<int16> raw_sample_data;
 
-	mp3_decoder_t *mp3 = mp3_create();
+	mp3dec_t mp3;
+	std::memset(&mp3, 0, sizeof(mp3dec_t));
+	mp3dec_init(&mp3);
 	
 	int rate = 0;
 	int channels = 0;
 
-	mp3_info_t info;
-	int frame_size = 0;
+	mp3dec_frame_info_t info;
+	std::memset(&info, 0, sizeof(mp3dec_frame_info_t));
 	do
 	{
-		int16 sample_buf[MP3_MAX_SAMPLES_PER_FRAME];
-		frame_size = mp3_decode(mp3, const_cast<uint8 *>(stream_pos), mpt::saturate_cast<int>(bytes_left), sample_buf, &info); // workaround lack of const qualifier in mp3_decode (all internal functions have the required const correctness)
-		if(rate != 0 && rate != info.sample_rate) break; // inconsistent stream
-		if(channels != 0 && channels != info.channels) break; // inconsistent stream
-		rate = info.sample_rate;
-		channels = info.channels;
-		if(rate <= 0) break; // broken stream
-		if(channels != 1 && channels != 2) break; // broken stream
-		stream_pos += frame_size;
-		bytes_left -= frame_size;
-		if(info.audio_bytes >= 0)
+		int16 sample_buf[MINIMP3_MAX_SAMPLES_PER_FRAME];
+		int frame_samples = mp3dec_decode_frame(&mp3, stream_pos, mpt::saturate_cast<int>(bytes_left), sample_buf, &info);
+		if(frame_samples < 0 || info.frame_bytes < 0) break; // internal error in minimp3
+		if(frame_samples > 0 && info.frame_bytes == 0) break; // internal error in minimp3
+		if(frame_samples == 0 && info.frame_bytes == 0) break; // end of stream, no progress
+		if(frame_samples == 0 && info.frame_bytes > 0) MPT_DO { } MPT_WHILE_0; // decoder skipped non-mp3 data
+		if(frame_samples > 0 && info.frame_bytes > 0) MPT_DO { } MPT_WHILE_0; // normal
+		if(info.frame_bytes > 0)
 		{
-			try
+			if(rate != 0 && rate != info.hz) break; // inconsistent stream
+			if(channels != 0 && channels != info.channels) break; // inconsistent stream
+			rate = info.hz;
+			channels = info.channels;
+			if(rate <= 0) break; // broken stream
+			if(channels != 1 && channels != 2) break; // broken stream
+			stream_pos += mpt::clamp(info.frame_bytes, 0, mpt::saturate_cast<int>(bytes_left));
+			bytes_left -= mpt::clamp(info.frame_bytes, 0, mpt::saturate_cast<int>(bytes_left));
+			if(frame_samples > 0)
 			{
-				raw_sample_data.insert(raw_sample_data.end(), sample_buf, sample_buf + (info.audio_bytes / sizeof(int16)));
-			} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
-			{
-				MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
-				break;
+				try
+				{
+					raw_sample_data.insert(raw_sample_data.end(), sample_buf, sample_buf + frame_samples * channels);
+				} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+				{
+					MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
+					break;
+				}
 			}
 		}
-	} while((bytes_left >= 0) && (frame_size > 0));
-
-	mp3_free(mp3);
+	} while(bytes_left > 0);
 
 	if(rate == 0 || channels == 0 || raw_sample_data.empty())
 	{
@@ -319,7 +323,7 @@ bool CSoundFile::ReadMP3Sample(SAMPLEINDEX sample, FileReader &file, bool mo3Dec
 		Samples[sample].Initialize();
 		Samples[sample].nC5Speed = rate;
 	}
-	Samples[sample].nLength = raw_sample_data.size() / channels;
+	Samples[sample].nLength = mpt::saturate_cast<SmpLength>(raw_sample_data.size() / channels);
 
 	Samples[sample].uFlags.set(CHN_16BIT);
 	Samples[sample].uFlags.set(CHN_STEREO, channels == 2);

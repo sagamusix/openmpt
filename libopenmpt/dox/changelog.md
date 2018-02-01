@@ -13,18 +13,56 @@ is just a high-level summary.
     this variable will be put in `libopenmpt.pc` `Libs.private` and used for
     nothing else. See \ref libopenmpt_c_staticlinking .
  *  [**New**] foo_openmpt: foo_openmpt now also works on Windows XP.
+ *  [**New**] libopenmpt Emscripten builds now ship with MP3 support by
+    default, based on minimp3 by Lion (github.com/lieff).
+ *  [**New**] New ctl `play.at_end` can be used to change what happens when the
+    song end is reached:
+    * "fadeout": Fades the module out for a short while. Subsequent reads after
+      the fadeout will return 0 rendered frames. This is the default and
+      identical to the behaviour in previous libopenmpt versions. 
+    * "continue": Returns 0 rendered frames when the song end is reached.
+      Subsequent reads will continue playing from the song start or loop start.
+      This can be used for custom loop logic, such as loop auto-detection and
+      longer fadeouts.
+    * "stop": Returns 0 rendered frames when the song end is reached. Subsequent
+      reads will return 0 rendered frames.
 
  *  [**Bug**] libopenmpt did not build on Android NDK 15c (and possibly
     other versions between 12b and 15c as well).
 
+ *  [**Change**] minimp3: Instead of the LGPL-2.1-licensed minimp3 by KeyJ,
+    libopenmpt now uses the CC0-1.0-licensed minimp3 by Lion (github.com/lieff)
+    as a fallback if libmpg123 is unavailable. The `USE_MINIMP3` `Makefile`
+    option is gone and minimp3 will be used automatically in the `Makefile`
+    build system if libmpg123 is not available.
  *  [**Change**] openmpt123: openmpt123 now rejects `--output-type` in `--ui`
     and `--batch` modes and also rejects `--output` in `--render` mode. These
     combinations of options really made no sense and were rather confusing.
 
  *  IT: In Compatible Gxx mode, allow sample changes next to a tone portamento
     effect if a previous sample has already stopped playing.
+ *  IT: Fix broken volume envelopes with negative values as found in breakdwn.it
+    by Elysis.
  *  MOD: Slides and delayed notes are executed on every repetition of a row with
     row delay (fixes "ode to protracker").
+ *  XM: If the sustain point of the panning envelope is reached before key-off,
+    it is never released.
+ *  XM E60 loop bug was not considered in song length calucation.
+ *  Tighten M15 and MOD file rejection heuristics.
+ *  J2B: Ignore frequency limits from file header. Fixes Medivo.j2b, broken
+    since libopenmpt-0.2.6401-beta17.
+ *  STM: More accurate tempo calculation.
+ *  STM: Better support for early format revisions (no such files have been
+    found in the wild, though).
+ *  STM: Last character of sample name was missing.
+ *  IMF: Filter cutoff was upside down and the cutoff range was too small.
+ *  ParamEq plugin center frequency was not limited correctly.
+ *  Subsong search is now less thorough. It could previously find many subsongs
+    that are technically correct (unplayed rows at the beginning of patterns
+    that have been jumped over due to pattern breaks), but so far no real-world
+    module that would require such a thorough subsong detection was found. The
+    old mechanism caused way more false positives than intended with real-world
+    modules, though.
 
 ### libopenmpt 0.3 (2017-09-27)
 

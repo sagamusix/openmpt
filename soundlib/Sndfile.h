@@ -95,20 +95,14 @@ struct PatternCuePoint
 // Return values for GetLength()
 struct GetLengthType
 {
-	double duration;		// total time in seconds
-	ROWINDEX lastRow;		// last parsed row (if no target is specified, this is the first row that is parsed twice, i.e. not the *last* played order)
-	ROWINDEX endRow;		// last row before module loops (UNDEFINED if a target is specified)
-	ROWINDEX startRow;		// first row of parsed subsong
-	ORDERINDEX lastOrder;	// last parsed order (see lastRow remark)
-	ORDERINDEX endOrder;	// last order before module loops (UNDEFINED if a target is specified)
-	ORDERINDEX startOrder;	// first order of parsed subsong
-	bool targetReached;		// true if the specified order/row combination or duration has been reached while going through the module
-
-	GetLengthType()
-		: duration(0.0)
-		, lastRow(ROWINDEX_INVALID), endRow(ROWINDEX_INVALID), startRow(0)
-		, lastOrder(ORDERINDEX_INVALID), endOrder(ORDERINDEX_INVALID), startOrder(0)
-		, targetReached(false) { }
+	double     duration = 0.0;                 // Total time in seconds
+	ROWINDEX   lastRow = ROWINDEX_INVALID;     // Last parsed row (if no target is specified, this is the first row that is parsed twice, i.e. not the *last* played order)
+	ROWINDEX   endRow = ROWINDEX_INVALID;      // Last row before module loops (UNDEFINED if a target is specified)
+	ROWINDEX   startRow = 0;                   // First row of parsed subsong
+	ORDERINDEX lastOrder = ORDERINDEX_INVALID; // Last parsed order (see lastRow remark)
+	ORDERINDEX endOrder = ORDERINDEX_INVALID;  // Last order before module loops (UNDEFINED if a target is specified)
+	ORDERINDEX startOrder = 0;                 // First order of parsed subsong
+	bool       targetReached = false;          // True if the specified order/row combination or duration has been reached while going through the module
 };
 
 
@@ -238,20 +232,11 @@ struct FileHistory
 
 struct TimingInfo
 {
-	double InputLatency; // seconds
-	double OutputLatency; // seconds
-	int64 StreamFrames;
-	uint64 SystemTimestamp; // nanoseconds
-	double Speed;
-	TimingInfo()
-		: InputLatency(0.0)
-		, OutputLatency(0.0)
-		, StreamFrames(0)
-		, SystemTimestamp(0)
-		, Speed(1.0)
-	{
-		return;
-	}
+	double InputLatency = 0.0; // seconds
+	double OutputLatency = 0.0; // seconds
+	int64 StreamFrames = 0;
+	uint64 SystemTimestamp = 0; // nanoseconds
+	double Speed = 1.0;
 };
 
 
@@ -733,13 +718,13 @@ public:
 	bool ReadICE(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadIMF(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadIT(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadITProject(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadITP(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadJ2B(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadM15(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMDL(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadMed(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadMED(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMO3(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadMod(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadMOD(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMT2(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadMTM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadOKT(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
@@ -752,12 +737,12 @@ public:
 	bool ReadSFX(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadSTM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadSTP(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadUlt(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadULT(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadXM(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 
 	bool ReadMID(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 	bool ReadUAX(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
-	bool ReadWav(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
+	bool ReadWAV(FileReader &file, ModLoadingFlags loadFlags = loadCompleteModule);
 
 	static std::vector<const char *> GetSupportedExtensions(bool otherFormats);
 	static bool IsExtensionSupported(const char *ext); // UTF8, casing of ext is ignored
@@ -786,9 +771,8 @@ public:
 	mpt::ustring GetSchismTrackerVersion(uint16 cwtv);
 
 	// Reads extended instrument properties(XM/IT/MPTM).
-	// If no errors occur and song extension tag is found, returns pointer to the beginning
-	// of the tag, else returns NULL.
-	void LoadExtendedInstrumentProperties(FileReader &file, bool *pInterpretMptMade = nullptr);
+	// Returns true if extended instrument properties were found.
+	bool LoadExtendedInstrumentProperties(FileReader &file);
 
 	void SetDefaultPlaybackBehaviour(MODTYPE type);
 	static PlayBehaviourSet GetSupportedPlaybackBehaviour(MODTYPE type);
@@ -852,7 +836,8 @@ public:
 	void KeyOff(ModChannel *pChn) const;
 	// Global Effects
 	void SetTempo(TEMPO param, bool setAsNonModcommand = false);
-	void SetSpeed(uint32 param);
+	void SetSpeed(PlayState &playState, uint32 param) const;
+	static TEMPO ConvertST2Tempo(uint8 tempo);
 
 protected:
 	// Global variable initializer for loader functions
@@ -1093,11 +1078,10 @@ inline IMixPlugin* CSoundFile::GetInstrumentPlugin(INSTRUMENTINDEX instr)
 ///////////////////////////////////////////////////////////
 // Low-level Mixing functions
 
-#define SCRATCH_BUFFER_SIZE 64 //Used for plug's final processing (cleanup)
 #define FADESONGDELAY		100
 
-#define MOD2XMFineTune(k)	((int)( (signed char)((k)<<4) ))
-#define XM2MODFineTune(k)	((int)( (k>>4)&0x0f ))
+static constexpr int8 MOD2XMFineTune(int v) { return static_cast<int8>(static_cast<uint8>(v) << 4); }
+static constexpr int8 XM2MODFineTune(int v) { return static_cast<int8>(static_cast<uint8>(v) >> 4); }
 
 // Read instrument property with 'code' and 'size' from 'file' to instrument 'pIns'.
 void ReadInstrumentExtensionField(ModInstrument* pIns, const uint32 code, const uint16 size, FileReader &file);

@@ -33,7 +33,7 @@ struct STMSampleHeader
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.Initialize();
-		mpt::String::Read<mpt::String::nullTerminated>(mptSmp.filename, filename);
+		mpt::String::Read<mpt::String::maybeNullTerminated>(mptSmp.filename, filename);
 
 		mptSmp.nC5Speed = sampleRate;
 		mptSmp.nVolume = std::min<uint8>(volume, 64) * 4;
@@ -65,7 +65,7 @@ struct STMFileHeader
 	uint8 filetype;			// 1=song, 2=module (only 2 is supported, of course) :)
 	uint8 verMajor;
 	uint8 verMinor;
-	uint8 initTempo;		// Ticks per row. Keep in mind that effects are only updated on every 16th tick.
+	uint8 initTempo;		// Ticks per row.
 	uint8 numPatterns;		// number of patterns
 	uint8 globalVolume;
 	uint8 reserved[13];
@@ -74,48 +74,34 @@ struct STMFileHeader
 MPT_BINARY_STRUCT(STMFileHeader, 48)
 
 
-// Pattern note entry
-struct STMPatternEntry
-{
-	uint8le note;
-	uint8le insvol;
-	uint8le volcmd;
-	uint8le cmdinf;
-};
-
-MPT_BINARY_STRUCT(STMPatternEntry, 4)
-
-
-struct STMPatternData
-{
-	STMPatternEntry entry[64 * 4];
-};
-
-MPT_BINARY_STRUCT(STMPatternData, 4*64*4)
-
-
 static bool ValidateHeader(const STMFileHeader &fileHeader)
 {
 	if(fileHeader.filetype != 2
 		|| (fileHeader.dosEof != 0x1A && fileHeader.dosEof != 2)	// ST2 ignores this, ST3 doesn't. putup10.stm / putup11.stm have dosEof = 2.
 		|| fileHeader.verMajor != 2
-		|| fileHeader.verMinor > 21	// ST3 only accepts 0, 10, 20 and 21
-		|| fileHeader.globalVolume > 64
-		|| (std::memcmp(fileHeader.trackername, "!Scream!", 8)
-			&& std::memcmp(fileHeader.trackername, "BMOD2STM", 8)
-			&& std::memcmp(fileHeader.trackername, "WUZAMOD!", 8))
-		)
+		|| (fileHeader.verMinor != 0 && fileHeader.verMinor != 10 && fileHeader.verMinor != 20 && fileHeader.verMinor != 21)
+		|| fileHeader.numPatterns > 64
+		|| fileHeader.globalVolume > 64)
 	{
 		return false;
 	}
+	// Tracker string can be anything really (ST2 and ST3 won't check it),
+	// but we do not want to generate too many false positives here, as
+	// STM already has very few magic bytes anyway.
+	// Magic bytes that have been found in the wild are !Scream!, BMOD2STM, WUZAMOD! and SWavePro.
+	for(uint8 c : fileHeader.trackername)
+	{
+		if(c < 0x20 || c >= 0x7F)
+			return false;
+	}
+
 	return true;
 }
 
 
 static uint64 GetHeaderMinimumAdditionalSize(const STMFileHeader &fileHeader)
 {
-	MPT_UNREFERENCED_PARAMETER(fileHeader);
-	return 31 * sizeof(STMSampleHeader) + 128;
+	return 31 * sizeof(STMSampleHeader) + (fileHeader.verMinor == 0 ? 64 : 128) + fileHeader.numPatterns * 64 * 4;
 }
 
 
@@ -138,11 +124,6 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 {
 	file.Rewind();
 
-	// NOTE: Historically the magic byte check used to be case-insensitive.
-	// Other libraries (mikmod, xmp, Milkyplay) don't do this.
-	// ScreamTracker 2 and 3 do not care about the content of the magic bytes at all.
-	// After reviewing all STM files on ModLand and ModArchive, it was found that the
-	// case-insensitive comparison is most likely not necessary for any files in the wild.
 	STMFileHeader fileHeader;
 	if(!file.ReadStruct(fileHeader))
 	{
@@ -171,15 +152,17 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 	m_nChannels = 4;
 	m_nMinPeriod = 64;
 	m_nMaxPeriod = 0x7FFF;
-#ifdef MODPLUG_TRACKER
-	m_nDefaultTempo.Set(125);
-	m_nDefaultSpeed = fileHeader.initTempo >> 4;
-#else
-	m_nDefaultTempo.Set(125 * 16);
-	m_nDefaultSpeed = fileHeader.initTempo;
-#endif // MODPLUG_TRACKER
-	if(m_nDefaultSpeed < 1) m_nDefaultSpeed = 1;
-	m_nDefaultGlobalVolume = fileHeader.globalVolume * 4u;
+	
+	uint8 initTempo = fileHeader.initTempo;
+	if(fileHeader.verMinor < 21)
+		initTempo = ((initTempo / 10u) << 4u) + initTempo % 10u;
+	if(initTempo == 0)
+		initTempo = 0x60;
+
+	m_nDefaultTempo = ConvertST2Tempo(initTempo);
+	m_nDefaultSpeed = initTempo >> 4;
+	if(fileHeader.verMinor > 10)
+		m_nDefaultGlobalVolume = fileHeader.globalVolume * 4u;
 
 	// Setting up channels
 	for(CHANNELINDEX chn = 0; chn < 4; chn++)
@@ -202,12 +185,12 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 	}
 
 	// Read order list
-	ReadOrderFromFile<uint8>(Order(), file, 128);
+	ReadOrderFromFile<uint8>(Order(), file, fileHeader.verMinor == 0 ? 64 : 128);
 	for(auto &pat : Order())
 	{
 		if(pat == 99 || pat == 255)	// 99 is regular, sometimes a single 255 entry can be found too
 			pat = Order.GetInvalidPatIndex();
-		else if(pat > 99)
+		else if(pat > 63)
 			return false;
 	}
 
@@ -215,11 +198,14 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 		Patterns.ResizeArray(fileHeader.numPatterns);
 	for(PATTERNINDEX pat = 0; pat < fileHeader.numPatterns; pat++)
 	{
-		STMPatternData patternData;
-
-		if(!(loadFlags & loadPatternData) || !Patterns.Insert(pat, 64) || !file.ReadStruct(patternData))
+		if(!(loadFlags & loadPatternData) || !Patterns.Insert(pat, 64))
 		{
-			file.Skip(sizeof(patternData));
+			for(int i = 0; i < 64 * 4; i++)
+			{
+				uint8 note = file.ReadUint8();
+				if(note < 0xFB || note > 0xFD)
+					file.Skip(3);
+			}
 			continue;
 		}
 
@@ -227,25 +213,38 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 		ORDERINDEX breakPos = ORDERINDEX_INVALID;
 		ROWINDEX breakRow = 63;	// Candidate row for inserting pattern break
 	
-		for(size_t n = 0; n < 64 * 4; n++, m++)
+		for(int i = 0; i < 64 * 4; i++, m++)
 		{
-			const STMPatternEntry &entry = patternData.entry[n];
-
-			if(entry.note == 0xFE || entry.note == 0xFC)
+			uint8 note = file.ReadUint8(), insvol, volcmd, cmdinf;
+			switch(note)
 			{
+			case 0xFB:
+				note = insvol = volcmd = cmdinf = 0x00;
+				break;
+			case 0xFC:
+				continue;
+			case 0xFD:
 				m->note = NOTE_NOTECUT;
-			} else if(entry.note < 0xFC)
-			{
-				m->note = (entry.note >> 4) * 12 + (entry.note & 0x0F) + 36 + NOTE_MIN;
+				continue;
+			default:
+				insvol = file.ReadUint8();
+				volcmd = file.ReadUint8();
+				cmdinf = file.ReadUint8();
+				break;
 			}
 
-			m->instr = entry.insvol >> 3;
+			if(note == 0xFE)
+				m->note = NOTE_NOTECUT;
+			else if(note < 0x60)
+				m->note = (note >> 4) * 12 + (note & 0x0F) + 36 + NOTE_MIN;
+
+			m->instr = insvol >> 3;
 			if(m->instr > 31)
 			{
 				m->instr = 0;
 			}
 			
-			int8 vol = (entry.insvol & 0x07) | ((entry.volcmd & 0xF0) >> 1);
+			uint8 vol = (insvol & 0x07) | ((volcmd & 0xF0) >> 1);
 			if(vol <= 64)
 			{
 				m->volcmd = VOLCMD_VOLUME;
@@ -254,15 +253,15 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 
 			static const EffectCommand stmEffects[] =
 			{
-				CMD_NONE, CMD_SPEED, CMD_POSITIONJUMP, CMD_PATTERNBREAK,					// .ABC
-				CMD_VOLUMESLIDE, CMD_PORTAMENTODOWN, CMD_PORTAMENTOUP, CMD_TONEPORTAMENTO,	// DEFG
-				CMD_VIBRATO, CMD_TREMOR, CMD_ARPEGGIO, CMD_NONE,							// HIJK
-				CMD_NONE, CMD_NONE, CMD_NONE, CMD_NONE,										// LMNO
+				CMD_NONE,        CMD_SPEED,          CMD_POSITIONJUMP, CMD_PATTERNBREAK,   // .ABC
+				CMD_VOLUMESLIDE, CMD_PORTAMENTODOWN, CMD_PORTAMENTOUP, CMD_TONEPORTAMENTO, // DEFG
+				CMD_VIBRATO,     CMD_TREMOR,         CMD_ARPEGGIO,     CMD_NONE,           // HIJK
+				CMD_NONE,        CMD_NONE,           CMD_NONE,         CMD_NONE,           // LMNO
 				// KLMNO can be entered in the editor but don't do anything
 			};
 
-			m->command = stmEffects[entry.volcmd & 0x0F];
-			m->param = entry.cmdinf;
+			m->command = stmEffects[volcmd & 0x0F];
+			m->param = cmdinf;
 
 			switch(m->command)
 			{
@@ -299,16 +298,20 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 				// broken... oh well. not a big loss.
 				break;
 
-#ifdef MODPLUG_TRACKER
 			case CMD_SPEED:
-				// ST2 assumes that the tempo is 125 * 16 BPM (or in other words: ticks are
-				// 16 times as precise as in ProTracker), and effects are updated on every
-				// 16th tick of a row. This is pretty hard to handle in the tracker when not
-				// natively supporting STM editing, so we just assume the tempo is 125 and
-				// divide the speed by 16 instead. Parameters below 10 might behave weird.
+				if(fileHeader.verMinor < 21)
+				{
+					m->param = ((m->param / 10u) << 4u) + m->param % 10u;
+				}
+
+#ifdef MODPLUG_TRACKER
+				// ST2 has a very weird tempo mode where the length of a tick depends both
+				// on the ticks per row and a scaling factor. This is probably the closest
+				// we can get with S3M-like semantics.
 				m->param >>= 4;
-				MPT_FALLTHROUGH;
 #endif // MODPLUG_TRACKER
+
+				MPT_FALLTHROUGH;
 
 			default:
 				// Anything not listed above is a no-op if there's no value.

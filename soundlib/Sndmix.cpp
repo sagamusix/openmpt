@@ -207,13 +207,16 @@ CSoundFile::samplecount_t CSoundFile::Read(samplecount_t count, IAudioReadTarget
 
 		// Update Channel Data
 		if(!m_PlayState.m_nBufferCount)
-		{ // last tick or fade completely processed, find out what to do next
+		{
+			// Last tick or fade completely processed, find out what to do next
 
 			if(m_SongFlags[SONG_FADINGSONG])
-			{ // song was faded out
+			{
+				// Song was faded out
 				m_SongFlags.set(SONG_ENDREACHED);
 			} else if(ReadNote())
-			{ // render next tick (normal progress)
+			{
+				// Render next tick (normal progress)
 				MPT_ASSERT(m_PlayState.m_nBufferCount > 0);
 				#ifdef MODPLUG_TRACKER
 					// Save pattern cue points for WAV rendering here (if we reached a new pattern, that is.)
@@ -227,7 +230,8 @@ CSoundFile::samplecount_t CSoundFile::Read(samplecount_t count, IAudioReadTarget
 					}
 				#endif
 			} else
-			{ // no new pattern data
+			{
+				// No new pattern data
 				#ifdef MODPLUG_TRACKER
 					if((m_nMaxOrderPosition) && (m_PlayState.m_nCurrentOrder >= m_nMaxOrderPosition))
 					{
@@ -235,7 +239,8 @@ CSoundFile::samplecount_t CSoundFile::Read(samplecount_t count, IAudioReadTarget
 					}
 				#endif // MODPLUG_TRACKER
 				if(IsRenderingToDisc())
-				{ // rewbs: disable song fade when rendering.
+				{
+					// Disable song fade when rendering or when requested in libopenmpt.
 					m_SongFlags.set(SONG_ENDREACHED);
 				} else
 				{ // end of song reached, fade it out
@@ -254,12 +259,18 @@ CSoundFile::samplecount_t CSoundFile::Read(samplecount_t count, IAudioReadTarget
 
 		if(m_SongFlags[SONG_ENDREACHED])
 		{
-			break; // mix done
+			// Mix done.
+
+			// If we decide to continue the mix (possible in libopenmpt), the tick count
+			// is valid right now (0), meaning that no new row data will be processed.
+			// This would effectively prolong the last played row.
+			m_PlayState.m_nTickCount = GetNumTicksOnCurrentRow();
+			break;
 		}
 
 		MPT_ASSERT(m_PlayState.m_nBufferCount > 0); // assert that we have actually something to do
 
-		const samplecount_t countChunk = std::min<samplecount_t>(MIXBUFFERSIZE, std::min<samplecount_t>(m_PlayState.m_nBufferCount, countToRender));
+		const samplecount_t countChunk = std::min<samplecount_t>({ MIXBUFFERSIZE, m_PlayState.m_nBufferCount, countToRender });
 
 		CreateStereoMix(countChunk);
 
@@ -919,12 +930,7 @@ void CSoundFile::ProcessTremor(CHANNELINDEX nChn, int &vol)
 			{
 				if (tremcount >= n) tremcount = 0;
 				if (tremcount >= ontime) vol = 0;
-
-				// ScreamTracker 2 only updates effects on every 16th tick.
-				if((m_PlayState.m_nTickCount & 0x0F) != 0 || GetType() != MOD_TYPE_STM)
-				{
-					chn.nTremorCount = tremcount + 1;
-				}
+				chn.nTremorCount = tremcount + 1;
 			} else
 			{
 				if(m_SongFlags[SONG_FIRSTTICK])
@@ -976,8 +982,9 @@ bool CSoundFile::IsEnvelopeProcessed(const ModChannel *pChn, EnvelopeType env) c
 	const InstrumentEnvelope &insEnv = pChn->pModInstrument->GetEnvelope(env);
 
 	// IT Compatibility: S77/S79/S7B do not disable the envelope, they just pause the counter
-	// Test cases: s77.it, EnvLoops.xm
-	return ((pChn->GetEnvelope(env).flags[ENV_ENABLED] || (insEnv.dwFlags[ENV_ENABLED] && m_playBehaviour[kITEnvelopePositionHandling]))
+	// Test cases: s77.it, EnvLoops.xm, PanSustainRelease.xm
+	bool playIfPaused = m_playBehaviour[kITEnvelopePositionHandling] || m_playBehaviour[kFT2PanSustainRelease];
+	return ((pChn->GetEnvelope(env).flags[ENV_ENABLED] || (insEnv.dwFlags[ENV_ENABLED] && playIfPaused))
 		&& !insEnv.empty());
 }
 
@@ -1168,6 +1175,12 @@ void CSoundFile::IncrementEnvelopePosition(ModChannel *pChn, EnvelopeType envTyp
 			if(position == insEnv[insEnv.nSustainEnd].tick + 1u)
 			{
 				position = insEnv[insEnv.nSustainStart].tick;
+				// FT2 compatibility: If the panning envelope reaches its sustain point before key-off, it stays there forever.
+				// Test case: PanSustainRelease.xm
+				if(m_playBehaviour[kFT2PanSustainRelease] && envType == ENV_PANNING && !pChn->dwFlags[CHN_KEYOFF])
+				{
+					chnEnv.flags.reset(ENV_ENABLED);
+				}
 			}
 		} else
 		{
@@ -1454,8 +1467,6 @@ void CSoundFile::ProcessArpeggio(CHANNELINDEX nChn, int &period, Tuning::NOTEIND
 			else
 			{
 				uint32 tick = m_PlayState.m_nTickCount;
-				if(GetType() == MOD_TYPE_STM)
-					tick >>= 4;
 
 				// TODO other likely formats for MOD case: MED, OKT, etc
 				uint8 note = (GetType() != MOD_TYPE_MOD) ? pChn->nNote : static_cast<uint8>(GetNoteFromPeriod(period, pChn->nFineTune, pChn->nC5Speed));
@@ -1619,12 +1630,6 @@ void CSoundFile::ProcessVibrato(CHANNELINDEX nChn, int &period, Tuning::RATIOTYP
 		// Advance vibrato position - IT updates on every tick, unless "old effects" are enabled (in this case it only updates on non-first ticks like other trackers)
 		if(!m_SongFlags[SONG_FIRSTTICK] || ((GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT)) && !(m_SongFlags[SONG_ITOLDEFFECTS])))
 		{
-			// ScreamTracker 2 only updates effects on every 16th tick.
-			if((m_PlayState.m_nTickCount & 0x0F) != 0 && GetType() == MOD_TYPE_STM)
-			{
-				return;
-			}
-
 			// IT compatibility: IT has its own, more precise tables and pre-increments the vibrato position
 			if(!m_playBehaviour[kITVibratoTremoloPanbrello])
 				chn.nVibratoPos += chn.nVibratoSpeed;

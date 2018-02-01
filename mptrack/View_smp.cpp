@@ -634,21 +634,19 @@ void CViewSample::DrawSampleData1(HDC hdc, int ymed, int cx, int cy, SmpLength l
 
 #if defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
 
+OPENMPT_NAMESPACE_END
 #include <mmintrin.h>
+OPENMPT_NAMESPACE_BEGIN
 
 // AMD MMX/SSE implementation for min/max finder, packs 4*int16 in a 64-bit MMX register.
 // scanlen = How many samples to process on this channel
 static void amdmmxext_or_sse_findminmax16(const void *p, SmpLength scanlen, int channels, int &smin, int &smax)
 {
 	scanlen *= channels;
-	__m64 minVal = _mm_cvtsi32_si64(smin);
-	__m64 maxVal = _mm_cvtsi32_si64(smax);
 
 	// Put minimum / maximum in 4 packed int16 values
-	minVal = _mm_unpacklo_pi16(minVal, minVal);
-	maxVal = _mm_unpacklo_pi16(maxVal, maxVal);
-	minVal = _mm_unpacklo_pi32(minVal, minVal);
-	maxVal = _mm_unpacklo_pi32(maxVal, maxVal);
+	__m64 minVal = _mm_set1_pi16(static_cast<int16>(smin));
+	__m64 maxVal = _mm_set1_pi16(static_cast<int16>(smax));
 
 	SmpLength scanlen4 = scanlen / 4;
 	if(scanlen4)
@@ -705,20 +703,12 @@ static void amdmmxext_or_sse_findminmax8(const void *p, SmpLength scanlen, int c
 {
 	scanlen *= channels;
 
-	__m64 minVal = _mm_cvtsi32_si64(smin);
-	__m64 maxVal = _mm_cvtsi32_si64(smax);
-
-	// For signed <-> unsigned conversion
-	__m64 xorVal = _mm_cvtsi32_si64(0x80808080);
-	xorVal = _mm_unpacklo_pi32(xorVal, xorVal);
+	// For signed <-> unsigned conversion (min/max only exists for unsigned 8-bit values)
+	__m64 xorVal = _mm_set1_pi8(0x80u);
 
 	// Put minimum / maximum in 8 packed uint8 values
-	minVal = _mm_unpacklo_pi8(minVal, minVal);
-	maxVal = _mm_unpacklo_pi8(maxVal, maxVal);
-	minVal = _mm_unpacklo_pi16(minVal, minVal);
-	maxVal = _mm_unpacklo_pi16(maxVal, maxVal);
-	minVal = _mm_unpacklo_pi32(minVal, minVal);
-	maxVal = _mm_unpacklo_pi32(maxVal, maxVal);
+	__m64 minVal = _mm_set1_pi8(static_cast<int8>(smin));
+	__m64 maxVal = _mm_set1_pi8(static_cast<int8>(smax));
 	minVal = _mm_xor_si64(minVal, xorVal);
 	maxVal = _mm_xor_si64(maxVal, xorVal);
 
@@ -779,9 +769,12 @@ static void amdmmxext_or_sse_findminmax8(const void *p, SmpLength scanlen, int c
 	_mm_empty();
 }
 
-#elif defined(ENABLE_SSE2)
+#endif // defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
+#if defined(ENABLE_SSE2)
 
+OPENMPT_NAMESPACE_END
 #include <emmintrin.h>
+OPENMPT_NAMESPACE_BEGIN
 
 // SSE2 implementation for min/max finder, packs 8*int16 in a 128-bit XMM register.
 // scanlen = How many samples to process on this channel
@@ -918,7 +911,66 @@ static void sse2_findminmax8(const void *p, SmpLength scanlen, int channels, int
 }
 
 
-#endif // defined(ENABLE_SSE)
+#endif // defined(ENABLE_SSE2)
+
+
+std::pair<int, int> CViewSample::FindMinMax(const int8 *p, SmpLength numSamples, int numChannels)
+{
+	int minVal = 127;
+	int maxVal = -128;
+#if defined(ENABLE_SSE2)
+	if(GetProcSupport() & PROCSUPPORT_SSE2)
+	{
+		sse2_findminmax8(p, numSamples, numChannels, minVal, maxVal);
+	} else
+#endif
+#if defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
+	if(GetProcSupport() & (PROCSUPPORT_AMD_MMXEXT | PROCSUPPORT_SSE))
+	{
+		amdmmxext_or_sse_findminmax8(p, numSamples, numChannels, minVal, maxVal);
+	} else
+#endif
+	{
+		while(numSamples--)
+		{
+
+			int s = *p;
+			if(s < minVal) minVal = s;
+			if(s > maxVal) maxVal = s;
+			p += numChannels;
+		}
+	}
+	return std::make_pair(minVal, maxVal);
+}
+
+
+std::pair<int, int> CViewSample::FindMinMax(const int16 *p, SmpLength numSamples, int numChannels)
+{
+	int minVal = 32767;
+	int maxVal = -32768;
+#if defined(ENABLE_SSE2)
+	if(GetProcSupport() & PROCSUPPORT_SSE2)
+	{
+		sse2_findminmax16(p, numSamples, numChannels, minVal, maxVal);
+	} else
+#endif
+#if defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
+	if(GetProcSupport() & (PROCSUPPORT_AMD_MMXEXT | PROCSUPPORT_SSE))
+	{
+		amdmmxext_or_sse_findminmax16(p, numSamples, numChannels, minVal, maxVal);
+	} else
+#endif
+	{
+		while(numSamples--)
+		{
+			int s = *p;
+			if(s < minVal) minVal = s;
+			if(s > maxVal) maxVal = s;
+			p += numChannels;
+		}
+	}
+	return std::make_pair(minVal, maxVal);
+}
 
 
 // Draw one channel of zoomed-out sample data
@@ -972,59 +1024,16 @@ void CViewSample::DrawSampleData2(HDC hdc, int ymed, int cx, int cy, SmpLength l
 		if (uFlags & CHN_16BIT)
 		{
 			signed short *p = (signed short *)(psample + poshi*smplsize);
-			smin = 32767;
-			smax = -32768;
-#if defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
-			if(GetProcSupport() & (PROCSUPPORT_AMD_MMXEXT|PROCSUPPORT_SSE))
-			{
-				amdmmxext_or_sse_findminmax16(p, scanlen, numChannels, smin, smax);
-			} else
-#elif defined(ENABLE_SSE2)
-			if(GetProcSupport() & PROCSUPPORT_SSE2)
-			{
-				sse2_findminmax16(p, scanlen, numChannels, smin, smax);
-			} else
-#endif
-			{
-				for (SmpLength i = 0; i < scanlen; i++)
-				{
-					int s = *p;
-					if (s < smin) smin = s;
-					if (s > smax) smax = s;
-					p += numChannels;
-				}
-			}
-			smin = YCVT(smin,15);
-			smax = YCVT(smax,15);
+			auto minMax = FindMinMax(p, scanlen, numChannels);
+			smin = YCVT(minMax.first, 15);
+			smax = YCVT(minMax.second, 15);
 		} else
 		// 8-bit
 		{
 			const int8 *p = psample + poshi * smplsize;
-			smin = 127;
-			smax = -128;
-#if defined(ENABLE_X86_AMD) || defined(ENABLE_SSE)
-			if(GetProcSupport() & (PROCSUPPORT_AMD_MMXEXT|PROCSUPPORT_SSE))
-			{
-				amdmmxext_or_sse_findminmax8(p, scanlen, numChannels, smin, smax);
-			} else
-#elif defined(ENABLE_SSE2)
-			if(GetProcSupport() & PROCSUPPORT_SSE2)
-			{
-				sse2_findminmax8(p, scanlen, numChannels, smin, smax);
-			} else
-#endif
-			{
-				for (SmpLength i = 0; i < scanlen; i++)
-				{
-
-					int s = *p;
-					if (s < smin) smin = s;
-					if (s > smax) smax = s;
-					p += numChannels;
-				}
-			}
-			smin = YCVT(smin,7);
-			smax = YCVT(smax,7);
+			auto minMax = FindMinMax(p, scanlen, numChannels);
+			smin = YCVT(minMax.first, 7);
+			smax = YCVT(minMax.second, 7);
 		}
 		if (smin > oldsmax)
 		{
@@ -2560,7 +2569,7 @@ void CViewSample::PlayNote(ModCommand::NOTE note, const SmpLength nStartPos, int
 			else if(m_nZoom < 0 && loopend - loopstart < 4)
 				loopend = loopstart = 0;
 
-			noteChannel[note - NOTE_MIN] = pModDoc->PlayNote(note, 0, m_nSample, volume, loopstart, loopend, CHANNELINDEX_INVALID, nStartPos);
+			noteChannel[note - NOTE_MIN] = pModDoc->PlayNote(PlayNoteParam(note).Sample(m_nSample).Volume(volume).LoopStart(loopstart).LoopEnd(loopend).Offset(nStartPos));
 
 			m_dwStatus.set(SMPSTATUS_KEYDOWN);
 

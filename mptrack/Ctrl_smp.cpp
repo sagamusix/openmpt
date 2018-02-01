@@ -65,6 +65,8 @@ BEGIN_MESSAGE_MAP(CCtrlSamples, CModControlDlg)
 	ON_COMMAND(IDC_SAMPLE_OPENKNOWN,	OnSampleOpenKnown)
 	ON_COMMAND(IDC_SAMPLE_OPENRAW,		OnSampleOpenRaw)
 	ON_COMMAND(IDC_SAMPLE_SAVEAS,		OnSampleSave)
+	ON_COMMAND(IDC_SAVE_ONE,			OnSampleSaveOne)
+	ON_COMMAND(IDC_SAVE_ALL,			OnSampleSaveAll)
 	ON_COMMAND(IDC_SAMPLE_PLAY,			OnSamplePlay)
 	ON_COMMAND(IDC_SAMPLE_NORMALIZE,	OnNormalize)
 	ON_COMMAND(IDC_SAMPLE_AMPLIFY,		OnAmplify)
@@ -237,7 +239,7 @@ BOOL CCtrlSamples::OnInitDialog()
 	m_ToolBar1.Init(CMainFrame::GetMainFrame()->m_PatternIcons,CMainFrame::GetMainFrame()->m_PatternIconsDisabled);
 	m_ToolBar1.AddButton(IDC_SAMPLE_NEW, TIMAGE_SAMPLE_NEW, TBSTYLE_BUTTON | TBSTYLE_DROPDOWN);
 	m_ToolBar1.AddButton(IDC_SAMPLE_OPEN, TIMAGE_OPEN, TBSTYLE_BUTTON | TBSTYLE_DROPDOWN);
-	m_ToolBar1.AddButton(IDC_SAMPLE_SAVEAS, TIMAGE_SAVE);
+	m_ToolBar1.AddButton(IDC_SAMPLE_SAVEAS, TIMAGE_SAVE, TBSTYLE_BUTTON | TBSTYLE_DROPDOWN);
 	// Edit ToolBar
 	m_ToolBar2.Init(CMainFrame::GetMainFrame()->m_PatternIcons,CMainFrame::GetMainFrame()->m_PatternIconsDisabled);
 	m_ToolBar2.AddButton(IDC_SAMPLE_PLAY, TIMAGE_PREVIEW);
@@ -1073,29 +1075,38 @@ void CCtrlSamples::OnZoomChanged()
 }
 
 
-void CCtrlSamples::OnTbnDropDownToolBar(NMHDR* pNMHDR, LRESULT* pResult)
+void CCtrlSamples::OnTbnDropDownToolBar(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	LPNMTOOLBAR pToolBar = reinterpret_cast<LPNMTOOLBAR>(pNMHDR);
+	CInputHandler *ih = CMainFrame::GetInputHandler();
+	NMTOOLBAR *pToolBar = reinterpret_cast<NMTOOLBAR *>(pNMHDR);
 	ClientToScreen(&(pToolBar->rcButton)); // TrackPopupMenu uses screen coords
 	const int offset = Util::ScalePixels(4, m_hWnd);	// Compared to the main toolbar, the offset seems to be a bit wrong here...?
+	int x = pToolBar->rcButton.left + offset, y = pToolBar->rcButton.bottom + offset;
+	CMenu menu;
 	switch(pToolBar->iItem)
 	{
 	case IDC_SAMPLE_NEW:
 		{
-			CMenu menu;
 			menu.CreatePopupMenu();
-			menu.AppendMenu(MF_STRING, IDC_SAMPLE_DUPLICATE, _T("&Duplicate Sample"));
-			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pToolBar->rcButton.left + offset, pToolBar->rcButton.bottom + offset, this);
+			menu.AppendMenu(MF_STRING, IDC_SAMPLE_DUPLICATE, ih->GetKeyTextFromCommand(kcSampleDuplicate, _T("&Duplicate Sample")));
+			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, this);
 			menu.DestroyMenu();
 		}
 		break;
 	case IDC_SAMPLE_OPEN:
 		{
-			CMenu menu;
 			menu.CreatePopupMenu();
 			menu.AppendMenu(MF_STRING, IDC_SAMPLE_OPENKNOWN, _T("Import &Sample..."));
 			menu.AppendMenu(MF_STRING, IDC_SAMPLE_OPENRAW, _T("Import &RAW Sample..."));
-			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pToolBar->rcButton.left + offset, pToolBar->rcButton.bottom + offset, this);
+			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, this);
+			menu.DestroyMenu();
+		}
+		break;
+	case IDC_SAMPLE_SAVEAS:
+		{
+			menu.CreatePopupMenu();
+			menu.AppendMenu(MF_STRING, IDC_SAVE_ALL, _T("Save &All..."));
+			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, this);
 			menu.DestroyMenu();
 		}
 		break;
@@ -1281,7 +1292,7 @@ void CCtrlSamples::OpenSamples(const std::vector<mpt::PathString> &files, FlagSe
 {
 	int8 confirm = -1;
 	bool first = true;
-	for(auto &file : files)
+	for(const auto &file : files)
 	{
 		// If loading multiple samples, create new slots for them
 		if(!first)
@@ -1301,8 +1312,13 @@ void CCtrlSamples::OpenSamples(const std::vector<mpt::PathString> &files, FlagSe
 
 void CCtrlSamples::OnSampleSave()
 {
+	SaveSample(CMainFrame::GetInputHandler()->ShiftPressed());
+}
+
+
+void CCtrlSamples::SaveSample(bool doBatchSave)
+{
 	mpt::PathString fileName, defaultPath = TrackerSettings::Instance().PathSamples.GetWorkingDir();
-	bool doBatchSave = CMainFrame::GetInputHandler()->ShiftPressed();
 	SampleEditorDefaultFormat defaultFormat = TrackerSettings::Instance().m_defaultSampleFormat;
 
 	if(!doBatchSave)
@@ -1448,9 +1464,27 @@ void CCtrlSamples::OnSamplePlay()
 		m_modDoc.NoteOff(0, true);
 	} else
 	{
-		m_modDoc.PlayNote(NOTE_MIDDLEC, 0, m_nSample);
+		m_modDoc.PlayNote(PlayNoteParam(NOTE_MIDDLEC).Sample(m_nSample));
 	}
 	SwitchToView();
+}
+
+
+template<typename T>
+static bool DoNormalize(T *p, SmpLength selStart, SmpLength selEnd)
+{
+	auto minMax = CViewSample::FindMinMax(p + selStart, selEnd - selStart, 1);
+	int max = std::max(-minMax.first, minMax.second);
+	if(max < std::numeric_limits<T>::max())
+	{
+		max++;
+		for(SmpLength i = selStart; i < selEnd; i++)
+		{
+			p[i] = static_cast<T>((static_cast<int>(p[i]) << (sizeof(T) * 8 - 1)) / max);
+		}
+		return true;
+	}
+	return false;
 }
 
 
@@ -1478,23 +1512,22 @@ void CCtrlSamples::OnNormalize()
 
 
 	BeginWaitCursor();
-	bool bModified = false;
+	bool modified = false;
 
-	for(SAMPLEINDEX iSmp = minSample; iSmp <= maxSample; iSmp++)
+	for(SAMPLEINDEX smp = minSample; smp <= maxSample; smp++)
 	{
-		if (m_sndFile.GetSample(iSmp).pSample)
+		if(m_sndFile.GetSample(smp).pSample)
 		{
-			bool bOk = false;
-			ModSample &sample = m_sndFile.GetSample(iSmp);
+			ModSample &sample = m_sndFile.GetSample(smp);
 
 			if(minSample != maxSample)
 			{
-				//if more than one sample is selected, always amplify the whole sample.
+				// If more than one sample is selected, always amplify the whole sample.
 				selStart = 0;
 				selEnd = sample.nLength;
 			} else
 			{
-				//one sample: correct the boundaries, if needed
+				// One sample: correct the boundaries, if needed
 				LimitMax(selEnd, sample.nLength);
 				LimitMax(selStart, selEnd);
 				if(selStart == selEnd)
@@ -1505,59 +1538,28 @@ void CCtrlSamples::OnNormalize()
 			}
 
 			SampleDataTransaction transaction(m_sndFile, m_nSample);
-			m_modDoc.GetSampleUndo().PrepareUndo(iSmp, sundo_update, "Normalize", selStart, selEnd);
+			m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Normalize", selStart, selEnd);
 
-			if(sample.uFlags[CHN_STEREO]) { selStart *= 2; selEnd *= 2; }
+			selStart *= sample.GetNumChannels();
+			selEnd *= sample.GetNumChannels();
 
 			if(sample.uFlags[CHN_16BIT])
 			{
-				int16 *p = sample.pSample16;
-				int max = 1;
-				for (SmpLength i = selStart; i < selEnd; i++)
-				{
-					if (p[i] > max) max = p[i];
-					if (-p[i] > max) max = -p[i];
-				}
-				if (max < 32767)
-				{
-					max++;
-					for (SmpLength j = selStart; j < selEnd; j++)
-					{
-						int l = (((int)p[j]) << 15) / max;
-						p[j] = (int16)l;
-					}
-					bModified = bOk = true;
-				}
+				modified |= DoNormalize(sample.pSample16, selStart, selEnd);
 			} else
 			{
-				int8 *p = sample.pSample8;
-				int max = 1;
-				for (SmpLength i = selStart; i < selEnd; i++)
-				{
-					if (p[i] > max) max = p[i];
-					if (-p[i] > max) max = -p[i];
-				}
-				if (max < 127)
-				{
-					max++;
-					for (SmpLength j = selStart; j < selEnd; j++)
-					{
-						int l = (((int)p[j]) << 7) / max;
-						p[j] = (int8)l;
-					}
-					bModified = bOk = true;
-				}
+				modified |= DoNormalize(sample.pSample8, selStart, selEnd);
 			}
 
-			if (bOk)
+			if(modified)
 			{
 				sample.PrecomputeLoops(m_sndFile, false);
-				m_modDoc.UpdateAllViews(nullptr, SampleHint(iSmp).Data());
+				m_modDoc.UpdateAllViews(nullptr, SampleHint(smp).Data());
 			}
 		}
 	}
 
-	if(bModified)
+	if(modified)
 	{
 		SetModified(SampleHint().Data(), false, true);
 	}
@@ -2198,10 +2200,10 @@ public:
 		static const SmpLength MaxInputChunkSize = 1024;
 
 		std::vector<float> buffer(MaxInputChunkSize * nChn);
-		std::vector<SC::Convert<float,int16> > convf32(nChn);
-		std::vector<SC::Convert<int16,float> > convi16(nChn);
-		std::vector<SC::Convert<float,int8> > conv8f32(nChn);
-		std::vector<SC::Convert<int8,float> > convint8(nChn);
+		std::vector<SC::Convert<float, int16>> convf32(nChn);
+		std::vector<SC::Convert<int16, float>> convi16(nChn);
+		std::vector<SC::Convert<float, int8>> conv8f32(nChn);
+		std::vector<SC::Convert<int8, float>> convint8(nChn);
 
 		SmpLength inPos = 0;
 		SmpLength outPos = 0; // Keeps count of the sample length received from stretching process.
@@ -2236,13 +2238,13 @@ public:
 			switch(smpsize)
 			{
 			case 1:
-				CopyInterleavedSampleStreams(&(buffer[0]), sample.pSample8 + inPos * nChn, inChunkSize, nChn, conv8f32);
+				CopyInterleavedSampleStreams(buffer.data(), sample.pSample8 + inPos * nChn, inChunkSize, nChn, conv8f32);
 				break;
 			case 2:
-				CopyInterleavedSampleStreams(&(buffer[0]), sample.pSample16 + inPos * nChn, inChunkSize, nChn, convf32);
+				CopyInterleavedSampleStreams(buffer.data(), sample.pSample16 + inPos * nChn, inChunkSize, nChn, convf32);
 				break;
 			}
-			soundtouch_putSamples(handleSt, &(buffer[0]), inChunkSize);
+			soundtouch_putSamples(handleSt, buffer.data(), inChunkSize);
 
 			// Receive some processed samples (it's not guaranteed that there is any available).
 			{
@@ -2250,14 +2252,14 @@ public:
 				if(outChunkSize > 0)
 				{
 					buffer.resize(outChunkSize * nChn);
-					soundtouch_receiveSamples(handleSt, &(buffer[0]), outChunkSize);
+					soundtouch_receiveSamples(handleSt, buffer.data(), outChunkSize);
 					switch(smpsize)
 					{
 					case 1:
-						CopyInterleavedSampleStreams(static_cast<int8 *>(pNewSample) + nChn * outPos, &(buffer[0]), outChunkSize, nChn, convint8);
+						CopyInterleavedSampleStreams(static_cast<int8 *>(pNewSample) + nChn * outPos, buffer.data(), outChunkSize, nChn, convint8);
 						break;
 					case 2:
-						CopyInterleavedSampleStreams(static_cast<int16 *>(pNewSample) + nChn * outPos, &(buffer[0]), outChunkSize, nChn, convi16);
+						CopyInterleavedSampleStreams(static_cast<int16 *>(pNewSample) + nChn * outPos, buffer.data(), outChunkSize, nChn, convi16);
 						break;
 					}
 					outPos += outChunkSize;
@@ -2276,14 +2278,14 @@ public:
 			if(outChunkSize > 0)
 			{
 				buffer.resize(outChunkSize * nChn);
-				soundtouch_receiveSamples(handleSt, &(buffer[0]), outChunkSize);
+				soundtouch_receiveSamples(handleSt, buffer.data(), outChunkSize);
 				switch(smpsize)
 				{
 				case 1:
-					CopyInterleavedSampleStreams(static_cast<int8 *>(pNewSample) + nChn * outPos, &(buffer[0]), outChunkSize, nChn, convint8);
+					CopyInterleavedSampleStreams(static_cast<int8 *>(pNewSample) + nChn * outPos, buffer.data(), outChunkSize, nChn, convint8);
 					break;
 				case 2:
-					CopyInterleavedSampleStreams(static_cast<int16 *>(pNewSample) + nChn * outPos, &(buffer[0]), outChunkSize, nChn, convi16);
+					CopyInterleavedSampleStreams(static_cast<int16 *>(pNewSample) + nChn * outPos, buffer.data(), outChunkSize, nChn, convi16);
 					break;
 				}
 				outPos += outChunkSize;
@@ -2708,7 +2710,7 @@ void CCtrlSamples::OnGlobalVolChanged()
 	if (IsLocked()) return;
 	int nVol = GetDlgItemInt(IDC_EDIT8);
 	Limit(nVol, 0, 64);
-	auto &sample = m_sndFile.GetSample(m_nSample);
+	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	if (nVol != sample.nGlobalVol)
 	{
 		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
@@ -2737,7 +2739,6 @@ void CCtrlSamples::OnSetPanningChanged()
 	}
 
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
-
 	if(b != sample.uFlags[CHN_PANNING])
 	{
 		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
@@ -2763,11 +2764,12 @@ void CCtrlSamples::OnPanningChanged()
 		nPan = nPan * 4;			// so we x4 to get MPT's internal 0-256 range.
 	}
 
-	if (nPan != m_sndFile.GetSample(m_nSample).nPan)
+	ModSample &sample = m_sndFile.GetSample(m_nSample);
+	if (nPan != sample.nPan)
 	{
 		SamplePropertyTransaction transaction(m_sndFile, m_nSample);
 		if(!m_startedEdit) PrepareUndo("Set Panning");
-		m_sndFile.GetSample(m_nSample).nPan = (uint16)nPan;
+		sample.nPan = static_cast<uint16>(nPan);
 		SetModified(SampleHint().Info(), false, false);
 	}
 }
@@ -2823,7 +2825,7 @@ void CCtrlSamples::OnFineTuneChangedDone()
 			chn.nFineTune = sample.nFineTune;
 			if(chn.nC5Speed != 0 && sample.nC5Speed != 0)
 			{
-				if(m_sndFile.m_SongFlags[SONG_LINEARSLIDES] && m_sndFile.m_playBehaviour[kHertzInLinearMode])
+				if(m_sndFile.PeriodsAreFrequencies())
 					chn.nPeriod = Util::muldivr(chn.nPeriod, sample.nC5Speed, chn.nC5Speed);
 				else if(!m_sndFile.m_SongFlags[SONG_LINEARSLIDES])
 					chn.nPeriod = Util::muldivr(chn.nPeriod, chn.nC5Speed, sample.nC5Speed);
@@ -3340,7 +3342,7 @@ LRESULT CCtrlSamples::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 	switch(wParam)
 	{
 	case kcSampleLoad:		OnSampleOpen(); return wParam;
-	case kcSampleSave:		OnSampleSave(); return wParam;
+	case kcSampleSave:		OnSampleSaveOne(); return wParam;
 	case kcSampleNew:		InsertSample(false); return wParam;
 	case kcSampleDuplicate:	InsertSample(true); return wParam;
 

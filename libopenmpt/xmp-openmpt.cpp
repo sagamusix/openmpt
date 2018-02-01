@@ -9,7 +9,6 @@
 
 #ifndef NO_XMPLAY
 
-#if defined(_MFC_VER) || 1
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -17,11 +16,13 @@
 #define _WIN32_WINNT 0x0501 // _WIN32_WINNT_WINXP
 #endif
 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS // Avoid binary bloat from linking unused MFC controls
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <afxwin.h>
 #include <afxcmn.h>
 #include <windows.h>
-#endif // _MFC_VER
+#include <WindowsX.h>
 
 #ifdef LIBOPENMPT_BUILD_DLL
 #undef LIBOPENMPT_BUILD_DLL
@@ -36,27 +37,8 @@
 #endif
 #endif // _MSC_VER
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#include <WindowsX.h>
-
 #include "libopenmpt.hpp"
 #include "libopenmpt_ext.hpp"
-#ifdef LIBOPENMPT_QUIRK_NO_CSTDINT
-#include <stdint.h>
-namespace std {
-typedef ::int8_t   int8_t;
-typedef ::int16_t  int16_t;
-typedef ::int32_t  int32_t;
-typedef ::int64_t  int64_t;
-typedef ::uint8_t  uint8_t; 
-typedef ::uint16_t uint16_t; 
-typedef ::uint32_t uint32_t;
-typedef ::uint64_t uint64_t;
-}
-#endif
 
 #include "libopenmpt_plugin_gui.hpp"
 
@@ -80,6 +62,7 @@ enum {
 	openmpt_shortcut_tempo_increase,
 	openmpt_shortcut_pitch_decrease,
 	openmpt_shortcut_pitch_increase,
+	openmpt_shortcut_switch_interpolation,
 	openmpt_shortcut_last = 0x21fff,
 
 	openmpt_shortcut_ex = 0x80000000,	// Use extended version of the shortcut callback
@@ -113,12 +96,12 @@ public:
 	}
 };
 
-static XMPFUNC_IN * xmpfin = NULL;
-static XMPFUNC_MISC * xmpfmisc = NULL;
-static XMPFUNC_REGISTRY * xmpfregistry = NULL;
-static XMPFUNC_FILE * xmpffile = NULL;
-static XMPFUNC_TEXT * xmpftext = NULL;
-static XMPFUNC_STATUS * xmpfstatus = NULL;
+static XMPFUNC_IN * xmpfin = nullptr;
+static XMPFUNC_MISC * xmpfmisc = nullptr;
+static XMPFUNC_REGISTRY * xmpfregistry = nullptr;
+static XMPFUNC_FILE * xmpffile = nullptr;
+static XMPFUNC_TEXT * xmpftext = nullptr;
+static XMPFUNC_STATUS * xmpfstatus = nullptr;
 
 struct self_xmplay_t;
 
@@ -132,14 +115,14 @@ class xmp_openmpt_settings
  : public libopenmpt::plugin::settings
 {
 protected:
-	virtual void read_setting( const std::string & key, const std::wstring & keyW, int & val ) {
+	void read_setting( const std::string & key, const std::wstring & keyW, int & val ) override {
 		libopenmpt::plugin::settings::read_setting( key, keyW, val );
 		int storedVal = 0;
 		if ( xmpfregistry->GetInt( "OpenMPT", key.c_str(), &storedVal ) ) {
 			val = storedVal;
 		}
 	}
-	virtual void write_setting( const std::string & key, const std::wstring & /* keyW */ , int val ) {
+	void write_setting( const std::string & key, const std::wstring & /* keyW */ , int val ) override {
 		if ( !xmpfregistry->SetInt( "OpenMPT", key.c_str(), &val ) ) {
 			// error
 		}
@@ -159,23 +142,14 @@ public:
 
 struct self_xmplay_t {
 	std::vector<float> subsong_lengths;
-	std::size_t samplerate;
-	std::size_t num_channels;
+	std::size_t samplerate = 48000;
+	std::size_t num_channels = 2;
 	xmp_openmpt_settings settings;
-	openmpt::module_ext * mod;
-	openmpt::ext::pattern_vis * pattern_vis;
-	std::int32_t tempo_factor, pitch_factor;
-	bool single_subsong_mode;
-	self_xmplay_t()
-		: samplerate(48000)
-		, num_channels(2)
-		, settings()
-		, mod(0)
-		, pattern_vis(0)
-		, tempo_factor(0)
-		, pitch_factor(0)
-		, single_subsong_mode(false)
-	{
+	openmpt::module_ext * mod = nullptr;
+	openmpt::ext::pattern_vis * pattern_vis = nullptr;
+	std::int32_t tempo_factor = 0, pitch_factor = 0;
+	bool single_subsong_mode = false;
+	self_xmplay_t() {
 		settings.changed = apply_and_save_options;
 	}
 	void on_new_mod() {
@@ -205,19 +179,19 @@ static std::string convert_to_native( const std::string & str ) {
 
 static std::string StringEncode( const std::wstring &src, UINT codepage )
 {
-	int required_size = WideCharToMultiByte( codepage, 0, src.c_str(), -1, NULL, 0, NULL, NULL );
+	int required_size = WideCharToMultiByte( codepage, 0, src.c_str(), -1, nullptr, 0, nullptr, nullptr);
 	if(required_size <= 0)
 	{
 		return std::string();
 	}
 	std::vector<CHAR> encoded_string( required_size );
-	WideCharToMultiByte( codepage, 0, src.c_str(), -1, &encoded_string[0], encoded_string.size(), NULL, NULL );
+	WideCharToMultiByte( codepage, 0, src.c_str(), -1, &encoded_string[0], encoded_string.size(), nullptr, nullptr);
 	return &encoded_string[0];
 }
 
 static std::wstring StringDecode( const std::string & src, UINT codepage )
 {
-	int required_size = MultiByteToWideChar( codepage, 0, src.c_str(), -1, NULL, 0 );
+	int required_size = MultiByteToWideChar( codepage, 0, src.c_str(), -1, nullptr, 0 );
 	if(required_size <= 0)
 	{
 		return std::wstring();
@@ -349,6 +323,7 @@ static void WINAPI openmpt_SetConfig( void * config, DWORD size ) {
 	reset_options();
 	if ( config ) {
 		load_settings_from_xml( self->settings, std::string( (char*)config, (char*)config + size ) );
+		apply_options();
 	}
 }
 
@@ -363,6 +338,24 @@ static void WINAPI ShortcutHandler( DWORD id ) {
 	case openmpt_shortcut_tempo_increase: self->tempo_factor++; tempo_changed = true; break;
 	case openmpt_shortcut_pitch_decrease: self->pitch_factor--; pitch_changed = true; break;
 	case openmpt_shortcut_pitch_increase: self->pitch_factor++; pitch_changed = true; break;
+	case openmpt_shortcut_switch_interpolation:
+		self->settings.interpolationfilterlength *= 2;
+		if ( self->settings.interpolationfilterlength > 8 ) {
+			self->settings.interpolationfilterlength = 1;
+		}
+		apply_and_save_options();
+		const char *s = nullptr;
+		switch ( self->settings.interpolationfilterlength )
+		{
+		case 1: s = "Interpolation: Off"; break;
+		case 2: s = "Interpolation: Linear"; break;
+		case 4: s = "Interpolation: Cubic"; break;
+		case 8: s = "Interpolation: Polyphase"; break;
+		}
+		if ( s ) {
+			xmpfmisc->ShowBubble( s, 0 );
+		}
+		break;
 	}
 	
 	self->tempo_factor = std::min ( 48, std::max( -48, self->tempo_factor ) );
@@ -454,7 +447,7 @@ static void WINAPI openmpt_About( HWND win ) {
 	credits << "Additional thanks to:" << std::endl;
 	credits << std::endl;
 	credits << "Arseny Kapoulkine for pugixml" << std::endl;
-	credits << "http://pugixml.org/" << std::endl;
+	credits << "https://pugixml.org/" << std::endl;
 	libopenmpt::plugin::gui_show_file_info( win, TEXT(SHORT_TITLE), StringReplace( StringDecode( credits.str(), CP_UTF8 ), L"\n", L"\r\n" ) );
 }
 
@@ -584,11 +577,11 @@ static std::string extract_date( const openmpt::module & mod ) {
 		// be considered.
 		std::string s = " " + mod.get_metadata("message");
 		auto names = mod.get_sample_names();
-		for ( auto &name : names ) {
+		for ( const auto & name : names ) {
 			s += " " + name;
 		}
 		names = mod.get_instrument_names();
-		for ( auto &name : names ) {
+		for ( const auto & name : names ) {
 			s += " " + name;
 		}
 		s += " ";
@@ -658,7 +651,7 @@ static char * build_xmplay_tags( const openmpt::module & mod ) {
 	tags.append( 1, '\0' );
 	char * result = static_cast<char*>( xmpfmisc->Alloc( tags.size() ) );
 	if ( !result ) {
-		return NULL;
+		return nullptr;
 	}
 	std::copy( tags.data(), tags.data() + tags.size(), result );
 	return result;
@@ -667,7 +660,7 @@ static char * build_xmplay_tags( const openmpt::module & mod ) {
 static float * build_xmplay_length( const openmpt::module & mod ) {
 	float * result = static_cast<float*>( xmpfmisc->Alloc( sizeof( float ) * self->subsong_lengths.size() ) );
 	if ( !result ) {
-		return NULL;
+		return nullptr;
 	}
 	for ( std::size_t i = 0; i < self->subsong_lengths.size(); ++i ) {
 		result[i] = self->subsong_lengths[i];
@@ -783,9 +776,11 @@ static BOOL WINAPI openmpt_CheckFile( const char * filename, XMPFILE file ) {
 
 static DWORD WINAPI openmpt_GetFileInfo( const char * filename, XMPFILE file, float * * length, char * * tags ) {
 	try {
-		std::map< std::string, std::string > ctls;
-		ctls[ "load.skip_plugins" ] = "1";
-		ctls[ "load.skip_samples" ] = "1";
+		std::map< std::string, std::string > ctls
+		{
+			{ "load.skip_plugins", "1" },
+			{ "load.skip_samples", "1" },
+		};
 		#ifdef USE_XMPLAY_FILE_IO
 			#ifdef USE_XMPLAY_ISTREAM
 				switch ( xmpffile->GetType( file ) ) {
@@ -846,8 +841,8 @@ static DWORD WINAPI openmpt_GetFileInfo( const char * filename, XMPFILE file, fl
 			}
 		#endif
 	} catch ( ... ) {
-		if ( length ) *length = NULL;
-		if ( tags ) *tags = NULL;
+		if ( length ) *length = nullptr;
+		if ( tags ) *tags = nullptr;
 		return 0;
 	}
 	return self->subsong_lengths.size() + XMPIN_INFO_NOSUBTAGS;
@@ -859,8 +854,11 @@ static DWORD WINAPI openmpt_Open( const char * filename, XMPFILE file ) {
 	xmpopenmpt_lock guard;
 	reset_options();
 	try {
-		std::map< std::string, std::string > ctls;
-		ctls["seek.sync_samples"] = "1";
+		std::map< std::string, std::string > ctls
+		{
+			{ "seek.sync_samples", "1" },
+			{ "play.at_end", "continue" },
+		};
 		self->delete_mod();
 		#ifdef USE_XMPLAY_FILE_IO
 			#ifdef USE_XMPLAY_ISTREAM
@@ -1070,6 +1068,16 @@ static double WINAPI openmpt_SetPosition( DWORD pos ) {
 	if ( !self->mod ) {
 		return -1.0;
 	}
+	if ( pos == XMPIN_POS_LOOP ) {
+		// If the time of the loop start position is known, that should be returned, otherwise -2 can be returned to let the time run on.
+		// There is currently no way to easily figure out at which time the loop restarts.
+		return -2;
+	} else if ( pos == XMPIN_POS_AUTOLOOP ) {
+		// In the auto-looping case, the function should only loop when a loop has been detected, and otherwise return -1
+		// If the time of the loop start position is known, that should be returned, otherwise -2 can be returned to let the time run on.
+		// There is currently no way to easily figure out at which time the loop restarts.
+		return -2;
+	}
 	if ( pos & XMPIN_POS_SUBSONG ) {
 		self->single_subsong_mode = ( pos & XMPIN_POS_SUBSONG1 ) != 0;
 		try {
@@ -1106,7 +1114,7 @@ static DWORD WINAPI openmpt_Process( float * dstbuf, DWORD count ) {
 	std::size_t frames_to_render = frames;
 	std::size_t frames_rendered = 0;
 	while ( frames_to_render > 0 ) {
-		std::size_t frames_chunk = std::min<std::size_t>( frames_to_render, self->samplerate / 100 ); // 100 Hz timing info update interval
+		std::size_t frames_chunk = std::min<std::size_t>( frames_to_render, ( self->samplerate + 99 ) / 100 ); // 100 Hz timing info update interval
 		switch ( self->num_channels ) {
 		case 1:
 			{
@@ -1172,9 +1180,9 @@ static void WINAPI openmpt_GetSamples( char * buf ) {
 }
 
 static DWORD WINAPI openmpt_GetSubSongs( float * length ) {
-	*length = 0.0;
-	for ( std::size_t i = 0; i < self->subsong_lengths.size(); ++i ) {
-		*length += self->subsong_lengths[i];
+	*length = 0.0f;
+	for ( auto sub_length : self->subsong_lengths ) {
+		*length += sub_length;
 	}
 
 	return static_cast<DWORD>( self->subsong_lengths.size() );
@@ -1571,16 +1579,16 @@ static XMPIN xmpin = {
 #else
 	XMPIN_FLAG_NOXMPFILE |
 #endif
-	XMPIN_FLAG_CONFIG,// 0, // XMPIN_FLAG_LOOP, the xmplay looping interface is not really compatible with libopenmpt looping interface, so dont support that for now
+	XMPIN_FLAG_CONFIG | XMPIN_FLAG_LOOP,
 	xmp_openmpt_string,
-	NULL, // "libopenmpt\0mptm/mptmz",
+	nullptr, // "libopenmpt\0mptm/mptmz",
 	openmpt_About,
 	openmpt_Config,
 	openmpt_CheckFile,
 	openmpt_GetFileInfo,
 	openmpt_Open,
 	openmpt_Close,
-	NULL, // reserved
+	nullptr, // reserved
 	openmpt_SetFormat,
 	openmpt_GetTags,
 	openmpt_GetInfoText,
@@ -1588,25 +1596,25 @@ static XMPIN xmpin = {
 	openmpt_GetMessage,
 	openmpt_SetPosition,
 	openmpt_GetGranularity,
-	NULL, // GetBuffering
+	nullptr, // GetBuffering
 	openmpt_Process,
-	NULL, // WriteFile
+	nullptr, // WriteFile
 	openmpt_GetSamples,
 	openmpt_GetSubSongs, // GetSubSongs
-	NULL, // GetCues
-	NULL, // GetDownloaded
+	nullptr, // GetCues
+	nullptr, // GetDownloaded
 
 	"OpenMPT Pattern Display",
 	VisOpen,
 	VisClose,
 	VisSize,
-	/*VisRender,*/NULL,
+	/*VisRender,*/nullptr,
 	VisRenderDC,
-	/*VisButton,*/NULL,
+	/*VisButton,*/nullptr,
 
-	NULL, // reserved2
-	openmpt_GetConfig,// NULL, // GetConfig
-	openmpt_SetConfig// NULL  // SetConfig
+	nullptr, // reserved2
+	openmpt_GetConfig,
+	openmpt_SetConfig
 };
 
 static const char * xmp_openmpt_default_exts = "OpenMPT\0mptm/mptmz";
@@ -1649,16 +1657,16 @@ static void xmp_openmpt_on_dll_unload() {
 		return;
 	}
 	if ( xmpin.exts == xmp_openmpt_default_exts ) {
-		xmpin.exts = NULL;
+		xmpin.exts = nullptr;
 		return;
 	}
 	HeapFree( GetProcessHeap(), 0, (LPVOID)xmpin.exts );
-	xmpin.exts = NULL;
+	xmpin.exts = nullptr;
 	DeleteCriticalSection( &xmpopenmpt_mutex );
 }
 
 static XMPIN * XMPIN_GetInterface_cxx( DWORD face, InterfaceProc faceproc ) {
-	if (face!=XMPIN_FACE) return NULL;
+	if ( face != XMPIN_FACE ) return nullptr;
 	xmpfin=(XMPFUNC_IN*)faceproc(XMPFUNC_IN_FACE);
 	xmpfmisc=(XMPFUNC_MISC*)faceproc(XMPFUNC_MISC_FACE);
 	xmpfregistry=(XMPFUNC_REGISTRY*)faceproc(XMPFUNC_REGISTRY_FACE);
@@ -1680,6 +1688,9 @@ static XMPIN * XMPIN_GetInterface_cxx( DWORD face, InterfaceProc faceproc ) {
 	xmpfmisc->RegisterShortcut( &cut );
 	cut.id = openmpt_shortcut_ex | openmpt_shortcut_pitch_increase;
 	cut.text = "OpenMPT - Increase Pitch";
+	xmpfmisc->RegisterShortcut( &cut );
+	cut.id = openmpt_shortcut_ex | openmpt_shortcut_switch_interpolation;
+	cut.text = "OpenMPT - Switch Interpolation";
 	xmpfmisc->RegisterShortcut( &cut );
 
 	self->settings.load();
