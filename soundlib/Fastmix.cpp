@@ -353,21 +353,24 @@ void CSoundFile::CreateStereoMix(int count)
 
 		//Look for plugins associated with this implicit tracker channel.
 #ifndef NO_PLUGINS
-		PLUGINDEX nMixPlugin = GetBestPlugin(m_PlayState, m_PlayState.ChnMix[nChn], PrioritiseInstrument, RespectMutes);
+		PluginChannel mixPlugin = GetBestPlugin(m_PlayState, m_PlayState.ChnMix[nChn], PrioritiseInstrument, RespectMutes);
 
-		if ((nMixPlugin > 0) && (nMixPlugin <= MAX_MIXPLUGINS) && m_MixPlugins[nMixPlugin - 1].pMixPlugin != nullptr)
+		if (mixPlugin.IsValidPlugin())
 		{
 			// Render into plugin buffer instead of global buffer
-			SNDMIXPLUGINSTATE &mixState = m_MixPlugins[nMixPlugin - 1].pMixPlugin->m_MixState;
-			if (mixState.pMixBuffer)
+			auto &mixBuffer = m_MixPlugins[mixPlugin.plugin - 1].pMixPlugin->m_mixBuffer;
+			if (mixBuffer.GetSendBuffer(0))
 			{
-				pbuffer = mixState.pMixBuffer;
-				pOfsR = &mixState.nVolDecayR;
-				pOfsL = &mixState.nVolDecayL;
-				if (!(mixState.dwFlags & SNDMIXPLUGINSTATE::psfMixReady))
+				// TODO sanitize channel count
+				// TODO don't access nonexisting channel pair
+				MPT_ASSERT((mixPlugin.channel % 2u) == 0);
+				pbuffer = mixBuffer.GetSendBuffer(mixPlugin.channel / 2);
+				pOfsL = mixBuffer.GetVolDecay(mixPlugin.channel);
+				pOfsR = mixBuffer.GetVolDecay(mixPlugin.channel + 1);
+				if (!(mixBuffer.HasSampleInput(mixPlugin.channel / 2)))
 				{
 					StereoFill(pbuffer, count, *pOfsR, *pOfsL);
-					mixState.dwFlags |= SNDMIXPLUGINSTATE::psfMixReady;
+					mixBuffer.SetSampleInput(mixPlugin.channel / 2);
 				}
 			}
 		}
@@ -527,11 +530,11 @@ void CSoundFile::CreateStereoMix(int count)
 		// Restore sample pointer in case it got changed through loop wrap-around
 		chn.pCurrentSample = mixLoopState.samplePointer;
 		nchmixed += naddmix;
-	
+
 #ifndef NO_PLUGINS
-		if(naddmix && nMixPlugin > 0 && nMixPlugin <= MAX_MIXPLUGINS && m_MixPlugins[nMixPlugin - 1].pMixPlugin)
+		if(naddmix && mixPlugin.IsValidPlugin() && m_MixPlugins[mixPlugin.plugin - 1].pMixPlugin)
 		{
-			m_MixPlugins[nMixPlugin - 1].pMixPlugin->ResetSilence();
+			m_MixPlugins[mixPlugin.plugin - 1].pMixPlugin->ResetSilence();
 		}
 #endif // NO_PLUGINS
 	}
@@ -554,9 +557,7 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 	for(PLUGINDEX plug = 0; plug < MAX_MIXPLUGINS; plug++)
 	{
 		SNDMIXPLUGIN &plugin = m_MixPlugins[plug];
-		if(plugin.pMixPlugin != nullptr
-			&& plugin.pMixPlugin->m_MixState.pMixBuffer != nullptr
-			&& plugin.pMixPlugin->m_mixBuffer.Ok())
+		if(plugin.pMixPlugin != nullptr && plugin.pMixPlugin->m_mixBuffer.Ok())
 		{
 			IMixPlugin *mixPlug = plugin.pMixPlugin;
 			SNDMIXPLUGINSTATE &state = mixPlug->m_MixState;
@@ -572,30 +573,36 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 
 
 			// Setup float input
-			float *plugInputL = mixPlug->m_mixBuffer.GetInputBuffer(0);
-			float *plugInputR = mixPlug->m_mixBuffer.GetInputBuffer(1);
-			if (state.dwFlags & SNDMIXPLUGINSTATE::psfMixReady)
+			const int numInputs = plugin.pMixPlugin->GetNumInputChannels();
+			auto &mixBuffer = plugin.pMixPlugin->m_mixBuffer;
+			for(int i = 0; i < numInputs; i += 2)
 			{
+				mixsample_t *sendBuffer = mixBuffer.GetSendBuffer(i / 2);
+				float *inBufferL = mixBuffer.GetInputBuffer(i);
+				float *inBufferR = mixBuffer.GetInputBuffer(i + 1);
+				if(mixBuffer.HasSampleInput(i / 2))
+				{
 #ifdef MPT_INTMIXER
-				StereoMixToFloat(state.pMixBuffer, plugInputL, plugInputR, nCount, IntToFloat);
+					StereoMixToFloat(sendBuffer, inBufferL, inBufferR, nCount, IntToFloat);
 #else
-				DeinterleaveStereo(state.pMixBuffer, plugInputL, plugInputR, nCount);
+					DeinterleaveStereo(sendBuffer, inBufferL, inBufferR, nCount);
 #endif // MPT_INTMIXER
-			} else if (state.nVolDecayR || state.nVolDecayL)
-			{
-				StereoFill(state.pMixBuffer, nCount, state.nVolDecayR, state.nVolDecayL);
+				} else if (*mixBuffer.GetVolDecay(i) || *mixBuffer.GetVolDecay(i + 1))
+				{
+					StereoFill(sendBuffer, nCount, *mixBuffer.GetVolDecay(i + 1), *mixBuffer.GetVolDecay(i));
 #ifdef MPT_INTMIXER
-				StereoMixToFloat(state.pMixBuffer, plugInputL, plugInputR, nCount, IntToFloat);
+					StereoMixToFloat(sendBuffer, inBufferL, inBufferR, nCount, IntToFloat);
 #else
-				DeinterleaveStereo(state.pMixBuffer, plugInputL, plugInputR, nCount);
+					DeinterleaveStereo(sendBuffer, inBufferL, inBufferR, nCount);
 #endif // MPT_INTMIXER
-			} else
-			{
-				memset(plugInputL, 0, nCount * sizeof(plugInputL[0]));
-				memset(plugInputR, 0, nCount * sizeof(plugInputR[0]));
+				} else
+				{
+					memset(inBufferL, 0, nCount * sizeof(inBufferL[0]));
+					memset(inBufferR, 0, nCount * sizeof(inBufferR[0]));
+				}
+				mixBuffer.ResetSampleInput(i / 2);
 			}
-			state.dwFlags &= ~SNDMIXPLUGINSTATE::psfMixReady;
-			
+
 			if(!plugin.IsMasterEffect() && !(state.dwFlags & SNDMIXPLUGINSTATE::psfSilenceBypass))
 			{
 				masterHasInput = true;
@@ -608,8 +615,8 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 #else
 	DeinterleaveStereo(MixSoundBuffer, MixFloatBuffer[0], MixFloatBuffer[1], nCount);
 #endif // MPT_INTMIXER
-	float *pMixL = MixFloatBuffer[0];
-	float *pMixR = MixFloatBuffer[1];
+	float *pOutputL = MixFloatBuffer[0];
+	float *pOutputR = MixFloatBuffer[1];
 
 	const bool positionChanged = HasPositionChanged();
 
@@ -617,9 +624,7 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 	for(PLUGINDEX plug = 0; plug < MAX_MIXPLUGINS; plug++)
 	{
 		SNDMIXPLUGIN &plugin = m_MixPlugins[plug];
-		if (plugin.pMixPlugin != nullptr
-			&& plugin.pMixPlugin->m_MixState.pMixBuffer != nullptr
-			&& plugin.pMixPlugin->m_mixBuffer.Ok())
+		if (plugin.pMixPlugin != nullptr && plugin.pMixPlugin->m_mixBuffer.Ok())
 		{
 			IMixPlugin *pObject = plugin.pMixPlugin;
 			if(!plugin.IsMasterEffect() && !plugin.pMixPlugin->ShouldProcessSilence() && !(plugin.pMixPlugin->m_MixState.dwFlags & SNDMIXPLUGINSTATE::psfHasInput))
@@ -642,18 +647,16 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 			}
 
 			bool isMasterMix = false;
-			float *plugInputL = pObject->m_mixBuffer.GetInputBuffer(0);
-			float *plugInputR = pObject->m_mixBuffer.GetInputBuffer(1);
-
-			if (pMixL == plugInputL)
+			if (pOutputL == plugin.pMixPlugin->m_mixBuffer.GetInputBuffer(0))
 			{
 				isMasterMix = true;
-				pMixL = MixFloatBuffer[0];
-				pMixR = MixFloatBuffer[1];
+				pOutputL = MixFloatBuffer[0];
+				pOutputR = MixFloatBuffer[1];
 			}
 			SNDMIXPLUGINSTATE &state = plugin.pMixPlugin->m_MixState;
-			float *pOutL = pMixL;
-			float *pOutR = pMixR;
+			auto &mixBuffer = plugin.pMixPlugin->m_mixBuffer;
+			float *pOutL = pOutputL;
+			float *pOutR = pOutputR;
 
 			if (!plugin.IsOutputToMaster())
 			{
@@ -661,6 +664,7 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 				if(nOutput > plug && nOutput < MAX_MIXPLUGINS
 					&& m_MixPlugins[nOutput].pMixPlugin != nullptr)
 				{
+					// Output to next plugin
 					IMixPlugin *outPlugin = m_MixPlugins[nOutput].pMixPlugin;
 					if(!(state.dwFlags & SNDMIXPLUGINSTATE::psfSilenceBypass)) outPlugin->ResetSilence();
 
@@ -688,18 +692,18 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 			{
 				if (!isMasterMix)
 				{
-					float *pInL = plugInputL;
-					float *pInR = plugInputR;
+					float *pInL = mixBuffer.GetInputBuffer(0);
+					float *pInR = mixBuffer.GetInputBuffer(1);
 					for (uint32 i=0; i<nCount; i++)
 					{
-						pInL[i] += pMixL[i];
-						pInR[i] += pMixR[i];
-						pMixL[i] = 0;
-						pMixR[i] = 0;
+						pInL[i] += pOutputL[i];
+						pInR[i] += pOutputR[i];
+						pOutputL[i] = 0;
+						pOutputR[i] = 0;
 					}
 				}
-				pMixL = pOutL;
-				pMixR = pOutR;
+				pOutputL = pOutL;
+				pOutputR = pOutR;
 
 				if(masterHasInput)
 				{
@@ -720,14 +724,20 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 				}
 			}
 
-			if(plugin.IsBypassed() || (plugin.IsAutoSuspendable() && (state.dwFlags & SNDMIXPLUGINSTATE::psfSilenceBypass)))
+			if(plugin.IsBypassed() || ((state.dwFlags & SNDMIXPLUGINSTATE::psfSilenceBypass) && plugin.IsAutoSuspendable()))
 			{
-				const float * const pInL = plugInputL;
-				const float * const pInR = plugInputR;
-				for (uint32 i=0; i<nCount; i++)
+				// TODO odd channel count
+				const int32 numInputs = plugin.pMixPlugin->GetNumInputChannels();
+				ASSERT(numInputs % 2 == 0);
+				for(int32 input = 0; input < numInputs; input += 2)
 				{
-					pOutL[i] += pInL[i];
-					pOutR[i] += pInR[i];
+					const float * const pInL = mixBuffer.GetInputBuffer(input);
+					const float * const pInR = mixBuffer.GetInputBuffer(input + 1);
+					for (UINT i=0; i<nCount; i++)
+					{
+						pOutL[i] += pInL[i];
+						pOutR[i] += pInR[i];
+					}
 				}
 			} else
 			{
@@ -761,9 +771,9 @@ void CSoundFile::ProcessPlugins(uint32 nCount)
 		}
 	}
 #ifdef MPT_INTMIXER
-	FloatToStereoMix(pMixL, pMixR, MixSoundBuffer, nCount, FloatToInt);
+	FloatToStereoMix(pOutputL, pOutputR, MixSoundBuffer, nCount, FloatToInt);
 #else
-	InterleaveStereo(pMixL, pMixR, MixSoundBuffer, nCount);
+	InterleaveStereo(pOutputL, pOutputR, MixSoundBuffer, nCount);
 #endif // MPT_INTMIXER
 
 #else

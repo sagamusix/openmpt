@@ -13,13 +13,13 @@
 #include "openmpt/all/BuildSettings.hpp"
 
 #include "dlg_misc.h"	// for keyboard control
+#include "ColorPickerButton.h"
 #include "EffectInfo.h"
 #include "PatternCursor.h"
 #include "PluginComboBox.h"
-#include "TrackerSettings.h"
 #include "ResizableDialog.h"
+#include "TrackerSettings.h"
 #include "resource.h"
-#include "ColorPickerButton.h"
 
 OPENMPT_NAMESPACE_BEGIN
 

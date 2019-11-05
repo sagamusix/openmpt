@@ -116,6 +116,7 @@ public:
 		Samples,
 		Instruments,
 		Comments,
+		Plugins,
 		MaxPages
 	};
 
@@ -139,6 +140,7 @@ public:
 	void SetMDIParentFrame(HWND hwnd) { m_hWndMDI = hwnd; }
 	void ForceRefresh();
 	CModControlDlg *GetCurrentControlDlg() const;
+	void PostMessageToAllControlDlgs(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 protected:
 	void RecalcLayout();

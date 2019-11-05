@@ -983,9 +983,11 @@ public:
 	void WriteInstrumentPropertyForAllInstruments(uint32 code,  uint16 size, std::ostream &f, INSTRUMENTINDEX nInstruments) const;
 	void SaveExtendedInstrumentProperties(INSTRUMENTINDEX nInstruments, std::ostream &f) const;
 	void SaveExtendedSongProperties(std::ostream &f) const;
+	size_t SaveModularInstrumentData(std::ostream &f, const ModInstrument &ins) const;
 #endif // MODPLUG_NO_FILESAVE
 	bool LoadExtendedSongProperties(FileReader &file, bool ignoreChannelCount, bool* pInterpretMptMade = nullptr);
 	void LoadMPTMProperties(FileReader &file, uint16 cwtv);
+	size_t LoadModularInstrumentData(FileReader &file, ModInstrument &ins);
 
 	static mpt::ustring GetSchismTrackerVersion(uint16 cwtv, uint32 reserved);
 
@@ -1306,12 +1308,12 @@ public:
 	void ProcessStereoSeparation(samplecount_t countChunk);
 
 private:
-	PLUGINDEX GetChannelPlugin(const PlayState &playState, CHANNELINDEX nChn, PluginMutePriority respectMutes) const;
-	static PLUGINDEX GetActiveInstrumentPlugin(const ModChannel &chn, PluginMutePriority respectMutes);
+	PluginChannel GetChannelPlugin(const PlayState &playState, CHANNELINDEX nChn, PluginMutePriority respectMutes) const;
+	PluginChannel GetActiveInstrumentPlugin(const ModChannel &chn, PluginMutePriority respectMutes) const;
 	IMixPlugin *GetChannelInstrumentPlugin(const ModChannel &chn) const;
 
 public:
-	PLUGINDEX GetBestPlugin(const PlayState &playState, CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const;
+	PluginChannel GetBestPlugin(const PlayState &playState, CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const;
 
 	PlaybackTest CreatePlaybackTest(uint32 mixingFreq = 0, uint32 outputChannels = 0, uint32 mixerChannels = 0, ResamplingMode srcMode = SRCMODE_CUBIC);
 };

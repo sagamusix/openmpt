@@ -39,28 +39,30 @@ public:
 		friend class PluginComboBox;
 
 		Config() = default;
-		explicit Config(FlagSet<Flags> flags) : m_flags{flags} {}
-		Config(UpdateHint hint, const CObject *sender = nullptr) : m_updateHintSender{sender}, m_hint{hint} {}
+		explicit Config(FlagSet<Flags> flags) : m_flags{ flags } {}
+		Config(UpdateHint hint, const CObject* sender = nullptr) : m_updateHintSender{ sender }, m_hint{ hint } {}
 
-		Config& Hint(UpdateHint hint, const CObject *sender = nullptr) { m_updateHintSender = sender; m_hint = hint; return *this; }
-		Config& Flags(FlagSet<Flags> flags) { m_flags = flags ; return *this; }
-		Config& CurrentSelection(PLUGINDEX selection) { m_curSelection = selection; return *this; }
+		Config& Hint(UpdateHint hint, const CObject* sender = nullptr) { m_updateHintSender = sender; m_hint = hint; return *this; }
+		Config& Flags(FlagSet<Flags> flags) { m_flags = flags; return *this; }
+		Config& CurrentSelection(PluginChannel selection) { m_curSelection = selection; return *this; }
 		Config& FirstPlugin(PLUGINDEX firstPlugin) { m_firstPlugin = firstPlugin; return *this; }
 
 	protected:
-		const CObject *m_updateHintSender = nullptr;
+		const CObject* m_updateHintSender = nullptr;
 		std::optional<UpdateHint> m_hint;
 		std::optional<FlagSet<PluginComboBox::Flags>> m_flags;
-		std::optional<PLUGINDEX> m_curSelection;
+		std::optional<PluginChannel> m_curSelection;
 		PLUGINDEX m_firstPlugin = 0;
 	};
 
 	int Update(const Config config, const CSoundFile &sndFile);
 	// Set zero-based plugin index, or PLUGINDEX_INVALID for "no plugin" choice
-	void SetSelection(PLUGINDEX plugin);
+	void SetSelection(PLUGINDEX plugin) { SetSelection(PluginChannel{plugin, 0}); }
+	void SetSelection(PluginChannel plugin);
+	std::optional<PluginChannel> GetSelection() const;
 	// Return 0-based plugin index, or PLUGINDEX_INVALID if "no plugin" is selected or no selection is made.
-	std::optional<PLUGINDEX> GetSelection() const;
-	
+	std::optional<PLUGINDEX> GetSelectionPlugin() const;
+
 	int GetRawSelection() const { return GetCurSel(); }
 	void SetRawSelection(int sel) { SetCurSel(sel); }
 

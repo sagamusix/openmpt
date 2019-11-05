@@ -111,6 +111,7 @@ BEGIN_MESSAGE_MAP(CModDoc, CDocument)
 	ON_COMMAND(ID_VIEW_SAMPLES,			&CModDoc::OnEditSamples)
 	ON_COMMAND(ID_VIEW_INSTRUMENTS,		&CModDoc::OnEditInstruments)
 	ON_COMMAND(ID_VIEW_COMMENTS,		&CModDoc::OnEditComments)
+	ON_COMMAND(ID_VIEW_PLUGINS,			&CModDoc::OnEditPlugins)
 	ON_COMMAND(ID_VIEW_EDITHISTORY,		&CModDoc::OnViewEditHistory)
 	ON_COMMAND(ID_VIEW_MIDIMAPPING,		&CModDoc::OnViewMIDIMapping)
 	ON_COMMAND(ID_VIEW_MPTHACKS,		&CModDoc::OnViewMPTHacks)
@@ -740,6 +741,11 @@ void CModDoc::PostMessageToAllViews(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if(CView *pView = GetNextView(pos); pView != nullptr)
 			pView->PostMessage(uMsg, wParam, lParam);
+		/*if(dynamic_cast<CModControlView *>(pView) != nullptr)
+		{
+			// The upper panels are children of CModControlViews
+			static_cast<CModControlView *>(pView)->PostMessageToAllControlDlgs(uMsg, wParam, lParam);
+		}*/
 	}
 }
 
@@ -1318,7 +1324,7 @@ bool CModDoc::UpdateChannelMuteStatus(CHANNELINDEX nChn)
 		m_SndFile.m_PlayState.Chn[nChn].dwFlags.set(muteType);
 		if(m_SndFile.m_opl) m_SndFile.m_opl->NoteCut(nChn);
 		// Kill VSTi notes on muted channel.
-		PLUGINDEX nPlug = m_SndFile.GetBestPlugin(m_SndFile.m_PlayState, nChn, PrioritiseInstrument, EvenIfMuted);
+		PLUGINDEX nPlug = m_SndFile.GetBestPlugin(m_SndFile.m_PlayState, nChn, PrioritiseInstrument, EvenIfMuted).plugin;
 		if ((nPlug) && (nPlug<=MAX_MIXPLUGINS))
 		{
 			IMixPlugin *pPlug = m_SndFile.m_MixPlugins[nPlug - 1].pMixPlugin;
@@ -2271,6 +2277,12 @@ void CModDoc::OnEditComments()
 }
 
 
+void CModDoc::OnEditPlugins()
+{
+	if(m_SndFile.GetModSpecifications().supportsPlugins)
+		SendMessageToActiveView(WM_MOD_ACTIVATEVIEW, IDD_CONTROL_PLUGINS);
+}
+
 void CModDoc::OnShowCleanup()
 {
 	CModCleanupDlg dlg(*this, CMainFrame::GetMainFrame());
@@ -2714,6 +2726,7 @@ LRESULT CModDoc::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 		case kcViewSamples: OnEditSamples(); break;
 		case kcViewInstruments: OnEditInstruments(); break;
 		case kcViewComments: OnEditComments(); break;
+		case kcViewPlugins: OnEditPlugins(); break;
 		case kcViewSongProperties: OnSongProperties(); break;
 		case kcViewTempoSwing: OnViewTempoSwingSettings(); break;
 		case kcShowMacroConfig:	OnSetupZxxMacros(); break;

@@ -14,7 +14,6 @@
 #include "InputHandler.h"
 #include "Mainfrm.h"
 #include "Moddoc.h"
-#include "Mptrack.h"
 #include "Reporting.h"
 #include "TempoSwingDialog.h"
 #include "View_pat.h"
@@ -663,7 +662,7 @@ void CEditCommand::OnNoteChanged()
 
 	if(wasParamControl)
 	{
-		if(auto sel = cbnInstr.GetSelection(); sel)
+		if(auto sel = cbnInstr.GetSelectionPlugin(); sel)
 			newInstr = *sel + 1;
 		else
 			newInstr = 0;

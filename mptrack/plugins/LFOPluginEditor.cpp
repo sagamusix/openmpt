@@ -10,6 +10,10 @@
 #include "stdafx.h"
 
 #include "LFOPluginEditor.h"
+<<<<<<< HEAD
+=======
+#include "../PluginComboBox.h"
+>>>>>>> a45ec0335 ([New] Modular plugin graph)
 #include "../UpdateHints.h"
 #include "../../soundlib/Sndfile.h"
 #include "../../soundlib/MIDIEvents.h"

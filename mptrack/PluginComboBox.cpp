@@ -24,7 +24,7 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 	if(config.m_flags)
 		m_flags = *config.m_flags;
 
-	const PLUGINDEX curSelection = config.m_curSelection ? *config.m_curSelection : GetSelection().value_or(PLUGINDEX_INVALID);
+	const PluginChannel curSelection = config.m_curSelection ? *config.m_curSelection : GetSelection().value_or(PLUGINDEX_INVALID);
 	PLUGINDEX updatePlugin = PLUGINDEX_INVALID;
 	if(config.m_hint)
 	{
@@ -43,8 +43,9 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 			int items = GetCount();
 			for(int i = 0; i < items; i++)
 			{
-				if(GetPluginIndex(GetItemData(i)) == curSelection)
+				if(GetPluginIndex(GetItemData(i)) == curSelection.plugin)
 				{
+					i += curSelection.channel / 2;
 					SetCurSel(i);
 					return i;
 				}
@@ -64,7 +65,7 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 	{
 		SetItemData(AddString(_T("No Plugin")), PLUGINDEX_INVALID);
 		insertAt++;
-		if(curSelection == PLUGINDEX_INVALID)
+		if(curSelection.plugin == PLUGINDEX_INVALID)
 		{
 			SetCurSel(selectedItem = 0);
 		}
@@ -102,7 +103,7 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 		if(updatePlugin != PLUGINDEX_INVALID && plug != updatePlugin)
 			continue;
 		const SNDMIXPLUGIN &plugin = sndFile.m_MixPlugins[plug];
-		if(!plugin.IsValidPlugin() && !m_flags[ShowEmptySlots] && curSelection != plug)
+		if(!plugin.IsValidPlugin() && !m_flags[ShowEmptySlots] && curSelection.plugin != plug)
 			continue;
 
 		str.clear();
@@ -135,9 +136,9 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 			}
 		}
 
-		if(plug == curSelection)
+		if(plug == curSelection.plugin)
 		{
-			selectedItem = firstItem;
+			selectedItem = firstItem + curSelection.channel / 2;
 			SetCurSel(selectedItem);
 		}
 	}
@@ -148,34 +149,46 @@ int PluginComboBox::Update(const Config config, const CSoundFile &sndFile)
 }
 
 
-void PluginComboBox::SetSelection(PLUGINDEX plugin)
+void PluginComboBox::SetSelection(PluginChannel plugin)
 {
 	int i = 0;
-	if(plugin != PLUGINDEX_INVALID || !m_flags[ShowNoPlugin])
+	if(plugin.plugin != PLUGINDEX_INVALID || !m_flags[ShowNoPlugin])
 	{
 		const int numItems = GetCount();
 		for(; i < numItems; i++)
 		{
-			if(GetPluginIndex(GetItemData(i)) == plugin)
+			if(GetPluginIndex(GetItemData(i)) == plugin.plugin)
 				break;
 		}
 	}
-	SetCurSel(i);
+	SetCurSel(i + plugin.channel / 2);
 }
 
 
-std::optional<PLUGINDEX> PluginComboBox::GetSelection() const
+std::optional<PluginChannel> PluginComboBox::GetSelection() const
 {
 	const auto sel = GetCurSel();
 	if(sel == -1)
 		return std::nullopt;
-	
+
 	const DWORD_PTR itemData = GetItemData(sel);
 	PLUGINDEX plugin = GetPluginIndex(itemData);
+	uint8 channel = static_cast<uint8>(itemData >> PluginShiftBits);
 	if(plugin < MAX_MIXPLUGINS)
-		return plugin;
+		return PluginChannel(plugin, channel);
 	else
 		return std::nullopt;
+}
+
+
+std::optional<PLUGINDEX> PluginComboBox::GetSelectionPlugin() const
+{
+	const auto sel = GetSelection();
+	if(sel)
+		return sel->plugin;
+	else
+		return std::nullopt;
+
 }
 
 

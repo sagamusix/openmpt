@@ -84,6 +84,7 @@ constexpr struct
 	{kcViewInstruments,                        'N',                ModAlt,             kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
 	{kcViewComments,                           VK_F9,              ModShift,           kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
 	{kcViewComments,                           'C',                ModAlt,             kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
+	{kcViewPlugins,                            'L',                ModAlt,             kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31.01.00")},//TODO
 	{kcViewTree,                               VK_F2,              ModCtrl,            kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
 	{kcViewOptions,                            VK_F1,              ModCtrl,            kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
 	{kcViewMIDImapping,                        VK_F3,              ModCtrl,            kKeyEventDown,                   kCtxAllContexts,         MPT_V("1.31")},
@@ -507,6 +508,12 @@ constexpr struct
 	{kcChnColorFromPrev,                       VK_LEFT,            ModShift | ModAlt,  kKeyEventDown,                   kCtxChannelSettings,     MPT_V("1.31")},
 	{kcChnColorFromNext,                       VK_RIGHT,           ModShift | ModAlt,  kKeyEventDown,                   kCtxChannelSettings,     MPT_V("1.31")},
 	{kcChnSettingsClose,                       VK_RETURN,          ModNone,            kKeyEventDown,                   kCtxChannelSettings,     MPT_V("1.31")},
+	{kcPluginGraphZoomIn,                      VK_ADD,             ModNone,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
+	{kcPluginGraphZoomIn,                      VK_OEM_PLUS,        ModNone,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
+	{kcPluginGraphZoomIn,                      VK_ADD,             ModCtrl,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_SUBTRACT,        ModNone,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_OEM_MINUS,       ModNone,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_SUBTRACT,        ModCtrl,            kKeyEventDown | kKeyEventRepeat, kCtxViewPlugins,         MPT_V("1.31.01.00")},//TODO
 };
 // clang-format on
 
@@ -1097,7 +1104,7 @@ static constexpr struct
 	{1766, kcPatternGoto, _T("Go to row/channel/...")},
 	{KeyCommand::Hidden, kcPatternOpenRandomizer, _T("Pattern Randomizer")},  // while there's not randomizer yet, let's just disable it for now
 	{1768, kcPatternInterpolateNote, _T("Interpolate Note")},
-	{KeyCommand::Hidden, kcViewGraph, _T("View Graph")},  // while there's no graph yet, let's just disable it for now
+	{1769, kcViewPlugins, _T("View Plugins")},
 	{1770, kcToggleChanMuteOnPatTransition, _T("(Un)mute channel on pattern transition")},
 	{1771, kcChannelUnmuteAll, _T("Unmute all channels")},
 	{1772, kcShowPatternProperties, _T("Show Pattern Properties")},
@@ -1384,6 +1391,9 @@ static constexpr struct
 	{2067, kcOrderlistQueueAtRowEnd, _T("Queue Pattern (Transition at end of current row)")},
 	{2068, kcSampleConvertNormalLoopToSustain, _T("Convert Normal Loop to Sustain Loop")},
 	{2069, kcSampleConvertSustainLoopToNormal, _T("Convert Sustain Loop to Normal Loop")},
+
+	{2096, kcPluginGraphZoomIn, _T("Zoom In")},
+	{2097, kcPluginGraphZoomOut, _T("Zoom Out")},
 };
 // clang-format on
 
@@ -2418,6 +2428,7 @@ CString KeyCombination::GetContextText(InputTargetContext ctx)
 		case kCtxViewPatternsFXparam:	return _T("Pattern Context [bottom] - Param Col");
 		case kCtxViewSamples:			return _T("Sample Context [bottom]");
 		case kCtxViewInstruments:		return _T("Instrument Context [bottom]");
+		case kCtxViewPlugins:			return _T("Plugin Graph");
 		case kCtxViewComments:			return _T("Comments Context [bottom]");
 		case kCtxViewTree:				return _T("Tree View");
 		case kCtxCtrlGeneral:			return _T("General Context [top]");

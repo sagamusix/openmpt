@@ -11,6 +11,8 @@
 
 #include "openmpt/all/BuildSettings.hpp"
 
+#include "Snd_defs.h"
+
 OPENMPT_NAMESPACE_BEGIN
 
 // struct Notification requires working copy constructor / copy assignment, keep in mind when extending

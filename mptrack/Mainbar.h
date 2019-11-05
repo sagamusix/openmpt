@@ -16,16 +16,17 @@
 #include "UpdateToolTip.h"
 #include "../soundlib/Snd_defs.h"
 
+#include "VUMeter.h"
+
 OPENMPT_NAMESPACE_BEGIN
 
 class CStereoVU: public CStatic
 {
 protected:
 	uint8 numChannels = 2;
+	VUMeterUI meterUI[4] = {{}};
 	uint32 vuMeter[4] = {{}};
 	DWORD lastVuUpdateTime;
-	int lastV[4] = {{}};
-	bool lastClip[4] = {{}};
 	bool horizontal = true;
 	bool allowRightToLeft = false;
 
@@ -36,7 +37,6 @@ public:
 
 protected:
 	void DrawVuMeters(CDC &dc, bool redraw = false);
-	void DrawVuMeter(CDC &dc, const CRect &rect, int index, bool redraw = false);
 
 protected:
 	afx_msg void OnPaint();
