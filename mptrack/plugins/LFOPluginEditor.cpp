@@ -339,12 +339,24 @@ void LFOPluginEditor::OnOutputPlugChanged()
 	if(m_locked)
 		return;
 
+<<<<<<< HEAD
 	PLUGINDEX plug = m_outPlug.GetSelection().value_or(PLUGINDEX_INVALID);
 	m_lfoPlugin.GetSoundFile().m_MixPlugins[m_lfoPlugin.GetSlot()].SetOutputPlugin(plug);
 	m_lfoPlugin.SetModified();
 	UpdateParamDisplays();
 	if(CModDoc *modDoc = m_lfoPlugin.GetSoundFile().GetpModDoc(); modDoc != nullptr)
 		modDoc->UpdateAllViews(nullptr, PluginHint(m_lfoPlugin.GetSlot() + 1).Info(), this);
+=======
+	PLUGINDEX plug = m_outPlug.GetSelectionPlugin().value_or(PLUGINDEX_INVALID);
+	if(plug > m_lfoPlugin.GetSlot() && plug < MAX_MIXPLUGINS)
+	{
+		m_lfoPlugin.GetSoundFile().m_MixPlugins[m_lfoPlugin.GetSlot()].SetOutputPlugin(plug);
+		m_lfoPlugin.SetModified();
+		UpdateParamDisplays();
+		if(CModDoc *modDoc = m_lfoPlugin.GetSoundFile().GetpModDoc(); modDoc != nullptr)
+			modDoc->UpdateAllViews(nullptr, PluginHint(m_lfoPlugin.GetSlot() + 1).Info(), this);
+	}
+>>>>>>> e02c1a657 ([New] Modular plugin graph)
 }
 
 

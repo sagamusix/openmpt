@@ -125,7 +125,7 @@ MIDIMacroParser::MIDIMacroParser(const CSoundFile &sndFile, PlayState *playState
 			// MIDI channel
 			isNibble = true;
 			data = 0xFF;
-			const PLUGINDEX plug = (plugin != 0 || !chn) ? plugin : sndFile.GetBestPlugin(*chn, nChn, PrioritiseChannel, EvenIfMuted);
+			const PLUGINDEX plug = (plugin != 0 || !chn) ? plugin : sndFile.GetBestPlugin(*chn, nChn, PrioritiseChannel, EvenIfMuted).plugin;
 			if(plug > 0 && plug <= MAX_MIXPLUGINS)
 			{
 				auto midiPlug = dynamic_cast<const IMidiPlugin *>(sndFile.m_MixPlugins[plug - 1u].pMixPlugin);

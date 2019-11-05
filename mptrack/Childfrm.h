@@ -24,9 +24,7 @@ class CModControlDlg;
 
 struct GeneralViewState
 {
-	PlugParamIndex nParam = 0;
 	CHANNELINDEX nTab = 0;
-	PLUGINDEX nPlugin = 0;
 	bool initialized = false;
 
 	std::string Serialize() const { return {}; }
@@ -47,6 +45,7 @@ struct PatternViewState
 	std::string Serialize() const;
 	void Deserialize(FileReader &f);
 };
+
 
 struct SampleViewState
 {
@@ -85,6 +84,15 @@ struct CommentsViewState
 };
 
 
+struct PluginViewState
+{
+	double zoom = 1.0;
+	CPoint position;
+
+	std::string Serialize() const;
+	void Deserialize(FileReader &f);
+};
+
 
 class CChildFrame: public CMDIChildWnd
 {
@@ -107,6 +115,7 @@ protected:
 	SampleViewState m_ViewSamples;
 	InstrumentViewState m_ViewInstruments;
 	CommentsViewState m_ViewComments;
+	PluginViewState m_ViewPlugins;
 	std::string m_currentViewClassName;
 	int m_dpi = 0;
 	bool m_maxWhenClosed = false;
@@ -128,6 +137,7 @@ public:
 	SampleViewState &GetSampleViewState() { return m_ViewSamples; }
 	InstrumentViewState &GetInstrumentViewState() { return m_ViewInstruments; }
 	CommentsViewState &GetCommentViewState() { return m_ViewComments; }
+	PluginViewState &GetPluginViewState() { return m_ViewPlugins; }
 
 	bool IsPatternView() const;
 

@@ -643,7 +643,7 @@ static constexpr struct
 	{1766, kcPatternGoto, _T("Go to row/channel/...")},
 	{KeyCommand::Hidden, kcPatternOpenRandomizer, _T("Pattern Randomizer")},  // while there's not randomizer yet, let's just disable it for now
 	{1768, kcPatternInterpolateNote, _T("Interpolate Note")},
-	{KeyCommand::Hidden, kcViewGraph, _T("View Graph")},  // while there's no graph yet, let's just disable it for now
+	{1769, kcViewPlugins, _T("View Plugins")},
 	{1770, kcToggleChanMuteOnPatTransition, _T("(Un)mute channel on pattern transition")},
 	{1771, kcChannelUnmuteAll, _T("Unmute all channels")},
 	{1772, kcShowPatternProperties, _T("Show Pattern Properties")},
@@ -967,6 +967,9 @@ static constexpr struct
 	{2130, kcSampleResampleAll, _T("Resample All Samples")},
 	{2131, kcSample8BitAll, _T("Convert All Samples to 8-Bit")},
 	{2132, kcSampleStereo, _T("Convert to Stereo")},
+
+	{2133, kcPluginGraphZoomIn, _T("Zoom In")},
+	{2134, kcPluginGraphZoomOut, _T("Zoom Out")},
 };
 // clang-format on
 
@@ -2025,6 +2028,7 @@ CString KeyCombination::GetContextText(InputTargetContext ctx)
 		case kCtxViewPatternsFXparam:	return _T("Pattern Context [bottom] - Param Col");
 		case kCtxViewSamples:			return _T("Sample Context [bottom]");
 		case kCtxViewInstruments:		return _T("Instrument Context [bottom]");
+		case kCtxViewPlugins:			return _T("Plugin Graph");
 		case kCtxViewComments:			return _T("Comments Context [bottom]");
 		case kCtxViewTree:				return _T("Tree View");
 		case kCtxCtrlGeneral:			return _T("General Context [top]");
@@ -2318,6 +2322,7 @@ InputTargetContext CCommandSet::ContextFromCommand(CommandID cmd)
 		{kCtxViewComments,        kcStartCommentsCommands,    kcEndCommentsCommands   },
 		{kCtxVSTGUI,              kcStartVSTGUICommands,      kcEndVSTGUICommands     },
 		{kCtxViewTree,            kcStartTreeViewCommands,    kcEndTreeViewCommands   },
+		{kCtxViewPlugins,         kcStartPluginGraph,         kcEndPluginGraph        },
 	};
 	for(const auto &[context, first, last] : ContextCommandRanges)
 	{

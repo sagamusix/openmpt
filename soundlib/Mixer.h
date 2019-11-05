@@ -41,10 +41,33 @@ static_assert(MIXING_SCALEF == 134217728.0f);
 static_assert(sizeof(mixsample_t) == 4);
 #endif
 
-#define MIXBUFFERSIZE 512
 #define NUMMIXINPUTBUFFERS 4
 
-#define VOLUMERAMPPRECISION 12	// Fractional bits in volume ramp variables
+#ifdef MPT_INTMIXER
+struct mixer_traits
+{
+	enum
+	{
+		MIXING_CLIPMAX = ((1<<MIXING_FRACTIONAL_BITS)-1),
+		MIXING_CLIPMIN = -(MIXING_CLIPMAX),
+	};
+	using sample_t = mixsample_t;
+	static sample_t clip_max() { return MIXING_CLIPMAX; }
+	static sample_t clip_min() { return -(MIXING_CLIPMAX); }
+};
+
+#else
+struct mixer_traits
+{
+	using sample_t = mixsample_t;
+	static sample_t clip_max() { return 1.0f; }
+	static sample_t clip_min() { return -1.0f; }
+};
+#endif
+
+enum { MIXBUFFERSIZE = 512 };
+
+enum { VOLUMERAMPPRECISION = 12 };	// Fractional bits in volume ramp variables
 
 // The absolute maximum number of sampling points any interpolation algorithm is going to look at in any direction from the current sampling point
 // Currently, the maximum is 4 sampling points forwards and 3 sampling points backwards (Polyphase / FIR algorithms).

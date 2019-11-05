@@ -1629,10 +1629,10 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	}
 
 #ifdef ENABLE_TESTS
-	if(!cmdInfo.m_noTests)
-	{
-		Test::DoTests();
-	}
+	//if(!cmdInfo.m_noTests)
+	//{	
+	//	Test::DoTests();
+	//}
 #endif
 
 	theApp.GetSettings().Flush();

@@ -11,6 +11,7 @@
 
 #include "stdafx.h"
 #include "Sndfile.h"
+#include "plugins/PlugInterface.h"
 #include "plugins/PluginManager.h"
 #include "../common/mptStringBuffer.h"
 #include "../common/version.h"
@@ -255,6 +256,36 @@ void CSoundFile::UpgradeModule()
 
 	const bool compatModeIT = m_playBehaviour[MSF_COMPATIBLE_PLAY] && (GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT));
 	const bool compatModeXM = m_playBehaviour[MSF_COMPATIBLE_PLAY] && GetType() == MOD_TYPE_XM;
+
+	// Legacy plugin output settings
+	// TODO add version number here
+	for(PLUGINDEX plug = 0; plug < MAX_MIXPLUGINS; plug++)
+	{
+		if(m_MixPlugins[plug].outputs.empty())
+		{
+			int chn = m_MixPlugins[plug].pMixPlugin != nullptr ? m_MixPlugins[plug].pMixPlugin->GetNumOutputChannels() : 2;
+			m_MixPlugins[plug].outputs.reserve(chn);
+			for(int i = 0; i < chn; i++)
+			{
+				SNDMIXPLUGIN::RoutingChannel routing;
+				routing.inChannel = static_cast<SNDMIXPLUGIN::RoutingChannel::channel_t>(i % 2u);
+				routing.outChannel = static_cast<SNDMIXPLUGIN::RoutingChannel::channel_t>(i);
+				if(m_MixPlugins[plug].Info.dwOutputRouting >= 0x80)
+				{
+					routing.plugin = static_cast<PLUGINDEX>(m_MixPlugins[plug].Info.dwOutputRouting - 0x80);
+					const IMixPlugin *outPlug = m_MixPlugins[routing.plugin].pMixPlugin;
+					if(outPlug != nullptr && outPlug->GetNumInputChannels() > 0)
+					{
+						LimitMax(routing.inChannel, static_cast<SNDMIXPLUGIN::RoutingChannel::channel_t>(outPlug->GetNumInputChannels() - 1));
+					}
+				} else
+				{
+					routing.plugin = PLUGINDEX_INVALID;	// Master
+				}
+				m_MixPlugins[plug].outputs.push_back(routing);
+			}
+		}
+	}
 
 	if(m_dwLastSavedWithVersion < MPT_V("1.20.00.00"))
 	{

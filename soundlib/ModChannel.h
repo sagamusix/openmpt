@@ -259,7 +259,7 @@ struct ModChannelSettings
 	uint16 nPan = 128;              // Initial pan (0...256)
 	uint8 nVolume = 64;             // Initial channel volume (0...64)
 	PLUGINDEX nMixPlugin = 0;       // Assigned plugin
-
+	uint8 pluginChannel = 0;
 	mpt::charbuf<MAX_CHANNELNAME> szName;  // Channel name
 };
 
