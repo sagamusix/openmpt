@@ -120,6 +120,8 @@ enum
 	CTRLMSG_INS_SONGDROP,
 	CTRLMSG_INS_SONGDROP_NEW,
 	CTRLMSG_INS_SAMPLEMAP,
+	// Plugin-specific
+	CTRLMSG_PLUG_SETCURRENT,
 };
 
 enum
@@ -148,13 +150,15 @@ enum
 	VIEWMSG_PASTEPATTERN,
 	VIEWMSG_AMPLIFYPATTERN,
 	VIEWMSG_SETDETAIL,
+	VIEWMSG_DOSCROLL,
 	// Sample-Specific
 	VIEWMSG_SETCURRENTSAMPLE,
 	VIEWMSG_SETMODIFIED,
 	VIEWMSG_PREPAREUNDO,
 	// Instrument-Specific
 	VIEWMSG_SETCURRENTINSTRUMENT,
-	VIEWMSG_DOSCROLL,
+	// Plugin-specific
+	VIEWMSG_SETCURRENTPLUGIN,
 };
 
 
@@ -206,35 +210,6 @@ template<> inline WINDOWPLACEMENT FromSettingValue(const SettingValue &val)
 }
 
 
-class VUMeter
-{
-public:
-	static constexpr std::size_t maxChannels = 4;
-	static const float dynamicRange; // corresponds to the current implementation of the UI widget diplaying the result
-	struct Channel
-	{
-		int32 peak = 0;
-		bool clipped = false;
-	};
-private:
-	Channel channels[maxChannels];
-	int32 decayParam;
-	void Process(Channel &channel, MixSampleInt sample);
-	void Process(Channel &channel, MixSampleFloat sample);
-public:
-	VUMeter() : decayParam(0) { SetDecaySpeedDecibelPerSecond(88.0f); }
-	void SetDecaySpeedDecibelPerSecond(float decibelPerSecond);
-public:
-	const Channel & operator [] (std::size_t channel) const { return channels[channel]; }
-	void Process(const MixSampleInt *mixbuffer, std::size_t numChannels, std::size_t numFrames); // mixbuffer is interleaved
-	void Process(const MixSampleInt *const *mixbuffers, std::size_t numChannels, std::size_t numFrames);
-	void Process(const MixSampleFloat *mixbuffer, std::size_t numChannels, std::size_t numFrames); // mixbuffer is interleaved
-	void Process(const MixSampleFloat *const *mixbuffers, std::size_t numChannels, std::size_t numFrames);
-	void Decay(int32 secondsNum, int32 secondsDen);
-	void ResetClipped();
-};
-
-
 class TfLanguageProfileNotifySink : public ITfLanguageProfileNotifySink
 {
 public:
@@ -280,8 +255,8 @@ public:
 	SoundDevice::IBase *gpSoundDevice = nullptr;
 	UINT_PTR m_NotifyTimer = 0;
 	Dither m_Dither;
-	VUMeter m_VUMeterInput;
-	VUMeter m_VUMeterOutput;
+	VUMeterMix m_VUMeterInput;
+	VUMeterMix m_VUMeterOutput;
 
 	DWORD m_AudioThreadId = 0;
 	bool m_InNotifyHandler = false;

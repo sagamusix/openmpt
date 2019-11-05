@@ -39,6 +39,7 @@ version:1
 0:1024:4:78:1		//View Instruments: Alt+N (KeyDown)
 0:1025:1:120:1		//View Comments: Shift+F9 (KeyDown)
 0:1025:4:67:1		//View Comments: Alt+C (KeyDown)
+0:1769:4:76:1		//View Plugins: Alt+L (KeyDown)
 0:1368:2:113:1		//Toggle Tree View: Ctrl+F2 (KeyDown)
 0:1369:2:112:1		//View Options: Ctrl+F1 (KeyDown)
 0:1781:2:114:1		//View MIDI Mapping: Ctrl+F3 (KeyDown)
@@ -476,3 +477,11 @@ version:1
 20:2008:5:37:1		//Pick Color from Previous Channel: Shift+Alt+Left (KeyDown)
 20:2009:5:39:1		//Pick Color from Next Channel: Shift+Alt+Right (KeyDown)
 20:1880:0:13:1		//Switch to Pattern Editor: ENTER (KeyDown)
+
+//----( Plugin Graph (21) )------------
+21:1952:0:107:5		//Zoom In: + (ZEHNERTASTATUR) (KeyDown|KeyHold)
+21:1952:0:187:5		//Zoom In: + (KeyDown|KeyHold)
+21:1952:2:187:5		//Zoom In: Ctrl++ (KeyDown|KeyHold)
+21:1953:0:109:5		//Zoom Out: - (ZEHNERTASTATUR) (KeyDown|KeyHold)
+21:1953:0:189:1		//Zoom Out: - (KeyDown)
+21:1953:2:189:5		//Zoom Out: Ctrl+- (KeyDown|KeyHold)

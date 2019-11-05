@@ -309,6 +309,9 @@
     <ClInclude Include="..\..\mptrack\Ctrl_pat.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\Ctrl_plugins.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\Ctrl_smp.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -447,6 +450,9 @@
     <ClInclude Include="..\..\mptrack\ResizableDialog.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\RoutingNodes.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\SampleConfigDlg.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -513,6 +519,9 @@
     <ClInclude Include="..\..\mptrack\VSTEditor.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\VUMeter.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\View_gen.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -520,6 +529,9 @@
       <Filter>mptrack</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\View_pat.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\View_plugins.h">
       <Filter>mptrack</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\View_smp.h">
@@ -1025,6 +1037,9 @@
     <ClCompile Include="..\..\mptrack\Ctrl_pat.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\Ctrl_plugins.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\Ctrl_seq.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -1175,6 +1190,9 @@
     <ClCompile Include="..\..\mptrack\ResizableDialog.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\RoutingNodes.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\SampleConfigDlg.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -1241,6 +1259,9 @@
     <ClCompile Include="..\..\mptrack\VSTEditor.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\VUMeter.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\View_gen.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -1248,6 +1269,9 @@
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\View_pat.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\View_plugins.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\View_smp.cpp">

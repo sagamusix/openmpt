@@ -414,7 +414,6 @@ void ErrorBox(UINT nStringID, CWnd *p = nullptr);
 // Helper function declarations.
 struct SNDMIXPLUGIN;
 class IMixPlugin;
-void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, const bool librarynames = false);
 void AddPluginParameternamesToCombobox(CComboBox &CBox, SNDMIXPLUGIN &plugarray);
 void AddPluginParameternamesToCombobox(CComboBox &CBox, IMixPlugin &plug);
 
@@ -432,6 +431,28 @@ CString GetWindowTextString(const CWnd &wnd);
 
 // Get window text (e.g. edit box content) as a unicode string
 mpt::ustring GetWindowTextUnicode(const CWnd &wnd);
+
+
+class PluginComboBox : public CComboBox
+{
+public:
+	enum Flags
+	{
+		ShowNoPlugin      = 0x01,
+		ShowEmptySlots    = 0x02,
+		ShowInputs        = 0x04,
+		ShowLibraryNames  = 0x08,
+		DoNotResetContent = 0x10,
+	};
+
+	int Update(const CSoundFile &sndFile, PluginChannel curSelection, FlagSet<Flags> flags, PLUGINDEX updatePlugin = PLUGINDEX_INVALID);
+	void SetSelection(PLUGINDEX plugin) { SetSelection(PluginChannel(plugin, 0)); }
+	void SetSelection(PluginChannel plugin);
+	PluginChannel GetSelection() const;
+	PLUGINDEX GetSelectionPlugin() const { return GetSelection().plugin; }
+};
+
+DECLARE_FLAGSET(PluginComboBox::Flags)
 
 ///////////////////////////////////////////////////
 // Tables

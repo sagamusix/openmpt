@@ -49,6 +49,8 @@ enum InputTargetContext : int8
 	kCtxCtrlComments,
 	kCtxCtrlOrderlist,
 	kCtxChannelSettings,
+	kCtxViewPlugins,
+	// New contexts must be added here.
 	kCtxMaxInputContexts
 };
 
@@ -134,7 +136,7 @@ enum CommandID
 	kcViewSamples,
 	kcViewInstruments,
 	kcViewComments,
-	kcViewGraph,
+	kcViewPlugins,
 	kcViewMain,
 	kcViewTree,
 	kcViewOptions,
@@ -868,6 +870,11 @@ enum CommandID
 	kcToggleSmpInsList = kcStartCommentsCommands,
 	kcExecuteSmpInsListItem,
 	kcEndCommentsCommands = kcExecuteSmpInsListItem,
+
+	kcStartPlugins,
+	kcPluginGraphZoomIn = kcStartPlugins,
+	kcPluginGraphZoomOut,
+	kcEndPlugins = kcPluginGraphZoomOut,
 
 	kcNumCommands,
 };

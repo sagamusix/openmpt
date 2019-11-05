@@ -44,7 +44,7 @@ IMixPlugin::IMixPlugin(VSTPluginLib &factory, CSoundFile &sndFile, SNDMIXPLUGIN 
 	, m_SndFile(sndFile)
 	, m_pMixStruct(mixStruct)
 {
-	m_MixState.pMixBuffer = (mixsample_t *)((((intptr_t)m_MixBuffer) + 7) & ~7);
+	//m_mixBuffer.Initialize(2, 2);
 	while(m_pMixStruct != &(m_SndFile.m_MixPlugins[m_nSlot]) && m_nSlot < MAX_MIXPLUGINS - 1)
 	{
 		m_nSlot++;
@@ -258,8 +258,15 @@ void IMixPlugin::ProcessMixOps(float * MPT_RESTRICT pOutL, float * MPT_RESTRICT 
 	wetRatio *= m_fGain;
 	dryRatio *= m_fGain;
 
-	float * MPT_RESTRICT plugInputL = m_mixBuffer.GetInputBuffer(0);
-	float * MPT_RESTRICT plugInputR = m_mixBuffer.GetInputBuffer(1);
+	const float * MPT_RESTRICT leftIn = m_mixBuffer.GetInputBuffer(0);
+	const float * MPT_RESTRICT rightIn = m_mixBuffer.GetInputBuffer(1);
+
+	float **inputBuffers = m_mixBuffer.GetInputBufferArray();
+	float **outputBuffers = m_mixBuffer.GetOutputBufferArray();
+	const int numChannelsIn = GetNumOutputChannels();
+	const int numChannelsOut = GetNumOutputChannels();
+	const int numChannelsInOut = std::min(numChannelsIn, numChannelsOut);
+	const int numStereoInOut = numChannelsInOut / 2;
 
 	// Mix operation
 	switch(mixop)
@@ -267,49 +274,92 @@ void IMixPlugin::ProcessMixOps(float * MPT_RESTRICT pOutL, float * MPT_RESTRICT 
 
 	// Default mix
 	case 0:
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numChannelsInOut; ch++)
 		{
-			//rewbs.wetratio - added the factors. [20040123]
-			pOutL[i] += leftPlugOutput[i] * wetRatio + plugInputL[i] * dryRatio;
-			pOutR[i] += rightPlugOutput[i] * wetRatio + plugInputR[i] * dryRatio;
+			float *in = inputBuffers[ch], *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = out[i] * wetRatio + in[i] * dryRatio;
+			}
 		}
+		// Mix output channels with no input
+		for(int ch = numChannelsInOut; ch < numChannelsOut; ch++)
+		{
+			float *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] *= wetRatio;
+			}
+		}
+		// TODO also mix input channels with no output
 		break;
 
 	// Wet subtract
 	case 1:
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numChannelsInOut; ch++)
 		{
-			pOutL[i] += plugInputL[i] - leftPlugOutput[i] * wetRatio;
-			pOutR[i] += plugInputR[i] - rightPlugOutput[i] * wetRatio;
+			float *in = inputBuffers[ch], *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = in[i] - out[i] * wetRatio;
+			}
+		}
+		for(int ch = numChannelsInOut; ch < numChannelsOut; ch++)
+		{
+			float *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = - out[i] * wetRatio;
+			}
 		}
 		break;
 
 	// Dry subtract
 	case 2:
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numChannelsInOut; ch++)
 		{
-			pOutL[i] += leftPlugOutput[i] - plugInputL[i] * dryRatio;
-			pOutR[i] += rightPlugOutput[i] - plugInputR[i] * dryRatio;
+			float *in = inputBuffers[ch], *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = out[i] - in[i] * wetRatio;
+			}
 		}
 		break;
 
 	// Mix subtract
 	case 3:
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numChannelsInOut; ch++)
 		{
-			pOutL[i] -= leftPlugOutput[i] - plugInputL[i] * wetRatio;
-			pOutR[i] -= rightPlugOutput[i] - plugInputR[i] * wetRatio;
+			float *in = inputBuffers[ch], *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = - out[i] - in[i] * wetRatio;
+			}
+		}
+		for(int ch = numChannelsInOut; ch < numChannelsOut; ch++)
+		{
+			float *out = outputBuffers[ch];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				out[i] = - out[i];
+			}
 		}
 		break;
 
 	// Middle subtract
 	case 4:
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numStereoInOut; ch += 2)
 		{
-			float middle = (pOutL[i] + plugInputL[i] + pOutR[i] + plugInputR[i]) / 2.0f;
-			pOutL[i] -= middle - leftPlugOutput[i] * wetRatio + middle - plugInputL[i];
-			pOutR[i] -= middle - rightPlugOutput[i] * wetRatio + middle - plugInputR[i];
+			float *inL = inputBuffers[ch], *inR = inputBuffers[ch + 1];
+			float *outL = outputBuffers[ch], *outR = outputBuffers[ch + 1];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				float middle = (outL[i] + inL[i] + outR[i] + inR[i]) / 2.0f;
+				outL[i] -= middle - outL[i] * wetRatio + middle - inL[i];
+				outR[i] -= middle - outR[i] * wetRatio + middle - inR[i];
+			}
 		}
+		// TODO remaining channels?
 		break;
 
 	// Left / Right balance
@@ -320,22 +370,36 @@ void IMixPlugin::ProcessMixOps(float * MPT_RESTRICT pOutL, float * MPT_RESTRICT 
 			dryRatio /= 2.0f;
 		}
 
-		for(uint32 i = 0; i < numFrames; i++)
+		for(int ch = 0; ch < numStereoInOut; ch += 2)
 		{
-			pOutL[i] += wetRatio * (leftPlugOutput[i] - plugInputL[i]) + dryRatio * (plugInputR[i] - rightPlugOutput[i]);
-			pOutR[i] += dryRatio * (leftPlugOutput[i] - plugInputL[i]) + wetRatio * (plugInputR[i] - rightPlugOutput[i]);
+			float *inL = inputBuffers[ch], *inR = inputBuffers[ch + 1];
+			float *outL = outputBuffers[ch], *outR = outputBuffers[ch + 1];
+			for(uint32 i = 0; i < numFrames; i++)
+			{
+				outL[i] += wetRatio * (outL[i] - inL[i]) + dryRatio * (inR[i] - outR[i]);
+				outR[i] += dryRatio * (outL[i] - inL[i]) + wetRatio * (inR[i] - outR[i]);
+			}
 		}
 		break;
+	}
+
+	for(uint32 i = 0; i < numFrames; i++)
+	{
+		pOutL[i] += leftPlugOutput[i];
+		pOutR[i] += rightPlugOutput[i];
 	}
 
 	// If dry mix is ticked, we add the unprocessed buffer,
 	// except if this is an instrument since then it has already been done:
 	if(m_pMixStruct->IsWetMix() && !IsInstrument())
 	{
+		// TODO do not only take the first stereo pair into account
+		const float *leftIn1 = m_mixBuffer.GetInputBuffer(0);
+		const float *rightIn1 = m_mixBuffer.GetInputBuffer(1);
 		for(uint32 i = 0; i < numFrames; i++)
 		{
-			pOutL[i] += plugInputL[i];
-			pOutR[i] += plugInputR[i];
+			pOutL[i] += leftIn1[i];
+			pOutR[i] += rightIn1[i];
 		}
 	}
 }
@@ -720,6 +784,16 @@ bool IMixPlugin::LoadProgram(mpt::PathString fileName)
 	}
 }
 
+
+uint32 IMixPlugin::GetOutputVUMeters(std::vector<float> &meters)
+{
+	uint32 numFrames = m_vuMeterFrames;
+	if(!numFrames)
+		return 0;
+	m_vuMeterFrames = 0;
+	meters.assign(m_outputVUMeters.begin(), m_outputVUMeters.end());
+	return numFrames;
+}
 
 #endif // MODPLUG_TRACKER
 

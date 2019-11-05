@@ -19,6 +19,7 @@
 #include "Ctrl_smp.h"
 #include "Ctrl_ins.h"
 #include "Ctrl_com.h"
+#include "Ctrl_plugins.h"
 #include "ImageLists.h"
 #include "../soundlib/mod_specifications.h"
 
@@ -292,14 +293,6 @@ BOOL CModControlView::SetActivePage(int nIndex, LPARAM lParam)
 
 	switch(nID)
 	{
-		//rewbs.graph
-		case IDD_CONTROL_GRAPH:
-			nIndex = 5;
-			break;
-		//end rewbs.graph
-		case IDD_CONTROL_COMMENTS:
-			nIndex = 4;
-			break;
 		case IDD_CONTROL_GLOBALS:
 			nIndex = 0;
 			break;
@@ -311,6 +304,12 @@ BOOL CModControlView::SetActivePage(int nIndex, LPARAM lParam)
 			break;
 		case IDD_CONTROL_INSTRUMENTS:
 			nIndex = 3;
+			break;
+		case IDD_CONTROL_COMMENTS:
+			nIndex = 4;
+			break;
+		case IDD_CONTROL_PLUGINS:
+			nIndex = 5;
 			break;
 		default:
 			return FALSE;
@@ -345,14 +344,6 @@ BOOL CModControlView::SetActivePage(int nIndex, LPARAM lParam)
 		MPT_ASSERT_ALWAYS(GetDocument() != nullptr);
 		switch(nID)
 		{
-		//rewbs.graph
-		case IDD_CONTROL_GRAPH:
-			//pDlg = new CCtrlGraph();
-			break;
-		//end rewbs.graph
-		case IDD_CONTROL_COMMENTS:
-			pDlg = new CCtrlComments(*this, *GetDocument());
-			break;
 		case IDD_CONTROL_GLOBALS:
 			pDlg = new CCtrlGeneral(*this, *GetDocument());
 			break;
@@ -364,6 +355,12 @@ BOOL CModControlView::SetActivePage(int nIndex, LPARAM lParam)
 			break;
 		case IDD_CONTROL_INSTRUMENTS:
 			pDlg = new CCtrlInstruments(*this, *GetDocument());
+			break;
+		case IDD_CONTROL_COMMENTS:
+			pDlg = new CCtrlComments(*this, *GetDocument());
+			break;
+		case IDD_CONTROL_PLUGINS:
+			pDlg = new CCtrlPlugins(*this, *GetDocument());
 			break;
 		default:
 			return FALSE;
@@ -415,13 +412,12 @@ void CModControlView::UpdateView(UpdateHint lHint, CObject *pObject)
 	// Module type changed: update tabs
 	if (lHint.GetType()[HINT_MODTYPE])
 	{
-		UINT nCount = 4;
-		UINT mask = 1 | 2 | 4 | 16;
+		UINT nCount = 5;
+		UINT mask = 1 | 2 | 4 | 16 | 32;
 
 		if(pDoc->GetSoundFile().GetModSpecifications().instrumentsMax > 0 || pDoc->GetNumInstruments() > 0)
 		{
 			mask |= 8;
-			//mask |= 32; //rewbs.graph
 			nCount++;
 		}
 		if (nCount != (UINT)m_TabCtrl.GetItemCount())
@@ -437,7 +433,7 @@ void CModControlView::UpdateView(UpdateHint lHint, CObject *pObject)
 			if (mask & 2) m_TabCtrl.InsertItem(count++, _T("Patterns"), IDD_CONTROL_PATTERNS, IMAGE_PATTERNS);
 			if (mask & 4) m_TabCtrl.InsertItem(count++, _T("Samples"), IDD_CONTROL_SAMPLES, IMAGE_SAMPLES);
 			if (mask & 8) m_TabCtrl.InsertItem(count++, _T("Instruments"), IDD_CONTROL_INSTRUMENTS, IMAGE_INSTRUMENTS);
-			//if (mask & 32) m_TabCtrl.InsertItem(count++, _T("Graph"), IDD_CONTROL_GRAPH, IMAGE_GRAPH); //rewbs.graph
+			if (mask & 32) m_TabCtrl.InsertItem(count++, _T("Plugins"), IDD_CONTROL_PLUGINS, IMAGE_GENERAL);
 			if (mask & 16) m_TabCtrl.InsertItem(count++, _T("Comments"), IDD_CONTROL_COMMENTS, IMAGE_COMMENTS);
 		}
 	}
@@ -526,6 +522,15 @@ LRESULT CModControlView::OnGetToolTipText(WPARAM uId, LPARAM pszText)
 		if (pActiveDlg) return (LRESULT)pActiveDlg->GetToolTipText(static_cast<UINT>(uId), (LPTSTR)pszText);
 	}
 	return 0;
+}
+
+
+void CModControlView::PostMessageToAllControlDlgs(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	for(int i = 0; i < MAX_PAGES; i++)
+	{
+		if(m_Pages[i] != nullptr) m_Pages[i]->PostMessage(uMsg, wParam, lParam);
+	}
 }
 
 

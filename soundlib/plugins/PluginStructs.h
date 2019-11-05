@@ -50,7 +50,7 @@ struct SNDMIXPLUGININFO
 	uint8le mixMode;
 	uint8le gain;					// Divide by 10 to get real gain
 	uint8le reserved;
-	uint32le dwOutputRouting;		// 0 = send to master 0x80 + x = send to plugin x
+	uint32le dwOutputRouting;		// Legacy routing info... 0 = send to master 0x80 + x = send to plugin x
 	uint32le dwReserved[4];			// Reserved for routing info
 	mpt::charbuf<32, mpt::String::nullTerminated> szName;         // User-chosen plugin display name - this is locale ANSI!
 	mpt::charbuf<64, mpt::String::nullTerminated> szLibraryName;  // original DLL name - this is UTF-8!
@@ -64,12 +64,22 @@ MPT_BINARY_STRUCT(SNDMIXPLUGININFO, 128)	// this is directly written to files, s
 
 struct SNDMIXPLUGIN
 {
+	struct RoutingChannel
+	{
+		using channel_t = uint8_t;
+		PLUGINDEX plugin;
+		channel_t outChannel;
+		channel_t inChannel;
+	};
+
 	IMixPlugin *pMixPlugin = nullptr;
 	std::vector<std::byte> pluginData;
 	SNDMIXPLUGININFO Info = {};
 	float fDryRatio = 0;
 	int32 defaultProgram = 0;
 	int32 editorX = 0, editorY = 0;
+	int32 graphX = int32_min, graphY = int32_min;  // Position in modular graph
+	std::vector<RoutingChannel> outputs;
 
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
 	const char * GetNameLocale() const

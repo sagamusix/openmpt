@@ -56,7 +56,8 @@ protected:
 class CEditCommand: public CDialog
 {
 protected:
-	CComboBox cbnNote, cbnInstr, cbnVolCmd, cbnCommand, cbnPlugParam;
+	CComboBox cbnNote, cbnVolCmd, cbnCommand, cbnPlugParam;
+	PluginComboBox cbnInstr;
 	CSliderCtrl sldVolParam, sldParam;
 	CSoundFile &sndFile;
 	const CModSpecifications *oldSpecs = nullptr;

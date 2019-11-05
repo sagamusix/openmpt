@@ -1414,7 +1414,7 @@ void CCtrlInstruments::UpdateView(UpdateHint hint, CObject *pObj)
 			}
 			if (pIns->nMixPlug <= MAX_MIXPLUGINS)
 			{
-				m_CbnMixPlug.SetCurSel(pIns->nMixPlug);
+				m_CbnMixPlug.SetSelection(PluginChannel(pIns->nMixPlug, pIns->pluginChannel));
 			} else
 			{
 				m_CbnMixPlug.SetCurSel(0);
@@ -2431,24 +2431,25 @@ void CCtrlInstruments::OnResamplingChanged()
 void CCtrlInstruments::OnMixPlugChanged()
 {
 	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
-	PLUGINDEX nPlug = static_cast<PLUGINDEX>(m_CbnMixPlug.GetItemData(m_CbnMixPlug.GetCurSel()));
+	const PluginChannel p = m_CbnMixPlug.GetSelection();
 
 	bool wasOpenedWithMouse = m_openendPluginListWithMouse;
 	m_openendPluginListWithMouse = false;
 
 	if (pIns)
 	{
-		BOOL enableVol = (nPlug < 1 || m_sndFile.m_playBehaviour[kMIDICCBugEmulation]) ? FALSE : TRUE;
+		BOOL enableVol = (p.plugin < 1 || m_sndFile.m_playBehaviour[kMIDICCBugEmulation]) ? FALSE : TRUE;
 		velocityStyle.EnableWindow(enableVol);
 		m_CbnPluginVolumeHandling.EnableWindow(enableVol);
 
-		if(nPlug >= 0 && nPlug <= MAX_MIXPLUGINS)
+		if(p.plugin >= 0 && p.plugin <= MAX_MIXPLUGINS)
 		{
 			bool active = !IsLocked();
-			if (active && pIns->nMixPlug != nPlug)
+			if (active && (pIns->nMixPlug != p.plugin || pIns->pluginChannel != p.channel))
 			{
 				PrepareUndo("Set Plugin");
-				pIns->nMixPlug = nPlug;
+				pIns->nMixPlug = p.plugin;
+				pIns->pluginChannel = p.channel;
 				SetModified(InstrumentHint().Info(), false);
 			}
 
@@ -2464,7 +2465,7 @@ void CCtrlInstruments::OnMixPlugChanged()
 				if(!plugin.IsValidPlugin() && active && wasOpenedWithMouse)
 				{
 					// No plugin in this slot yet: Ask user to add one.
-					CSelectPluginDlg dlg(&m_modDoc, nPlug - 1, this);
+					CSelectPluginDlg dlg(&m_modDoc, p.plugin - 1, this);
 					if (dlg.DoModal() == IDOK)
 					{
 						if(m_sndFile.GetModSpecifications().supportsPlugins)
@@ -2473,7 +2474,7 @@ void CCtrlInstruments::OnMixPlugChanged()
 						}
 						UpdatePluginList();
 
-						m_modDoc.UpdateAllViews(nullptr, PluginHint(nPlug).Info().Names());
+						m_modDoc.UpdateAllViews(nullptr, PluginHint(pIns->nMixPlug).Info().Names());
 					}
 				}
 
@@ -2837,7 +2838,7 @@ void CCtrlInstruments::TogglePluginEditor()
 {
 	if(m_nInstrument)
 	{
-		m_modDoc.TogglePluginEditor(static_cast<PLUGINDEX>(m_CbnMixPlug.GetItemData(m_CbnMixPlug.GetCurSel()) - 1), CMainFrame::GetInputHandler()->ShiftPressed());
+		m_modDoc.TogglePluginEditor(m_CbnMixPlug.GetSelection().plugin - 1, CMainFrame::GetInputHandler()->ShiftPressed());
 	}
 }
 
@@ -3148,16 +3149,13 @@ void CCtrlInstruments::BuildTuningComboBox()
 
 void CCtrlInstruments::UpdatePluginList()
 {
-	m_CbnMixPlug.SetRedraw(FALSE);
-	m_CbnMixPlug.Clear();
-	m_CbnMixPlug.ResetContent();
 #ifndef NO_PLUGINS
-	m_CbnMixPlug.SetItemData(m_CbnMixPlug.AddString(_T("No plugin")), 0);
-	AddPluginNamesToCombobox(m_CbnMixPlug, m_sndFile.m_MixPlugins, false);
+	PluginChannel plugin;
+	const ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
+	if(pIns != nullptr)
+		plugin = PluginChannel(pIns->nMixPlug, pIns->pluginChannel);
+	m_CbnMixPlug.Update(m_sndFile, plugin, PluginComboBox::ShowNoPlugin | PluginComboBox::ShowEmptySlots | PluginComboBox::ShowInputs);
 #endif // NO_PLUGINS
-	m_CbnMixPlug.SetRedraw(TRUE);
-	ModInstrument *pIns = m_sndFile.Instruments[m_nInstrument];
-	if ((pIns) && (pIns->nMixPlug <= MAX_MIXPLUGINS)) m_CbnMixPlug.SetCurSel(pIns->nMixPlug);
 }
 
 

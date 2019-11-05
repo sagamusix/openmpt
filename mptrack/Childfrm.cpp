@@ -23,6 +23,7 @@
 #include "Ctrl_ins.h"
 #include "View_ins.h"
 #include "view_com.h"
+#include "View_plugins.h"
 #include "Childfrm.h"
 #include "ChannelManagerDlg.h"
 
@@ -288,6 +289,8 @@ void CChildFrame::SavePosition(BOOL bForce)
 					TrackerSettings::Instance().glInstrumentWindowHeight = l;
 				else if (strcmp(CViewComments::classCViewComments.m_lpszClassName, m_szCurrentViewClassName) == 0)
 					TrackerSettings::Instance().glCommentsWindowHeight = l;
+				else if (strcmp(CViewPlugins::classCViewPlugins.m_lpszClassName, m_szCurrentViewClassName) == 0)
+					TrackerSettings::Instance().glPluginWindowHeight = l;
 			}
 		}
 	}
@@ -428,6 +431,10 @@ std::string CChildFrame::SerializeView() const
 	} else if (strcmp(CViewInstrument::classCViewInstrument.m_lpszClassName, m_szCurrentViewClassName) == 0)
 	{
 		mpt::IO::WriteVarInt(f, (uint32)view->SendMessage(WM_MOD_CTRLMSG, CTRLMSG_GETCURRENTINSTRUMENT));	// Instrument number
+	} else if (strcmp(CViewPlugins::classCViewPlugins.m_lpszClassName, m_szCurrentViewClassName) == 0)
+	{
+		// TODO
+		mpt::IO::Write(f, IEEE754binary64LE(m_ViewPlugins.zoom));
 	}
 	return f.str();
 }
@@ -459,6 +466,11 @@ void CChildFrame::DeserializeView(FileReader &file)
 			break;
 		case CModControlView::VIEW_COMMENTS:
 			pageDlg = IDD_CONTROL_COMMENTS;
+			break;
+		case CModControlView::VIEW_PLUGINS:
+			pageDlg = IDD_CONTROL_PLUGINS;
+			m_ViewPlugins.zoom = file.ReadDoubleLE();
+			if(m_ViewPlugins.zoom < 0.1) m_ViewPlugins.zoom = 0.1;
 			break;
 		}
 		GetModControlView()->PostMessage(WM_MOD_ACTIVATEVIEW, pageDlg, (LPARAM)-1);

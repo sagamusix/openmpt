@@ -124,7 +124,7 @@ BOOL CMIDIMappingDialog::OnInitDialog()
 	}
 
 	// Add plugin names
-	AddPluginNamesToCombobox(m_PluginCBox, m_sndFile.m_MixPlugins);
+	m_PluginCBox.Update(m_sndFile, {}, PluginComboBox::ShowEmptySlots);
 
 	// Initialize mapping table
 	static constexpr CListCtrlEx::Header headers[] =

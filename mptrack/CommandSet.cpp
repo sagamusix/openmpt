@@ -519,7 +519,7 @@ static constexpr struct
 	{1766, kcPatternGoto, _T("Go to row/channel/...")},
 	{KeyCommand::Hidden, kcPatternOpenRandomizer, _T("Pattern Randomizer")},  // while there's not randomizer yet, let's just disable it for now
 	{1768, kcPatternInterpolateNote, _T("Interpolate Note")},
-	{KeyCommand::Hidden, kcViewGraph, _T("View Graph")},  // while there's no graph yet, let's just disable it for now
+	{1769, kcViewPlugins, _T("View Plugins")},
 	{1770, kcToggleChanMuteOnPatTransition, _T("(Un)mute channel on pattern transition")},
 	{1771, kcChannelUnmuteAll, _T("Unmute all channels")},
 	{1772, kcShowPatternProperties, _T("Show Pattern Properties")},
@@ -738,6 +738,8 @@ static constexpr struct
 	{2011, kcChannelMoveRight, _T("Move Channels to Right")},
 	{2012, kcSampleConvertPingPongLoop, _T("Convert Ping-Pong Loop to Unidirectional") },
 	{2013, kcSampleConvertPingPongSustain, _T("Convert Ping-Pong Sustain Loop to Unidirectional") },
+	{2014, kcPluginGraphZoomIn, _T("Zoom In")},
+	{2015, kcPluginGraphZoomOut, _T("Zoom Out")},
 };
 
 // Get command descriptions etc.. loaded up.
@@ -1754,6 +1756,7 @@ CString KeyCombination::GetContextText(InputTargetContext ctx)
 		case kCtxViewPatternsFXparam:	return _T("Pattern Context [bottom] - Param Col");
 		case kCtxViewSamples:			return _T("Sample Context [bottom]");
 		case kCtxViewInstruments:		return _T("Instrument Context [bottom]");
+		case kCtxViewPlugins:			return _T("Plugin Graph");
 		case kCtxViewComments:			return _T("Comments Context [bottom]");
 		case kCtxCtrlGeneral:			return _T("General Context [top]");
 		case kCtxCtrlPatterns:			return _T("Pattern Context [top]");

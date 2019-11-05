@@ -317,6 +317,12 @@ void COptionsKeyboard::DefineCommandCategories()
 		commandCategories.push_back(newCat);
 	}
 
+	{
+		CommandCategory newCat(_T("  Plugin Graph"), kCtxViewPlugins);
+		newCat.AddCommands(kcStartPlugins, kcEndPlugins);
+		commandCategories.push_back(newCat);
+	}
+
 	commandCategories.emplace_back(_T("  Comments [Top]"), kCtxCtrlComments);
 
 	{

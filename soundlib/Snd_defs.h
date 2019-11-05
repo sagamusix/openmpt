@@ -413,6 +413,15 @@ enum VibratoType : uint8
 	VIB_RANDOM
 };
 
+struct PluginChannel
+{
+	PLUGINDEX plugin;
+	uint8 channel;
+
+	PluginChannel(PLUGINDEX plugin = 0, uint8 channel = 0) : plugin(plugin), channel(channel) { }
+	bool IsValidPlugin() const { return plugin > 0 && plugin <= MAX_MIXPLUGINS; }
+};
+
 
 // Tracker-specific playback behaviour
 // Note: The index of every flag has to be fixed, so do not remove flags. Always add new flags at the end!

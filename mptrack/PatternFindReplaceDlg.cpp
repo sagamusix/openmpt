@@ -370,7 +370,7 @@ void CFindReplaceTab::UpdateInstrumentList()
 		sel = m_cbnInstr.GetCount() + oldSelection - 1;
 	if(isPCEvent)
 	{
-		AddPluginNamesToCombobox(m_cbnInstr, m_sndFile.m_MixPlugins, false);
+		m_cbnInstr.Update(m_sndFile, {}, PluginComboBox::ShowEmptySlots | PluginComboBox::DoNotResetContent);
 	} else
 	{
 		CString s;
@@ -383,8 +383,8 @@ void CFindReplaceTab::UpdateInstrumentList()
 				s += mpt::ToCString(m_sndFile.GetCharsetInternal(), m_sndFile.m_szNames[n]);
 			m_cbnInstr.SetItemData(m_cbnInstr.AddString(s), n);
 		}
+		m_cbnInstr.SetCurSel(sel);
 	}
-	m_cbnInstr.SetCurSel(sel);
 	m_cbnInstr.SetRedraw(TRUE);
 	m_cbnInstr.Invalidate(FALSE);
 }

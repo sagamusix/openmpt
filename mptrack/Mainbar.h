@@ -12,27 +12,27 @@
 
 #include "BuildSettings.h"
 
+#include "VUMeter.h"
+
 OPENMPT_NAMESPACE_BEGIN
 
 class CStereoVU: public CStatic
 {
 protected:
 	uint8 numChannels;
+	VUMeterUI meterUI[4];
 	uint32 vuMeter[4];
 	DWORD lastVuUpdateTime;
-	int lastV[4];
-	bool lastClip[4];
 	bool horizontal;
 	bool allowRightToLeft;
 
 public:
-	CStereoVU() { numChannels = 2; MemsetZero(vuMeter); lastVuUpdateTime = timeGetTime(); horizontal = true; MemsetZero(lastV); MemsetZero(lastClip); allowRightToLeft = false; }
+	CStereoVU() { numChannels = 2; MemsetZero(vuMeter); lastVuUpdateTime = timeGetTime(); horizontal = true; allowRightToLeft = false; }
 	void SetVuMeter(uint8 validChannels, const uint32 channels[4], bool force=false);
 	void SetOrientation(bool h) { horizontal = h; }
 
 protected:
 	void DrawVuMeters(CDC &dc, bool redraw=false);
-	void DrawVuMeter(CDC &dc, const CRect &rect, int index, bool redraw=false);
 
 protected:
 	afx_msg void OnPaint();

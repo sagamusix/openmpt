@@ -647,9 +647,9 @@ class StereoVuMeterSourceWrapper
 {
 private:
 	SoundDevice::BufferIO &bufferio;
-	VUMeter &vumeter;
+	VUMeterMix &vumeter;
 public:
-	inline StereoVuMeterSourceWrapper(SoundDevice::BufferIO &bufferIO, VUMeter &vumeter)
+	inline StereoVuMeterSourceWrapper(SoundDevice::BufferIO &bufferIO, VUMeterMix &vumeter)
 		: bufferio(bufferIO)
 		, vumeter(vumeter)
 	{
@@ -675,9 +675,9 @@ class StereoVuMeterTargetWrapper
 {
 private:
 	SoundDevice::BufferIO &bufferio;
-	VUMeter &vumeter;
+	VUMeterMix &vumeter;
 public:
-	inline StereoVuMeterTargetWrapper(SoundDevice::BufferIO &bufferIO, VUMeter &vumeter)
+	inline StereoVuMeterTargetWrapper(SoundDevice::BufferIO &bufferIO, VUMeterMix &vumeter)
 		: bufferio(bufferIO)
 		, vumeter(vumeter)
 	{
@@ -833,120 +833,11 @@ void CMainFrame::audioCloseDevice()
 }
 
 
-void VUMeter::Process(Channel &c, MixSampleInt sample)
+static void SetVUMeter(std::array<uint32, 4> &masterVU, const VUMeterMix &vumeter)
 {
-	c.peak = std::max(c.peak, std::abs(sample));
-	if(sample < MixSampleIntTraits::mix_clip_min() || MixSampleIntTraits::mix_clip_max() < sample)
+	for(std::size_t channel = 0; channel < VUMeterMix::maxChannels; ++channel)
 	{
-		c.clipped = true;
-	}
-}
-
-
-void VUMeter::Process(Channel &c, MixSampleFloat sample)
-{
-	Process(c, SC::ConvertToFixedPoint<MixSampleInt, MixSampleFloat, MixSampleIntTraits::filter_fractional_bits()>()(sample));
-}
-
-
-void VUMeter::Process(const MixSampleInt *mixbuffer, std::size_t numChannels, std::size_t numFrames)
-{
-	for(std::size_t frame = 0; frame < numFrames; ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(numChannels, maxChannels); ++channel)
-		{
-			Process(channels[channel], mixbuffer[frame*numChannels + channel]);
-		}
-	}
-	for(std::size_t channel = std::min(numChannels, maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(const MixSampleFloat *mixbuffer, std::size_t numChannels, std::size_t numFrames)
-{
-	for(std::size_t frame = 0; frame < numFrames; ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(numChannels, maxChannels); ++channel)
-		{
-			Process(channels[channel], mixbuffer[frame*numChannels + channel]);
-		}
-	}
-	for(std::size_t channel = std::min(numChannels, maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(const MixSampleInt *const *mixbuffers, std::size_t numChannels, std::size_t numFrames)
-{
-	for(std::size_t channel = 0; channel < std::min(numChannels, maxChannels); ++channel)
-	{
-		for(std::size_t frame = 0; frame < numFrames; ++frame)
-		{
-			Process(channels[channel], mixbuffers[channel][frame]);
-		}
-	}
-	for(std::size_t channel = std::min(numChannels, maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(const MixSampleFloat *const *mixbuffers, std::size_t numChannels, std::size_t numFrames)
-{
-	for(std::size_t channel = 0; channel < std::min(numChannels, maxChannels); ++channel)
-	{
-		for(std::size_t frame = 0; frame < numFrames; ++frame)
-		{
-			Process(channels[channel], mixbuffers[channel][frame]);
-		}
-	}
-	for(std::size_t channel = std::min(numChannels, maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-const float VUMeter::dynamicRange = 48.0f; // corresponds to the current implementation of the UI widget displaying the result
-
-
-void VUMeter::SetDecaySpeedDecibelPerSecond(float decibelPerSecond)
-{
-	float linearDecayRate = decibelPerSecond / dynamicRange;
-	decayParam = mpt::saturate_round<int32>(linearDecayRate * MixSampleIntTraits::mix_clip_max());
-}
-
-
-void VUMeter::Decay(int32 secondsNum, int32 secondsDen)
-{
-	int32 decay = Util::muldivr(decayParam, secondsNum, secondsDen);
-	for(std::size_t channel = 0; channel < maxChannels; ++channel)
-	{
-		channels[channel].peak = std::max(channels[channel].peak - decay, 0);
-	}
-}
-
-
-void VUMeter::ResetClipped()
-{
-	for(std::size_t channel = 0; channel < maxChannels; ++channel)
-	{
-		channels[channel].clipped = false;
-	}
-}
-
-
-static void SetVUMeter(std::array<uint32, 4> &masterVU, const VUMeter &vumeter)
-{
-	for(std::size_t channel = 0; channel < VUMeter::maxChannels; ++channel)
-	{
-		masterVU[channel] = Clamp(vumeter[channel].peak >> 11, 0, 0x10000);
+		masterVU[channel] = vumeter[channel].PeakToUIValue();
 		if(vumeter[channel].clipped)
 		{
 			masterVU[channel] |= Notification::ClipVU;
@@ -1380,8 +1271,8 @@ bool CMainFrame::PlayMod(CModDoc *pModDoc)
 
 	m_wndToolBar.SetCurrentSong(m_pSndFile);
 
-	m_VUMeterInput = VUMeter();
-	m_VUMeterOutput = VUMeter();
+	m_VUMeterInput = VUMeterMix();
+	m_VUMeterOutput = VUMeterMix();
 
 	if(!StartPlayback())
 	{
@@ -2271,7 +2162,7 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 			duplicateMono = true;
 		}
 		uint8 countChan = 0;
-		uint32 vu[VUMeter::maxChannels * 2];
+		uint32 vu[VUMeterMix::maxChannels * 2];
 		MemsetZero(vu);
 		std::copy(pnotify->masterVUin.begin(), pnotify->masterVUin.begin() + pnotify->masterVUinChannels, vu + countChan);
 
@@ -2416,7 +2307,7 @@ LRESULT CMainFrame::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		case kcViewSamples:
 		case kcViewInstruments:
 		case kcViewComments:
-		case kcViewGraph: //rewbs.graph
+		case kcViewPlugins:
 		case kcViewSongProperties:
 		case kcViewTempoSwing:
 		case kcViewMIDImapping:
@@ -3072,20 +2963,69 @@ ULONG TfLanguageProfileNotifySink::Release()
 //Misc helper functions
 /////////////////////////////////////////////
 
-void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, const bool librarynames)
+static constexpr auto PluginShiftBits = (sizeof(PLUGINDEX) * CHAR_BIT);
+static constexpr PLUGINDEX GetPluginIndex(DWORD_PTR x) { return static_cast<PLUGINDEX>(x & ((1 << PluginShiftBits) - 1)); }
+
+int PluginComboBox::Update(const CSoundFile &sndFile, PluginChannel curSelection, FlagSet<Flags> flags, PLUGINDEX updatePlugin)
 {
+	int selectedItem = -1;
+	SetRedraw(FALSE);
+	
+	if(!flags[DoNotResetContent] && updatePlugin == PLUGINDEX_INVALID)
+		ResetContent();
+
+	int insertAt = GetCount();
+	if(flags[ShowNoPlugin] && updatePlugin == PLUGINDEX_INVALID)
+	{
+		SetItemData(AddString(_T("No Plugin")), 0);
+		insertAt++;
+		if(curSelection.plugin == 0)
+		{
+			SetCurSel(selectedItem = 0);
+		}
+	} else if (updatePlugin != PLUGINDEX_INVALID)
+	{
+		int items = GetCount();
+		bool firstItemOfPlugin = true;
+		for(int i = 0; i < items; i++)
+		{
+			auto thisPlugin = GetPluginIndex(GetItemData(i));
+			if(thisPlugin == (updatePlugin + 1))
+			{
+				DeleteString(i);
+				if(firstItemOfPlugin)
+					insertAt = i;
+				firstItemOfPlugin = false;
+				i--;
+				items--;
+			}
+			if(thisPlugin > (updatePlugin + 1))
+			{
+				if(firstItemOfPlugin)
+					insertAt = i;
+				break;
+			}
+		}
+	}
 #ifndef NO_PLUGINS
+	const auto fxFormat = MPT_UFORMAT("FX{}: ");
+	const auto inputFormat = MPT_UFORMAT("    Stereo Input {}");
 	mpt::ustring str;
 	str.reserve(80);
-	for (PLUGINDEX iPlug = 0; iPlug < MAX_MIXPLUGINS; iPlug++)
+	for(PLUGINDEX plug = 1; plug <= MAX_MIXPLUGINS; plug++)
 	{
-		const SNDMIXPLUGIN &plugin = plugarray[iPlug];
-		str.clear();
-		str += MPT_UFORMAT("FX{}: ")(iPlug + 1);
+		if(updatePlugin != PLUGINDEX_INVALID && plug != (updatePlugin + 1))
+			continue;
+		const SNDMIXPLUGIN &plugin = sndFile.m_MixPlugins[plug - 1];
+		if(!plugin.IsValidPlugin() && !flags[ShowEmptySlots] && curSelection.plugin != plug)
+			continue;
+
+		str = fxFormat(plug);
 		const size_t size0 = str.size();
-		str += (librarynames) ? plugin.GetLibraryName() : plugin.GetName();
-		if(str.size() <= size0) str += U_("--");
-		
+		str += flags[ShowLibraryNames] ? plugin.GetLibraryName() : plugin.GetName();
+		if(str.size() <= size0)
+			str += UL_("--");
+
 #ifndef NO_VST
 		auto *vstPlug = dynamic_cast<const CVstPlugin *>(plugin.pMixPlugin);
 		if(vstPlug != nullptr && vstPlug->isBridged)
@@ -3093,11 +3033,58 @@ void AddPluginNamesToCombobox(CComboBox &CBox, const SNDMIXPLUGIN *plugarray, co
 			VSTPluginLib &lib = vstPlug->GetPluginFactory();
 			str += MPT_UFORMAT(" ({} Bridged)")(lib.GetDllArchNameUser());
 		}
-#endif // NO_VST
+#endif  // NO_VST
 
-		CBox.SetItemData(static_cast<int>(::SendMessageW(CBox.m_hWnd, CB_ADDSTRING, 0, (LPARAM)str.c_str())), iPlug + 1);
+		const int firstItem = static_cast<int>(::SendMessageW(m_hWnd, CB_INSERTSTRING, insertAt, (LPARAM)str.c_str()));
+		insertAt = firstItem + 1;
+		SetItemData(firstItem, plug);
+
+		if(flags[ShowInputs] && plugin.pMixPlugin != nullptr && plugin.pMixPlugin->GetNumInputChannels() > 2)
+		{
+			for(int ch = 2; ch < plugin.pMixPlugin->GetNumInputChannels(); ch += 2)
+			{
+				str = inputFormat(1 + ch / 2);
+				SetItemData(static_cast<int>(::SendMessageW(m_hWnd, CB_INSERTSTRING, insertAt, (LPARAM)str.c_str())), plug | (ch << PluginShiftBits));
+				insertAt++;
+			}
+		}
+
+		if(plug == curSelection.plugin)
+		{
+			selectedItem = firstItem + curSelection.channel / 2;
+			SetCurSel(selectedItem);
+		}
 	}
 #endif // NO_PLUGINS
+	SetRedraw(TRUE);
+	return selectedItem;
+}
+
+void PluginComboBox::SetSelection(PluginChannel plugin)
+{
+	const int numItems = GetCount();
+	int i = 0;
+	for(; i < numItems; i++)
+	{
+		if(GetPluginIndex(GetItemData(i)) == plugin.plugin)
+		{
+			break;
+		}
+	}
+	SetCurSel(i + plugin.channel / 2);
+}
+
+
+PluginChannel PluginComboBox::GetSelection() const
+{
+	if(GetCurSel() == -1)
+	{
+		return PluginChannel(PLUGINDEX_INVALID);
+	}
+	const DWORD_PTR itemData = GetItemData(GetCurSel());
+	PLUGINDEX plugin = GetPluginIndex(itemData);
+	uint8 channel = static_cast<uint8>(itemData >> PluginShiftBits);
+	return PluginChannel(plugin, channel);
 }
 
 

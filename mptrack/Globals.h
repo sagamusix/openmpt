@@ -141,6 +141,7 @@ public:
 	void SetMDIParentFrame(HWND hwnd) { m_hWndMDI = hwnd; }
 	void ForceRefresh();
 	CModControlDlg *GetCurrentControlDlg() { return m_Pages[m_nActiveDlg]; }
+	void PostMessageToAllControlDlgs(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 protected:
 	void RecalcLayout();

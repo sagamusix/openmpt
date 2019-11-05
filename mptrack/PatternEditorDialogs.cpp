@@ -464,8 +464,7 @@ void CEditCommand::InitNote()
 	if(m->IsPcNote())
 	{
 		// control plugin param note
-		cbnInstr.SetItemData(cbnInstr.AddString(_T("No Effect")), 0);
-		AddPluginNamesToCombobox(cbnInstr, sndFile.m_MixPlugins, false);
+		cbnInstr.Update(sndFile, m->instr, PluginComboBox::ShowNoPlugin | PluginComboBox::ShowEmptySlots);
 	} else
 	{
 		// instrument / sample
@@ -483,8 +482,8 @@ void CEditCommand::InitNote()
 				s += mpt::ToCString(sndFile.GetCharsetInternal(), sndFile.m_szNames[i]);
 			cbnInstr.SetItemData(cbnInstr.AddString(s), i);
 		}
+		cbnInstr.SetCurSel(m->instr);
 	}
-	cbnInstr.SetCurSel(m->instr);
 	cbnInstr.SetRedraw(TRUE);
 }
 

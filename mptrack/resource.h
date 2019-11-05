@@ -91,7 +91,8 @@
 #define IDD_LEGACY_PLAYBACK             502
 #define IDD_FIND_RANGE                  503
 #define IDD_MIDI_IO_PLUGIN              504
-#define IDD_CONTROL_GRAPH               507
+#define IDD_CONTROL_PLUGINS             507
+#define IDD_SCALE_ENV_POINTS            510
 #define IDD_SCALE_ENV_POINTS            510
 #define IDD_TUNING                      511
 #define IDD_UPDATE                      512
@@ -1148,7 +1149,7 @@
 #define ID_INFO_OUPUTS                  36016
 #define ID_EDIT_SAMPLETRIMMER           36017
 #define ID_EDIT_GOTO                    36018
-#define ID_VIEW_GRAPH                   36019
+#define ID_VIEW_PLUGINS                 36019
 #define ID_PATTERN_TRANSITIONMUTE       36020
 #define ID_PATTERN_TRANSITIONSOLO       36021
 #define ID_PATTERN_TRANSITION_UNMUTEALL 36022

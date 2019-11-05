@@ -23,9 +23,7 @@ class CModControlDlg;
 
 struct GENERALVIEWSTATE
 {
-	PlugParamIndex nParam = 0;
 	CHANNELINDEX nTab = 0;
-	PLUGINDEX nPlugin = 0;
 	bool initialized = false;
 };
 
@@ -40,6 +38,7 @@ struct PATTERNVIEWSTATE
 	ORDERINDEX initialOrder = ORDERINDEX_INVALID;
 	bool initialized = false;
 };
+
 
 struct SAMPLEVIEWSTATE
 {
@@ -58,6 +57,14 @@ struct INSTRUMENTVIEWSTATE
 	bool bGrid = false;
 	bool initialized = false;
 };
+
+
+struct PLUGINVIEWSTATE
+{
+	double zoom = 1.0;
+	CPoint position;
+};
+
 
 struct COMMENTVIEWSTATE
 {
@@ -86,6 +93,7 @@ protected:
 	PATTERNVIEWSTATE m_ViewPatterns;
 	SAMPLEVIEWSTATE m_ViewSamples;
 	INSTRUMENTVIEWSTATE m_ViewInstruments;
+	PLUGINVIEWSTATE m_ViewPlugins;
 	COMMENTVIEWSTATE m_ViewComments;
 	CHAR m_szCurrentViewClassName[256];
 	bool m_bMaxWhenClosed;
@@ -107,6 +115,7 @@ public:
 	SAMPLEVIEWSTATE &GetSampleViewState() { return m_ViewSamples; }
 	INSTRUMENTVIEWSTATE &GetInstrumentViewState() { return m_ViewInstruments; }
 	COMMENTVIEWSTATE &GetCommentViewState() { return m_ViewComments; }
+	PLUGINVIEWSTATE &GetPluginViewState() { return m_ViewPlugins; }
 
 	void SetSplitterHeight(int x);
 	int GetSplitterHeight();

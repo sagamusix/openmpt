@@ -35,7 +35,7 @@ protected:
 
 	// Dialog Data
 	CComboBox m_ControllerCBox;
-	CComboBox m_PluginCBox;
+	PluginComboBox m_PluginCBox;
 	CComboBox m_PlugParamCBox;
 	CComboBox m_ChannelCBox;
 	CComboBox m_EventCBox;

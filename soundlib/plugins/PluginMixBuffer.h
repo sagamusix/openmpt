@@ -11,6 +11,7 @@
 #pragma once
 
 #include "BuildSettings.h"
+#include "Mixer.h"
 
 #include <algorithm>
 #include <array>
@@ -38,6 +39,9 @@ private:
 
 protected:
 
+	std::vector<mixsample_t> sendBuffer;              // Interleaved stereo send buffers
+	std::vector<mixsample_t> volDecay;                // End-of sample volume decay memory
+	std::vector<bool> hasSampleInput;                 // Stereo pair has sample input
 #if defined(MPT_ENABLE_ALIGNED_ALLOC)
 	std::vector<mpt::aligned_array<buffer_t, bufferSize, alignment>> inputs;
 	std::vector<mpt::aligned_array<buffer_t, bufferSize, alignment>> outputs;
@@ -65,6 +69,9 @@ public:
 			outputs.resize(numOutputs);
 			inputsarray.resize(numInputs);
 			outputsarray.resize(numOutputs);
+			sendBuffer.assign(bufferSize * (numInputs + (numInputs % 2u)), mixsample_t(0));
+			ResetVolDecay();
+			hasSampleInput.assign((numInputs + 1) / 2, false);
 		} catch(mpt::out_of_memory e)
 		{
 			mpt::delete_out_of_memory(e);
@@ -76,6 +83,8 @@ public:
 			inputsarray.shrink_to_fit();
 			outputsarray.clear();
 			outputsarray.shrink_to_fit();
+			sendBuffer.clear();
+			hasSampleInput.clear();
 			return false;
 		}
 
@@ -128,6 +137,19 @@ public:
 	buffer_t **GetOutputBufferArray() { return outputs.empty() ? nullptr : outputsarray.data(); }
 
 	bool Ok() const { return (inputs.size() + outputs.size()) > 0; }
+
+
+	// Get stereo send buffer
+	mixsample_t *GetSendBuffer(size_t index) { return &sendBuffer[MIXBUFFERSIZE * 2 * index]; }
+
+	// Get volume decay state for channel
+	mixsample_t *GetVolDecay(size_t index) { return &volDecay[index]; }
+
+	void ResetVolDecay() { volDecay.assign(inputs.size(), mixsample_t(0)); }
+
+	void SetSampleInput(size_t index) { hasSampleInput[index] = true; }
+	void ResetSampleInput(size_t index) { hasSampleInput[index] = false; }
+	bool HasSampleInput(size_t index) { return hasSampleInput[index]; }
 
 };
 
