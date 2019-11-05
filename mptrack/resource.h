@@ -90,7 +90,7 @@
 #define IDD_LEGACY_PLAYBACK             502
 #define IDD_FIND_RANGE                  503
 #define IDD_MIDI_IO_PLUGIN              504
-#define IDD_CONTROL_GRAPH               507
+#define IDD_CONTROL_PLUGINS             507
 #define IDD_QUICKSTART                  508
 #define IDD_SCALE_ENV_POINTS            510
 #define IDD_TUNING                      511
@@ -630,13 +630,9 @@
 #define IDC_EDIT_BASEOCTAVE             2070
 #define IDC_SPIN_BASEOCTAVE             2071
 #define IDC_LIST1                       2072
-#define IDC_LIST3                       2073
 #define IDC_TOOLBAR1                    2074
-#define IDC_LIST4                       2074
 #define IDC_TOOLBAR2                    2075
-#define IDC_LIST5                       2075
 #define IDC_TOOLBAR_DETAILS             2076
-#define IDC_LIST6                       2076
 #define IDC_KEYBOARD1                   2078
 #define IDC_SPLASH                      2079
 #define IDC_SAVE_ONE                    2080
@@ -1163,7 +1159,7 @@
 #define ID_INFO_OUPUTS                  36016
 #define ID_EDIT_SAMPLETRIMMER           36017
 #define ID_EDIT_GOTO                    36018
-#define ID_VIEW_GRAPH                   36019
+#define ID_VIEW_PLUGINS                 36019
 #define ID_PATTERN_TRANSITIONMUTE       36020
 #define ID_PATTERN_TRANSITIONSOLO       36021
 #define ID_PATTERN_TRANSITION_UNMUTEALL 36022

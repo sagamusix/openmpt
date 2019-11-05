@@ -12,8 +12,8 @@
 #pragma once
 
 #include "openmpt/all/BuildSettings.hpp"
-#include "AccessibleControls.h"
 #include "ColorPickerButton.h"
+#include "PluginComboBox.h"
 #include "PluginComboBox.h"
 #include "UpdateHints.h"
 
@@ -32,27 +32,11 @@ protected:
 	CRect m_rcClient;
 	CTabCtrl m_TabCtrl;
 	PluginComboBox m_CbnEffects[CHANNELS_IN_TAB];
-	PluginComboBox m_CbnPlugin;
-	CComboBox m_CbnParam, m_CbnOutput;
-
-	CSliderCtrl m_sbVolume[CHANNELS_IN_TAB], m_sbPan[CHANNELS_IN_TAB], m_sbValue, m_sbDryRatio;
-	ColorPickerButton m_channelColor[CHANNELS_IN_TAB];
-
-	CComboBox m_CbnPreset;
-	CSliderCtrl m_sbWetDry;
-	CSpinButtonCtrl m_spinVolume[CHANNELS_IN_TAB], m_spinPan[CHANNELS_IN_TAB];
-	CButton m_BtnSelect, m_BtnEdit;
+	CSliderCtrl m_sbVolume[CHANNELS_IN_TAB], m_sbPan[CHANNELS_IN_TAB];
+	ColorPickerButton m_channelColor[CHANNELS_IN_TAB];	CSpinButtonCtrl m_spinVolume[CHANNELS_IN_TAB], m_spinPan[CHANNELS_IN_TAB];
 	int m_nLockCount = 1;
-	PlugParamIndex m_nCurrentParam = 0;
 	CHANNELINDEX m_nActiveTab = 0;
 	CHANNELINDEX m_lastEdit = CHANNELINDEX_INVALID;
-	PLUGINDEX m_nCurrentPlugin = 0;
-
-	CComboBox m_CbnSpecialMixProcessing;
-	CSpinButtonCtrl m_SpinMixGain;
-	AccessibleButton m_prevPluginButton, m_nextPluginButton;
-
-	enum {AdjustPattern = true, NoPatternAdjust = false};
 
 protected:
 	CViewGlobals();
@@ -65,9 +49,6 @@ public:
 	void UnlockControls();
 	bool IsLocked() const noexcept { return (m_nLockCount > 0); }
 	int GetDlgItemIntEx(UINT nID);
-	void PopulateChannelPlugins(UpdateHint hint, const CObject *pObj = nullptr);
-	void BuildEmptySlotList(std::vector<PLUGINDEX> &emptySlots);
-	bool MovePlug(PLUGINDEX src, PLUGINDEX dest, bool bAdjustPat = AdjustPattern);
 
 public:
 	//{{AFX_VIRTUAL(CViewGlobals)
@@ -91,13 +72,6 @@ private:
 	void OnEditPan(const CHANNELINDEX chnMod4, const UINT itemID);
 	void OnEditName(const CHANNELINDEX chnMod4, const UINT itemID);
 	void OnFxChanged(const CHANNELINDEX chnMod4);
-
-	IMixPlugin *GetCurrentPlugin() const;
-
-	void FillPluginProgramBox(int32 firstProg, int32 lastProg);
-	void SetPluginModified();
-
-	void UpdateDryWetDisplay();
 
 protected:
 	//{{AFX_MSG(CViewGlobals)
@@ -134,38 +108,10 @@ protected:
 	afx_msg void OnFx2Changed();
 	afx_msg void OnFx3Changed();
 	afx_msg void OnFx4Changed();
-	afx_msg void OnPluginChanged();
-	afx_msg void OnPluginNameChanged();
-	afx_msg void OnFillParamCombo();
-	afx_msg void OnParamChanged();
-	afx_msg void OnFocusParam();
-	afx_msg void OnFillProgramCombo();
-	afx_msg void OnProgramChanged();
-	afx_msg void OnLoadParam();
-	afx_msg void OnSaveParam();
-	afx_msg void OnSelectPlugin();
-	afx_msg void OnRemovePlugin();
-	afx_msg void OnSetParameter();
-	afx_msg void OnEditPlugin();
-	afx_msg void OnMixModeChanged();
-	afx_msg void OnBypassChanged();
-	afx_msg void OnDryMixChanged();
-	afx_msg void OnMovePlugToSlot();
-	afx_msg void OnInsertSlot();
-	afx_msg void OnClonePlug();
-	LRESULT OnParamAutomated(WPARAM plugin, LPARAM param);
 	LRESULT OnDryWetRatioChangedFromPlayer(WPARAM plugin, LPARAM);
 
-	afx_msg void OnWetDryExpandChanged();
-	afx_msg void OnAutoSuspendChanged();
-	afx_msg void OnSpecialMixProcessingChanged();
-
-	afx_msg void OnOutputRoutingChanged();
-	afx_msg void OnPrevPlugin();
-	afx_msg void OnNextPlugin();
 	afx_msg void OnDestroy();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnTabSelchange(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnMDIDeactivate(WPARAM, LPARAM);

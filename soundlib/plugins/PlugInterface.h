@@ -41,10 +41,8 @@ struct SNDMIXPLUGINSTATE
 		psfSilenceBypass = 0x04, // Bypass because of silence detection
 	};
 
-	mixsample_t *pMixBuffer = nullptr; // Stereo effect send buffer
-	uint32 dwFlags = 0;                // PluginStateFlags
-	uint32 inputSilenceCount = 0;      // How much silence has been processed? (for plugin auto-turnoff)
-	mixsample_t nVolDecayL = 0, nVolDecayR = 0; // End of sample click removal
+	uint32 dwFlags = 0;           // PluginStateFlags
+	uint32 inputSilenceCount = 0; // How much silence has been processed? (for plugin auto-turnoff)
 
 	void ResetSilence()
 	{
@@ -74,10 +72,12 @@ public:
 	PluginMixBuffer<float, MIXBUFFERSIZE> m_mixBuffer;	// Float buffers (input and output) for plugins
 
 protected:
-	mixsample_t m_MixBuffer[MIXBUFFERSIZE * 2 + 2];		// Stereo interleaved input (sample mixer renders here)
-
 	float m_fGain = 1.0f;
 	PLUGINDEX m_nSlot = 0;
+#ifdef MODPLUG_TRACKER
+	std::vector<float> m_outputVUMeters;
+	uint32 m_vuMeterFrames = 0;
+#endif // MODPLUG_TRACKER
 
 	bool m_isSongPlaying = false;
 	bool m_isResumed = false;
@@ -226,6 +226,8 @@ public:
 	void AutomateParameter(PlugParamIndex param);
 	// Plugin state changed, set document as modified.
 	void SetModified();
+
+	uint32 GetOutputVUMeters(std::vector<float> &meters);
 #endif
 
 	virtual int GetNumInputChannels() const = 0;

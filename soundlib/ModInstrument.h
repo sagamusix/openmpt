@@ -97,12 +97,13 @@ struct ModInstrument
 	int8 nPPS = 0;                         // Pitch/Pan separation (i.e. how wide the panning spreads, -32...32)
 	uint8 nPPC = NOTE_MIDDLEC - NOTE_MIN;  // Pitch/Pan centre (zero-based)
 
-	uint16 wMidiBank = 0;    // MIDI Bank (1...16384). 0 = Don't send.
-	uint8 nMidiProgram = 0;  // MIDI Program (1...128). 0 = Don't send.
-	uint8 nMidiChannel = 0;  // MIDI Channel (1...16). 0 = Don't send. 17 = Mapped (Send to tracker channel modulo 16).
-	uint8 nMidiDrumKey = 0;  // Drum set note mapping (currently only used by the .MID loader)
-	int8 midiPWD = 2;        // MIDI Pitch Wheel Depth and CMD_FINETUNE depth in semitones
-	PLUGINDEX nMixPlug = 0;  // Plugin assigned to this instrument (0 = no plugin, 1 = first plugin)
+	uint16 wMidiBank = 0;     // MIDI Bank (1...16384). 0 = Don't send.
+	uint8 nMidiProgram = 0;   // MIDI Program (1...128). 0 = Don't send.
+	uint8 nMidiChannel = 0;   // MIDI Channel (1...16). 0 = Don't send. 17 = Mapped (Send to tracker channel modulo 16).
+	uint8 nMidiDrumKey = 0;   // Drum set note mapping (currently only used by the .MID loader)
+	int8 midiPWD = 2;         // MIDI Pitch Wheel Depth and CMD_FINETUNE depth in semitones
+	PLUGINDEX nMixPlug = 0;   // Plugin assigned to this instrument (0 = no plugin, 1 = first plugin)
+	uint8 pluginChannel = 0;  // First channel of plugin to which audio should be sent
 
 	PlugVelocityHandling pluginVelocityHandling = PLUGIN_VELOCITYHANDLING_CHANNEL;  // How to deal with plugin velocity
 	PlugVolumeHandling pluginVolumeHandling = PLUGIN_VOLUMEHANDLING_IGNORE;         // How to deal with plugin volume

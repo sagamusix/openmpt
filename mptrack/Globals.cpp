@@ -17,6 +17,7 @@
 #include "Ctrl_ins.h"
 #include "Ctrl_pat.h"
 #include "Ctrl_smp.h"
+#include "Ctrl_plugins.h"
 #include "HighDPISupport.h"
 #include "ImageLists.h"
 #include "InputHandler.h"
@@ -312,9 +313,6 @@ bool CModControlView::SetActivePage(Page page, LPARAM lParam)
 
 	switch(nID)
 	{
-		case IDD_CONTROL_COMMENTS:
-			page = Page::Comments;
-			break;
 		case IDD_CONTROL_GLOBALS:
 			page = Page::Globals;
 			break;
@@ -326,6 +324,12 @@ bool CModControlView::SetActivePage(Page page, LPARAM lParam)
 			break;
 		case IDD_CONTROL_INSTRUMENTS:
 			page = Page::Instruments;
+			break;
+		case IDD_CONTROL_COMMENTS:
+			page = Page::Comments;
+			break;
+		case IDD_CONTROL_PLUGINS:
+			page = Page::Plugins;
 			break;
 		default:
 			return false;
@@ -360,9 +364,6 @@ bool CModControlView::SetActivePage(Page page, LPARAM lParam)
 		MPT_ASSERT_ALWAYS(GetDocument() != nullptr);
 		switch(nID)
 		{
-		case IDD_CONTROL_COMMENTS:
-			pDlg = new CCtrlComments(*this, *GetDocument());
-			break;
 		case IDD_CONTROL_GLOBALS:
 			pDlg = new CCtrlGeneral(*this, *GetDocument());
 			break;
@@ -374,6 +375,12 @@ bool CModControlView::SetActivePage(Page page, LPARAM lParam)
 			break;
 		case IDD_CONTROL_INSTRUMENTS:
 			pDlg = new CCtrlInstruments(*this, *GetDocument());
+			break;
+		case IDD_CONTROL_COMMENTS:
+			pDlg = new CCtrlComments(*this, *GetDocument());
+			break;
+		case IDD_CONTROL_PLUGINS:
+			pDlg = new CCtrlPlugins(*this, *GetDocument());
 			break;
 		default:
 			return false;
@@ -425,13 +432,12 @@ void CModControlView::UpdateView(UpdateHint lHint, CObject *pObject)
 	// Module type changed: update tabs
 	if (lHint.GetType()[HINT_MODTYPE])
 	{
-		UINT nCount = 4;
-		UINT mask = 1 | 2 | 4 | 16;
+		UINT nCount = 5;
+		UINT mask = 1 | 2 | 4 | 16 | 32;
 
 		if(pDoc->GetSoundFile().GetModSpecifications().instrumentsMax > 0 || pDoc->GetNumInstruments() > 0)
 		{
 			mask |= 8;
-			//mask |= 32; //rewbs.graph
 			nCount++;
 		}
 		if (nCount != (UINT)m_TabCtrl.GetItemCount())
@@ -445,7 +451,7 @@ void CModControlView::UpdateView(UpdateHint lHint, CObject *pObject)
 			if (mask & 2) m_TabCtrl.InsertItem(count++, _T("Patterns"), IDD_CONTROL_PATTERNS, IMAGE_PATTERNS);
 			if (mask & 4) m_TabCtrl.InsertItem(count++, _T("Samples"), IDD_CONTROL_SAMPLES, IMAGE_SAMPLES);
 			if (mask & 8) m_TabCtrl.InsertItem(count++, _T("Instruments"), IDD_CONTROL_INSTRUMENTS, IMAGE_INSTRUMENTS);
-			//if (mask & 32) m_TabCtrl.InsertItem(count++, _T("Graph"), IDD_CONTROL_GRAPH, IMAGE_GRAPH); //rewbs.graph
+			if (mask & 32) m_TabCtrl.InsertItem(count++, _T("Plugins"), IDD_CONTROL_PLUGINS, IMAGE_GENERAL);
 			if (mask & 16) m_TabCtrl.InsertItem(count++, _T("Comments"), IDD_CONTROL_COMMENTS, IMAGE_COMMENTS);
 		}
 	}
@@ -547,6 +553,16 @@ void CModControlView::SampleChanged(SAMPLEINDEX smp)
 	} else
 	{
 		InstrumentChanged(smp);
+	}
+}
+
+
+void CModControlView::PostMessageToAllControlDlgs(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	for(CWnd *dlg : m_Pages)
+	{
+		if(dlg)
+			dlg->PostMessage(uMsg, wParam, lParam);
 	}
 }
 

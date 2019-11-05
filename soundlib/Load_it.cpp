@@ -310,23 +310,7 @@ size_t CSoundFile::ITInstrToMPT(FileReader &file, ModInstrument &ins, uint16 trk
 		size_t instSize = instrumentHeader.ConvertToMPT(ins, GetType());
 		file.Seek(offset + instSize);
 
-		// Try reading modular instrument data.
-		// Yes, it is completely idiotic that we have both this and LoadExtendedInstrumentProperties.
-		// This is only required for files saved with *really* old OpenMPT versions (pre-1.17-RC1).
-		// This chunk was also written in later versions (probably to maintain compatibility with
-		// those ancient versions), but this also means that redundant information is stored in the file.
-		// Starting from OpenMPT 1.25.02.07, this chunk is no longer written.
-		if(file.ReadMagic("MSNI"))
-		{
-			//...the next piece of data must be the total size of the modular data
-			FileReader modularData = file.ReadChunk(file.ReadUint32LE());
-			instSize += 8 + modularData.GetLength();
-			if(modularData.ReadMagic("GULP"))
-			{
-				ins.nMixPlug = modularData.ReadUint8();
-				if(ins.nMixPlug > MAX_MIXPLUGINS) ins.nMixPlug = 0;
-			}
-		}
+		instSize += LoadModularInstrumentData(file, ins);
 
 		return instSize;
 	}
@@ -1731,6 +1715,11 @@ bool CSoundFile::SaveIT(std::ostream &f, const mpt::PathString &filename, bool c
 		inspos[nins - 1] = static_cast<uint32>(dwPos);
 		dwPos += instSize;
 		mpt::IO::WritePartial(f, iti, instSize);
+
+		if(Instruments[nins] && !compatibilityExport)
+		{
+			dwPos += SaveModularInstrumentData(f, *Instruments[nins]);
+		}
 	}
 
 	// Writing dummy sample headers (until we know the correct sample data offset)
@@ -2117,10 +2106,26 @@ uint32 CSoundFile::SaveMixPlugins(std::ostream *file, bool updatePlugData)
 				plugin.pMixPlugin->SaveAllParameters();
 			}
 
-			const uint32 extraDataSize =
+			uint32 extraDataSize =
 				4 + sizeof(IEEE754binary32LE) + // 4 for ID and size of dryRatio
 				4 + sizeof(int32);              // Default Program
 			// For each extra entity, add 4 for ID, plus 4 for size of entity, plus size of entity
+
+			std::string extendedRouting;
+			if(!plugin.outputs.empty())
+			{
+				std::ostringstream o;
+				mpt::IO::WriteVarInt(o, plugin.outputs.size());
+				for(const auto &out : plugin.outputs)
+				{
+					mpt::IO::WriteVarInt(o, out.inChannel);		// Source channel
+					mpt::IO::WriteVarInt(o, out.plugin);		// Target plugin
+					mpt::IO::WriteVarInt(o, out.outChannel);	// Target channel
+				}
+				extendedRouting = o.str();
+				if(!extendedRouting.empty())
+					extraDataSize += 2 * sizeof(int32) + extendedRouting.size();
+			}
 
 			chunkSize += extraDataSize + 4; // +4 is for size field itself
 
@@ -2160,6 +2165,14 @@ uint32 CSoundFile::SaveMixPlugins(std::ostream *file, bool updatePlugData)
 				static_assert(sizeof(m_MixPlugins[i].defaultProgram) == sizeof(int32));
 				mpt::IO::WriteIntLE<int32>(f, m_MixPlugins[i].defaultProgram);
 
+				// Extended routing
+				if(!extendedRouting.empty())
+				{
+					mpt::IO::WriteRaw(f, "ROUT", 4);
+					mpt::IO::WriteIntLE<uint32>(f, extendedRouting.size());
+					mpt::IO::WriteRaw(f, extendedRouting.c_str(), extendedRouting.size());
+				}
+
 				// Please, if you add any more chunks here, don't repeat history (see above) and *do* add a size field for your chunk, mmmkay?
 			}
 			totalSize += chunkSize + 8;
@@ -2167,17 +2180,23 @@ uint32 CSoundFile::SaveMixPlugins(std::ostream *file, bool updatePlugData)
 	}
 	std::vector<uint32le> chinfo(GetNumChannels());
 	uint32 numChInfo = 0;
+	bool saveExtendedInfo = false;
 	for(CHANNELINDEX j = 0; j < GetNumChannels(); j++)
 	{
 		if((chinfo[j] = ChnSettings[j].nMixPlugin) != 0)
 		{
 			numChInfo = j + 1;
+			if(ChnSettings[j].pluginChannel != 0)
+			{
+				saveExtendedInfo = true;
+			}
 		}
 	}
 	if(numChInfo)
 	{
 		if(file)
 		{
+			// Legacy
 			std::ostream &f = *file;
 			mpt::IO::WriteRaw(f, "CHFX", 4);
 			mpt::IO::WriteIntLE<uint32>(f, numChInfo * 4);
@@ -2185,6 +2204,35 @@ uint32 CSoundFile::SaveMixPlugins(std::ostream *file, bool updatePlugData)
 			mpt::IO::Write(f, chinfo);
 		}
 		totalSize += numChInfo * 4 + 8;
+
+		if(saveExtendedInfo)
+		{
+			// Extended routing information
+			if(file)
+			{
+				mpt::IO::WriteRaw(*file, "ROUT", 4);
+			}
+			std::ostringstream o;
+			for(uint32 i = 0; i < numChInfo; ++i)
+			{
+				if(ChnSettings[i].nMixPlugin)
+				{
+					mpt::IO::WriteVarInt(o, 1u);
+					mpt::IO::WriteVarInt(o, ChnSettings[i].nMixPlugin);
+					mpt::IO::WriteVarInt(o, ChnSettings[i].pluginChannel);
+				} else
+				{
+					mpt::IO::WriteVarInt(o, 0u);
+				}
+			}
+			const std::string data = o.str();
+			if(file)
+			{
+				mpt::IO::WriteIntLE<uint32>(*file, data.size());
+				mpt::IO::WriteRaw(*file, mpt::as_span(data));
+			}
+			totalSize += 4 + sizeof(uint32) + data.size();
+		}
 	}
 	return totalSize;
 #else
@@ -2228,6 +2276,22 @@ std::pair<bool, bool> CSoundFile::LoadMixPlugins(FileReader &file, bool ignoreCh
 				chn.nMixPlugin = static_cast<PLUGINDEX>(chunk.ReadUint32LE());
 			}
 			hasPluginChunks = true;
+		} else if(!memcmp(code, "ROUT", 4))
+		{
+			// Extended routing
+			for (size_t ch = 0; ch < MAX_BASECHANNELS; ch++)
+			{
+				uint32 numEntries;
+				chunk.ReadVarInt(numEntries);
+				for(uint32 i = 0; i < numEntries; i++)
+				{
+					chunk.ReadVarInt(ChnSettings[ch].nMixPlugin);
+					chunk.ReadVarInt(ChnSettings[ch].pluginChannel);
+					if(ChnSettings[ch].nMixPlugin > MAX_MIXPLUGINS)
+						ChnSettings[ch].nMixPlugin = 0;
+				}
+			}
+			hasPluginChunks = true;
 #ifndef NO_PLUGINS
 		}
 		// Plugin Data FX00, ... FX99, F100, ... F255
@@ -2261,6 +2325,7 @@ void CSoundFile::ReadMixPluginChunk(FileReader &file, SNDMIXPLUGIN &plugin)
 	file.ReadStruct(plugin.Info);
 	mpt::String::SetNullTerminator(plugin.Info.szName.buf);
 	mpt::String::SetNullTerminator(plugin.Info.szLibraryName.buf);
+	plugin.outputs.clear();
 	plugin.editorX = plugin.editorY = int32_min;
 
 	// Plugin user data
@@ -2704,6 +2769,116 @@ bool CSoundFile::LoadExtendedSongProperties(FileReader &file, bool ignoreChannel
 	//m_dwLastSavedWithVersion
 
 	return true;
+}
+
+
+#ifndef MODPLUG_NO_FILESAVE
+
+size_t CSoundFile::SaveModularInstrumentData(std::ostream &f, const ModInstrument &ins) const
+{
+	// Yes, it is completely idiotic that we have both SaveModularInstrumentData and SaveExtendedInstrumentProperties.
+	// And they are all insane in their own way:
+	// - SaveExtendedInstrumentProperties is tacked SOMEWHERE AFTER THE SAMPLE CHUNK, which is horrible in case of
+	//   compressed samples because you don't know where to start reading without actually unpacking the sample.
+	//   this mechanism has broken a gazillion times in the past due to simple code changes. Luckily we have unit
+	//   tests which can detect this most of the time.
+	// - SaveModularInstrumentData follows the instrument data as it should, but was historically just used for one
+	//   chunk, and it didn't actually specify the chunk's size. You have to hardcode chunk size or else you're lost.
+	//   That's totally awesome if you have to process unknown chunks. NOT.
+	//   The chunk ("PLUG") was only required for really early OpenMPT versions (pre-1.17-RC1) and was thus redundant
+	//   and is no longer written as of OpenMPT 1.25.02.07.
+	//   Nowadays, we use this chunk for something more sensible, namely plugin routing information.
+	//   This does not use SaveExtendedInstrumentProperties because the information size differs between instruments.
+	// Oh, and of course they all use backwards FOURCCs because they originally used the non-standard '1234'
+	// multi-char MSVC extension. It's one big clusterfuck.
+
+	// As the only stuff that is actually written here is the plugin routing info,
+	// we can actually chicken out if there's no info to write.
+	if(!ins.pluginChannel)
+	{
+		return 0;
+	}
+
+	uint32 modularInstSize = 0;
+	uint32 id = MagicBE("INSM");
+	mpt::IO::WriteIntLE<uint32>(f, id);
+	auto sizePos = mpt::IO::TellWrite(f); // we will want to write the modular data's total size here
+	mpt::IO::WriteIntLE<uint32>(f, 0);    // write a DUMMY size, just to move file pointer by a long
+
+	// Write chunks
+	if(ins.pluginChannel)
+	{
+		// Plugin routing (extended)
+		id = MagicLE("ROUT");
+		mpt::IO::WriteIntLE(f, id);
+		std::ostringstream o;
+		mpt::IO::WriteVarInt(o, 1u);	// Only one output routing at the moment
+		mpt::IO::WriteVarInt(o, ins.nMixPlug);
+		mpt::IO::WriteVarInt(o, ins.pluginChannel);
+		std::string data = o.str();
+		size_t size = 0;
+		mpt::IO::WriteVarInt(f, data.size(), &size);
+		mpt::IO::WriteRaw(f, data.c_str(), data.size());
+		modularInstSize += sizeof(id) + size + data.size();
+	}
+
+	// Write modular data's total size in header
+	auto curPos = mpt::IO::TellWrite(f);
+	mpt::IO::SeekAbsolute(f, sizePos);
+	mpt::IO::WriteIntLE<uint32>(f, modularInstSize);
+	mpt::IO::SeekAbsolute(f, curPos);
+
+	// Compute the size that we just wasted.
+	return sizeof(id) + sizeof(modularInstSize) + modularInstSize;
+}
+
+#endif // MODPLUG_NO_FILESAVE
+
+
+size_t CSoundFile::LoadModularInstrumentData(FileReader &file, ModInstrument &ins)
+{
+	//If the next piece of data is 'INSM' we have modular extensions to our instrument...
+	if(!file.ReadMagic("MSNI"))
+	{
+		return 0;
+	}
+	//...the next piece of data must be the total size of the modular data
+	FileReader modularData = file.ReadChunk(file.ReadUint32LE());
+
+	// Handle chunks
+	while(modularData.CanRead(4))
+	{
+		const uint32 chunkID = modularData.ReadUint32LE();
+		uint16 chunkSize;
+		// Legacy chunk
+		if(chunkID == MagicBE("PLUG"))
+			chunkSize = 1;	// Legacy, no size specified *gulp*
+		else
+			modularData.ReadVarInt(chunkSize);
+		FileReader chunkData = modularData.ReadChunk(chunkSize);
+
+		switch (chunkID)
+		{
+		case MagicBE("PLUG"):
+			ins.nMixPlug = chunkData.ReadUint8();
+			if(ins.nMixPlug > MAX_MIXPLUGINS) ins.nMixPlug = 0;
+			break;
+
+		case MagicLE("ROUT"):
+			{
+				uint32 numEntries;
+				chunkData.ReadVarInt(numEntries);
+				// At the moment, we read only one entry
+				chunkData.ReadVarInt(ins.nMixPlug);
+				chunkData.ReadVarInt(ins.pluginChannel);
+			}
+			break;
+		}
+	}
+	if(ins.nMixPlug > MAX_MIXPLUGINS)
+		ins.nMixPlug = 0;
+
+	return 8 + modularData.GetLength();
 }
 
 

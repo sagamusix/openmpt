@@ -1005,118 +1005,9 @@ void CMainFrame::audioCloseDevice()
 }
 
 
-void VUMeter::Process(Channel &c, MixSampleInt sample)
+static void SetVUMeter(std::array<uint32, 4> &masterVU, const VUMeterMix &vumeter)
 {
-	c.peak = std::max(c.peak, std::abs(sample));
-	if(sample < MixSampleIntTraits::mix_clip_min || MixSampleIntTraits::mix_clip_max < sample)
-	{
-		c.clipped = true;
-	}
-}
-
-
-void VUMeter::Process(Channel &c, MixSampleFloat sample)
-{
-	Process(c, SC::ConvertToFixedPoint<MixSampleInt, MixSampleFloat, MixSampleIntTraits::mix_fractional_bits>()(sample));
-}
-
-
-void VUMeter::Process(mpt::audio_span_interleaved<const MixSampleInt> buffer)
-{
-	for(std::size_t frame = 0; frame < buffer.size_frames(); ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(buffer.size_channels(), maxChannels); ++channel)
-		{
-			Process(channels[channel], buffer(channel, frame));
-		}
-	}
-	for(std::size_t channel = std::min(buffer.size_channels(), maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(mpt::audio_span_interleaved<const MixSampleFloat> buffer)
-{
-	for(std::size_t frame = 0; frame < buffer.size_frames(); ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(buffer.size_channels(), maxChannels); ++channel)
-		{
-			Process(channels[channel], buffer(channel, frame));
-		}
-	}
-	for(std::size_t channel = std::min(buffer.size_channels(), maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(mpt::audio_span_planar<const MixSampleInt> buffer)
-{
-	for(std::size_t frame = 0; frame < buffer.size_frames(); ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(buffer.size_channels(), maxChannels); ++channel)
-		{
-			Process(channels[channel], buffer(channel, frame));
-		}
-	}
-	for(std::size_t channel = std::min(buffer.size_channels(), maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-void VUMeter::Process(mpt::audio_span_planar<const MixSampleFloat> buffer)
-{
-	for(std::size_t frame = 0; frame < buffer.size_frames(); ++frame)
-	{
-		for(std::size_t channel = 0; channel < std::min(buffer.size_channels(), maxChannels); ++channel)
-		{
-			Process(channels[channel], buffer(channel, frame));
-		}
-	}
-	for(std::size_t channel = std::min(buffer.size_channels(), maxChannels); channel < maxChannels; ++channel)
-	{
-		channels[channel] = Channel();
-	}
-}
-
-
-const float VUMeter::dynamicRange = 48.0f; // corresponds to the current implementation of the UI widget displaying the result
-
-
-void VUMeter::SetDecaySpeedDecibelPerSecond(float decibelPerSecond)
-{
-	float linearDecayRate = decibelPerSecond / dynamicRange;
-	decayParam = mpt::saturate_round<int32>(linearDecayRate * static_cast<float>(MixSampleIntTraits::mix_clip_max));
-}
-
-
-void VUMeter::Decay(int32 secondsNum, int32 secondsDen)
-{
-	int32 decay = Util::muldivr(decayParam, secondsNum, secondsDen);
-	for(std::size_t channel = 0; channel < maxChannels; ++channel)
-	{
-		channels[channel].peak = std::max(channels[channel].peak - decay, 0);
-	}
-}
-
-
-void VUMeter::ResetClipped()
-{
-	for(std::size_t channel = 0; channel < maxChannels; ++channel)
-	{
-		channels[channel].clipped = false;
-	}
-}
-
-
-static void SetVUMeter(std::array<uint32, 4> &masterVU, const VUMeter &vumeter)
-{
-	for(std::size_t channel = 0; channel < VUMeter::maxChannels; ++channel)
+	for(std::size_t channel = 0; channel < VUMeterMix::maxChannels; ++channel)
 	{
 		masterVU[channel] = Clamp(vumeter[channel].peak >> 11, 0, 0x10000);
 		if(vumeter[channel].clipped)
@@ -1535,8 +1426,8 @@ bool CMainFrame::PlayMod(CModDoc *pModDoc)
 
 	m_wndToolBar.SetCurrentSong(m_pSndFile);
 
-	m_VUMeterInput = VUMeter();
-	m_VUMeterOutput = VUMeter();
+	m_VUMeterInput = VUMeterMix();
+	m_VUMeterOutput = VUMeterMix();
 
 	UpdateMetronomeSamples();
 
@@ -2479,7 +2370,7 @@ LRESULT CMainFrame::OnUpdatePosition(WPARAM, LPARAM lParam)
 			duplicateMono = true;
 		}
 		uint8 countChan = 0;
-		uint32 vu[VUMeter::maxChannels * 2];
+		uint32 vu[VUMeterMix::maxChannels * 2];
 		MemsetZero(vu);
 		std::copy(pnotify->masterVUin.begin(), pnotify->masterVUin.begin() + pnotify->masterVUinChannels, vu + countChan);
 
@@ -2679,7 +2570,7 @@ LRESULT CMainFrame::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		case kcViewSamples:
 		case kcViewInstruments:
 		case kcViewComments:
-		case kcViewGraph: //rewbs.graph
+		case kcViewPlugins:
 		case kcViewSongProperties:
 		case kcViewTempoSwing:
 		case kcViewMIDImapping:

@@ -1010,12 +1010,13 @@ void CVstPlugin::Initialize()
 		// Set VST speaker in/out setup to Stereo. Required for some plugins (e.g. Voxengo SPAN 2)
 		// All this might get more interesting when adding sidechaining support...
 		VstSpeakerArrangement sa{};
-		sa.numChannels = 2;
+		sa.numChannels = std::min(m_Effect.numInputs, static_cast<int32>(std::size(sa.speakers)));
 		sa.type = kSpeakerArrStereo;
 		for(std::size_t i = 0; i < std::size(sa.speakers); i++)
 		{
 			// For now, only left and right speaker are used.
-			switch(i)
+			// TODO
+			switch(i % 2u)
 			{
 			case 0:
 				sa.speakers[i].type = kSpeakerL;
@@ -1098,7 +1099,12 @@ bool CVstPlugin::InitializeIOBuffers()
 {
 	// Input pointer array size must be >= 2 for now - the input buffer assignment might write to non allocated mem. otherwise
 	// In case of a bridged plugin, the AEffect struct has been updated before calling this opcode, so we don't have to worry about it being up-to-date.
-	return m_mixBuffer.Initialize(std::max(m_Effect.numInputs, int32(2)), m_Effect.numOutputs);
+	bool result = m_mixBuffer.Initialize(std::max(m_Effect.numInputs, int32(2)), m_Effect.numOutputs);
+#ifdef MODPLUG_TRACKER
+	m_outputVUMeters.assign(m_Effect.numOutputs, 0.0f);
+#endif
+
+	return result;
 }
 
 
@@ -1403,8 +1409,7 @@ void CVstPlugin::Resume()
 	const uint32 sampleRate = m_SndFile.GetSampleRate();
 
 	//reset some stuff
-	m_MixState.nVolDecayL = 0;
-	m_MixState.nVolDecayR = 0;
+	m_mixBuffer.ResetVolDecay();
 	if(m_isResumed)
 	{
 		Dispatch(effStopProcess, 0, 0, nullptr, 0.0f);
@@ -1537,11 +1542,12 @@ void CVstPlugin::Process(float *pOutL, float *pOutR, uint32 numFrames)
 		// Merge stereo input before sending to the plugin if it can only handle one input.
 		if (numInputs == 1)
 		{
-			float *plugInputL = m_mixBuffer.GetInputBuffer(0);
-			float *plugInputR = m_mixBuffer.GetInputBuffer(1);
+			float *leftIn = m_mixBuffer.GetInputBuffer(0);
+			float *rightIn = m_mixBuffer.GetInputBuffer(1);
 			for (uint32 i = 0; i < numFrames; i++)
 			{
-				plugInputL[i] = 0.5f * (plugInputL[i] + plugInputR[i]);
+				leftIn[i] = 0.5f * (leftIn[i] + rightIn[i]);
+				rightIn[i] = leftIn[i];	// for mono plugins + dry mix
 			}
 		}
 
@@ -1563,10 +1569,24 @@ void CVstPlugin::Process(float *pOutL, float *pOutR, uint32 numFrames)
 			}
 		}
 
+		MPT_ASSERT(outputBuffers != nullptr);
+
+#ifdef MODPLUG_TRACKER
+		for(int32 ch = 0; ch < m_Effect.numOutputs; ch++)
+		{
+			if(m_vuMeterFrames == 0)
+				m_outputVUMeters[ch] = 0;
+			for(size_t i = 0; i < numFrames; i++)
+			{
+				m_outputVUMeters[ch] = std::max(m_outputVUMeters[ch], std::abs(outputBuffers[ch][i]));
+			}
+		}
+		m_vuMeterFrames += numFrames;
+#endif
+
 		// Mix outputs of multi-output VSTs:
 		if(numOutputs > 2)
 		{
-			MPT_ASSERT(outputBuffers != nullptr);
 			// first, mix extra outputs on a stereo basis
 			int32 outs = numOutputs;
 			// so if nOuts is not even, let process the last output later
@@ -1596,7 +1616,6 @@ void CVstPlugin::Process(float *pOutL, float *pOutR, uint32 numFrames)
 
 		if(numOutputs != 0)
 		{
-			MPT_ASSERT(outputBuffers != nullptr);
 			ProcessMixOps(pOutL, pOutR, outputBuffers[0], outputBuffers[numOutputs > 1 ? 1 : 0], numFrames);
 		}
 

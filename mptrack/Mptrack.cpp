@@ -1507,8 +1507,8 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	}
 
 #ifdef ENABLE_TESTS
-	if(!cmdInfo.m_noTests)
-		Test::DoTests();
+	//if(!cmdInfo.m_noTests)
+	//	Test::DoTests();
 #endif
 
 	if(TrackerSettings::Instance().m_SoundSettingsOpenDeviceAtStartup)

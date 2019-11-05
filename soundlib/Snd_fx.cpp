@@ -2299,7 +2299,7 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 	IMixPlugin *pPlugin = nullptr;
 	if(srcChn.HasMIDIOutput() && ModCommand::IsNote(srcChn.nNote))  // Instrument has MIDI channel assigned (but not necessarily a plugin)
 	{
-		const PLUGINDEX plugin = GetBestPlugin(m_PlayState.Chn[nChn], nChn, PrioritiseInstrument, RespectMutes);
+		const PLUGINDEX plugin = GetBestPlugin(m_PlayState.Chn[nChn], nChn, PrioritiseInstrument, RespectMutes).plugin;
 		if(plugin > 0 && plugin <= MAX_MIXPLUGINS)
 			pPlugin = m_MixPlugins[plugin - 1].pMixPlugin;
 	}
@@ -2586,7 +2586,7 @@ void CSoundFile::StopOldNNA(ModChannel &chn, CHANNELINDEX channel)
 	// Is a plugin note still associated with this old NNA channel? Stop it first.
 	if(chn.HasMIDIOutput() && ModCommand::IsNote(chn.nNote) && !chn.dwFlags[CHN_KEYOFF] && chn.lastMidiNoteWithoutArp != NOTE_NONE)
 	{
-		const PLUGINDEX plugin = GetBestPlugin(m_PlayState.Chn[channel], channel, PrioritiseInstrument, RespectMutes);
+		const PLUGINDEX plugin = GetBestPlugin(m_PlayState.Chn[channel], channel, PrioritiseInstrument, RespectMutes).plugin;
 		if(plugin > 0 && plugin <= MAX_MIXPLUGINS)
 		{
 			IMixPlugin *nnaPlugin = m_MixPlugins[plugin - 1].pMixPlugin;
@@ -5560,7 +5560,7 @@ void CSoundFile::SendMIDIData(PlayState &playState, CHANNELINDEX nChn, bool isSm
 		} else if(macroCode == 0x03 && !isExtended)
 		{
 			// F0.F0.03.xx: Set plug dry/wet
-			PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted);
+			PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted).plugin;
 			if(plug > 0 && plug <= MAX_MIXPLUGINS && param < 0x80)
 			{
 				plug--;
@@ -5578,7 +5578,7 @@ void CSoundFile::SendMIDIData(PlayState &playState, CHANNELINDEX nChn, bool isSm
 		} else if((macroCode & 0x80) || isExtended)
 		{
 			// F0.F0.{80|n}.xx / F0.F1.n.xx: Set VST effect parameter n to xx
-			PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted);
+			PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted).plugin;
 			if(plug > 0 && plug <= MAX_MIXPLUGINS && param < 0x80)
 			{
 				plug--;
@@ -5606,7 +5606,7 @@ void CSoundFile::SendMIDIData(PlayState &playState, CHANNELINDEX nChn, bool isSm
 			PLUGINDEX plug = 0;
 			if(!chn.dwFlags[CHN_NOFX])
 			{
-				plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted);
+				plug = (plugin != 0) ? plugin : GetBestPlugin(chn, nChn, PrioritiseChannel, EvenIfMuted).plugin;
 			}
 
 			if(plug > 0 && plug <= MAX_MIXPLUGINS)
@@ -6580,10 +6580,10 @@ uint32 CSoundFile::GetFreqFromPeriod(uint32 period, uint32 c5speed, int32 nPerio
 }
 
 
-PLUGINDEX CSoundFile::GetBestPlugin(const ModChannel &channel, CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const
+PluginChannel CSoundFile::GetBestPlugin(const ModChannel &channel, CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const
 {
 	//Define search source order
-	PLUGINDEX plugin = 0;
+	PluginChannel plugin;
 	switch(priority)
 	{
 		case ChannelOnly:
@@ -6594,14 +6594,14 @@ PLUGINDEX CSoundFile::GetBestPlugin(const ModChannel &channel, CHANNELINDEX nChn
 			break;
 		case PrioritiseInstrument:
 			plugin  = GetActiveInstrumentPlugin(channel, respectMutes);
-			if(!plugin || plugin > MAX_MIXPLUGINS)
+			if(!plugin.plugin || plugin.plugin > MAX_MIXPLUGINS)
 			{
 				plugin = GetChannelPlugin(channel, nChn, respectMutes);
 			}
 			break;
 		case PrioritiseChannel:
-			plugin  = GetChannelPlugin(channel, nChn, respectMutes);
-			if(!plugin || plugin > MAX_MIXPLUGINS)
+			plugin = GetChannelPlugin(channel, nChn, respectMutes);
+			if (!plugin.IsValidPlugin())
 			{
 				plugin = GetActiveInstrumentPlugin(channel, respectMutes);
 			}
@@ -6612,12 +6612,12 @@ PLUGINDEX CSoundFile::GetBestPlugin(const ModChannel &channel, CHANNELINDEX nChn
 }
 
 
-PLUGINDEX CSoundFile::GetChannelPlugin(const ModChannel &channel, CHANNELINDEX nChn, PluginMutePriority respectMutes) const
+PluginChannel CSoundFile::GetChannelPlugin(const ModChannel &channel, CHANNELINDEX nChn, PluginMutePriority respectMutes) const
 {
-	PLUGINDEX plugin;
+	PluginChannel plugin;
 	if((respectMutes == RespectMutes && channel.dwFlags[CHN_MUTE | CHN_SYNCMUTE]) || channel.dwFlags[CHN_NOFX])
 	{
-		plugin = 0;
+		plugin = PluginChannel(0, 0);
 	} else
 	{
 		// If it looks like this is an NNA channel, we need to find the master channel.
@@ -6626,28 +6626,33 @@ PLUGINDEX CSoundFile::GetChannelPlugin(const ModChannel &channel, CHANNELINDEX n
 			nChn = channel.nMasterChn - 1;
 
 		if(nChn < ChnSettings.size())
-			plugin = ChnSettings[nChn].nMixPlugin;
-		else
-			plugin = 0;
+		{
+			plugin.plugin = ChnSettings[nChn].nMixPlugin;
+			plugin.channel = ChnSettings[nChn].pluginChannel;
+		} else
+		{
+			plugin.plugin = 0;
+		}
 	}
 	return plugin;
 }
 
 
-PLUGINDEX CSoundFile::GetActiveInstrumentPlugin(const ModChannel &chn, PluginMutePriority respectMutes)
+PluginChannel CSoundFile::GetActiveInstrumentPlugin(const ModChannel &chn, PluginMutePriority respectMutes) const
 {
 	// Unlike channel settings, pModInstrument is copied from the original chan to the NNA chan,
 	// so we don't need to worry about finding the master chan.
 
-	PLUGINDEX plug = 0;
-	if(chn.pModInstrument != nullptr)
+	PluginChannel plugin;
+	const ModInstrument *ins = chn.pModInstrument;
+	if(ins != nullptr)
 	{
 		if(respectMutes == RespectMutes && chn.pModInstrument->dwFlags[INS_MUTE])
-			plug = 0;
+			plugin = PluginChannel(0, 0);
 		else
-			plug = chn.pModInstrument->nMixPlug;
+			plugin = PluginChannel(ins->nMixPlug, ins->pluginChannel);
 	}
-	return plug;
+	return plugin;
 }
 
 

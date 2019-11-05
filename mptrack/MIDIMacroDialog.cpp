@@ -375,7 +375,7 @@ void CMidiMacroSetup::OnViewAllParams(UINT id)
 void CMidiMacroSetup::OnPlugChanged()
 {
 #ifndef NO_PLUGINS
-	PLUGINDEX plug = m_CbnMacroPlug.GetSelection().value_or(PLUGINDEX_INVALID);
+	PLUGINDEX plug = m_CbnMacroPlug.GetSelectionPlugin().value_or(PLUGINDEX_INVALID);
 
 	if(plug >= MAX_MIXPLUGINS)
 		return;

@@ -439,6 +439,7 @@ namespace MidiExport
 		void SetCurrentProgramName(const CString &) override { }
 		CString GetProgramName(int32) override { return {}; }
 		bool HasEditor() const override { return false; }
+		virtual std::vector<float> GetOutputVUMeters() { return std::vector<float>(); }
 #endif // MODPLUG_TRACKER
 		int GetNumInputChannels() const override { return 0; }
 		int GetNumOutputChannels() const override { return 0; }

@@ -65,6 +65,7 @@ constexpr DefaultKeybinding DefaultKeybindings[] =
 	{kcViewPattern,                            'P',                ModAlt,             kKeyEventDown,                   MPT_V("1.31")},
 	{kcViewSamples,                            'S',                ModAlt,             kKeyEventDown,                   MPT_V("1.31")},
 	{kcViewInstruments,                        'N',                ModAlt,             kKeyEventDown,                   MPT_V("1.31")},
+	{kcViewPlugins,                            'L',                ModAlt,             kKeyEventDown,                   MPT_V("1.32.01.00")},//TODO
 	{kcViewComments,                           VK_F9,              ModShift,           kKeyEventDown,                   MPT_V("1.31")},
 	{kcViewComments,                           'C',                ModAlt,             kKeyEventDown,                   MPT_V("1.31")},
 	{kcViewTree,                               VK_F2,              ModCtrl,            kKeyEventDown,                   MPT_V("1.31")},
@@ -498,6 +499,12 @@ constexpr DefaultKeybinding DefaultKeybindings[] =
 	{kcChnColorFromPrev,                       VK_LEFT,            ModShift | ModAlt,  kKeyEventDown,                   MPT_V("1.31")},
 	{kcChnColorFromNext,                       VK_RIGHT,           ModShift | ModAlt,  kKeyEventDown,                   MPT_V("1.31")},
 	{kcChnSettingsClose,                       VK_RETURN,          ModNone,            kKeyEventDown,                   MPT_V("1.31")},
+	{kcPluginGraphZoomIn,                      VK_ADD,             ModNone,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
+	{kcPluginGraphZoomIn,                      VK_OEM_PLUS,        ModNone,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
+	{kcPluginGraphZoomIn,                      VK_ADD,             ModCtrl,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_SUBTRACT,        ModNone,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_OEM_MINUS,       ModNone,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
+	{kcPluginGraphZoomOut,                     VK_SUBTRACT,        ModCtrl,            kKeyEventDown | kKeyEventRepeat, MPT_V("1.32.01.00")},//TODO
 };
 // clang-format on
 

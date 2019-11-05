@@ -343,7 +343,7 @@ void CMIDIMappingDialog::OnCbnSelchangeComboChannel()
 
 void CMIDIMappingDialog::OnCbnSelchangeComboPlugin()
 {
-	PLUGINDEX i = m_PluginCBox.GetSelection().value_or(PLUGINDEX_INVALID);
+	PLUGINDEX i = m_PluginCBox.GetSelectionPlugin().value_or(PLUGINDEX_INVALID);
 	if(i >= MAX_MIXPLUGINS)
 		return;
 	m_Setting.SetPlugIndex(i + 1);

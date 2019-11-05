@@ -2659,7 +2659,7 @@ void CSoundFile::ProcessMidiOut(CHANNELINDEX nChn)
 	}
 
 	// Check instrument plugins
-	const PLUGINDEX nPlugin = GetBestPlugin(chn, nChn, PrioritiseInstrument, RespectMutes);
+	const PLUGINDEX nPlugin = GetBestPlugin(chn, nChn, PrioritiseInstrument, RespectMutes).plugin;
 	IMixPlugin *pPlugin = nullptr;
 	if(nPlugin > 0 && nPlugin <= MAX_MIXPLUGINS)
 	{

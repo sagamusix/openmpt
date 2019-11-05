@@ -343,6 +343,11 @@ void COptionsKeyboard::DefineCommandCategories()
 		commands.emplace_back(kcStartInsEnvelopeEdit, kcEndInsEnvelopeEdit, _T(""));
 	}
 
+	{
+		auto &commands = commandCategories.emplace_back(_T("  Plugin Graph"), kCtxViewPlugins).commandRanges;
+		commands.emplace_back(kcStartPluginGraph, kcEndPluginGraph, _T(""));
+	}
+
 	commandCategories.emplace_back(_T("  Comments [Top]"), kCtxCtrlComments);
 
 	{

@@ -643,6 +643,7 @@ void CModDoc::ClonePlugin(SNDMIXPLUGIN &target, const SNDMIXPLUGIN &source)
 	IMixPlugin *srcVstPlug = source.pMixPlugin;
 	target.Destroy();
 	target = source;
+	target.graphX = target.graphY = int32_min;
 	// Don't want this plugin to be accidentally erased again...
 	target.pMixPlugin = nullptr;
 	if(target.editorX != int32_min)

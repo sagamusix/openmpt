@@ -86,37 +86,6 @@ template<> inline WINDOWPLACEMENT FromSettingValue(const SettingValue &val)
 }
 
 
-class VUMeter
-	: public IMonitorInput
-	, public IMonitorOutput
-{
-public:
-	static constexpr std::size_t maxChannels = 4;
-	static const float dynamicRange; // corresponds to the current implementation of the UI widget diplaying the result
-	struct Channel
-	{
-		int32 peak = 0;
-		bool clipped = false;
-	};
-private:
-	Channel channels[maxChannels];
-	int32 decayParam;
-	void Process(Channel &channel, MixSampleInt sample);
-	void Process(Channel &channel, MixSampleFloat sample);
-public:
-	VUMeter() : decayParam(0) { SetDecaySpeedDecibelPerSecond(88.0f); }
-	void SetDecaySpeedDecibelPerSecond(float decibelPerSecond);
-public:
-	const Channel & operator [] (std::size_t channel) const { return channels[channel]; }
-	void Process(mpt::audio_span_interleaved<const MixSampleInt> buffer);
-	void Process(mpt::audio_span_planar<const MixSampleInt> buffer);
-	void Process(mpt::audio_span_interleaved<const MixSampleFloat> buffer);
-	void Process(mpt::audio_span_planar<const MixSampleFloat> buffer);
-	void Decay(int32 secondsNum, int32 secondsDen);
-	void ResetClipped();
-};
-
-
 class TfLanguageProfileNotifySink : public ITfLanguageProfileNotifySink
 {
 public:
@@ -166,8 +135,8 @@ public:
 	Util::MultimediaClock m_SoundDeviceClock;
 	SoundDevice::IBase *gpSoundDevice = nullptr;
 	UINT_PTR m_NotifyTimer = 0;
-	VUMeter m_VUMeterInput;
-	VUMeter m_VUMeterOutput;
+	VUMeterMix m_VUMeterInput;
+	VUMeterMix m_VUMeterOutput;
 
 	DWORD m_AudioThreadId = 0;
 	bool m_InNotifyHandler = false;

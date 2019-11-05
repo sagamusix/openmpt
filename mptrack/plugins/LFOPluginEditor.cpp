@@ -332,7 +332,7 @@ void LFOPluginEditor::OnOutputPlugChanged()
 	if(m_locked)
 		return;
 
-	PLUGINDEX plug = m_outPlug.GetSelection().value_or(PLUGINDEX_INVALID);
+	PLUGINDEX plug = m_outPlug.GetSelectionPlugin().value_or(PLUGINDEX_INVALID);
 	if(plug > m_lfoPlugin.GetSlot() && plug < MAX_MIXPLUGINS)
 	{
 		m_lfoPlugin.GetSoundFile().m_MixPlugins[m_lfoPlugin.GetSlot()].SetOutputPlugin(plug);

@@ -24,6 +24,7 @@
 #include "View_gen.h"
 #include "View_ins.h"
 #include "View_pat.h"
+#include "View_plugins.h"
 #include "View_smp.h"
 #include "WindowMessages.h"
 #include "../common/FileReader.h"
@@ -311,6 +312,8 @@ void CChildFrame::SavePosition(bool force)
 					TrackerSettings::Instance().glInstrumentWindowHeight = l;
 				else if(CViewComments::classCViewComments.m_lpszClassName == m_currentViewClassName)
 					TrackerSettings::Instance().glCommentsWindowHeight = l;
+				else if(CViewPlugins::classCViewPlugins.m_lpszClassName == m_currentViewClassName)
+					TrackerSettings::Instance().glPluginWindowHeight = l;
 			}
 		}
 	}
@@ -443,6 +446,7 @@ std::string CChildFrame::SerializeView()
 	Serialize(f, CModControlView::Page::Patterns, m_ViewPatterns.Serialize());
 	Serialize(f, CModControlView::Page::Samples, m_ViewSamples.Serialize());
 	Serialize(f, CModControlView::Page::Instruments, m_ViewInstruments.Serialize());
+	Serialize(f, CModControlView::Page::Plugins, m_ViewPlugins.Serialize());
 
 	return std::move(f).str();
 }
@@ -480,6 +484,9 @@ void CChildFrame::DeserializeView(FileReader &file)
 	case CModControlView::Page::Comments:
 		pageDlg = IDD_CONTROL_COMMENTS;
 		break;
+	case CModControlView::Page::Plugins:
+		pageDlg = IDD_CONTROL_PLUGINS;
+		break;
 	case CModControlView::Page::Unknown:
 	case CModControlView::Page::NumPages:
 		break;
@@ -502,6 +509,7 @@ void CChildFrame::DeserializeView(FileReader &file)
 		case CModControlView::Page::Samples:     m_ViewSamples.Deserialize(chunk); break;
 		case CModControlView::Page::Instruments: m_ViewInstruments.Deserialize(chunk); break;
 		case CModControlView::Page::Comments:    m_ViewComments.Deserialize(chunk); break;
+		case CModControlView::Page::Plugins:     m_ViewPlugins.Deserialize(chunk); break;
 		case CModControlView::Page::Unknown:
 		case CModControlView::Page::NumPages:
 			break;
@@ -565,6 +573,24 @@ std::string InstrumentViewState::Serialize() const
 void InstrumentViewState::Deserialize(FileReader &f)
 {
 	f.ReadVarInt(initialInstrument);
+}
+
+
+std::string PluginViewState::Serialize() const
+{
+	std::ostringstream f(std::ios::out | std::ios::binary);
+	// TODO
+	mpt::IO::Write(f, IEEE754binary64LE(zoom));
+	return std::move(f).str();
+}
+
+
+void PluginViewState::Deserialize(FileReader &f)
+{
+	// TODO
+	zoom = f.ReadFloatLE();
+	if(zoom < 0.1)
+		zoom = 0.1;
 }
 
 

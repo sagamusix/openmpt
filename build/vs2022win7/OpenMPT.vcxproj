@@ -901,6 +901,7 @@
     <ClInclude Include="..\..\mptrack\Ctrl_gen.h" />
     <ClInclude Include="..\..\mptrack\Ctrl_ins.h" />
     <ClInclude Include="..\..\mptrack\Ctrl_pat.h" />
+    <ClInclude Include="..\..\mptrack\Ctrl_plugins.h" />
     <ClInclude Include="..\..\mptrack\Ctrl_smp.h" />
     <ClInclude Include="..\..\mptrack\DefaultKeyBindings.h" />
     <ClInclude Include="..\..\mptrack\DefaultVstEditor.h" />
@@ -952,6 +953,7 @@
     <ClInclude Include="..\..\mptrack\QuickStartDialog.h" />
     <ClInclude Include="..\..\mptrack\Reporting.h" />
     <ClInclude Include="..\..\mptrack\ResizableDialog.h" />
+    <ClInclude Include="..\..\mptrack\RoutingNodes.h" />
     <ClInclude Include="..\..\mptrack\SampleConfigDlg.h" />
     <ClInclude Include="..\..\mptrack\SampleEditorDialogs.h" />
     <ClInclude Include="..\..\mptrack\SampleGenerator.h" />
@@ -967,9 +969,11 @@
     <ClInclude Include="..\..\mptrack\UpdateHints.h" />
     <ClInclude Include="..\..\mptrack\UpdateToolTip.h" />
     <ClInclude Include="..\..\mptrack\VSTEditor.h" />
+    <ClInclude Include="..\..\mptrack\VUMeter.h" />
     <ClInclude Include="..\..\mptrack\View_gen.h" />
     <ClInclude Include="..\..\mptrack\View_ins.h" />
     <ClInclude Include="..\..\mptrack\View_pat.h" />
+    <ClInclude Include="..\..\mptrack\View_plugins.h" />
     <ClInclude Include="..\..\mptrack\View_smp.h" />
     <ClInclude Include="..\..\mptrack\View_tre.h" />
     <ClInclude Include="..\..\mptrack\VstPresets.h" />
@@ -1345,6 +1349,7 @@
     <ClCompile Include="..\..\mptrack\Ctrl_gen.cpp" />
     <ClCompile Include="..\..\mptrack\Ctrl_ins.cpp" />
     <ClCompile Include="..\..\mptrack\Ctrl_pat.cpp" />
+    <ClCompile Include="..\..\mptrack\Ctrl_plugins.cpp" />
     <ClCompile Include="..\..\mptrack\Ctrl_seq.cpp" />
     <ClCompile Include="..\..\mptrack\Ctrl_smp.cpp" />
     <ClCompile Include="..\..\mptrack\DefaultVstEditor.cpp" />
@@ -1400,6 +1405,7 @@
     <ClCompile Include="..\..\mptrack\QuickStartDialog.cpp" />
     <ClCompile Include="..\..\mptrack\Reporting.cpp" />
     <ClCompile Include="..\..\mptrack\ResizableDialog.cpp" />
+    <ClCompile Include="..\..\mptrack\RoutingNodes.cpp" />
     <ClCompile Include="..\..\mptrack\SampleConfigDlg.cpp" />
     <ClCompile Include="..\..\mptrack\SampleEditorDialogs.cpp" />
     <ClCompile Include="..\..\mptrack\SampleGenerator.cpp" />
@@ -1415,9 +1421,11 @@
     <ClCompile Include="..\..\mptrack\UpdateCheck.cpp" />
     <ClCompile Include="..\..\mptrack\UpdateToolTip.cpp" />
     <ClCompile Include="..\..\mptrack\VSTEditor.cpp" />
+    <ClCompile Include="..\..\mptrack\VUMeter.cpp" />
     <ClCompile Include="..\..\mptrack\View_gen.cpp" />
     <ClCompile Include="..\..\mptrack\View_ins.cpp" />
     <ClCompile Include="..\..\mptrack\View_pat.cpp" />
+    <ClCompile Include="..\..\mptrack\View_plugins.cpp" />
     <ClCompile Include="..\..\mptrack\View_smp.cpp" />
     <ClCompile Include="..\..\mptrack\View_tre.cpp" />
     <ClCompile Include="..\..\mptrack\VstPresets.cpp" />
@@ -1620,6 +1628,7 @@
     <None Include="..\..\mptrack\res\MPTRACK.RC2" />
     <None Include="..\..\mptrack\res\NODROP.CUR" />
     <None Include="..\..\mptrack\res\OpenMPT.manifest" />
+    <None Include="..\..\mptrack\res\defaultKeybindings.mkb" />
     <None Include="..\..\mptrack\res\moddoc.ico" />
     <None Include="..\..\mptrack\res\nodrag.cur" />
     <None Include="..\vs\win7.manifest" />

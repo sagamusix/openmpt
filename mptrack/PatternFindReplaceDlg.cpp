@@ -12,7 +12,6 @@
 #include "stdafx.h"
 #include "PatternFindReplaceDlg.h"
 #include "DialogBase.h"
-#include "Mptrack.h"
 #include "PatternFindReplace.h"
 #include "resource.h"
 #include "View_pat.h"
@@ -503,7 +502,7 @@ void CFindReplaceTab::UpdateVolumeList()
 	int plugData = 0;
 	if(int sel = m_cbnInstr.GetRawSelection(); sel >= 0 && m_cbnInstr.GetItemData(sel) < kBeginSpecial)
 	{
-		plug = m_cbnInstr.GetSelection().value_or(PLUGINDEX_INVALID);
+		plug = m_cbnInstr.GetSelectionPlugin().value_or(PLUGINDEX_INVALID);
 		plugData = (plug != PLUGINDEX_INVALID) ? plug + 1 : 0;
 	}
 	if(isPCEvent && (m_cbnPCParam.GetCount() == 0 || GetWindowLongPtr(m_cbnPCParam.m_hWnd, GWLP_USERDATA) != plugData))
@@ -671,7 +670,7 @@ void CFindReplaceTab::OnInstrChanged()
 	int item = static_cast<int>(m_cbnInstr.GetItemData(m_cbnInstr.GetRawSelection()));
 	if(item < kBeginSpecial && IsPCEvent())
 	{
-		if(auto sel = m_cbnInstr.GetSelection(); sel)
+		if(auto sel = m_cbnInstr.GetSelectionPlugin(); sel)
 			item = *sel + 1;
 		else
 			item = 0;

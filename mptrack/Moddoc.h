@@ -443,6 +443,7 @@ public:
 	afx_msg void OnEditSamples();
 	afx_msg void OnEditInstruments();
 	afx_msg void OnEditComments();
+	afx_msg void OnEditPlugins();
 	afx_msg void OnShowCleanup();
 	afx_msg void OnShowSampleTrimmer();
 	afx_msg void OnSetupZxxMacros();
