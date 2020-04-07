@@ -1,0 +1,4 @@
+This is Sol 3.2.3 commit b8aa189e3253fe661bb2d2d90b56fafb2659f20a (2020-11-02)
+https://github.com/ThePhD/sol2/
+The following changes have been made:
+- Unnecessary folders and files have been removed.

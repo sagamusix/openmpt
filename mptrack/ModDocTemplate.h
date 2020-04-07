@@ -13,6 +13,7 @@
 #include "BuildSettings.h"
 
 #include <unordered_set>
+#include "../../common/mptMutex.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -22,6 +23,8 @@ namespace mpt { class PathString; }
 class CModDocTemplate: public CMultiDocTemplate
 {
 	std::unordered_set<CModDoc *> m_documents;	// Allow faster lookup of open documents than MFC's linear search allows for
+	mutable mpt::mutex m_mutex;	// Scripts may access document status in their own thread
+	CModDoc *m_activeDoc = nullptr;
 
 public:
 	CModDocTemplate(UINT nIDResource, CRuntimeClass* pDocClass, CRuntimeClass* pFrameClass, CRuntimeClass* pViewClass):
@@ -34,6 +37,10 @@ public:
 	void AddDocument(CDocument *doc) override;
 	void RemoveDocument(CDocument *doc) override;
 	bool DocumentExists(const CModDoc *doc) const;
+	std::unordered_set<CModDoc *> GetDocuments() const;
+
+	CModDoc *ActiveDoc() const;
+	void SetActiveDoc(CModDoc *modDoc);
 
 	size_t size() const { return m_documents.size(); }
 	bool empty() const { return m_documents.empty(); }

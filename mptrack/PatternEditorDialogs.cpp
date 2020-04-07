@@ -19,6 +19,7 @@
 #include "TempoSwingDialog.h"
 #include "../soundlib/mod_specifications.h"
 #include "../common/mptStringBuffer.h"
+#include "scripting/LuaVM.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -139,15 +140,14 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 	{
 		CString s;
 		const CPattern &pattern = sndFile.Patterns[m_nPattern];
-		ROWINDEX nrows = pattern.GetNumRows();
 
 		const CModSpecifications &specs = sndFile.GetModSpecifications();
 		combo->SetRedraw(FALSE);
-		for(UINT irow = specs.patternRowsMin; irow <= specs.patternRowsMax; irow++)
+		for(ROWINDEX row = specs.patternRowsMin; row <= specs.patternRowsMax; row++)
 		{
-			combo->AddString(mpt::cfmt::dec(irow));
+			combo->AddString(mpt::cfmt::dec(row));
 		}
-		combo->SetCurSel(nrows - specs.patternRowsMin);
+		combo->SetCurSel(pattern.GetNumRows() - specs.patternRowsMin);
 		combo->SetRedraw(TRUE);
 
 		CheckRadioButton(IDC_RADIO1, IDC_RADIO2, IDC_RADIO2);
@@ -278,8 +278,19 @@ void CPatternPropertiesDlg::OnOK()
 		}
 	}
 
-
-	const ROWINDEX newSize = (ROWINDEX)GetDlgItemInt(IDC_COMBO1, NULL, FALSE);
+	ROWINDEX newSize;
+	try
+	{
+		CString newSizeStr;
+		GetDlgItemText(IDC_COMBO1, newSizeStr);
+		Scripting::LuaVM lua;
+		newSize = mpt::saturate_round<ROWINDEX>(lua.Eval<double>("return " + mpt::ToCharset(mpt::Charset::UTF8, newSizeStr)));
+	} catch(const Scripting::LuaVM::Error &e)
+	{
+		Reporting::Error(e.what(), "Invalid expression");
+		GetDlgItem(IDC_COMBO1)->SetFocus();
+		return;
+	}
 
 	// Check if any pattern data would be removed.
 	bool resize = (newSize != sndFile.Patterns[m_nPattern].GetNumRows());

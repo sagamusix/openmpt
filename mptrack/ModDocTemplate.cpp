@@ -95,6 +95,7 @@ CDocument *CModDocTemplate::OpenTemplateFile(const mpt::PathString &filename, bo
 void CModDocTemplate::AddDocument(CDocument *doc)
 {
 	CMultiDocTemplate::AddDocument(doc);
+	std::lock_guard lock{m_mutex};
 	m_documents.insert(static_cast<CModDoc *>(doc));
 }
 
@@ -102,13 +103,38 @@ void CModDocTemplate::AddDocument(CDocument *doc)
 void CModDocTemplate::RemoveDocument(CDocument *doc)
 {
 	CMultiDocTemplate::RemoveDocument(doc);
+	std::lock_guard lock{m_mutex};
 	m_documents.erase(static_cast<CModDoc *>(doc));
+	if(m_activeDoc == doc)
+		m_activeDoc = nullptr;
 }
 
 
 bool CModDocTemplate::DocumentExists(const CModDoc *doc) const
 {
+	std::lock_guard lock{m_mutex};
 	return m_documents.count(const_cast<CModDoc *>(doc)) != 0;
+}
+
+
+std::unordered_set<CModDoc *> CModDocTemplate::GetDocuments() const
+{
+	std::lock_guard lock{m_mutex};
+	return m_documents;
+}
+
+
+CModDoc *CModDocTemplate::ActiveDoc() const
+{
+	std::lock_guard lock{m_mutex};
+	return m_activeDoc;
+}
+
+
+void CModDocTemplate::SetActiveDoc(CModDoc *modDoc)
+{
+	std::lock_guard lock{m_mutex};
+	m_activeDoc = modDoc;
 }
 
 

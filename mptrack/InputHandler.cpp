@@ -14,6 +14,7 @@
 #include "resource.h"
 #include "Mainfrm.h"
 #include "../soundlib/MIDIEvents.h"
+#include "scripting/ScriptManager.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -81,12 +82,16 @@ static CommandID SendCommands(CWnd *wnd, const KeyMapRange &cmd)
 		{
 			commands.push_back(*i);
 		}
-		for(const auto &i : commands)
+		for(const auto &[kc, id] : commands)
 		{
-			if(wnd->SendMessage(WM_MOD_KEYCOMMAND, i.second, i.first.AsLPARAM()) != kcNull)
+			if(id >= kcScriptableCommandBase && id <= kcScriptableCommandEnd)
+			{
+				Scripting::Manager::GetManager().OnShortcut(id);
+				executeCommand = id;
+			} else if(wnd->SendMessage(WM_MOD_KEYCOMMAND, id, kc.AsLPARAM()) != kcNull)
 			{
 				// Command was handled, no need to let the OS handle the key
-				executeCommand = i.second;
+				executeCommand = id;
 			}
 		}
 	}

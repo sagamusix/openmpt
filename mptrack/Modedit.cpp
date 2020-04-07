@@ -28,6 +28,7 @@
 #include "../soundlib/plugins/PlugInterface.h"
 #include "VstPresets.h"
 #include "../common/FileReader.h"
+#include "scripting/ScriptManager.h"
 
 
 #ifdef _DEBUG
@@ -368,6 +369,7 @@ SAMPLEINDEX CModDoc::ReArrangeSamples(const std::vector<SAMPLEINDEX> &newOrder)
 			target.Initialize(m_SndFile.GetType());
 			m_SndFile.m_szNames[i + 1] = "";
 			m_SndFile.ResetSamplePath(i + 1);
+			Scripting::Manager::GetManager().OnNewSample(*this, i + 1);
 		}
 	}
 
@@ -479,6 +481,10 @@ INSTRUMENTINDEX CModDoc::ReArrangeInstruments(const std::vector<INSTRUMENTINDEX>
 		{
 			// Copy an original instrument.
 			*ins = instrumentHeaders[origSlot];
+		} else
+		{
+			// New instrument
+			Scripting::Manager::GetManager().OnNewInstrument(*this, i + 1);
 		}
 	}
 
@@ -641,6 +647,7 @@ void CModDoc::ClonePlugin(SNDMIXPLUGIN &target, const SNDMIXPLUGIN &source)
 			FileReader file(mpt::as_span(data));
 			VSTPresets::LoadFile(file, *newVstPlug);
 		}
+		Scripting::Manager::GetManager().OnNewPlugin(*this, newVstPlug->GetSlot());
 	}
 #endif // !NO_PLUGINS
 }
@@ -683,6 +690,7 @@ SAMPLEINDEX CModDoc::InsertSample()
 	m_SndFile.ResetSamplePath(i);
 
 	SetModified();
+	Scripting::Manager::GetManager().OnNewSample(*this, i);
 	return i;
 }
 
@@ -772,6 +780,7 @@ INSTRUMENTINDEX CModDoc::InsertInstrument(SAMPLEINDEX sample, INSTRUMENTINDEX du
 	}
 
 	SetModified();
+	Scripting::Manager::GetManager().OnNewInstrument(*this, newins);
 
 	return newins;
 }
@@ -807,6 +816,7 @@ INSTRUMENTINDEX CModDoc::InsertInstrumentForPlugin(PLUGINDEX plug)
 	{
 		SetModified();
 	}
+	Scripting::Manager::GetManager().OnNewInstrument(*this, instr);
 
 	return instr;
 #else

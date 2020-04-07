@@ -25,6 +25,7 @@
 #include "SelectPluginDialog.h"
 #include "../pluginBridge/BridgeWrapper.h"
 #include "FolderScanner.h"
+#include "scripting/ScriptManager.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -191,6 +192,7 @@ void CSelectPluginDlg::OnOK()
 					MemsetZero(m_pPlugin->Info);
 				}
 			}
+			Scripting::Manager::GetManager().OnNewPlugin(*m_pModDoc, static_cast<PLUGINDEX>(m_nPlugSlot + 1));
 			changed = true;
 		}
 	} else if(m_pPlugin->IsValidPlugin())

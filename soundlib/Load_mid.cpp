@@ -557,17 +557,37 @@ static void EnterMIDIVolume(ModCommand &m, ModChannelState &modChn, const MidiCh
 }
 
 
+static bool ValidateHeader(const MThd &fileHeader)
+{
+	return fileHeader.numTracks > 0 && fileHeader.headerLength >= 6;
+}
+
+
+static uint64 GetHeaderMinimumAdditionalSize(const MThd &fileHeader)
+{
+	return fileHeader.headerLength - 6;
+}
+
+
 CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderMID(MemoryFileReader file, const uint64 *pfilesize)
 {
-	MPT_UNREFERENCED_PARAMETER(pfilesize);
-	char magic[4];
-	file.ReadArray(magic);
-	if(!memcmp(magic, "MThd", 4))
-		return ProbeSuccess;
-
-	if(!memcmp(magic, "RIFF", 4) && file.Skip(4) && file.ReadMagic("RMID"))
-		return ProbeSuccess;
-
+	if(file.ReadMagic("RIFF"))
+	{
+		file.Skip(4);
+		return file.ReadMagic("RMID") ? ProbeSuccess : ProbeFailure;
+	} else if(file.ReadMagic("MThd"))
+	{
+		MThd fileHeader;
+		if(!file.ReadStruct(fileHeader))
+		{
+			return ProbeWantMoreData;
+		}
+		if(!ValidateHeader(fileHeader))
+		{
+			return ProbeFailure;
+		}
+		return ProbeAdditionalSize(file, pfilesize, GetHeaderMinimumAdditionalSize(fileHeader));
+	}
 	return ProbeFailure;
 }
 
@@ -607,8 +627,7 @@ bool CSoundFile::ReadMID(FileReader &file, ModLoadingFlags loadFlags)
 	MThd fileHeader;
 	if(!file.ReadMagic("MThd")
 		|| !file.ReadStruct(fileHeader)
-		|| fileHeader.numTracks == 0
-		|| fileHeader.headerLength < 6
+		|| !ValidateHeader(fileHeader)
 		|| !file.Skip(fileHeader.headerLength - 6))
 	{
 		return false;

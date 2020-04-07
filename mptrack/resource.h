@@ -100,6 +100,7 @@
 #define IDD_MIDIPARAMCONTROL            515
 #define IDD_MSGBOX_HIDABLE              516
 #define IDD_ADDSILENCE                  517
+#define IDD_SCRIPTING_CONSOLE           518
 #define IDR_DEFAULT_KEYBINDINGS         519
 #define IDD_OPL_PARAMS                  520
 #define IDD_CLEANUP_SONG                521

@@ -34,6 +34,8 @@ end
    "../../include/flac/include",
    "../../include/lame/include",
    "../../include/lhasa/lib/public",
+   "../../include/lua/src",
+   "../../include/lua-sol2/single/include",
    "../../include/mpg123/ports/MSVC++",
    "../../include/mpg123/src/libmpg123",
    "../../include/nlohmann-json/include",
@@ -96,6 +98,10 @@ end
    "../../mptrack/*.h",
    "../../mptrack/plugins/*.cpp",
    "../../mptrack/plugins/*.h",
+   "../../mptrack/scripting/*.cpp",
+   "../../mptrack/scripting/*.h",
+   "../../mptrack/scripting/api/*.cpp",
+   "../../mptrack/scripting/api/*.h",
    "../../test/*.cpp",
    "../../test/*.h",
    "../../pluginBridge/BridgeCommon.h",
@@ -157,6 +163,7 @@ end
    "smbPitchShift",
    "lame",
    "lhasa",
+   "lua",
    "flac",
    "mpg123",
    "ogg",
@@ -181,8 +188,10 @@ end
   }
 	end
   filter { "action:vs*" }
+    buildoptions { "/bigobj" } -- required for template hell in scripting support
     files {
       "../../build/vs/debug/openmpt.natvis",
+      "../../include/lua-sol2/sol2.natvis",
     }
   filter {}
   prebuildcommands { "..\\..\\build\\svn_version\\update_svn_version_vs_premake.cmd $(IntDir)" }

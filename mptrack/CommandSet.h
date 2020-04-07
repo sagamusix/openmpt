@@ -870,6 +870,9 @@ enum CommandID
 	kcEndCommentsCommands = kcExecuteSmpInsListItem,
 
 	kcNumCommands,
+
+	kcScriptableCommandBase,
+	kcScriptableCommandEnd = int32_max
 };
 
 
@@ -1033,6 +1036,7 @@ protected:
 
 	const CModSpecifications *m_oldSpecs = nullptr;
 	KeyCommand m_commands[kcNumCommands];
+	std::vector<KeyCommand> m_scriptableCommands;
 	std::bitset<kCtxMaxInputContexts> m_isParentContext[kCtxMaxInputContexts];
 	std::bitset<kNumRules> m_enforceRule;
 
@@ -1043,6 +1047,9 @@ public:
 	CString Add(KeyCombination kc, CommandID cmd, bool overwrite, int pos = -1, bool checkEventConflict = true);
 	CString Remove(KeyCombination kc, CommandID cmd);
 	CString Remove(int pos, CommandID cmd);
+
+	CommandID AddScriptable(const KeyCombination &kc);
+	bool RemoveScriptable(CommandID cmd);
 
 	std::pair<CommandID, KeyCombination> IsConflicting(KeyCombination kc, CommandID cmd, bool checkEventConflict = true) const;
 	bool IsCrossContextConflict(KeyCombination kc1, KeyCombination kc2) const;

@@ -48,6 +48,11 @@
 #include "FileDialog.h"
 #include "ProgressDialog.h"
 #include <HtmlHelp.h>
+#include "scripting/ScriptingConsole.h"
+
+#include <functional>
+
+static std::shared_ptr<Scripting::Console> g_Console;
 
 
 #ifdef _DEBUG
@@ -106,6 +111,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_MOD_INVALIDATEPATTERNS,	&CMainFrame::OnInvalidatePatterns)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,			&CMainFrame::OnCustomKeyMsg)
 	ON_MESSAGE(WM_MOD_MIDIMAPPING,			&CMainFrame::OnViewMIDIMapping)
+	ON_MESSAGE(WM_MOD_SCRIPTCALL,			&CMainFrame::OnScriptCall)
 	ON_MESSAGE(WM_MOD_UPDATEVIEWS,			&CMainFrame::OnUpdateViews)
 	ON_MESSAGE(WM_MOD_SETMODIFIED,			&CMainFrame::OnSetModified)
 	ON_COMMAND(ID_INTERNETUPDATE,			&CMainFrame::OnInternetUpdate)
@@ -222,12 +228,16 @@ void CMainFrame::Initialize()
 	CreateExampleModulesMenu();
 	CreateTemplateModulesMenu();
 	UpdateMRUList();
+
+	g_Console = std::make_shared<Scripting::Console>(this);
 }
 
 
 CMainFrame::~CMainFrame()
 {
 	delete m_InputHandler;
+	m_InputHandler = nullptr;
+
 	CChannelManagerDlg::DestroySharedInstance();
 }
 
@@ -341,6 +351,12 @@ BOOL CMainFrame::DestroyWindow()
 	DeleteGDIObject(m_hFixedFont);
 	DeleteGDIObject(penGray99);
 #undef DeleteGDIObject
+
+	if(g_Console)
+	{
+		g_Console->DestroyWindow();
+		g_Console = nullptr;
+	}
 
 	return CMDIFrameWnd::DestroyWindow();
 }
@@ -3019,6 +3035,13 @@ void CMainFrame::NotifyAccessibilityUpdate(CWnd &source)
 	if(!IsPlaying() || m_pSndFile->m_SongFlags[SONG_PAUSED])
 		source.NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, OBJID_CLIENT, CHILDID_SELF);
 }
+
+LRESULT CMainFrame::OnScriptCall(WPARAM wParam, LPARAM /*lParam*/)
+{
+	(*reinterpret_cast<std::function<void()> *>(wParam))();
+	return 0;
+}
+
 
 // ITfLanguageProfileNotifySink implementation
 

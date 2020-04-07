@@ -58,6 +58,7 @@ enum
 	WM_MOD_SETMODIFIED,
 	WM_MOD_MDIACTIVATE,
 	WM_MOD_MDIDEACTIVATE,
+	WM_MOD_SCRIPTCALL,
 };
 
 enum
@@ -547,6 +548,7 @@ protected:
 	afx_msg void OnHelp();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg BOOL OnQueryEndSession();
+	afx_msg LRESULT OnScriptCall(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
