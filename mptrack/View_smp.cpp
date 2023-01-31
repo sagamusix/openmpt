@@ -25,6 +25,7 @@
 #include "OPLInstrDlg.h"
 #include "Reporting.h"
 #include "SampleEditorDialogs.h"
+#include "SampleGenerator.h"
 #include "WindowMessages.h"
 #include "../common/FileReader.h"
 #include "../soundlib/MIDIEvents.h"
@@ -77,6 +78,7 @@ static constexpr UINT cLeftBarButtons[SMP_LEFTBAR_BUTTONS] =
 		ID_SEPARATOR,
 	ID_SAMPLE_DRAW,
 	ID_SAMPLE_ADDSILENCE,
+	ID_SAMPLE_GENERATE,
 		ID_SEPARATOR,
 	ID_SAMPLE_GRID,
 		ID_SEPARATOR,
@@ -140,6 +142,7 @@ BEGIN_MESSAGE_MAP(CViewSample, CModScrollView)
 	ON_COMMAND(ID_SAMPLE_ZOOMDOWN,			&CViewSample::OnZoomDown)
 	ON_COMMAND(ID_SAMPLE_DRAW,				&CViewSample::OnDrawingToggle)
 	ON_COMMAND(ID_SAMPLE_ADDSILENCE,		&CViewSample::OnAddSilence)
+	ON_COMMAND(ID_SAMPLE_GENERATE,			&CViewSample::OnSampleGenerate)
 	ON_COMMAND(ID_SAMPLE_GRID,				&CViewSample::OnChangeGridSize)
 	ON_COMMAND(ID_SAMPLE_QUICKFADE,			&CViewSample::OnQuickFade)
 	ON_COMMAND(ID_SAMPLE_SLICE,				&CViewSample::OnSampleSlice)
@@ -1530,6 +1533,7 @@ void CViewSample::DrawNcButton(CDC *pDC, UINT nBtn)
 		case ID_SAMPLE_ZOOMDOWN:	nImage = SIMAGE_ZOOMDOWN; break;
 		case ID_SAMPLE_DRAW:		nImage = SIMAGE_DRAW; break;
 		case ID_SAMPLE_ADDSILENCE:	nImage = SIMAGE_RESIZE; break;
+		case ID_SAMPLE_GENERATE:	nImage = SIMAGE_GENERATE; break;
 		case ID_SAMPLE_GRID:		nImage = SIMAGE_GRID; break;
 		}
 		pDC->Draw3dRect(rect.left-1, rect.top-1, SMP_LEFTBAR_CXBTN+2, SMP_LEFTBAR_CYBTN+2, c3, c4);
@@ -3947,6 +3951,30 @@ void CViewSample::OnSampleDeleteCuePoint()
 	modDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_none, "Delete Cue Point");
 	sample.cues[m_dwMenuParam] = MAX_SAMPLE_LENGTH;
 	SetModified(SampleHint().Info().Data(), true, false);
+}
+
+
+void CViewSample::OnSampleGenerate()
+{
+	CModDoc *pModDoc = GetDocument();
+	if(pModDoc == nullptr) return;
+
+	SampleGenerator smpgen;
+	if(!smpgen.ShowDialog(this)) return;
+	if(!smpgen.CanRenderSample()) return;
+
+	pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Sample Generator");
+	pModDoc->BeginWaitCursor();
+	if(smpgen.RenderSample(pModDoc->GetSoundFile(), m_nSample))
+	{
+		SetCurSel(0, 0);
+		pModDoc->GetSoundFile().ResetSamplePath(m_nSample);
+		SetModified(SampleHint().Info().Data(), true, true);
+	} else
+	{
+		pModDoc->GetSampleUndo().RemoveLastUndoStep(m_nSample);
+	}
+	pModDoc->EndWaitCursor();
 }
 
 

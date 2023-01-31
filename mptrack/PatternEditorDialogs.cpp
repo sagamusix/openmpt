@@ -131,6 +131,15 @@ BEGIN_MESSAGE_MAP(CPatternPropertiesDlg, CDialog)
 	ON_COMMAND(IDC_BUTTON1,			&CPatternPropertiesDlg::OnTempoSwing)
 END_MESSAGE_MAP()
 
+void CPatternPropertiesDlg::DoDataExchange(CDataExchange *pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(CPatternPropertiesDlg)
+	DDX_Control(pDX, IDC_COMBO1, m_EditRows);
+	//}}AFX_DATA_MAP
+}
+
+
 BOOL CPatternPropertiesDlg::OnInitDialog()
 {
 	CComboBox *combo;
@@ -142,15 +151,14 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 	{
 		CString s;
 		const CPattern &pattern = sndFile.Patterns[m_nPattern];
-		ROWINDEX nrows = pattern.GetNumRows();
 
 		const CModSpecifications &specs = sndFile.GetModSpecifications();
 		combo->SetRedraw(FALSE);
-		for(UINT irow = specs.patternRowsMin; irow <= specs.patternRowsMax; irow++)
+		for(ROWINDEX row = specs.patternRowsMin; row <= specs.patternRowsMax; row++)
 		{
-			combo->AddString(mpt::cfmt::dec(irow));
+			combo->AddString(mpt::cfmt::dec(row));
 		}
-		combo->SetCurSel(nrows - specs.patternRowsMin);
+		combo->SetCurSel(pattern.GetNumRows() - specs.patternRowsMin);
 		combo->SetRedraw(TRUE);
 
 		CheckRadioButton(IDC_RADIO1, IDC_RADIO2, IDC_RADIO2);
@@ -283,8 +291,11 @@ void CPatternPropertiesDlg::OnOK()
 		}
 	}
 
-
-	const ROWINDEX newSize = (ROWINDEX)GetDlgItemInt(IDC_COMBO1, NULL, FALSE);
+	ROWINDEX newSize;
+	if(const auto result = m_EditRows.GetValue<ROWINDEX>(); result)
+		newSize = *result;
+	else
+		return;
 
 	// Check if any pattern data would be removed.
 	bool resize = (newSize != sndFile.Patterns[m_nPattern].GetNumRows());
