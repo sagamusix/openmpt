@@ -69,6 +69,7 @@ public:
 	CString GetMenuText(UINT id) const;
 	void UpdateMainMenu();
 	void SetNewCommandSet(const CCommandSet *newSet);
+	void RegenerateCommandSet() { m_activeCommandSet->GenKeyMap(m_keyMap); }
 	bool SetEffectLetters(const CModSpecifications &modSpecs);
 };
 

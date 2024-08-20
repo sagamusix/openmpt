@@ -20,7 +20,7 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
-#define SMP_LEFTBAR_BUTTONS		8
+#define SMP_LEFTBAR_BUTTONS		9
 class OPLInstrDlg;
 
 class CViewSample: public CModScrollView
@@ -226,6 +226,7 @@ protected:
 	afx_msg void OnZoomDown();
 	afx_msg void OnDrawingToggle();
 	afx_msg void OnAddSilence();
+	afx_msg void OnSampleGenerate();
 	afx_msg void OnChangeGridSize();
 	afx_msg void OnQuickFade();
 	afx_msg LRESULT OnMidiMsg(WPARAM, LPARAM);
