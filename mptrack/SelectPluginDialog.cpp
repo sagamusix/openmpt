@@ -29,6 +29,7 @@
 #include "../pluginBridge/BridgeWrapper.h"
 #include "../soundlib/plugins/PluginManager.h"
 #include "../soundlib/plugins/PlugInterface.h"
+#include "scripting/ScriptManager.h"
 #include "mpt/string/utility.hpp"
 
 
@@ -211,6 +212,7 @@ void CSelectPluginDlg::OnOK()
 					MemsetZero(m_pPlugin->Info);
 				}
 			}
+			Scripting::Manager::GetManager().OnNewPlugin(*m_pModDoc, static_cast<PLUGINDEX>(m_nPlugSlot + 1));
 			changed = true;
 		}
 	} else if(m_pPlugin->IsValidPlugin())

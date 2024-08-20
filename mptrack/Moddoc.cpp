@@ -60,6 +60,7 @@
 #include "mpt/io_file/outputfile.hpp"
 #include "mpt/io/io.hpp"
 #include "mpt/io/io_stdstream.hpp"
+#include "scripting/ScriptManager.h"
 
 #include <sstream>
 
@@ -186,6 +187,7 @@ BOOL CModDoc::OnNewDocument()
 
 	ReinitRecordState();
 	SetModified(false);
+	Scripting::Manager::GetManager().OnNewSong(*this);
 	return TRUE;
 }
 
@@ -285,6 +287,7 @@ BOOL CModDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	{
 		instance->SetDocument(this);
 	}
+	static_cast<CModDocTemplate *>(GetDocTemplate())->SetActiveDoc(this);
 
 	// Show warning if file was made with more recent version of OpenMPT except
 	if(m_SndFile.m_dwLastSavedWithVersion.WithoutTestNumber() > Version::Current())
@@ -1119,6 +1122,7 @@ CHANNELINDEX CModDoc::PlayNote(PlayNoteParam &params, NoteToChannelMap *noteChan
 		if(params.m_volume >= 0)
 			chn.nVolume = std::min(params.m_volume, 256);
 		chn.nnaChannelAge = 0;
+		if(params.m_panning >= 0) chn.nPan = std::min(params.m_panning, 256);
 
 		// Handle sample looping.
 		if ((params.m_loopStart + 16 < params.m_loopEnd) && (params.m_loopStart >= 0) && (chn.pModSample != nullptr))

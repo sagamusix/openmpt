@@ -42,6 +42,7 @@
 #include "SelectPluginDialog.h"
 #include "UpdateCheck.h"
 #include "WindowMessages.h"
+#include "scripting/ScriptingConsole.h"
 
 #include "../common/FileReader.h"
 #include "../common/mptFileIO.h"
@@ -68,6 +69,10 @@
 
 #include <HtmlHelp.h>
 #include <Dbt.h>  // device change messages
+
+#include <functional>
+
+static std::unique_ptr<Scripting::Console> g_Console;
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -100,6 +105,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 
 	ON_COMMAND(ID_VIEW_OPTIONS,      &CMainFrame::OnViewOptions)
 	ON_COMMAND(ID_PLUGIN_SETUP,      &CMainFrame::OnPluginManager)
+	ON_COMMAND(ID_VIEW_LUA_CONSOLE,  &CMainFrame::OnViewScriptingConsole)
 	ON_COMMAND(ID_CLIPBOARD_MANAGER, &CMainFrame::OnClipboardManager)
 	//ON_COMMAND(ID_HELP,              &CMDIFrameWnd::OnHelp)
 
@@ -120,6 +126,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_MOD_INVALIDATEPATTERNS, &CMainFrame::OnInvalidatePatterns)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,         &CMainFrame::OnCustomKeyMsg)
 	ON_MESSAGE(WM_MOD_MIDIMAPPING,        &CMainFrame::OnViewMIDIMapping)
+	ON_MESSAGE(WM_MOD_SCRIPTCALL,         &CMainFrame::OnScriptCall)
 	ON_MESSAGE(WM_MOD_UPDATEVIEWS,        &CMainFrame::OnUpdateViews)
 	ON_MESSAGE(WM_MOD_SETMODIFIED,        &CMainFrame::OnSetModified)
 #if defined(MPT_ENABLE_UPDATE)
@@ -271,6 +278,8 @@ void CMainFrame::Initialize()
 
 	LoadMetronomeSamples();
 
+	OnViewScriptingConsole();
+
 #ifdef MPT_ENABLE_PLAYBACK_TEST_MENU
 	CMenu debugMenu;
 	debugMenu.CreatePopupMenu();
@@ -284,6 +293,8 @@ void CMainFrame::Initialize()
 
 CMainFrame::~CMainFrame()
 {
+	m_InputHandler = nullptr;
+
 	CChannelManagerDlg::DestroySharedInstance();
 	m_metronomeMeasure.FreeSample();
 	m_metronomeBeat.FreeSample();
@@ -444,6 +455,12 @@ BOOL CMainFrame::DestroyWindow()
 	DeleteGDIObject(penGray99);
 	DeleteGDIObject(penHalfDarkGray);
 #undef DeleteGDIObject
+
+	if(g_Console)
+	{
+		g_Console->DestroyWindow();
+		g_Console = nullptr;
+	}
 
 	return CMDIFrameWnd::DestroyWindow();
 }
@@ -2182,6 +2199,15 @@ void CMainFrame::OnPluginManager()
 }
 
 
+void CMainFrame::OnViewScriptingConsole()
+{
+	if(g_Console && g_Console->m_hWnd)
+		g_Console->SetFocus();
+	else
+		g_Console = std::make_unique<Scripting::Console>(this);
+}
+
+
 void CMainFrame::OnClipboardManager()
 {
 	PatternClipboardDialog::Show();
@@ -2726,6 +2752,7 @@ LRESULT CMainFrame::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		case kcViewMIDImapping:
 		case kcViewEditHistory:
 		case kcViewChannelManager:
+			// TODO entry for Lua Console
 		case kcPlayPatternFromCursor:
 		case kcPlayPatternFromStart:
 		case kcPlaySongFromCursor:
@@ -3464,6 +3491,13 @@ void CMainFrame::UpdateDocumentCount()
 	{
 		m_quickStartDlg.reset();
 	}
+}
+
+
+LRESULT CMainFrame::OnScriptCall(WPARAM wParam, LPARAM /*lParam*/)
+{
+	(*reinterpret_cast<std::function<void()> *>(wParam))();
+	return 0;
 }
 
 

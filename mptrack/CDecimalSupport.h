@@ -56,7 +56,7 @@ protected:
 	/// the locale dependant negative sign
 	TCHAR m_NegativeSign[6];
 
-	bool m_allowNegative = true, m_allowFractions = true;
+	bool m_allowNegative = true, m_allowFractions = true, m_allowExpressions = false;
 
 public:
 
@@ -144,6 +144,10 @@ public:
 				bHandled = true;
 				for (TCHAR* s = lptstr; *s; ++s)
 				{
+					if(m_allowExpressions && IsValidExpressionChar(*s))
+					{
+						continue;
+					}
 					if ((*s == m_NegativeSign[0] ||*s == _T('-')) && m_allowNegative)
 					{
 
@@ -168,7 +172,7 @@ public:
 							if (*t != *(s+1)) ++dec_point;
 						}
 
-						if (dec_point)
+						if (dec_point && !m_allowExpressions)
 						{
 							bHandled = false;
 							break;
@@ -211,9 +215,17 @@ public:
 	LRESULT OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, bool &handled)
 	{
 		handled = false;
+		T *pT = static_cast<T *>(this);
+		if(m_allowExpressions && IsValidExpressionChar(static_cast<TCHAR>(wParam)))
+		{
+			const TCHAR buffer[] = {static_cast<TCHAR>(wParam), 0};
+			pT->ReplaceSel(buffer, true);
+			handled = true;
+			return 0;
+		}
+
 		if ((static_cast<TCHAR>(wParam) == m_DecimalSeparator[0] || wParam == _T('.')) && m_allowFractions)
 		{
-			T* pT = static_cast<T*>(this);
 			int nStartChar;
 			int nEndChar;
 			pT->GetSel(nStartChar, nEndChar);
@@ -223,7 +235,7 @@ public:
 			for (TCHAR* x = buffer; *x; ++x)
 			{
 				if (x - buffer == nStartChar) x += nEndChar - nStartChar;
-				if (*x == m_DecimalSeparator[0]) return 0;
+				if (*x == m_DecimalSeparator[0] && !m_allowExpressions) return 0;
 			}
 
 			pT->ReplaceSel(m_DecimalSeparator, true);
@@ -232,11 +244,10 @@ public:
 
 		if ((static_cast<TCHAR>(wParam) == m_NegativeSign[0] || wParam == _T('-')) && m_allowNegative)
 		{
-			T* pT = static_cast<T*>(this);
 			int nStartChar;
 			int nEndChar;
 			pT->GetSel(nStartChar, nEndChar);
-			if (nStartChar) return 0;
+			if (nStartChar && !m_allowExpressions) return 0;
 
 			TCHAR buffer[limit];
 			pT->GetWindowText(buffer, limit);
@@ -245,6 +256,7 @@ public:
 			pT->ReplaceSel(m_NegativeSign, true);
 			handled = true;
 		}
+
 		return 0;
 	}
 
@@ -256,6 +268,16 @@ public:
 		TCHAR szBuff[limit];
 		static_cast<const T*>(this)->GetWindowText(szBuff, limit);
 		return TextToDouble(szBuff, d);
+	}
+
+	CString GetExpression() const
+	{
+		CString s;
+		static_cast<const T*>(this)->GetWindowText(s);
+		double d = 0.0;
+		TextToDouble(s.GetBuffer(), d);
+		s.ReleaseBuffer();
+		return s;
 	}
 
 	/// converts a string to double
@@ -273,7 +295,8 @@ public:
 				if (*x == m_DecimalSeparator[0])
 				{
 					*x = _T('.');
-					break;
+					if(!m_allowExpressions)
+						break;
 				}
 			}
 
@@ -363,16 +386,40 @@ public:
 		szBuff[std::min(buflen - 1, last_nonzero)] = _T('\0');
 	}
 
-	void AllowNegative(bool allow)
+	bool IsValidExpressionChar(TCHAR ch) const noexcept
+	{
+		switch(ch)
+		{
+		case _T('+'):
+		case _T('-'):
+		case _T('*'):
+		case _T('/'):
+		case _T('%'):
+		case _T('^'):
+		case _T('('):
+		case _T(')'):
+		case _T(' '):
+		case _T('\t'):
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	void AllowNegative(bool allow) noexcept
 	{
 		m_allowNegative = allow;
 	}
 
-	void AllowFractions(bool allow)
+	void AllowFractions(bool allow) noexcept
 	{
 		m_allowFractions = allow;
 	}
 
+	void AllowExpressions(bool allow) noexcept
+	{
+		m_allowExpressions = allow;
+	}
 };
 
 
