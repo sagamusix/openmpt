@@ -1,0 +1,5 @@
+This is Sol 3.5.0 commit c1f95a773c6f8f4fde8ca3efe872e7286afe4444 (2025-03-07)
+https://github.com/ThePhD/sol2/
+The following changes have been made:
+- Unnecessary folders and files have been removed.
+- Amalgamated header was generated.

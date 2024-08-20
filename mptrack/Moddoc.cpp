@@ -58,6 +58,7 @@
 #include "mpt/io_file/outputfile.hpp"
 #include "mpt/io/io.hpp"
 #include "mpt/io/io_stdstream.hpp"
+#include "scripting/ScriptManager.h"
 
 #include <sstream>
 
@@ -184,6 +185,7 @@ BOOL CModDoc::OnNewDocument()
 
 	ReinitRecordState();
 	SetModified(false);
+	Scripting::Manager::GetManager().OnNewSong(*this);
 	return TRUE;
 }
 
@@ -283,6 +285,7 @@ BOOL CModDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	{
 		instance->SetDocument(this);
 	}
+	static_cast<CModDocTemplate *>(GetDocTemplate())->SetActiveDoc(this);
 
 	// Show warning if file was made with more recent version of OpenMPT except
 	if(m_SndFile.m_dwLastSavedWithVersion.WithoutTestNumber() > Version::Current())

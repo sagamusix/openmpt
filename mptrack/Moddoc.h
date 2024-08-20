@@ -98,7 +98,7 @@ struct PlayNoteParam
 	PlayNoteParam& Offset(SmpLength sampleOffset) { m_sampleOffset = sampleOffset; return *this; }
 
 	PlayNoteParam& Volume(int32 volume) { m_volume = volume; return *this; }
-	PlayNoteParam& Panning(int32 panning) { m_panning= panning; return *this; }
+	PlayNoteParam& Panning(int32 panning) { m_panning = panning; return *this; }
 	PlayNoteParam& Sample(SAMPLEINDEX sample) { m_sample = sample; return *this; }
 	PlayNoteParam& Instrument(INSTRUMENTINDEX instr) { m_instr = instr; return *this; }
 	PlayNoteParam& Channel(CHANNELINDEX channel) { m_currentChannel = channel; return *this; }
