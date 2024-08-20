@@ -20,6 +20,7 @@
 #include "PluginComboBox.h"
 #include "ResizableDialog.h"
 #include "TrackerSettings.h"
+#include "CScriptableEdit.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -69,6 +70,7 @@ protected:
 	PATTERNINDEX m_nPattern;
 	CSpinButtonCtrl m_spinPattern, m_spinRPB, m_spinRPM;
 	CComboBox m_numRows;
+	CScriptableEdit m_EditRows;
 	ColorPickerButton m_colorBtn;
 	bool m_locked = true;
 };

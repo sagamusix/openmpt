@@ -11,6 +11,7 @@ end
 include_dependency "../../build/premake/ext-flac.lua"
 include_dependency "../../build/premake/ext-lame.lua"
 include_dependency "../../build/premake/ext-lhasa.lua"
+include_dependency "../../build/premake/ext-lua.lua"
 include_dependency "../../build/premake/ext-minizip.lua"
 include_dependency "../../build/premake/ext-mpg123.lua"
 include_dependency "../../build/premake/ext-nlohmann-json.lua"
@@ -85,6 +86,7 @@ end
 	mpt_use_lame()
 	defines { "MPT_WITH_LAME" }
 	mpt_use_lhasa()
+	mpt_use_lua()
 	defines { "MPT_WITH_LHASA" }
 	mpt_use_minizip()
 	defines { "MPT_WITH_MINIZIP" }
@@ -157,6 +159,10 @@ end
    "../../mptrack/*.h",
    "../../mptrack/plugins/*.cpp",
    "../../mptrack/plugins/*.h",
+   "../../mptrack/scripting/*.cpp",
+   "../../mptrack/scripting/*.h",
+   "../../mptrack/scripting/api/*.cpp",
+   "../../mptrack/scripting/api/*.h",
    "../../test/*.cpp",
    "../../test/*.h",
    "../../pluginBridge/BridgeCommon.h",
@@ -217,8 +223,10 @@ end
   }
 	end
   filter { "action:vs*" }
+    buildoptions { "/bigobj" } -- required for template hell in scripting support
     files {
       "../../build/vs/debug/openmpt.natvis",
+      "../../include/lua-sol2/sol2.natvis",
     }
   filter {}
   prebuildcommands { "..\\..\\build\\svn_version\\update_svn_version_vs_premake.cmd $(IntDir)" }

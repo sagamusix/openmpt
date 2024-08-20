@@ -11,6 +11,7 @@
 #include "stdafx.h"
 #include "Moddoc.h"
 #include "../soundlib/mod_specifications.h"
+#include "scripting/ScriptManager.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -96,6 +97,7 @@ void CModDoc::AppendModule(const CSoundFile &source)
 						ins->nMixPlug = pluginMapping[ins->nMixPlug];
 					}
 					instrMapping[i] = targetIns;
+					Scripting::Manager::GetManager().OnNewInstrument(*this, targetIns);
 				}
 			}
 		} else
@@ -119,6 +121,7 @@ void CModDoc::AppendModule(const CSoundFile &source)
 					m_SndFile.ReadSampleFromSong(targetSmp, source, i);
 				}
 				instrMapping[i] = targetIns;
+				Scripting::Manager::GetManager().OnNewInstrument(*this, targetIns);
 			}
 		}
 	} else
@@ -136,6 +139,7 @@ void CModDoc::AppendModule(const CSoundFile &source)
 				}
 				m_SndFile.ReadSampleFromSong(targetSmp, source, source.Instruments[i]->Keyboard[NOTE_MIDDLEC - NOTE_MIN]);
 				instrMapping[i] = targetSmp;
+				Scripting::Manager::GetManager().OnNewSample(*this, targetSmp);
 			}
 		} else
 		{
@@ -149,6 +153,7 @@ void CModDoc::AppendModule(const CSoundFile &source)
 				}
 				m_SndFile.ReadSampleFromSong(targetSmp, source, i);
 				instrMapping[i] = targetSmp;
+				Scripting::Manager::GetManager().OnNewSample(*this, targetSmp);
 			}
 		}
 	}
@@ -194,6 +199,7 @@ void CModDoc::AppendModule(const CSoundFile &source)
 						AddToLog("Too many patterns!");
 						break;
 					}
+					Scripting::Manager::GetManager().OnNewPattern(*this, patternMapping[srcPat], insertPos);
 				}
 				if(patternMapping[srcPat] == PATTERNINDEX_INVALID)
 				{

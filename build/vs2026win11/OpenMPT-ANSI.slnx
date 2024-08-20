@@ -19,6 +19,8 @@
   </Project>
   <Project Path="ext\lhasa.vcxproj" Id="6B11F6A8-B131-4D2B-80EF-5731A9016436">
   </Project>
+  <Project Path="ext\lua.vcxproj" Id="5C2FAD13-3006-4D75-AF2A-8C50A6B533DB">
+  </Project>
   <Project Path="ext\minizip.vcxproj" Id="63AF9025-A6CE-4147-A05D-6E2CCFD3A0D7">
   </Project>
   <Project Path="ext\mpg123.vcxproj" Id="7ADFAFB9-0A83-4D35-9891-FB24FDF30B53">

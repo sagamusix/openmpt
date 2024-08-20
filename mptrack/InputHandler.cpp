@@ -18,6 +18,7 @@
 #include "WindowMessages.h"
 #include "../soundlib/MIDIEvents.h"
 #include "mpt/fs/fs.hpp"
+#include "scripting/ScriptManager.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -77,14 +78,19 @@ CommandID CInputHandler::SendCommands(CWnd *wnd, const KeyMapRange &cmd)
 		{
 			commands.push_back(*i);
 		}
-		for(const auto &i : commands)
+		for(const auto &[kc, id] : commands)
 		{
-			m_lastCommands[m_lastCommandPos] = i.second;
+			m_lastCommands[m_lastCommandPos] = id;
 			m_lastCommandPos = (m_lastCommandPos + 1) % m_lastCommands.size();
-			if(wnd->SendMessage(WM_MOD_KEYCOMMAND, i.second, i.first.AsLPARAM()) != kcNull)
+
+			if(id >= kcScriptableCommandBase && id <= kcScriptableCommandEnd)
+			{
+				Scripting::Manager::GetManager().OnShortcut(id);
+				executeCommand = id;
+			} else if(wnd->SendMessage(WM_MOD_KEYCOMMAND, id, kc.AsLPARAM()) != kcNull)
 			{
 				// Command was handled, no need to let the OS handle the key
-				executeCommand = i.second;
+				executeCommand = id;
 			}
 		}
 	}
@@ -439,6 +445,7 @@ CString CInputHandler::GetMenuText(UINT id) const
 		{ ID_VIEW_TOOLBAR,        kcViewMain,               _T("Show &Main Toolbar") },
 		{ IDD_TREEVIEW,           kcViewTree,               _T("Show &Tree View") },
 		{ ID_PLUGIN_SETUP,        kcViewAddPlugin,          _T("Pl&ugin Manager") },
+		//{ ID_VIEW_SCRIPTINGCONSOLE, kcTODO, _T("Lua Scripting C&onsole")},
 		{ ID_CHANNEL_MANAGER,     kcViewChannelManager,     _T("Ch&annel Manager") },
 		{ ID_CLIPBOARD_MANAGER,   kcToggleClipboardManager, _T("C&lipboard Manager") },
 		{ ID_VIEW_SONGPROPERTIES, kcViewSongProperties,     _T("Song P&roperties") },

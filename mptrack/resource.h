@@ -86,6 +86,7 @@
 #define IDD_PITCHSHIFT                  442
 #define IDD_OPTIONS_AUTOSAVE            443
 #define IDD_EDIT_GOTO                   444
+#define IDD_SCRIPTING_CONSOLE           500
 #define IDD_MOVEFXSLOT                  501
 #define IDD_LEGACY_PLAYBACK             502
 #define IDD_FIND_RANGE                  503
@@ -1220,6 +1221,7 @@
 #define ID_FILE_OPENTEMPLATE            43055
 // From here: Command range [ID_FILE_OPENTEMPLATE, ID_FILE_OPENTEMPLATE_LASTINRANGE]
 #define ID_FILE_OPENTEMPLATE_LASTINRANGE 43105
+#define ID_VIEW_LUA_CONSOLE             43142
 #define ID_INDICATOR_TIME               43143
 #define ID_INDICATOR_USER               43144
 #define ID_INDICATOR_INFO               43145
