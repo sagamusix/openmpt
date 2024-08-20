@@ -40,6 +40,8 @@
   </Project>
   <Project Path="libopenmpt_test.vcxproj" Id="0A313F63-131E-46A0-931D-23C3A3D488F2">
   </Project>
+  <Project Path="ext\lua.vcxproj" Id="5C2FAD13-3006-4D75-AF2A-8C50A6B533DB">
+  </Project>
   <Project Path="ext\minimp3.vcxproj" Id="E88C4285-EFB1-4226-BCAC-E904BA792A48">
   </Project>
   <Project Path="ext\miniz.vcxproj" Id="B5E0C06B-8121-426A-8FFB-4293ECAAE29C">

@@ -138,7 +138,6 @@ BEGIN_MESSAGE_MAP(CPatternPropertiesDlg, DialogBase)
 	ON_EN_CHANGE(IDC_EDIT1,       &CPatternPropertiesDlg::OnPatternChanged)
 END_MESSAGE_MAP()
 
-
 void CPatternPropertiesDlg::DoDataExchange(CDataExchange *pDX)
 {
 	DialogBase::DoDataExchange(pDX);
@@ -165,7 +164,10 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 	COMBOBOXINFO cbi{};
 	cbi.cbSize = sizeof(cbi);
 	GetComboBoxInfo(m_numRows, &cbi);
-	CWnd::FromHandle(cbi.hwndItem)->ModifyStyle(0, ES_NUMBER);
+	(m_EditRows.SubclassWindow)(cbi.hwndItem);
+	m_EditRows.ModifyStyle(0, ES_NUMBER);
+	m_EditRows.AllowFractions(false);
+	m_EditRows.AllowNegative(false);
 
 	const CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	const CModSpecifications &specs = sndFile.GetModSpecifications();
@@ -253,7 +255,8 @@ void CPatternPropertiesDlg::StorePatternProperties()
 	CString str;
 	GetDlgItemText(IDC_EDIT2, str);
 	prop.name = mpt::ToCharset(m_modDoc.GetSoundFile().GetCharsetInternal(), str);
-	prop.numRows = GetDlgItemInt(IDC_COMBO1);
+	if(auto rows = m_EditRows.GetValue<ROWINDEX>(); rows)
+		prop.numRows = *rows;
 	prop.resizeAtEnd = IsDlgButtonChecked(IDC_RADIO2) != BST_UNCHECKED;
 	prop.repeatContents = IsDlgButtonChecked(IDC_CHECK2) != BST_UNCHECKED;
 	if(IsDlgButtonChecked(IDC_CHECK1) != BST_UNCHECKED)
@@ -269,6 +272,13 @@ void CPatternPropertiesDlg::StorePatternProperties()
 
 bool CPatternPropertiesDlg::ValidatePatternProperties()
 {
+	if(!m_EditRows.GetValue<ROWINDEX>())
+	{
+		SetDlgItemInt(IDC_EDIT1, m_nPattern);
+		m_EditRows.SetFocus();
+		return false;
+	}
+
 	StorePatternProperties();
 
 	CSoundFile &sndFile = m_modDoc.GetSoundFile();
@@ -301,7 +311,7 @@ bool CPatternPropertiesDlg::ValidatePatternProperties()
 				{
 					SetCurrentPattern(m_nPattern);
 					SetDlgItemInt(IDC_EDIT1, m_nPattern);
-					m_numRows.SetFocus();
+					m_EditRows.SetFocus();
 					return false;
 				}
 				break;

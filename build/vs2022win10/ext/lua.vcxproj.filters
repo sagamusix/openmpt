@@ -1,0 +1,570 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="lua">
+      <UniqueIdentifier>{C78D880B-3397-887C-BC12-9F7C281B947C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua\src">
+      <UniqueIdentifier>{5ED73395-CAB6-B230-D3CE-3D073F2D1992}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2">
+      <UniqueIdentifier>{B4868A3B-A053-E546-C96C-D3EEB5981AD5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include">
+      <UniqueIdentifier>{2722BD2A-131B-DC7C-3C4D-C10128A5BB88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol">
+      <UniqueIdentifier>{649B5BAB-502A-E574-F948-F96FE5B6F51A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol\compatibility">
+      <UniqueIdentifier>{0DF8FFFE-F933-0369-6246-1B604EA1AB83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol\detail">
+      <UniqueIdentifier>{A65A302F-1268-5E15-9B4E-5A00075B2ACC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol\stack">
+      <UniqueIdentifier>{A953288E-9563-D45E-FE1C-397DEA4BC3F7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol\stack\detail">
+      <UniqueIdentifier>{4B733C73-B7E1-91F2-00CB-4CF26C78878E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua-sol2\include\sol\utility">
+      <UniqueIdentifier>{C7151654-B3D0-0500-5C88-7E4A48225090}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\abort.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\as_args.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\as_returns.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\assert.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\base_traits.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\bind_traits.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\bytecode.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\call.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\compatibility.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\compatibility\lua_version.hpp">
+      <Filter>lua-sol2\include\sol\compatibility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\config.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\coroutine.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\debug.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\demangle.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\deprecate.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\detail\build_version.hpp">
+      <Filter>lua-sol2\include\sol\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\dump_handler.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\ebco.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\environment.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\epilogue.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\error.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\error_handler.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\forward.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\forward_as.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\forward_detail.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_result.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types_core.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types_overloaded.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types_stateful.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types_stateless.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\function_types_templated.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\in_place.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\inheritance.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\load_result.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\lua_table.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\lua_value.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\make_reference.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\metatable.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\object.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\object_base.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\optional.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\optional_implementation.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\overload.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\packaged_coroutine.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\pairs_iterator.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\pointer_like.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\policies.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\prologue.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\property.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\protect.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\protected_function.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\protected_function_result.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\protected_handler.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\proxy_base.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\raii.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\reference.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\resolve.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\sol.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack\detail\pairs.hpp">
+      <Filter>lua-sol2\include\sol\stack\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check_get.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check_get_qualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check_get_unqualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check_qualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_check_unqualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_core.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_field.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_get.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_get_qualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_get_unqualified.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_guard.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_iterator.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_pop.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_probe.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_proxy.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_proxy_base.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_push.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\stack_reference.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\state.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\state_handling.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\state_view.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\string_view.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\table.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\table_core.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\table_iterator.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\table_proxy.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\thread.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\tie.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\traits.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\trampoline.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\tuple.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\types.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\unicode.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\unique_usertype_traits.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\unreachable.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\unsafe_function.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\unsafe_function_result.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\userdata.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_container.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_container_launch.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_core.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_proxy.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_storage.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\usertype_traits.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\utility\is_integer.hpp">
+      <Filter>lua-sol2\include\sol\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\utility\to_string.hpp">
+      <Filter>lua-sol2\include\sol\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\variadic_args.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\variadic_results.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\version.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua-sol2\include\sol\wrapper.hpp">
+      <Filter>lua-sol2\include\sol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\openmpt.h">
+      <Filter>lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lapi.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lauxlib.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lcode.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lctype.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\ldebug.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\ldo.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lfunc.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lgc.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\ljumptab.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\llex.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\llimits.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lmem.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lobject.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lopcodes.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lopnames.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lparser.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lprefix.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lstate.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lstring.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\ltable.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\ltm.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lua.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lua.hpp">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\luaconf.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lualib.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lundump.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lvm.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\lua\src\lzio.h">
+      <Filter>lua\src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\include\lua\openmpt.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lapi.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lauxlib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lbaselib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lbitlib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lcode.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lcorolib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lctype.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ldblib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ldebug.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ldo.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ldump.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lfunc.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lgc.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\linit.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\liolib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\llex.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lmathlib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lmem.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\loadlib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lobject.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lopcodes.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\loslib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lparser.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lstate.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lstring.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lstrlib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ltable.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ltablib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\ltm.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lundump.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lutf8lib.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lvm.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\lua\src\lzio.c">
+      <Filter>lua\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

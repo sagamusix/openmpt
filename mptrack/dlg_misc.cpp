@@ -1735,27 +1735,29 @@ void MsgBoxHidable(enMsgBoxHidableMessage enMsg)
 	if((TrackerSettings::Instance().gnMsgBoxVisiblityFlags & msg.mask) == 0)
 		return;
 
-#if MPT_WINNT_AT_LEAST(MPT_WIN_VISTA) && defined(UNICODE)
-	if(CTaskDialog::IsSupported()
-	   && !(mpt::OS::Windows::IsWine() && theApp.GetWineVersion()->Version().IsBefore(mpt::OS::Wine::Version(3, 13, 0))))
-	{
-		CTaskDialog taskDialog(msg.message, msg.mainTitle ? CString{msg.mainTitle} : CString{}, AfxGetAppName(), TDCBF_OK_BUTTON);
-		taskDialog.SetVerificationCheckboxText(_T("Do not show this message again"));
-		taskDialog.SetVerificationCheckbox(msg.defaultDontShowAgainStatus);
-		taskDialog.DoModal();
+	TaskDlg dlg = TaskDlg{}
+		.WindowTitle(msg.mainTitle)
+		.Icon(MB_ICONINFORMATION);
 
-		if(taskDialog.GetVerificationCheckboxState())
-			TrackerSettings::Instance().gnMsgBoxVisiblityFlags &= ~msg.mask;
-		else
-			TrackerSettings::Instance().gnMsgBoxVisiblityFlags |= msg.mask;
-	} else
-#endif
+	bool dontShowAgain;
+	if(TaskDlg::ModernTaskDialogSupported())
 	{
-		if(Reporting::Confirm(msg.message + CString(_T("\n\nShow this message again?")), msg.mainTitle ? CString{msg.mainTitle} : CString{}, msg.defaultDontShowAgainStatus) == cnfNo)
-			TrackerSettings::Instance().gnMsgBoxVisiblityFlags &= ~msg.mask;
-		else
-			TrackerSettings::Instance().gnMsgBoxVisiblityFlags |= msg.mask;
+		dlg.Description(msg.message)
+			.VerificationText(_T("Do not show this message again"))
+			.VerificationChecked(msg.defaultDontShowAgainStatus);
+		dontShowAgain = dlg.DoModal().verificationChecked;
+	} else
+	{
+		dlg.Description(CString{msg.message} + _T("\n\nShow this message again?"))
+			.Buttons({{_T("Yes"), IDYES}, {_T("No"), IDNO} })
+			.DefaultButton(msg.defaultDontShowAgainStatus ? IDNO : IDYES);
+		dontShowAgain = dlg.DoModal().buttonId == IDNO;
 	}
+
+	if(dontShowAgain)
+		TrackerSettings::Instance().gnMsgBoxVisiblityFlags &= ~msg.mask;
+	else
+		TrackerSettings::Instance().gnMsgBoxVisiblityFlags |= msg.mask;
 }
 
 
