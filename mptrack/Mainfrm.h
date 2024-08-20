@@ -324,6 +324,9 @@ public:
 	void CreateTemplateModulesMenu();
 	static std::pair<CMenu *, int> FindMenuItemByCommand(CMenu &menu, UINT commandID);
 
+	const std::vector<mpt::PathString> &GetExampleModulePaths() const { return m_ExampleModulePaths; }
+	const std::vector<mpt::PathString> &GetTemplateModulePaths() const { return m_TemplateModulePaths; }
+
 	// Creates submenu whose items are filenames of files in both
 	// AppDirectory\folderName\ (usually C:\Program Files\OpenMPT\folderName\)
 	// and
@@ -430,6 +433,7 @@ public:
 	afx_msg void OnAddDlsBank();
 	afx_msg void OnImportMidiLib();
 	afx_msg void OnViewOptions();
+	afx_msg void OnViewScriptingConsole();
 	afx_msg void OnHelp();
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -497,6 +501,7 @@ protected:
 	afx_msg void OnVerifyMixerDump();
 	afx_msg void OnConvertMixerDumpToText();
 
+	afx_msg LRESULT OnScriptCall(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
