@@ -15,6 +15,7 @@
 #include "resource.h"
 #include "TrackerSettings.h"
 #include "WindowMessages.h"
+#include "scripting/ScriptManager.h"
 #include "../soundlib/MIDIEvents.h"
 
 #include <mmsystem.h>
@@ -99,6 +100,7 @@ void CALLBACK MidiInCallBack(HMIDIIN, UINT wMsg, DWORD_PTR, DWORD_PTR dwParam1, 
 	if(wMsg == MIM_DATA || wMsg == MIM_MOREDATA)
 	{
 		uint32 data = static_cast<uint32>(dwParam1);
+		Scripting::Manager::GetManager().OnMidiMessage(data);
 		if(::IsWindow(hWndMidi))
 		{
 			switch(MIDIEvents::GetTypeFromEvent(data))

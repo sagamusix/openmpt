@@ -1,0 +1,5 @@
+This is Sol 3.3.0 commit 19898d8d3e6c3def33625082343428be1bb9387b (2023-01-07)
+https://github.com/ThePhD/sol2/
+The following changes have been made:
+- Unnecessary folders and files have been removed.
+- Amalgamated header was generated.

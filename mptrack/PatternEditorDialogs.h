@@ -20,6 +20,7 @@
 #include "PluginComboBox.h"
 #include "ResizableDialog.h"
 #include "TrackerSettings.h"
+#include "CScriptableEdit.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -29,6 +30,7 @@ struct SplitKeyboardSettings;
 class CPatternPropertiesDlg : public DialogBase
 {
 protected:
+	CScriptableEdit m_EditRows;
 	CModDoc &modDoc;
 	TempoSwing m_tempoSwing;
 	PATTERNINDEX m_nPattern;
@@ -37,6 +39,7 @@ public:
 	CPatternPropertiesDlg(CModDoc &modParent, PATTERNINDEX nPat, CWnd *parent = nullptr);
 
 protected:
+	void DoDataExchange(CDataExchange *pDX) override;
 	BOOL OnInitDialog() override;
 	void OnOK() override;
 	afx_msg void OnHalfRowNumber();

@@ -16,6 +16,12 @@
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{89AF369E-F58E-B539-FEA6-40106A051C9B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\lua-sol2">
+      <UniqueIdentifier>{87358380-732E-A2D2-9C60-875788B881DE}</UniqueIdentifier>
+    </Filter>
     <Filter Include="misc">
       <UniqueIdentifier>{B1A29A7C-9DD9-9B0D-46C6-811032DC170F}</UniqueIdentifier>
     </Filter>
@@ -27,6 +33,12 @@
     </Filter>
     <Filter Include="mptrack\res">
       <UniqueIdentifier>{3025A28F-9CDA-1A85-25CF-145C91831189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mptrack\scripting">
+      <UniqueIdentifier>{599FED26-C5B5-EBBC-0E2D-77DE7A82BC44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mptrack\scripting\api">
+      <UniqueIdentifier>{22150B19-8E81-C613-5775-5E71C3A0E87B}</UniqueIdentifier>
     </Filter>
     <Filter Include="pluginBridge">
       <UniqueIdentifier>{E1FAE259-CD5D-72FE-76E3-AAB462253E81}</UniqueIdentifier>
@@ -363,6 +375,9 @@
     <ClInclude Include="..\..\mptrack\CListCtrl.h">
       <Filter>mptrack</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mptrack\CScriptableEdit.h">
+      <Filter>mptrack</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\mptrack\ChannelManagerDlg.h">
       <Filter>mptrack</Filter>
     </ClInclude>
@@ -653,6 +668,60 @@
     </ClInclude>
     <ClInclude Include="..\..\mptrack\resource.h">
       <Filter>mptrack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\LuaVM.h">
+      <Filter>mptrack\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\Script.h">
+      <Filter>mptrack\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\ScriptManager.h">
+      <Filter>mptrack\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\ScriptPackage.h">
+      <Filter>mptrack\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\ScriptingConsole.h">
+      <Filter>mptrack\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaChannel.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaDump.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaGlobals.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaInstrument.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaObject.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaPattern.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaPlugin.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSample.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSequence.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSong.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaTimeSignature.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\ProxyContainer.h">
+      <Filter>mptrack\scripting\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mptrack\scripting\api\ScopedLock.h">
+      <Filter>mptrack\scripting\api</Filter>
     </ClInclude>
     <ClInclude Include="..\..\mptrack\tuningRatioMapWnd.h">
       <Filter>mptrack</Filter>
@@ -1685,6 +1754,9 @@
     <ClCompile Include="..\..\mptrack\CImageListEx.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mptrack\CScriptableEdit.cpp">
+      <Filter>mptrack</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mptrack\ChannelManagerDlg.cpp">
       <Filter>mptrack</Filter>
     </ClCompile>
@@ -1966,6 +2038,21 @@
     </ClCompile>
     <ClCompile Include="..\..\mptrack\plugins\MidiInOutEditor.cpp">
       <Filter>mptrack\plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\scripting\Script.cpp">
+      <Filter>mptrack\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\scripting\ScriptIntegration.cpp">
+      <Filter>mptrack\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\scripting\ScriptManager.cpp">
+      <Filter>mptrack\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\scripting\ScriptPackage.cpp">
+      <Filter>mptrack\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mptrack\scripting\ScriptingConsole.cpp">
+      <Filter>mptrack\scripting</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mptrack\tuningRatioMapWnd.cpp">
       <Filter>mptrack</Filter>
@@ -2566,6 +2653,9 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
+    <Natvis Include="..\..\include\lua-sol2\sol2.natvis">
+      <Filter>include\lua-sol2</Filter>
+    </Natvis>
     <Natvis Include="..\vs\debug\openmpt.natvis">
       <Filter>build\vs\debug</Filter>
     </Natvis>

@@ -431,6 +431,9 @@ void CSoundFile::ProcessDSP(uint32 countChunk)
 
 bool CSoundFile::ProcessRow()
 {
+#ifdef MODPLUG_TRACKER
+	//if(GetpModDoc()) GetpModDoc()->GetScriptManager().OnTick();
+#endif
 	while(++m_PlayState.m_nTickCount >= m_PlayState.TicksOnRow())
 	{
 		const auto [ignoreRow, patternTransition] = NextRow(m_PlayState, m_PlayState.m_flags[SONG_BREAKTOROW]);

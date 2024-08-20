@@ -445,6 +445,7 @@ protected:
 	afx_msg void OnVerifyMixerDump();
 	afx_msg void OnConvertMixerDumpToText();
 
+	afx_msg LRESULT OnScriptCall(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:

@@ -84,6 +84,7 @@
 #define IDD_PITCHSHIFT                  442
 #define IDD_OPTIONS_AUTOSAVE            443
 #define IDD_EDIT_GOTO                   444
+#define IDD_SCRIPTING_CONSOLE           500
 #define IDD_MOVEFXSLOT                  501
 #define IDD_LEGACY_PLAYBACK             502
 #define IDD_FIND_RANGE                  503

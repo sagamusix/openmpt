@@ -429,13 +429,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -444,7 +445,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -467,13 +468,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -482,7 +484,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -505,13 +507,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -520,7 +523,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -542,7 +545,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -553,7 +556,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -562,7 +565,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -586,7 +589,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -596,7 +599,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -605,7 +608,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -629,7 +632,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -639,7 +642,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -648,7 +651,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -672,7 +675,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -684,7 +687,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -693,7 +696,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -717,7 +720,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -728,7 +731,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -737,7 +740,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -761,7 +764,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -772,7 +775,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -781,7 +784,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;MPT_WITH_ANCIENT;MPT_WITH_ASIO;FLAC__NO_DLL;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -805,13 +808,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -820,7 +824,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -842,13 +846,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -857,7 +862,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -879,13 +884,14 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -894,7 +900,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_DEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -916,7 +922,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -927,7 +933,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -936,7 +942,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -960,7 +966,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -970,7 +976,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -979,7 +985,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1003,7 +1009,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MaxSpeed</Optimization>
@@ -1013,7 +1019,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -1022,7 +1028,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1046,7 +1052,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -1058,7 +1064,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -1067,7 +1073,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"x86\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1091,7 +1097,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -1102,7 +1108,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -1111,7 +1117,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"amd64\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1135,7 +1141,7 @@
       <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>PCH.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -1146,7 +1152,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/Gw /Zc:checkGwOdr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Gw /Zc:checkGwOdr /bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ConformanceMode>true</ConformanceMode>
@@ -1155,7 +1161,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>DEBUG;MPT_BUILD_CHECKED;MPT_BUILD_MSVC;WIN32;NOMINMAX;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;_CSTRING_DISABLE_NARROW_WIDE_CONVERSION;_AFX_NO_MFC_CONTROLS_IN_DIALOGS;MPT_WITH_MFC;ANCIENT_API_DECLSPEC_DLLIMPORT;MPT_WITH_ANCIENT;MPT_WITH_ASIO;MPT_WITH_FLAC;MPT_WITH_LAME;MPT_WITH_LHASA;MPT_WITH_MINIZIP;MPG123_NO_LARGENAME;MPT_WITH_MPG123;MPT_WITH_NLOHMANNJSON;MPT_WITH_OGG;MPT_WITH_OPUS;MPT_WITH_OPUSENC;MPT_WITH_OPUSFILE;MPT_WITH_PORTAUDIO;MPT_WITH_R8BRAIN;MPT_WITH_RTAUDIO;MPT_WITH_RTMIDI;MPT_WITH_SIGNALSMITH_STRETCH;MPT_WITH_UNRAR;MPT_WITH_VORBIS;MPT_WITH_VORBISENC;MPT_WITH_VORBISFILE;ZLIB_DLL;MPT_WITH_ZLIB;MPT_BUILD_ENABLE_PCH;MODPLUG_TRACKER;VER_ARCHNAME=\"arm\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\ancient\api;..\..\include\asiomodern\include;..\..\include\flac\include;..\..\include\lame\include;..\..\include\lhasa\lib\public;..\..\include\lua\src;..\..\include\lua-sol2\single\include;..\..\include\mpg123\src\include;..\..\include\nlohmann-json\include;..\..\include\ogg\include;..\..\include\opus\include;..\..\include\opusenc\include;..\..\include\opusfile\include;..\..\include\portaudio\include;..\..\include\rtaudio;..\..\include\SignalsmithStretch;..\..\include;..\..\include\vorbis\include;..\..\include\zlib;..\..\src;..\..\common;..\..\soundlib;$(IntDir)\svn_version;..\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1227,6 +1233,7 @@
     <ClInclude Include="..\..\mptrack\CDecimalSupport.h" />
     <ClInclude Include="..\..\mptrack\CImageListEx.h" />
     <ClInclude Include="..\..\mptrack\CListCtrl.h" />
+    <ClInclude Include="..\..\mptrack\CScriptableEdit.h" />
     <ClInclude Include="..\..\mptrack\ChannelManagerDlg.h" />
     <ClInclude Include="..\..\mptrack\Childfrm.h" />
     <ClInclude Include="..\..\mptrack\CleanupSong.h" />
@@ -1324,6 +1331,24 @@
     <ClInclude Include="..\..\mptrack\plugins\VstEventQueue.h" />
     <ClInclude Include="..\..\mptrack\plugins\VstOpCodes.h" />
     <ClInclude Include="..\..\mptrack\resource.h" />
+    <ClInclude Include="..\..\mptrack\scripting\LuaVM.h" />
+    <ClInclude Include="..\..\mptrack\scripting\Script.h" />
+    <ClInclude Include="..\..\mptrack\scripting\ScriptManager.h" />
+    <ClInclude Include="..\..\mptrack\scripting\ScriptPackage.h" />
+    <ClInclude Include="..\..\mptrack\scripting\ScriptingConsole.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaChannel.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaDump.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaGlobals.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaInstrument.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaObject.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaPattern.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaPlugin.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSample.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSequence.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaSong.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\LuaTimeSignature.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\ProxyContainer.h" />
+    <ClInclude Include="..\..\mptrack\scripting\api\ScopedLock.h" />
     <ClInclude Include="..\..\mptrack\tuningRatioMapWnd.h" />
     <ClInclude Include="..\..\mptrack\view_com.h" />
     <ClInclude Include="..\..\pluginBridge\BridgeCommon.h" />
@@ -1669,6 +1694,7 @@
     <ClCompile Include="..\..\mptrack\Autotune.cpp" />
     <ClCompile Include="..\..\mptrack\CDecimalSupport.cpp" />
     <ClCompile Include="..\..\mptrack\CImageListEx.cpp" />
+    <ClCompile Include="..\..\mptrack\CScriptableEdit.cpp" />
     <ClCompile Include="..\..\mptrack\ChannelManagerDlg.cpp" />
     <ClCompile Include="..\..\mptrack\Childfrm.cpp" />
     <ClCompile Include="..\..\mptrack\CleanupSong.cpp" />
@@ -1763,6 +1789,11 @@
     <ClCompile Include="..\..\mptrack\plugins\LFOPluginEditor.cpp" />
     <ClCompile Include="..\..\mptrack\plugins\MidiInOut.cpp" />
     <ClCompile Include="..\..\mptrack\plugins\MidiInOutEditor.cpp" />
+    <ClCompile Include="..\..\mptrack\scripting\Script.cpp" />
+    <ClCompile Include="..\..\mptrack\scripting\ScriptIntegration.cpp" />
+    <ClCompile Include="..\..\mptrack\scripting\ScriptManager.cpp" />
+    <ClCompile Include="..\..\mptrack\scripting\ScriptPackage.cpp" />
+    <ClCompile Include="..\..\mptrack\scripting\ScriptingConsole.cpp" />
     <ClCompile Include="..\..\mptrack\tuningRatioMapWnd.cpp" />
     <ClCompile Include="..\..\mptrack\view_com.cpp" />
     <ClCompile Include="..\..\pluginBridge\BridgeWrapper.cpp" />
@@ -1970,6 +2001,7 @@
     <Image Include="..\..\mptrack\res\view_pat.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <Natvis Include="..\..\include\lua-sol2\sol2.natvis" />
     <Natvis Include="..\vs\debug\openmpt.natvis" />
   </ItemGroup>
   <ItemGroup>
@@ -1984,6 +2016,9 @@
     </ProjectReference>
     <ProjectReference Include="ext\lhasa.vcxproj">
       <Project>{6B11F6A8-B131-4D2B-80EF-5731A9016436}</Project>
+    </ProjectReference>
+    <ProjectReference Include="ext\lua.vcxproj">
+      <Project>{5C2FAD13-3006-4D75-AF2A-8C50A6B533DB}</Project>
     </ProjectReference>
     <ProjectReference Include="ext\minizip.vcxproj">
       <Project>{63AF9025-A6CE-4147-A05D-6E2CCFD3A0D7}</Project>
