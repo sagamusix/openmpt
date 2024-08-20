@@ -18,6 +18,7 @@
 #include "HighDPISupport.h"
 #include "Mainfrm.h"
 #include "Moddoc.h"
+#include "ModDocTemplate.h"
 #include "Mptrack.h"
 #include "resource.h"
 #include "view_com.h"
@@ -27,6 +28,7 @@
 #include "View_smp.h"
 #include "WindowMessages.h"
 #include "../common/FileReader.h"
+
 #include "mpt/io/io.hpp"
 #include "mpt/io/io_stdstream.hpp"
 
@@ -165,8 +167,11 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd *pActivateWnd, CWnd *pDeact
 	if(bActivate)
 	{
 		MPT_ASSERT(pActivateWnd == this);
-		CMainFrame::GetMainFrame()->UpdateEffectKeys(static_cast<CModDoc *>(GetActiveDocument()));
+		auto activeDoc = static_cast<CModDoc *>(GetActiveDocument());
+		CMainFrame::GetMainFrame()->UpdateEffectKeys(activeDoc);
 		CMainFrame::GetMainFrame()->SetMidiRecordWnd(m_hWndView);
+		if(activeDoc != nullptr)
+			static_cast<CModDocTemplate *>(activeDoc->GetDocTemplate())->SetActiveDoc(activeDoc);
 		m_lastActiveFrame = this;
 	}
 	if(m_hWndCtrl)
