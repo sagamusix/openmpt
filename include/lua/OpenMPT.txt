@@ -1,0 +1,9 @@
+This is Lua v5.4.4
+https://www.lua.org/
+The following changes have been made:
+- Unnecessary folders and files have been removed.
+- openmpt.c and openmpt.h have been added.
+  openmpt.h is included via the LUA_USER_H preprocessor mechanism.
+
+For building, premake is used to generate Visual Studio project files.
+See ../build/premake/ for details.

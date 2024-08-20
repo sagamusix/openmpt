@@ -1,7 +1,7 @@
 /*
  * SampleGenerator.cpp
  * -------------------
- * Purpose: Generate samples from math formulas using muParser
+ * Purpose: Generate samples from math formulas using Lua
  * Notes  : (currently none)
  * Authors: OpenMPT Devs
  * The OpenMPT source code is released under the BSD license. Read LICENSE for more details.
@@ -10,54 +10,66 @@
 
 #include "stdafx.h"
 
-#if MPT_DISABLED_CODE
-
 #include "SampleGenerator.h"
-#include "modsmp_ctrl.h"
+#include "Reporting.h"
+#include "resource.h"
+#include "scripting/LuaVM.h"
+#include "../soundlib/modsmp_ctrl.h"
+#include "../soundlib/AudioCriticalSection.h"
+#include "../soundlib/Sndfile.h"
 
-int CSampleGenerator::sample_frequency = 44100;
-int CSampleGenerator::sample_length = CSampleGenerator::sample_frequency;
-mu::string_type CSampleGenerator::expression = _T("sin(xp * _pi)");
-smpgen_clip_methods CSampleGenerator::sample_clipping = smpgen_normalize;
+OPENMPT_NAMESPACE_BEGIN
 
-mu::value_type *CSampleGenerator::sample_buffer = nullptr;
-size_t CSampleGenerator::samples_written = 0;
+uint32 SampleGenerator::m_sampleFrequency = 48000;
+SmpLength SampleGenerator::m_sampleLength = SampleGenerator::m_sampleFrequency;
+CString SampleGenerator::m_expression = _T("math.sin(xp * math.pi)");
+SampleGenerator::ClipMethod SampleGenerator::m_sampleClipping = SampleGenerator::ClipMethod::Normalize;
 
-
-CSampleGenerator::CSampleGenerator()
+namespace
 {
+	using mix_t = SampleGenerator::mix_t;
 
+	auto clip(mix_t val, mix_t min, mix_t max) { return std::clamp(val, min, max); }
+	auto pwm(mix_t pos, mix_t duty, mix_t width) { if (width == 0) return 0.0; else return (std::fmod(pos, width) < ((duty / 100) * width)) ? 1.0 : -1.0; }
+	auto sign(mix_t v) { return static_cast<mix_t>(mpt::signum(v)); }
+	auto tri(mix_t pos, mix_t width) { if ((int)width == 0) return 0.0; else return std::abs(((int)pos % (int)(width)) - width / 2) / (width / 4) - 1; }
+}
+
+SampleGenerator::SampleGenerator()
+	: lua{std::make_unique<sol::state>()}
+{
+	lua->open_libraries(sol::lib::base, sol::lib::math);
 	// Setup function callbacks
-	muParser.DefineFun(_T("clip"), &ClipCallback, false);
-	muParser.DefineFun(_T("pwm"), &PWMCallback, false);
-	muParser.DefineFun(_T("rnd"), &RndCallback, false);
-	muParser.DefineFun(_T("smp"), &SampleDataCallback, false);
-	muParser.DefineFun(_T("tri"), &TriangleCallback, false);
-
-	// Setup binary operator callbacks
-	muParser.DefineOprt(_T("mod"), &ModuloCallback, 0);
-
-	//muParser.DefineConst("pi", (mu::value_type)PARSER_CONST_PI);
-
+#define MPT_SOL_BIND(func) lua->set(#func, sol::c_call<decltype(&func), &func>);
+	MPT_SOL_BIND(clip);
+	MPT_SOL_BIND(pwm);
+	MPT_SOL_BIND(sign);
+	MPT_SOL_BIND(tri);
+#undef MPT_LUA_BIND
+	lua->set_function("smp", [this](SmpLength v) { return (v >= 0 && v < m_sampleBuffer.size()) ? m_sampleBuffer[v] : 0; });
+	lua->script("function iif(condition, if_true, if_false) if condition then return if_true else return if_false end end");
 }
 
 
+SampleGenerator::~SampleGenerator() {}
+
+
 // Open the smpgen dialog
-bool CSampleGenerator::ShowDialog()
+bool SampleGenerator::ShowDialog(CWnd *parent)
 {
 	bool isDone = false, result = false;
 	while(!isDone)
 	{
-		CSmpGenDialog dlg(sample_frequency, sample_length, sample_clipping, expression);
+		SmpGenDialog dlg(m_sampleFrequency, m_sampleLength, m_sampleClipping, m_expression, parent);
 		dlg.DoModal();
 
 		// pressed "OK" button?
 		if(dlg.CanApply())
 		{
-			sample_frequency = dlg.GetFrequency();
-			sample_length = dlg.GetLength();
-			sample_clipping = dlg.GetClipping();
-			expression = dlg.GetExpression();
+			m_sampleFrequency = dlg.GetFrequency();
+			m_sampleLength = dlg.GetLength();
+			m_sampleClipping = dlg.GetClipping();
+			m_expression = dlg.GetExpression();
 			isDone = CanRenderSample();
 			if(isDone) isDone = TestExpression();	// show dialog again if the formula can't be parsed.
 			result = true;
@@ -71,28 +83,22 @@ bool CSampleGenerator::ShowDialog()
 }
 
 
-// Check if the currently select expression can be parsed by muParser.
-bool CSampleGenerator::TestExpression()
+// Check if the currently select expression can be parsed and executed.
+bool SampleGenerator::TestExpression()
 {
-	// reset helper variables
-	samples_written = 0;
-	sample_buffer = nullptr;
-
-	muParser.SetExpr(expression);
-	mu::value_type x = 0;
-	muParser.DefineVar(_T("x"), &x);
-	muParser.DefineVar(_T("xp"), &x);
-	muParser.DefineVar(_T("len"), &x);
-	muParser.DefineVar(_T("lens"), &x);
-	muParser.DefineVar(_T("freq"), &x);
-
 	try
 	{
-		muParser.Eval();
-	}
-	catch (mu::Parser::exception_type &e)
+		lua->script("function sampleGenerator(x, xp, len, lens, freq) return " + mpt::ToCharset(mpt::Charset::UTF8, m_expression) + " end");
+		sol::protected_function f = (*lua)["sampleGenerator"];
+		auto res = f(0, 0.0, 0, 0.0, m_sampleFrequency);
+		if(!res.valid())
+		{
+			sol::error err = res;
+			throw err;
+		}
+	} catch (const sol::error &e)
 	{
-		ShowError(&e);
+		Reporting::Error(e.what(), "Invalid sample generator expression");
 		return false;
 	}
 	return true;
@@ -100,333 +106,311 @@ bool CSampleGenerator::TestExpression()
 
 
 // Check if sample parameters are valid.
-bool CSampleGenerator::CanRenderSample() const
+bool SampleGenerator::CanRenderSample() const
 {
-	if(sample_frequency < SMPGEN_MINFREQ || sample_frequency > SMPGEN_MAXFREQ || sample_length < SMPGEN_MINLENGTH || sample_length > SMPGEN_MAXLENGTH) return false;
-	return true;
+	return mpt::is_in_range(m_sampleFrequency, MIN_FREQ, MAX_FREQ)
+		&& mpt::is_in_range(m_sampleLength, MIN_LENGTH, MAX_LENGTH);
 }
 
 
 // Actual render loop.
-bool CSampleGenerator::RenderSample(CSoundFile *pSndFile, SAMPLEINDEX nSample)
+bool SampleGenerator::RenderSample(CSoundFile &sndFile, SAMPLEINDEX smp)
 {
-	if(!CanRenderSample() || !TestExpression() || (pSndFile == nullptr) || (nSample < 1) || (nSample > pSndFile->GetNumSamples())) return false;
+	if(!CanRenderSample() || !TestExpression() || (smp < 1) || (smp > sndFile.GetNumSamples())) return false;
 
-	// allocate a new buffer
-	sample_buffer = (mu::value_type *)malloc(sample_length * sizeof(mu::value_type));
-	if(sample_buffer == nullptr) return false;
-	memset(sample_buffer, 0, sample_length * sizeof(mu::value_type));
-
-	mu::value_type x = 0, xp = 0;
-	mu::value_type v_len = sample_length, v_freq = sample_frequency, v_lens = v_len / v_freq;
-	muParser.DefineVar(_T("x"), &x);
-	muParser.DefineVar(_T("xp"), &xp);
-	muParser.DefineVar(_T("len"), &v_len);
-	muParser.DefineVar(_T("lens"), &v_lens);
-	muParser.DefineVar(_T("freq"), &v_freq);
-
-	bool success = true;
-	mu::value_type minmax = 0;
-
-	for(size_t i = 0; i < (size_t)sample_length; i++)
+	try
 	{
-		samples_written = i;
-		x = (mu::value_type)i;
-		xp = x * 100 / sample_length;
-
-		try
-		{
-			sample_buffer[i] = muParser.Eval();
-		}
-		catch (mu::Parser::exception_type &e)
-		{
-			// let's just ignore div by zero errors (note: this error code is currently unused (muParser 1.30))
-			if(e.GetCode() != mu::ecDIV_BY_ZERO)
-			{
-				ShowError(&e);
-				success = false;
-				break;
-			}
-			sample_buffer[i] = 0;
-		}
-		// new maximum value?
-		if(std::abs(sample_buffer[i]) > minmax) minmax = std::abs(sample_buffer[i]);
-
+		m_sampleBuffer.assign(m_sampleLength, 0);
+	} catch(mpt::out_of_memory e)
+	{
+		mpt::delete_out_of_memory(e);
+		return false;
 	}
 
-	if(success)
+	const SmpLength length = m_sampleLength, freq = m_sampleFrequency;
+	const double lengthSec = static_cast<double>(length) / freq;
+	mix_t minMax = 0;
+
+	try
 	{
-		MODSAMPLE *pModSample = &pSndFile->Samples[nSample];
-
-		BEGIN_CRITICAL();
-
-		// first, save some memory... (leads to crashes)
-		//CSoundFile::FreeSample(pModSample->pSample);
-		//pModSample->pSample = nullptr;
-
-		if(minmax == 0) minmax = 1;	// avoid division by 0
-
-		// convert sample to 16-bit (or whateve rhas been specified)
-		int16 *pSample = (sampling_type *)CSoundFile::AllocateSample((sample_length + 4) * SMPGEN_MIXBYTES);
-		for(size_t i = 0; i < (size_t)sample_length; i++)
+		sol::function genFunc = (*lua)["sampleGenerator"];
+		for(SmpLength x = 0; x < length; x++)
 		{
-			switch(sample_clipping)
-			{
-			case smpgen_clip: sample_buffer[i] = CLAMP(sample_buffer[i], -1, 1); break;	// option 1: clip
-			case smpgen_normalize: sample_buffer[i] /= minmax; break;	// option 3: normalize
-			}
-
-			pSample[i] = (sampling_type)(sample_buffer[i] * sample_maxvalue);
+			mix_t xp = x * 100.0 / length;
+			m_sampleBuffer[x] = genFunc(x, xp, length, lengthSec, freq);
+			minMax = std::max(minMax, std::abs(m_sampleBuffer[x]));
 		}
-
-		// set new sample proprerties
-		pModSample->nC5Speed = sample_frequency;
-		CSoundFile::FrequencyToTranspose(pModSample);
-		pModSample->uFlags |= CHN_16BIT;	// has to be adjusted if SMPGEN_MIXBYTES changes!
-		pModSample->uFlags &= ~(CHN_STEREO|CHN_SUSTAINLOOP|CHN_PINGPONGSUSTAIN);
-		pModSample->nLoopStart = 0;
-		pModSample->nLoopEnd = sample_length;
-		pModSample->nSustainStart = pModSample->nSustainEnd = 0;
-		if(sample_length / sample_frequency < 5)	// arbitrary limit for automatic sample loop (5 seconds)
-			pModSample->uFlags |= CHN_LOOP;
-		else
-			pModSample->uFlags &= ~(CHN_LOOP|CHN_PINGPONGLOOP);
-
-		ctrlSmp::ReplaceSample(*pModSample, (LPSTR)pSample, sample_length, pSndFile);
-
-		END_CRITICAL();
+	} catch (const sol::error &e)
+	{
+		Reporting::Error(e.what(), "Invalid sample generator expression");
+		return false;
 	}
 
-	free(sample_buffer);
-	sample_buffer = nullptr;
+	// Set new sample properties
+	CriticalSection cs;
+	ModSample &sample = sndFile.GetSample(smp);
+	sample.nC5Speed = m_sampleFrequency;
+	if constexpr (sizeof(sample_t) == 2)
+		sample.uFlags.set(CHN_16BIT);
+	sample.uFlags.reset(CHN_STEREO | CHN_SUSTAINLOOP | CHN_PINGPONGSUSTAIN);
+	sample.nLoopStart = 0;
+	sample.nLoopEnd = length;
+	sample.nSustainStart = sample.nSustainEnd = 0;
+	sample.nLength = length;
+	if(lengthSec < 5.0) // arbitrary limit for automatic sample loop (5 seconds)
+		sample.uFlags.set(CHN_LOOP);
+	else
+		sample.uFlags.reset(CHN_LOOP | CHN_PINGPONGLOOP);
+	sample.Convert(MOD_TYPE_MPT, sndFile.GetType());
 
-	return success;
-}
+	// Convert sample to 16-bit (or whatever has been specified)
+	if(sample.AllocateSample())
+	{
+		sample_t *pSample = static_cast<sample_t *>(sample.samplev());
+		if(minMax == 0)
+			minMax = 1;  // avoid division by 0
+		for(SmpLength i = 0; i < length; i++)
+		{
+			auto val = m_sampleBuffer[i];
+			switch(m_sampleClipping)
+			{
+			case ClipMethod::Clip: val = std::clamp(val, -1.0, 1.0); break;
+			case ClipMethod::Normalize: val /= minMax; break;
+			}
 
+			pSample[i] = static_cast<sample_t>(val * Util::MaxValueOfType(pSample[0]));
+		}
 
-// Callback function to access sample data
-mu::value_type CSampleGenerator::SampleDataCallback(mu::value_type v)
-{
-	if(sample_buffer == nullptr) return 0;
-	v = CLAMP(v, 0, samples_written);
-	size_t pos = static_cast<size_t>(v);
-	return sample_buffer[pos];
-}
-
-
-void CSampleGenerator::ShowError(mu::Parser::exception_type *e)
-{
-	std::string errmsg;
-	errmsg = "The expression\n    " + e->GetExpr() + "\ncontains an error ";
-	if(!e->GetToken().empty())
-		errmsg += "in the token\n    " + e->GetToken() + "\n";
-	errmsg += "at position " + Stringify(e->GetPos()) + ".\nThe error message was: " + e->GetMsg();
-	::MessageBox(0, errmsg.c_str(), _T("muParser Sample Generator"), 0);
+		sample.pData.pSample = nullptr;
+		sample.ReplaceWaveform(pSample, length, sndFile);
+		sample.PrecomputeLoops(sndFile);
+	}
+	return true;
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 // Sample Generator Dialog implementation
 
-#define MAX_SAMPLEGEN_EXPRESSIONS 61
-
-BEGIN_MESSAGE_MAP(CSmpGenDialog, DialogBase)
-	ON_EN_CHANGE(IDC_EDIT_SAMPLE_LENGTH,		&CSmpGenDialog::OnSampleLengthChanged)
-	ON_EN_CHANGE(IDC_EDIT_SAMPLE_LENGTH_SEC,	&CSmpGenDialog::OnSampleSecondsChanged)
-	ON_EN_CHANGE(IDC_EDIT_SAMPLE_FREQ,			&CSmpGenDialog::OnSampleFreqChanged)
-	ON_EN_CHANGE(IDC_EDIT_FORMULA,				&CSmpGenDialog::OnExpressionChanged)
-	ON_COMMAND(IDC_BUTTON_SHOW_EXPRESSIONS,		&CSmpGenDialog::OnShowExpressions)
-	ON_COMMAND(IDC_BUTTON_SAMPLEGEN_PRESETS,	&CSmpGenDialog::OnShowPresets)
-	ON_COMMAND_RANGE(ID_SAMPLE_GENERATOR_MENU, ID_SAMPLE_GENERATOR_MENU + MAX_SAMPLEGEN_EXPRESSIONS - 1, &CSmpGenDialog::OnInsertExpression)
-	ON_COMMAND_RANGE(ID_SAMPLE_GENERATOR_PRESET_MENU, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 1, &CSmpGenDialog::OnSelectPreset)
-END_MESSAGE_MAP()
-
 
 // List of all possible expression for expression menu
-const samplegen_expression menu_descriptions[MAX_SAMPLEGEN_EXPRESSIONS] =
+static constexpr std::pair<const char*, const char *> menuItems[] =
 {
-	{"Variables", ""},
-	{"Current position (sampling point)", "x"},
-	{"Current position (percentage)", "xp"},
-	{"Sample length", "len"},
-	{"Sample length (seconds)", "lens"},
-	{"Sampling frequency", "freq"},
-	{"Constants", ""},
-	{"Pi", "_pi"},
-	{"e", "_e"},
-	{"Trigonometric functions", ""},
-	{"Sine", "sin(x)"},
-	{"Cosine", "cos(x)"},
-	{"Tangens", "tan(x)"},
-	{"Arcus Sine", "asin(x)"},
-	{"Arcus Cosine", "acos(x)"},
-	{"Arcus Tangens", "atan(x)"},
-	{"Hyperbolic Sine", "sinh(x)"},
-	{"Hyperbolic Cosine", "cosh(x)"},
-	{"Hyperbolic Tangens", "tanh(x)"},
-	{"Hyperbolic Arcus Sine", "asinh(x)"},
-	{"Hyperbolic Arcus Cosine", "acosh(x)"},
-	{"Hyperbolic Arcus Tangens", "atanh(x)"},
-	{"Log, Exp, Root", ""},
-	{"Logarithm (base 2)", "log2(x)"},
-	{"Logarithm (base 10)", "log(x)"},
-	{"Natural Logarithm (base e)", "ln(x)"},
-	{"e^x", "exp(x)"},
-	{"Square Root", "sqrt(x)"},
-	{"Sign and rounding", ""},
-	{"Sign", "sign(x)"},
-	{"Absolute value", "abs(x)"},
-	{"Round to nearest integer", "rint(x)"},
-	{"Sets", ""},
-	{"Minimum", "min(x, y, ...)"},
-	{"Maximum", "max(x, y, ...)"},
-	{"Sum", "sum(x, y, ...)"},
-	{"Mean value", "avg(x, y, ...)"},
-	{"Misc functions", ""},
-	{"Pulse generator", "pwm(position, duty%, width)"},
-	{"Triangle", "tri(position, width)"},
-	{"Random value between 0 and x", "rnd(x)"},
-	{"Access previous sampling point", "smp(position)"},
-	{"Clip between values", "clip(value, minclip, maxclip)"},
-	{"If...Then...Else", "if(condition, statement1, statement2)"},
-	{"Operators", ""},
-	{"Assignment", "x = y"},
-	{"Logical And", "x abd y"},
-	{"Logical Or", "x or y"},
-	{"Logical Xor", "x xor y"},
-	{"Less or equal", "x <= y"},
-	{"Greater or equal", "x >= y"},
-	{"Not equal", "x != y"},
-	{"Equal", "x == y"},
-	{"Greater than", "x > y"},
-	{"Less than", "x < y"},
-	{"Addition", "x + y"},
-	{"Subtraction", "x - y"},
-	{"Multiplication", "x * y"},
-	{"Division", "x / y"},
-	{"x^y", "x ^ y"},
-	{"Modulo", "x mod y"},
+	//------------------------------------
+	{ "Variables", "" },
+	//------------------------------------
+	{ "Current position (sampling point)", "x" },
+	{ "Current position (percentage)", "xp" },
+	{ "Sample length (frames)", "len" },
+	{ "Sample length (seconds)", "lens" },
+	{ "Sampling frequency", "freq" },
+	//------------------------------------
+	{ "Constants", "" },
+	//------------------------------------
+	{ "Pi", "math.pi" },
+	{ "e", "math.exp(1)" },
+	//------------------------------------
+	{ "Trigonometric functions", "" },
+	//------------------------------------
+	{ "Sine", "math.sin(x)" },
+	{ "Cosine", "math.cos(x)" },
+	{ "Tangens", "math.tan(x)" },
+	{ "Arcus Sine", "math.asin(x)" },
+	{ "Arcus Cosine", "math.acos(x)" },
+	{ "Arcus Tangens", "math.atan(x[, y])" },
+	//------------------------------------
+	{ "Log, Exp, Root", "" },
+	//------------------------------------
+	{ "Logarithm (base 10)", "math.log10(x)" },
+	{ "Natural Logarithm (base e)", "math.log(x)" },
+	{ "x^y", "x ^ y" },
+	{ "e^x", "math.exp(x)" },
+	{ "Square Root", "math.sqrt(x)" },
+	//------------------------------------
+	{ "Sign and rounding", "" },
+	//------------------------------------
+	{ "Sign", "sign(x)" },
+	{ "Absolute value", "math.abs(x)" },
+	{ "Round Down", "math.floor(x)" },
+	{ "Round Up", "math.ceil(x)" },
+	//------------------------------------
+	{ "Sets", "" },
+	//------------------------------------
+	{ "Minimum", "math.min(x, y, ...)" },
+	{ "Maximum", "math.max(x, y, ...)" },
+	//{ "Sum", "sum(x, y, ...)" },
+	//{ "Mean value", "avg(x, y, ...)" },
+	//------------------------------------
+	{ "Misc functions", "" },
+	//------------------------------------
+	{ "Pulse Generator", "pwm(position, duty%, width)" },
+	{ "Triangle", "tri(position, width)" },
+	{ "Random value between 0 and 1", "math.random()" },
+	{ "Random integer value between x and y", "math.random(x, y)" },
+	{ "Access previous sampling point", "smp(position)" },
+	{ "Clip between values", "clip(value, minclip, maxclip)" },
+	{ "If...Then...Else", "iif(condition, true_statement, false_statement)" },
+	//------------------------------------
+	{ "Operators", "" },
+	//------------------------------------
+	//{ "Assignment", "x = y" },
+	{ "Logical And", "x & y" },
+	{ "Logical Or", "x | y" },
+	{ "Less or equal", "x <= y" },
+	{ "Greater or equal", "x >= y" },
+	{ "Not equal", "x != y" },
+	{ "Equal", "x == y" },
+	{ "Greater than", "x > y" },
+	{ "Less than", "x < y" },
+	{ "Addition", "x + y" },
+	{ "Subtraction", "x - y" },
+	{ "Multiplication", "x * y" },
+	{ "Division", "x / y" },
+	{ "Modulo", "x % y" },
 };
 
 
-BOOL CSmpGenDialog::OnInitDialog()
+BEGIN_MESSAGE_MAP(SmpGenDialog, DialogBase)
+	ON_EN_CHANGE(IDC_EDIT_SAMPLE_LENGTH,     &SmpGenDialog::OnSampleLengthChanged)
+	ON_EN_CHANGE(IDC_EDIT_SAMPLE_LENGTH_SEC, &SmpGenDialog::OnSampleSecondsChanged)
+	ON_EN_CHANGE(IDC_EDIT_SAMPLE_FREQ,       &SmpGenDialog::OnSampleFreqChanged)
+	ON_EN_CHANGE(IDC_EDIT_FORMULA,           &SmpGenDialog::OnExpressionChanged)
+	ON_COMMAND(IDC_BUTTON_SHOW_EXPRESSIONS,  &SmpGenDialog::OnShowExpressions)
+	ON_COMMAND(IDC_BUTTON_SAMPLEGEN_PRESETS, &SmpGenDialog::OnShowPresets)
+
+	ON_COMMAND_RANGE(ID_SAMPLE_GENERATOR_MENU, static_cast<UINT>(ID_SAMPLE_GENERATOR_MENU + std::size(menuItems) - 1), &SmpGenDialog::OnInsertExpression)
+	ON_COMMAND_RANGE(ID_SAMPLE_GENERATOR_PRESET_MENU, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 1, &SmpGenDialog::OnSelectPreset)
+END_MESSAGE_MAP()
+
+
+SmpGenDialog::SmpGenDialog(uint32 freq, SmpLength len, SampleGenerator::ClipMethod clipping, const CString &expr, CWnd *parent)
+	: DialogBase{IDD_SAMPLE_GENERATOR, parent}
+	, m_sampleLength{len}
+	, m_sampleFrequency{freq}
+	, m_expression{expr}
+	, m_sampleClipping{clipping}
+{
+}
+
+
+
+BOOL SmpGenDialog::OnInitDialog()
 {
 	DialogBase::OnInitDialog();
+
+	m_EditLength.SubclassDlgItem(IDC_EDIT_SAMPLE_LENGTH_SEC, this);
+	m_EditLength.AllowNegative(false);
+	m_EditLength.AllowFractions(true);
+
 	RecalcParameters(false, true);
-	SetDlgItemText(IDC_EDIT_FORMULA, expression.c_str());
+	SetDlgItemText(IDC_EDIT_FORMULA, m_expression);
 
 	int check = IDC_RADIO_SMPCLIP1;
-	switch(sample_clipping)
+	switch(m_sampleClipping)
 	{
-	case smpgen_clip: check = IDC_RADIO_SMPCLIP1; break;
-	case smpgen_overflow: check = IDC_RADIO_SMPCLIP2; break;
-	case smpgen_normalize: check = IDC_RADIO_SMPCLIP3; break;
+	case SampleGenerator::ClipMethod::Clip: check = IDC_RADIO_SMPCLIP1; break;
+	case SampleGenerator::ClipMethod::Overflow: check = IDC_RADIO_SMPCLIP2; break;
+	case SampleGenerator::ClipMethod::Normalize: check = IDC_RADIO_SMPCLIP3; break;
 	}
 	CheckRadioButton(IDC_RADIO_SMPCLIP1, IDC_RADIO_SMPCLIP3, check);
 
-	if(presets.GetNumPresets() == 0)
+	if(m_presets.empty())
 	{
 		CreateDefaultPresets();
 	}
 
 	// Create font for "dropdown" button (Marlett system font)
-	hButtonFont = CreateFont(14, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, TEXT("Marlett"));
-	::SendMessage(GetDlgItem(IDC_BUTTON_SHOW_EXPRESSIONS)->m_hWnd, WM_SETFONT, (WPARAM)hButtonFont, MAKELPARAM(TRUE, 0));
+	m_hButtonFont.CreateFont(14, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, _T("Marlett"));
+	GetDlgItem(IDC_BUTTON_SHOW_EXPRESSIONS)->SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(m_hButtonFont.m_hObject), MAKELPARAM(TRUE, 0));
 
 	return TRUE;
 }
 
 
-void CSmpGenDialog::OnOK()
+void SmpGenDialog::OnOK()
 {
 	DialogBase::OnOK();
-	apply = true;
+	m_apply = true;
 
 	int check = GetCheckedRadioButton(IDC_RADIO_SMPCLIP1, IDC_RADIO_SMPCLIP3);
 	switch(check)
 	{
-	case IDC_RADIO_SMPCLIP1: sample_clipping = smpgen_clip; break;
-	case IDC_RADIO_SMPCLIP2: sample_clipping = smpgen_overflow; break;
-	case IDC_RADIO_SMPCLIP3: sample_clipping = smpgen_normalize; break;
+	case IDC_RADIO_SMPCLIP1: m_sampleClipping = SampleGenerator::ClipMethod::Clip; break;
+	case IDC_RADIO_SMPCLIP2: m_sampleClipping = SampleGenerator::ClipMethod::Overflow; break;
+	case IDC_RADIO_SMPCLIP3: m_sampleClipping = SampleGenerator::ClipMethod::Normalize; break;
 	}
-
-	DeleteObject(hButtonFont);
 }
 
 
-void CSmpGenDialog::OnCancel()
+void SmpGenDialog::OnCancel()
 {
 	DialogBase::OnCancel();
-	apply = false;
+	m_apply = false;
 }
 
 
 // User changed formula
-void CSmpGenDialog::OnExpressionChanged()
+void SmpGenDialog::OnExpressionChanged()
 {
-	CString result;
-	GetDlgItemText(IDC_EDIT_FORMULA, result);
-	expression = result;
+	GetDlgItemText(IDC_EDIT_FORMULA, m_expression);
 }
 
 
 // User changed sample length field
-void CSmpGenDialog::OnSampleLengthChanged()
+void SmpGenDialog::OnSampleLengthChanged()
 {
-	int temp_length = GetDlgItemInt(IDC_EDIT_SAMPLE_LENGTH);
-	if(temp_length >= SMPGEN_MINLENGTH && temp_length <= SMPGEN_MAXLENGTH)
+	int length = GetDlgItemInt(IDC_EDIT_SAMPLE_LENGTH);
+	if(length >= SampleGenerator::MIN_LENGTH && length <= SampleGenerator::MAX_LENGTH)
 	{
-		sample_length = temp_length;
+		m_sampleLength = length;
 		RecalcParameters(false);
 	}
 }
 
 
 // User changed sample length (seconds) field
-void CSmpGenDialog::OnSampleSecondsChanged()
+void SmpGenDialog::OnSampleSecondsChanged()
 {
-	CString str;
-	GetDlgItemText(IDC_EDIT_SAMPLE_LENGTH_SEC, str);
-	double temp_seconds = atof(str);
-	if(temp_seconds > 0)
+	double seconds = 0.0;
+	if(m_EditLength.GetDecimalValue(seconds))
 	{
-		sample_seconds = temp_seconds;
+		m_sampleSeconds = seconds;
 		RecalcParameters(true);
 	}
 }
 
 
 // User changed sample frequency field
-void CSmpGenDialog::OnSampleFreqChanged()
+void SmpGenDialog::OnSampleFreqChanged()
 {
-	int temp_freq = GetDlgItemInt(IDC_EDIT_SAMPLE_FREQ);
-	if(temp_freq >= SMPGEN_MINFREQ && temp_freq <= SMPGEN_MAXFREQ)
+	UINT freq = GetDlgItemInt(IDC_EDIT_SAMPLE_FREQ);
+	if(freq >= SampleGenerator::MIN_FREQ && freq <= SampleGenerator::MAX_FREQ)
 	{
-		sample_frequency = temp_freq;
+		m_sampleFrequency = freq;
 		RecalcParameters(false);
 	}
 }
 
 
 // Show all expressions that can be input
-void CSmpGenDialog::OnShowExpressions()
+void SmpGenDialog::OnShowExpressions()
 {
 	HMENU hMenu = ::CreatePopupMenu(), hSubMenu = NULL;
 	if(!hMenu) return;
 
-	for(int i = 0; i < MAX_SAMPLEGEN_EXPRESSIONS; i++)
+	for(size_t i = 0; i < std::size(menuItems); i++)
 	{
-		if(menu_descriptions[i].expression == "")
+		if(!strcmp(menuItems[i].second, ""))
 		{
 			// add sub menu
 			if(hSubMenu != NULL) ::DestroyMenu(hSubMenu);
 			hSubMenu = ::CreatePopupMenu();
 
-			AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, menu_descriptions[i].description.c_str());
+			AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, mpt::ToWin(mpt::Charset::ASCII, menuItems[i].first).c_str());
 		} else
 		{
 			// add sub menu entry (formula)
-			AppendMenu(hSubMenu, MF_STRING, ID_SAMPLE_GENERATOR_MENU + i, menu_descriptions[i].description.c_str());
+			AppendMenu(hSubMenu, MF_STRING, ID_SAMPLE_GENERATOR_MENU + i, mpt::ToWin(mpt::Charset::ASCII, menuItems[i].first).c_str());
 		}
 	}
 
@@ -440,30 +424,30 @@ void CSmpGenDialog::OnShowExpressions()
 
 
 // Show all expression presets
-void CSmpGenDialog::OnShowPresets()
+void SmpGenDialog::OnShowPresets()
 {
 	HMENU hMenu = ::CreatePopupMenu();
 	if(!hMenu) return;
 
 	bool prestsExist = false;
-	for(size_t i = 0; i < presets.GetNumPresets(); i++)
+	for(size_t i = 0; i < m_presets.size(); i++)
 	{
-		if(presets.GetPreset(i)->expression != "")
+		if(!m_presets[i].expression.IsEmpty())
 		{
-			AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + i, presets.GetPreset(i)->description.c_str());
+			AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + i, m_presets[i].description);
 			prestsExist = true;
 		}
 	}
 	
 	if(prestsExist) AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 
-	AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS, _TEXT("Manage..."));
+	AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS, _T("Manage..."));
 
 	CString result;
 	GetDlgItemText(IDC_EDIT_FORMULA, result);
-	if((!result.IsEmpty()) && (presets.GetNumPresets() < MAX_SAMPLEGEN_PRESETS))
+	if((!result.IsEmpty()) && (m_presets.size() < MAX_SAMPLEGEN_PRESETS))
 	{
-		AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 1, _TEXT("Add current..."));
+		AppendMenu(hMenu, MF_STRING, ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 1, _T("Add current..."));
 	}
 
 	// place popup menu below button
@@ -476,142 +460,106 @@ void CSmpGenDialog::OnShowPresets()
 
 
 // Insert expression from context menu
-void CSmpGenDialog::OnInsertExpression(UINT nId)
+void SmpGenDialog::OnInsertExpression(UINT id)
 {
-	if((nId < ID_SAMPLE_GENERATOR_MENU) || (nId >= ID_SAMPLE_GENERATOR_MENU + MAX_SAMPLEGEN_EXPRESSIONS)) return;
+	if((id < ID_SAMPLE_GENERATOR_MENU) || (id >= ID_SAMPLE_GENERATOR_MENU + std::size(menuItems)))
+		return;
 
-	expression += " " +  menu_descriptions[nId - ID_SAMPLE_GENERATOR_MENU].expression;
-
-	SetDlgItemText(IDC_EDIT_FORMULA, expression.c_str());
+	m_expression += _T(" ") + mpt::ToCString(mpt::Charset::ASCII, menuItems[id - ID_SAMPLE_GENERATOR_MENU].second);
+	SetDlgItemText(IDC_EDIT_FORMULA, m_expression);
 }
 
 
 // Select a preset (or manage them, or add one)
-void CSmpGenDialog::OnSelectPreset(UINT nId)
+void SmpGenDialog::OnSelectPreset(UINT id)
 {
-	if((nId < ID_SAMPLE_GENERATOR_PRESET_MENU) || (nId >= ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 2)) return;
+	if((id < ID_SAMPLE_GENERATOR_PRESET_MENU) || (id >= ID_SAMPLE_GENERATOR_PRESET_MENU + MAX_SAMPLEGEN_PRESETS + 2))
+		return;
 
-	if(nId - ID_SAMPLE_GENERATOR_PRESET_MENU >= MAX_SAMPLEGEN_PRESETS)
+	if(id - ID_SAMPLE_GENERATOR_PRESET_MENU >= MAX_SAMPLEGEN_PRESETS)
 	{
 		// add...
-		if((nId - ID_SAMPLE_GENERATOR_PRESET_MENU == MAX_SAMPLEGEN_PRESETS + 1))
+		if((id - ID_SAMPLE_GENERATOR_PRESET_MENU == MAX_SAMPLEGEN_PRESETS + 1))
 		{
-			samplegen_expression newPreset;
-			newPreset.description = newPreset.expression = expression;
-			presets.AddPreset(newPreset);
+			m_presets.emplace_back(m_expression, m_expression);
 			// call preset manager now.
 		}
 
 		// manage...
-		CSmpGenPresetDlg dlg(&presets);
+		SmpGenPresetDlg dlg(m_presets, this);
 		dlg.DoModal();
 	} else
 	{
-		expression = presets.GetPreset(nId - ID_SAMPLE_GENERATOR_PRESET_MENU)->expression;
-		SetDlgItemText(IDC_EDIT_FORMULA, expression.c_str());
+		m_expression = m_presets[id - ID_SAMPLE_GENERATOR_PRESET_MENU].expression;
+		SetDlgItemText(IDC_EDIT_FORMULA, m_expression);
 	}
-
 }
 
 
 // Update input fields, depending on what has been chagned
-void CSmpGenDialog::RecalcParameters(bool secondsChanged, bool forceRefresh)
+void SmpGenDialog::RecalcParameters(bool secondsChanged, bool forceRefresh)
 {
 	static bool isLocked = false;
-	if(isLocked) return;
-	isLocked = true;	// avoid deadlock
+	if(isLocked)
+		return;
+	isLocked = true;  // avoid deadlock
 
 	if(secondsChanged)
 	{
 		// seconds changed => recalc length
-		sample_length = (int)(sample_seconds * sample_frequency);
-		if(sample_length < SMPGEN_MINLENGTH || sample_length > SMPGEN_MAXLENGTH) sample_length = SMPGEN_MAXLENGTH;
+		m_sampleLength = mpt::saturate_round<SmpLength>(m_sampleSeconds * m_sampleFrequency);
+		if(m_sampleLength < SampleGenerator::MIN_LENGTH || m_sampleLength > SampleGenerator::MAX_LENGTH) m_sampleLength = SampleGenerator::MAX_LENGTH;
 	} else
 	{
 		// length/freq changed => recalc seconds
-		sample_seconds = ((double)sample_length) / ((double)sample_frequency);
+		m_sampleSeconds = static_cast<double>(m_sampleLength) / m_sampleFrequency;
 	}
 
-	if(secondsChanged || forceRefresh) SetDlgItemInt(IDC_EDIT_SAMPLE_LENGTH, sample_length);
-	if(secondsChanged || forceRefresh) SetDlgItemInt(IDC_EDIT_SAMPLE_FREQ, sample_frequency);
-	CString str;
-	str.Format("%.4f", sample_seconds);
-	if(!secondsChanged || forceRefresh) SetDlgItemText(IDC_EDIT_SAMPLE_LENGTH_SEC, str);
+	if(secondsChanged || forceRefresh) SetDlgItemInt(IDC_EDIT_SAMPLE_LENGTH, m_sampleLength);
+	if(secondsChanged || forceRefresh) SetDlgItemInt(IDC_EDIT_SAMPLE_FREQ, m_sampleFrequency);
+	if(!secondsChanged || forceRefresh) m_EditLength.SetDecimalValue(m_sampleSeconds, 10);
 
-	int smpsize = sample_length * SMPGEN_MIXBYTES;
-	if(smpsize < 1024)
+	size_t smpSize = m_sampleLength * sizeof(SampleGenerator::sample_t);
+	const TCHAR *unit = nullptr;
+	if(smpSize < 1024)
 	{
-		str.Format("Sample Size: %d Bytes", smpsize);
-	} else if((smpsize >> 10) < 1024)
+		unit = _T("Bytes");
+	} else if((smpSize >> 10) < 1024)
 	{
-		str.Format("Sample Size: %d KB", smpsize >> 10);
+		smpSize >>= 10;
+		unit = _T("KB");
 	} else
 	{
-		str.Format("Sample Size: %d MB", smpsize >> 20);
+		smpSize >>= 20;
+		unit = _T("MB");
 	}
-	SetDlgItemText(IDC_STATIC_SMPSIZE_KB, str);
+	SetDlgItemText(IDC_STATIC_SMPSIZE_KB, MPT_TFORMAT("Sample Size: {} {}")(smpSize, unit).c_str());
 
 	isLocked = false;
 }
 
 
 // Create a set of default formla presets
-void CSmpGenDialog::CreateDefaultPresets()
+void SmpGenDialog::CreateDefaultPresets()
 {
-	samplegen_expression preset;
-
-	preset.description = "A440";
-	preset.expression = "sin(xp * _pi / 50 * 440 * len / freq)";
-	presets.AddPreset(preset);
-
-	preset.description = "Brown Noise (kind of)";
-	preset.expression = "rnd(1) * 0.1 + smp(x - 1) * 0.9";
-	presets.AddPreset(preset);
-
-	preset.description = "Noisy Saw";
-	preset.expression = "(x mod 800) / 800 - 0.5 + rnd(0.1)";
-	presets.AddPreset(preset);
-
-	preset.description = "PWM Filter";
-	preset.expression = "pwm(x, 50 + sin(xp * _pi / 100) * 40, 100) + tri(x, 50)";
-	presets.AddPreset(preset);
-	
-	preset.description = "Fat PWM Pad";
-	preset.expression = "pwm(x, xp, 500) + pwm(x, abs(50 - xp), 1000)";
-	presets.AddPreset(preset);
-
-	preset.description = "Dual Square";
-	preset.expression = "if((x mod 100) < 50, (x mod 200), -x mod 200)";
-	presets.AddPreset(preset);
-
-	preset.description = "Noise Hit";
-	preset.expression = "exp(-xp) * (rnd(x) - x / 2)";
-	presets.AddPreset(preset);
-
-	preset.description = "Laser";
-	preset.expression = "sin(xp * _pi * 100 /(xp ^ 2)) * 100 / sqrt(xp)";
-	presets.AddPreset(preset);
-
-	preset.description = "Noisy Laser Hit";
-	preset.expression = "(sin(sqrt(xp) * 100) + rnd(1) - 0.5) * exp(-xp / 10)";
-	presets.AddPreset(preset);
-
-	preset.description = "Twinkle, Twinkle...";
-	preset.expression = "sin(xp * _pi * 100 / xp) * 100 / sqrt(xp)";
-	presets.AddPreset(preset);
-
-	preset.description = "FM Tom";
-	preset.expression = "sin(xp * _pi * 2 + (xp / 5 - 50) ^ 2) * exp(-xp / 10)";
-	presets.AddPreset(preset);
-
-	preset.description = "FM Warp";
-	preset.expression = "sin(_pi * xp / 2 * (1 + (1 + sin(_pi * xp / 4 * 50)) / 4)) * exp(-(xp / 8) * .6)";
-	presets.AddPreset(preset);
-
-	preset.description = "Weird Noise";
-	preset.expression = "rnd(1) * 0.1 + smp(x - rnd(xp)) * 0.9";
-	presets.AddPreset(preset);
-
+	m_presets.assign({
+		{_T("A440"), _T("math.sin(xp * math.pi / 50 * 440 * len / freq)")},
+		{_T("Bass Drum"), _T("math.sin(math.sqrt(xp) * math.pi * 10) * math.exp(math.min(0, 15 - xp / 5)) + (math.random() * 2 - 1) * math.exp(-xp)")},
+		{_T("Brown Noise (kind of)"), _T("(math.random() - 0.5) * 0.1 + smp(x - 1) * 0.9")},
+		{_T("Noisy Saw"), _T("(x % 800) / 800.0 - 0.5 + math.random() * 0.1")},
+		{_T("PWM Filter"), _T("pwm(x, 50 + math.sin(xp * math.pi / 100) * 40, 100) + tri(x, 50)")},
+		{_T("Fat PWM Pad"), _T("pwm(x, xp, 500) + pwm(x, math.abs(50 - xp), 1000)")},
+		{_T("Dual Square"), _T("iif((x % 100) < 50, x % 200, -(x % 200) + 50)")},
+		{_T("Noise Hit"), _T("math.exp(-xp) * (math.random() * x - x / 2)")},
+		{_T("Laser"), _T("math.sin(xp * math.pi * 100 / xp ^ 2) * 100 / math.sqrt(xp)")},
+		{_T("Noisy Laser Hit"), _T("(math.sin(math.sqrt(xp) * 100) + math.random() - 0.5) * math.exp(-xp / 10)")},
+		{_T("Twinkle, Twinkle..."), _T("math.sin(x * math.pi * 100 / xp) * 100 / math.sqrt(xp)")},
+		{_T("FM Tom"), _T("math.sin(xp * math.pi * 2 + (xp / 5 - 50) ^ 2) * math.exp(-xp / 10)")},
+		{_T("FM Warp"), _T("math.sin(math.pi * xp / 2 * (1 + (1 + math.sin(math.pi * xp / 4 * 50)) / 4)) * math.exp(-(xp / 8) * 0.6)")},
+		{_T("Super Pulse"), _T("pwm(x * 0.99, 50, 100) + pwm(x * 1.01, 50, 100) + pwm(x * 0.985, 50, 100) + pwm(x * 1.015, 50, 100)")},
+		{_T("Flanging Saw"), _T("x % 100 + (x * 0.99) % 100 + (x * 1.01) % 100 - 150")},
+		//{_T("Weird Noise"), _T("math.random() * 0.1 + smp(x - math.random() * xp) * 0.9")},
+	});
 }
 
 
@@ -620,118 +568,116 @@ void CSmpGenDialog::CreateDefaultPresets()
 // Sample Generator Preset Dialog implementation
 
 
-BEGIN_MESSAGE_MAP(CSmpGenPresetDlg, DialogBase)
-	ON_COMMAND(IDC_BUTTON_ADD,				&CSmpGenPresetDlg::OnAddPreset)
-	ON_COMMAND(IDC_BUTTON_REMOVE,			&CSmpGenPresetDlg::OnRemovePreset)
-	ON_EN_CHANGE(IDC_EDIT_PRESET_NAME,		&CSmpGenPresetDlg::OnTextChanged)
-	ON_EN_CHANGE(IDC_EDIT_PRESET_EXPR,		&CSmpGenPresetDlg::OnExpressionChanged)
-	ON_LBN_SELCHANGE(IDC_LIST_SAMPLEGEN_PRESETS,	&CSmpGenPresetDlg::OnListSelChange)
+BEGIN_MESSAGE_MAP(SmpGenPresetDlg, DialogBase)
+	ON_COMMAND(IDC_BUTTON_ADD,                   &SmpGenPresetDlg::OnAddPreset)
+	ON_COMMAND(IDC_BUTTON_REMOVE,                &SmpGenPresetDlg::OnRemovePreset)
+	ON_EN_CHANGE(IDC_EDIT_PRESET_NAME,           &SmpGenPresetDlg::OnTextChanged)
+	ON_EN_CHANGE(IDC_EDIT_PRESET_EXPR,           &SmpGenPresetDlg::OnExpressionChanged)
+	ON_LBN_SELCHANGE(IDC_LIST_SAMPLEGEN_PRESETS, &SmpGenPresetDlg::OnListSelChange)
 END_MESSAGE_MAP()
 
 
-BOOL CSmpGenPresetDlg::OnInitDialog()
+SmpGenPresetDlg::SmpGenPresetDlg(SmpGenPresets &presets, CWnd *parent)
+	: DialogBase(IDD_SAMPLE_GENERATOR_PRESETS, parent)
+	, m_presets(presets)
+{
+}
+
+
+BOOL SmpGenPresetDlg::OnInitDialog()
 {
 	DialogBase::OnInitDialog();
-
 	RefreshList();
-
 	return TRUE;
 }
 
 
-void CSmpGenPresetDlg::OnOK()
+void SmpGenPresetDlg::OnOK()
 {
-	// remove empty presets
-	for(size_t i = 0; i < presets->GetNumPresets(); i++)
-	{
-		if(presets->GetPreset(i)->expression.empty())
-		{
-			presets->RemovePreset(i);
-		}
-	}
+	// Remove empty presets
+	m_presets.erase(std::remove_if(m_presets.begin(), m_presets.end(), [](const auto &preset) { return preset.expression.IsEmpty(); }), m_presets.end());
 	DialogBase::OnOK();
 }
 
 
-void CSmpGenPresetDlg::OnListSelChange()
+void SmpGenPresetDlg::OnListSelChange()
 {
-	currentItem = ((CListBox *)GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS))->GetCurSel() + 1;
-	if(currentItem == 0 || currentItem > presets->GetNumPresets()) return;
-	samplegen_expression *preset = presets->GetPreset(currentItem - 1);
-	if(preset == nullptr) return;
-	SetDlgItemText(IDC_EDIT_PRESET_NAME, preset->description.c_str());
-	SetDlgItemText(IDC_EDIT_PRESET_EXPR, preset->expression.c_str());
+	m_currentItem = static_cast<CListBox *>(GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS))->GetCurSel() + 1;
+	if(m_currentItem == 0 || m_currentItem > m_presets.size())
+		return;
+	const auto &preset = m_presets[m_currentItem - 1];
+	SetDlgItemText(IDC_EDIT_PRESET_NAME, preset.description);
+	SetDlgItemText(IDC_EDIT_PRESET_EXPR, preset.expression);
 }
 
 
-void CSmpGenPresetDlg::OnTextChanged()
+void SmpGenPresetDlg::OnTextChanged()
 {
-	if(currentItem == 0 || currentItem > presets->GetNumPresets()) return;
+	if(m_currentItem == 0 || m_currentItem > m_presets.size())
+		return;
 	CString result;
 	GetDlgItemText(IDC_EDIT_PRESET_NAME, result);
 
-	samplegen_expression *preset = presets->GetPreset(currentItem - 1);
-	if(preset == nullptr) return;
-	preset->description = result;
+	const int item = static_cast<int>(m_currentItem - 1);
+	auto &preset = m_presets[item];
+	preset.description = result;
 
-	CListBox *clist = (CListBox *)GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS);
-	clist->DeleteString(currentItem - 1);
-	clist->InsertString(currentItem - 1, (preset->description).c_str());
-	clist->SetCurSel(currentItem - 1);
+	CListBox *clist = static_cast<CListBox *>(GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS));
+	clist->DeleteString(static_cast<UINT>(item));
+	clist->InsertString(item, preset.description);
+	clist->SetCurSel(item);
 }
 
 
-void CSmpGenPresetDlg::OnExpressionChanged()
+void SmpGenPresetDlg::OnExpressionChanged()
 {
-	if(currentItem == 0 || currentItem > presets->GetNumPresets()) return;
+	if(m_currentItem == 0 || m_currentItem > m_presets.size())
+		return;
 	CString result;
 	GetDlgItemText(IDC_EDIT_PRESET_EXPR, result);
-
-	samplegen_expression *preset = presets->GetPreset(currentItem - 1);
-	if(preset != nullptr) preset->expression = result;
+	m_presets[m_currentItem - 1].expression = result;
 
 }
 
 
-void CSmpGenPresetDlg::OnAddPreset()
+void SmpGenPresetDlg::OnAddPreset()
 {
-	samplegen_expression newPreset;
-	newPreset.description = "New Preset";
-	newPreset.expression = "";
-	if(presets->AddPreset(newPreset))
+	if (m_presets.size() >= MAX_SAMPLEGEN_PRESETS)
 	{
-		currentItem = presets->GetNumPresets();
-		RefreshList();
+		// TODO
+		::MessageBeep(MB_ICONWARNING);
+		return;
 	}
+	m_presets.emplace_back(_T("New Preset"), _T(""));
+	m_currentItem = m_presets.size();
+	RefreshList();
 }
 
 
-void CSmpGenPresetDlg::OnRemovePreset()
+void SmpGenPresetDlg::OnRemovePreset()
 {
-	if(currentItem == 0 || currentItem > presets->GetNumPresets()) return;
-	if(presets->RemovePreset(currentItem - 1))
-		RefreshList();
+	if(m_currentItem == 0 || m_currentItem > m_presets.size())
+		return;
+	m_presets.erase(m_presets.begin() + m_currentItem - 1);
+	RefreshList();
 }
 
 
-void CSmpGenPresetDlg::RefreshList()
+void SmpGenPresetDlg::RefreshList()
 {
-	CListBox *clist = (CListBox *)GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS);
-	clist->SetRedraw(FALSE);	//disable lisbox refreshes during fill to avoid flicker
+	CListBox *clist = static_cast<CListBox *>(GetDlgItem(IDC_LIST_SAMPLEGEN_PRESETS));
+	clist->SetRedraw(FALSE);  //disable listbox refreshes during fill to avoid flicker
 	clist->ResetContent();
-	for(size_t i = 0; i < presets->GetNumPresets(); i++)
+	for(const auto &preset : m_presets)
 	{
-		samplegen_expression *preset = presets->GetPreset(i);
-		if(preset != nullptr)
-			clist->AddString((preset->description).c_str());
+		clist->AddString(preset.description);
 	}
-	clist->SetRedraw(TRUE);		//re-enable lisbox refreshes
-	if(currentItem == 0 || currentItem > presets->GetNumPresets())
-	{
-		currentItem = presets->GetNumPresets();
-	}
-	if(currentItem != 0) clist->SetCurSel(currentItem - 1);
+	clist->SetRedraw(TRUE);  //re-enable listbox refreshes
+	if(m_currentItem == 0 || m_currentItem > m_presets.size())
+		m_currentItem = m_presets.size();
+	if(m_currentItem != 0)
+		clist->SetCurSel(static_cast<int>(m_currentItem - 1));
 	OnListSelChange();
 }
 
-#endif // MPT_DISABLED_CODE
+OPENMPT_NAMESPACE_END

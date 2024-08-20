@@ -20,6 +20,7 @@
 #include "PluginComboBox.h"
 #include "ResizableDialog.h"
 #include "TrackerSettings.h"
+#include "CScriptableEdit.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -65,7 +66,7 @@ protected:
 	std::map<PATTERNINDEX, PatternProperties> m_properties;
 	PATTERNINDEX m_nPattern;
 	CSpinButtonCtrl m_spinPattern, m_spinRPB, m_spinRPM;
-	CComboBox m_numRows;
+	CScriptableEdit m_EditRows;
 	bool m_locked = true;
 };
 

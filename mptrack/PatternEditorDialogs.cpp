@@ -135,12 +135,11 @@ BEGIN_MESSAGE_MAP(CPatternPropertiesDlg, DialogBase)
 	ON_EN_CHANGE(IDC_EDIT1,       &CPatternPropertiesDlg::OnPatternChanged)
 END_MESSAGE_MAP()
 
-
 void CPatternPropertiesDlg::DoDataExchange(CDataExchange *pDX)
 {
 	DialogBase::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CPatternPropertiesDlg)
-	DDX_Control(pDX, IDC_COMBO1, m_numRows);
+	DDX_Control(pDX, IDC_COMBO1, m_EditRows);
 	DDX_Control(pDX, IDC_SPIN1, m_spinPattern);
 	DDX_Control(pDX, IDC_SPIN2, m_spinRPB);
 	DDX_Control(pDX, IDC_SPIN3, m_spinRPM);
@@ -161,13 +160,14 @@ BOOL CPatternPropertiesDlg::OnInitDialog()
 
 	const CSoundFile &sndFile = m_modDoc.GetSoundFile();
 	const CModSpecifications &specs = sndFile.GetModSpecifications();
-	m_numRows.SetRedraw(FALSE);
+	auto &rowBox = reinterpret_cast<CComboBox &>(m_EditRows);
+	rowBox.SetRedraw(FALSE);
 	for(ROWINDEX irow = specs.patternRowsMin; irow <= specs.patternRowsMax; irow++)
 	{
-		m_numRows.AddString(mpt::cfmt::dec(irow));
+		rowBox.AddString(mpt::cfmt::dec(irow));
 	}
-	m_numRows.SetRedraw(TRUE);
-	m_numRows.SetFocus();
+	rowBox.SetRedraw(TRUE);
+	rowBox.SetFocus();
 	m_spinRPB.SetRange32(1, MAX_ROWS_PER_BEAT);
 	m_spinRPM.SetRange32(1, MAX_ROWS_PER_MEASURE);
 	m_spinPattern.SetRange32(-1, 1);
@@ -198,7 +198,7 @@ void CPatternPropertiesDlg::SetCurrentPattern(PATTERNINDEX pat)
 	{
 		m_nPattern = pat;
 		PatternProperties &prop = GetPatternProperties();
-		m_numRows.SetCurSel(prop.numRows - sndFile.GetModSpecifications().patternRowsMin);
+		reinterpret_cast<CComboBox &>(m_EditRows).SetCurSel(prop.numRows - sndFile.GetModSpecifications().patternRowsMin);
 		CheckRadioButton(IDC_RADIO1, IDC_RADIO2, prop.resizeAtEnd ? IDC_RADIO2 : IDC_RADIO1);
 
 		// Window title
@@ -289,7 +289,7 @@ bool CPatternPropertiesDlg::ValidatePatternProperties()
 				{
 					SetCurrentPattern(m_nPattern);
 					SetDlgItemInt(IDC_EDIT1, m_nPattern);
-					m_numRows.SetFocus();
+					m_EditRows.SetFocus();
 					return false;
 				}
 				break;
@@ -459,7 +459,11 @@ void CPatternPropertiesDlg::OnOK()
 			}
 		}
 
-		const ROWINDEX newSize = prop.numRows;
+	ROWINDEX newSize;
+	if(const auto result = m_EditRows.GetValue<ROWINDEX>(); result)
+		newSize = *result;
+	else
+		return;
 
 		// Check if any pattern data would be removed.
 		const ROWINDEX oldSize = pattern.GetNumRows();
