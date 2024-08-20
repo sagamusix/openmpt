@@ -18,6 +18,7 @@
 #include "View_pat.h"
 #include "WindowMessages.h"
 #include "../soundlib/mod_specifications.h"
+#include "scripting/LuaVM.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -119,6 +120,22 @@ void CViewPattern::OnEditFindNext()
 		// Limit search to pattern selection
 		firstChannel = std::min(FindReplace::instance.selection.GetStartChannel(), lastChannel);
 		lastChannel = std::min(FindReplace::instance.selection.GetEndChannel(), lastChannel);
+	}
+
+	// Prepare user script
+	sol::state lua;
+	sol::protected_function findExpression;
+	try
+	{
+		lua.script("function findExpression(p, r, c) return p >= 1 end");
+		findExpression = lua["findExpression"];
+		findExpression(0, 0, 0);
+	} catch(const sol::error &e)
+	{
+		//Reporting::Error("function findExpression(pat, row, chn) is missing.", "Find/Replace script error");
+		Reporting::Error(e.what(), "Find/Replace script error");
+		PostMessage(WM_COMMAND, ID_EDIT_FIND);
+		return;
 	}
 
 	for(PATTERNINDEX pat = patStart; pat < patEnd; pat++)
@@ -227,6 +244,25 @@ void CViewPattern::OnEditFindNext()
 				{
 					if((m->param & 0xF0) != (FindReplace::instance.findParamMin & 0xF0))
 						continue;
+				}
+
+				// Evaluate user script for find/replace
+				auto res = findExpression(pat, row, chn);
+				if(!res.valid())
+				{
+					sol::error err = res;
+					Reporting::Error(err.what(), "Find/Replace script error");
+					break;
+				}
+				sol::optional<bool> scriptResult = res;
+				if(!scriptResult)
+				{
+					Reporting::Error("Incompatible return type", "Find/Replace script error");
+					break;
+				}
+				if(!scriptResult.value())
+				{
+					continue;
 				}
 
 				// Found!

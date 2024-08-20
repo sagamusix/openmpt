@@ -2058,22 +2058,22 @@ CString CCommandSet::EnforceAll(KeyCombination inKc, CommandID inCmd, bool addin
 
 
 //Generate a keymap from a command set
-void CCommandSet::GenKeyMap(KeyMap &km)
+
+static void AddCommandsToKeyMap(KeyMap &km, const mpt::span<KeyCommand> commands, CommandID cmdBase, bool allowDupes)
 {
 	std::vector<KeyEventType> eventTypes;
 	std::vector<InputTargetContext> contexts;
 
-	km.clear();
-
-	const bool allowDupes = TrackerSettings::Instance().MiscAllowMultipleCommandsPerKey;
-
-	// Copy commandlist content into map:
-	for(UINT cmd = kcFirst; cmd < kcNumCommands; cmd++)
+	int i = cmdBase;
+	for(const auto &cmd : commands)
 	{
-		if(m_commands[cmd].IsDummy())
+		if(cmd.IsDummy())
+		{
+			i++;
 			continue;
+		}
 
-		for(auto curKc : m_commands[cmd].kcList)
+		for(auto curKc : cmd.kcList)
 		{
 			eventTypes.clear();
 			contexts.clear();
@@ -2105,11 +2105,23 @@ void CCommandSet::GenKeyMap(KeyMap &km)
 						KeyMapRange dupes = km.equal_range(kc);
 						km.erase(dupes.first, dupes.second);
 					}
-					km.insert(std::make_pair(kc, static_cast<CommandID>(cmd)));
+					km.insert(std::make_pair(kc, static_cast<CommandID>(i)));
 				}
 			}
 		}
+		i++;
 	}
+}
+
+
+void CCommandSet::GenKeyMap(KeyMap &km)
+{
+	const bool allowDupes = TrackerSettings::Instance().MiscAllowMultipleCommandsPerKey;
+	km.clear();
+	// Copy commandlist content into map:
+	AddCommandsToKeyMap(km, mpt::as_span(m_commands), kcNull, allowDupes);
+	// And also scriptable commands:
+	AddCommandsToKeyMap(km, mpt::as_span(m_scriptableCommands), kcScriptableCommandBase, allowDupes);
 }
 
 
@@ -2414,6 +2426,32 @@ CommandID CCommandSet::FindCmd(uint32 uid) const
 			return static_cast<CommandID>(i);
 	}
 	return kcNull;
+}
+
+
+CommandID CCommandSet::AddScriptable(const KeyCombination &kc)
+{
+	if(m_scriptableCommands.size() < (kcScriptableCommandEnd - kcScriptableCommandBase))
+	{
+		m_scriptableCommands.push_back({KeyCommand::Hidden, _T("Scriptable Shortcut"), {kc}});
+		return static_cast<CommandID>(m_scriptableCommands.size() - 1 + kcScriptableCommandBase);
+	}
+	return kcNull;
+}
+
+
+bool CCommandSet::RemoveScriptable(CommandID cmd)
+{
+	if(cmd >= kcScriptableCommandBase && (cmd - kcScriptableCommandBase) < m_scriptableCommands.size())
+	{
+		auto &kc = m_scriptableCommands[cmd - kcScriptableCommandBase];
+		if(!kc.IsDummy())
+		{
+			kc = {KeyCommand::Hidden | KeyCommand::Dummy};
+			return true;
+		}
+	}
+	return false;
 }
 
 

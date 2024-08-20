@@ -40,6 +40,7 @@
 #include "SelectPluginDialog.h"
 #include "UpdateCheck.h"
 #include "WindowMessages.h"
+#include "scripting/ScriptingConsole.h"
 
 #include "../common/FileReader.h"
 #include "../common/mptFileIO.h"
@@ -64,6 +65,10 @@
 
 #include <HtmlHelp.h>
 #include <Dbt.h>  // device change messages
+
+#include <functional>
+
+static std::shared_ptr<Scripting::Console> g_Console;
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -115,6 +120,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_MOD_INVALIDATEPATTERNS,	&CMainFrame::OnInvalidatePatterns)
 	ON_MESSAGE(WM_MOD_KEYCOMMAND,			&CMainFrame::OnCustomKeyMsg)
 	ON_MESSAGE(WM_MOD_MIDIMAPPING,			&CMainFrame::OnViewMIDIMapping)
+	ON_MESSAGE(WM_MOD_SCRIPTCALL,			&CMainFrame::OnScriptCall)
 	ON_MESSAGE(WM_MOD_UPDATEVIEWS,			&CMainFrame::OnUpdateViews)
 	ON_MESSAGE(WM_MOD_SETMODIFIED,			&CMainFrame::OnSetModified)
 #if defined(MPT_ENABLE_UPDATE)
@@ -241,6 +247,8 @@ void CMainFrame::Initialize()
 	CreateTemplateModulesMenu();
 	UpdateMRUList();
 
+	g_Console = std::make_shared<Scripting::Console>(this);
+
 #ifdef MPT_ENABLE_PLAYBACK_TEST_MENU
 	CMenu debugMenu;
 	debugMenu.CreatePopupMenu();
@@ -255,6 +263,8 @@ void CMainFrame::Initialize()
 CMainFrame::~CMainFrame()
 {
 	delete m_InputHandler;
+	m_InputHandler = nullptr;
+
 	CChannelManagerDlg::DestroySharedInstance();
 }
 
@@ -374,6 +384,12 @@ BOOL CMainFrame::DestroyWindow()
 	DeleteGDIObject(m_hFixedFont);
 	DeleteGDIObject(penGray99);
 #undef DeleteGDIObject
+
+	if(g_Console)
+	{
+		g_Console->DestroyWindow();
+		g_Console = nullptr;
+	}
 
 	return CMDIFrameWnd::DestroyWindow();
 }
@@ -3309,6 +3325,13 @@ void CMainFrame::NotifyAccessibilityUpdate(CWnd &source)
 	if(!IsPlaying() || m_pSndFile->m_PlayState.m_flags[SONG_PAUSED])
 		source.NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, OBJID_CLIENT, CHILDID_SELF);
 }
+
+LRESULT CMainFrame::OnScriptCall(WPARAM wParam, LPARAM /*lParam*/)
+{
+	(*reinterpret_cast<std::function<void()> *>(wParam))();
+	return 0;
+}
+
 
 // ITfLanguageProfileNotifySink implementation
 
