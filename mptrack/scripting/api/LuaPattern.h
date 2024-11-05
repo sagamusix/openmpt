@@ -82,7 +82,7 @@ struct PatternCell : public Obj
 		auto &pattern = sndFile->Patterns[static_cast<PATTERNINDEX>(m_index)];
 		if(!pattern.IsValidRow(m_row))
 			throw "Invalid Row";
-		if(m_channel < 1 || m_channel >= pattern.GetNumChannels())
+		if(m_channel < 1 || m_channel > pattern.GetNumChannels())
 			throw "Invalid Channel";
 		return make_lock(*pattern.GetpModCommand(m_row, m_channel - 1u), std::move(sndFile));
 	}
