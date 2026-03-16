@@ -46,6 +46,7 @@ OutputDir=.\
 OutputBaseFilename=OpenMPT-{#GetAppVersion}-Setup
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=commandline dialog
+SetupArchitecture=x86
 SetupIconFile=..\mptrack\res\MPTRACK.ICO
 SolidCompression=yes
 TimeStampsInUTC=yes
