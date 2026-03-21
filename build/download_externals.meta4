@@ -1,22 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
- <file name="build/externals/7za920.zip">
-  <size>384846</size>
-  <hash type="sha-512">84e830c91a0e8ae499cc4814080da6569d8a6acbddc585c8b62abc86c809793aeb669b0a741063a379fd281ade85f120bc27efeb67d63bf961be893eec8bc3b3</hash>
-  <url>https://7-zip.org/a/7za920.zip</url>
-  <url>https://deac-fra.dl.sourceforge.net/project/sevenzip/7-Zip/9.20/7za920.zip</url>
-  <url>https://sf-eu-introserv-1.dl.sourceforge.net/project/sevenzip/7-Zip/9.20/7za920.zip</url>
-  <url>https://sf-west-interserver-1.dl.sourceforge.net/project/sevenzip/7-Zip/9.20/7za920.zip</url>
-  <url>https://sf-west-interserver-2.dl.sourceforge.net/project/sevenzip/7-Zip/9.20/7za920.zip</url>
- </file>
- <file name="build/externals/7z2600-extra.7z">
-  <size>1636191</size>
-  <hash type="sha-512">b7619b8a6d8678027e755c02c04766b24ebf8ab8af97d7f1a561073eee964a444a353515e57dd11cbe7fb6fe485ca021dbca9fc228c2e09a9df0cbd45bf5ad1d</hash>
-  <url>https://7-zip.org/a/7z2600-extra.7z</url>
-  <url>https://deac-fra.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7z2600-extra.7z</url>
-  <url>https://sf-eu-introserv-1.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7z2600-extra.7z</url>
-  <url>https://sf-west-interserver-1.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7z2600-extra.7z</url>
-  <url>https://sf-west-interserver-2.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7z2600-extra.7z</url>
+ <file name="build/externals/7zr.exe">
+  <size>601088</size>
+  <hash type="sha-512">a30f8a214cbe5c0efcbfc4f2cae80f23e821044d167e8d33d882415f0544ae8ba78ad23fa17d58ad92cf7e46c31bded170eefb3d3bd8130d1fa78c6f2dcd5f58</hash>
+  <url>https://7-zip.org/a/7zr.exe</url>
+  <url>https://deac-fra.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7zr.exe</url>
+  <url>https://sf-eu-introserv-1.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7zr.exe</url>
+  <url>https://sf-west-interserver-1.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7zr.exe</url>
+  <url>https://sf-west-interserver-2.dl.sourceforge.net/project/sevenzip/7-Zip/26.00/7zr.exe</url>
  </file>
  <file name="build/externals/7z2600-x64.exe">
   <size>1655627</size>

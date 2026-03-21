@@ -31,16 +31,13 @@ if not exist "build\tools"     mkdir "build\tools"
 rem download
 for /f "delims=" %%a in ('powershell -ExecutionPolicy Unrestricted .\build\scriptlib\Parse-Metalink.ps1 -filename ".\build\download_externals.meta4"') do ( call build\scriptlib\download.cmd %%a || goto error )
 
-call :killdir "build\tools\7zipold" || goto error
-call :killdir "build\tools\7zipa" || goto error
+call :killdir "build\tools\7zipr" || goto error
 call :killdir "build\tools\7zip" || goto error
-rem Get old 7zip distributed as zip and unpack with built-in zip depacker
-rem Get current 7zip commandline version which can unpack 7zip and the 7zip installer but not other archive formats
+rem Get current 7zip commandline version which can unpack the 7zip installer but not other archive formats
 rem Get 7zip installer and unpack it with current commandline 7zip
-rem This is a mess for automation. Oh well.
-cscript build\scriptlib\unpack-zip.vbs "build\externals\7za920.zip" "build\tools\7zipold" || goto error
-build\tools\7zipold\7za.exe x -y -obuild\tools\7zipa "build\externals\7z2600-extra.7z" || goto error
-build\tools\7zipa\7za.exe x -y -obuild\tools\7zip "build\externals\7z2600-x64.exe" || goto error
+if not exist "build\tools\7zipr" mkdir "build\tools\7zipr"
+copy /y "build\externals\7zr.exe" "build\tools\7zipr\7zr.exe"
+build\tools\7zipr\7zr.exe x -y -obuild\tools\7zip "build\externals\7z2600-x64.exe" || goto error
 
 call build\scriptlib\unpack.cmd "build\tools\htmlhelp" "build\externals\htmlhelp.exe" "." || goto error
 
