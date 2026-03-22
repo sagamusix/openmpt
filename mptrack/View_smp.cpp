@@ -194,7 +194,7 @@ void CViewSample::OnInitialUpdate()
 
 
 // updateAll: Update all views including this one. Otherwise, only update update other views.
-void CViewSample::SetModified(SampleHint hint, bool updateAll, bool waveformModified)
+void CViewSample::SetModified(SAMPLEINDEX smp, SampleHint hint, bool updateAll, bool waveformModified)
 {
 	CModDoc *pModDoc = GetDocument();
 	pModDoc->SetModified();
@@ -202,12 +202,12 @@ void CViewSample::SetModified(SampleHint hint, bool updateAll, bool waveformModi
 	if(waveformModified)
 	{
 		// Update on-disk sample status in tree
-		ModSample &sample = pModDoc->GetSoundFile().GetSample(m_nSample);
+		ModSample &sample = pModDoc->GetSoundFile().GetSample(smp);
 		if(sample.uFlags[SMP_KEEPONDISK] && !sample.uFlags[SMP_MODIFIED])
 			hint.Names();
 		sample.uFlags.set(SMP_MODIFIED);
 	}
-	pModDoc->UpdateAllViews(nullptr, hint.SetData(m_nSample), updateAll ? nullptr : this);
+	pModDoc->UpdateAllViews(nullptr, hint.SetData(smp), updateAll ? nullptr : this);
 }
 
 
@@ -2907,22 +2907,40 @@ void CViewSample::OnEditRedo()
 
 void CViewSample::On8BitConvert()
 {
+	Convert8Bit(CInputHandler::ShiftPressed());
+}
+
+
+void CViewSample::Convert8Bit(bool allSamples)
+{
 	CModDoc *pModDoc = GetDocument();
+	if(!pModDoc)
+		return;
+
+	if(allSamples && Reporting::Confirm(_T("This will convert all samples to 8-bit. Continue?"), _T("8-Bit Conversion")) == cnfNo)
+		return;
+
 	BeginWaitCursor();
-	if ((pModDoc) && (m_nSample <= pModDoc->GetNumSamples()))
+	CSoundFile &sndFile = pModDoc->GetSoundFile();
+	SAMPLEINDEX minSample = m_nSample, maxSample = m_nSample;
+	if(allSamples)
 	{
-		CSoundFile &sndFile = pModDoc->GetSoundFile();
-		ModSample &sample = sndFile.GetSample(m_nSample);
+		minSample = 1;
+		maxSample = sndFile.GetNumSamples();
+	}
+	for(SAMPLEINDEX smp = minSample; smp <= maxSample; smp++)
+	{
+		ModSample &sample = sndFile.GetSample(smp);
 		if(sample.uFlags[CHN_16BIT] && !sample.uFlags[CHN_ADLIB] && sample.HasSampleData())
 		{
-			ASSERT(sample.GetElementarySampleSize() == 2);
-			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "8-Bit Conversion");
+			MPT_ASSERT(sample.GetElementarySampleSize() == 2);
+			pModDoc->GetSampleUndo().PrepareUndo(smp, sundo_replace, "8-Bit Conversion");
 
 			CriticalSection cs;
 			SampleEdit::ConvertTo8Bit(sample, sndFile);
 			cs.Leave();
 
-			SetModified(SampleHint().Info().Data(), true, true);
+			SetModified(smp, SampleHint().Info().Data(), smp == m_nSample, true);
 		}
 	}
 	EndWaitCursor();
@@ -2939,7 +2957,7 @@ void CViewSample::On16BitConvert()
 		ModSample &sample = sndFile.GetSample(m_nSample);
 		if(!sample.uFlags[CHN_16BIT] && !sample.uFlags[CHN_ADLIB] && sample.HasSampleData())
 		{
-			ASSERT(sample.GetElementarySampleSize() == 1);
+			MPT_ASSERT(sample.GetElementarySampleSize() == 1);
 			pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "16-Bit Conversion");
 			if(!SampleEdit::ConvertTo16Bit(sample, sndFile))
 			{
@@ -3668,27 +3686,17 @@ LRESULT CViewSample::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		case kcSampleConvertPingPongLoop: OnConvertPingPongLoop(); return wParam;
 		case kcSampleConvertPingPongSustain: OnConvertPingPongSustain(); return wParam;
 		case kcSample8Bit:		if(sndFile.GetSample(m_nSample).uFlags[CHN_16BIT])
-									On8BitConvert();
+									Convert8Bit(false);
 								else
 									On16BitConvert();
 								return wParam;
+		case kcSample8BitAll:	Convert8Bit(true); return wParam;
 		case kcSampleMonoMix:	OnMonoConvertMix(); return wParam;
 		case kcSampleMonoLeft:	OnMonoConvertLeft(); return wParam;
 		case kcSampleMonoRight:	OnMonoConvertRight(); return wParam;
 		case kcSampleMonoSplit:	OnMonoConvertSplit(); return wParam;
 		case kcSampleSendSelectionToNew: OnSendSelectionToNewSlot(); return wParam;
 
-		case kcSampleReverse:			PostCtrlMessage(IDC_SAMPLE_REVERSE); return wParam;
-		case kcSampleSilence:			PostCtrlMessage(IDC_SAMPLE_SILENCE); return wParam;
-		case kcSampleNormalize:			PostCtrlMessage(IDC_SAMPLE_NORMALIZE); return wParam;
-		case kcSampleAmplify:			PostCtrlMessage(IDC_SAMPLE_AMPLIFY); return wParam;
-		case kcSampleInvert:			PostCtrlMessage(IDC_SAMPLE_INVERT); return wParam;
-		case kcSampleSignUnsign:		PostCtrlMessage(IDC_SAMPLE_SIGN_UNSIGN); return wParam;
-		case kcSampleRemoveDCOffset:	PostCtrlMessage(IDC_SAMPLE_DCOFFSET); return wParam;
-		case kcSampleXFade:				PostCtrlMessage(IDC_SAMPLE_XFADE); return wParam;
-		case kcSampleAutotune:			PostCtrlMessage(IDC_SAMPLE_AUTOTUNE); return wParam;
-		case kcSampleQuickFade:			PostCtrlMessage(IDC_SAMPLE_QUICKFADE); return wParam;
-		case kcSampleStereoSep:			PostCtrlMessage(IDC_SAMPLE_STEREOSEPARATION); return wParam;
 		case kcSampleSliceCuePoints:	OnSampleSliceCuePoints(); return wParam;
 		case kcSampleSliceGrid:			OnSampleSliceGrid(); return wParam;
 		case kcSampleToggleDrawing:		OnDrawingToggle(); return wParam;
@@ -3771,7 +3779,7 @@ LRESULT CViewSample::OnCustomKeyMsg(WPARAM wParam, LPARAM lParam)
 		return wParam;
 	}
 
-	// Pass on to ctrl_smp
+	// Pass on to CCtrlSamples
 	return GetControlDlg()->SendMessage(WM_MOD_KEYCOMMAND, wParam, lParam);
 }
 

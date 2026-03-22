@@ -103,7 +103,8 @@ public:
 	DECLARE_SERIAL(CViewSample)
 
 protected:
-	MPT_ATTR_NOINLINE MPT_DECL_NOINLINE void SetModified(SampleHint hint, bool updateAll, bool waveformModified);
+	MPT_ATTR_NOINLINE MPT_DECL_NOINLINE void SetModified(SAMPLEINDEX smp, SampleHint hint, bool updateAll, bool waveformModified);
+	void SetModified(SampleHint hint, bool updateAll, bool waveformModified) { SetModified(m_nSample, hint, updateAll, waveformModified); }
 	void UpdateScrollSize() { UpdateScrollSize(m_nZoom, true); }
 	void UpdateScrollSize(int newZoom, bool forceRefresh, SmpLength centeredSample = SmpLength(-1));
 	void UpdateOPLEditor();
@@ -154,6 +155,7 @@ protected:
 
 	void OnMonoConvert(ctrlSmp::StereoToMonoMode convert);
 	void TrimSample(bool trimToLoopEnd);
+	void Convert8Bit(bool allSamples);
 
 	int CalcScroll(int &currentPos, int amount, int style, int bar);
 

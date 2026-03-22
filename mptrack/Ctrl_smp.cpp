@@ -471,60 +471,8 @@ LRESULT CCtrlSamples::OnModCtrlMsg(WPARAM wParam, LPARAM lParam)
 	case CTRLMSG_SMP_NEWSAMPLE:
 		return InsertSample(false) ? 1 : 0;
 
-	case IDC_SAMPLE_REVERSE:
-		OnReverse();
-		break;
-
-	case IDC_SAMPLE_SILENCE:
-		OnSilence();
-		break;
-
-	case IDC_SAMPLE_INVERT:
-		OnInvert();
-		break;
-
-	case IDC_SAMPLE_XFADE:
-		OnXFade();
-		break;
-
-	case IDC_SAMPLE_STEREOSEPARATION:
-		OnStereoSeparation();
-		break;
-
-	case IDC_SAMPLE_AUTOTUNE:
-		OnAutotune();
-		break;
-
-	case IDC_SAMPLE_SIGN_UNSIGN:
-		OnSignUnSign();
-		break;
-
-	case IDC_SAMPLE_DCOFFSET:
-		RemoveDCOffset(false);
-		break;
-
-	case IDC_SAMPLE_NORMALIZE:
-		Normalize(false);
-		break;
-
-	case IDC_SAMPLE_AMPLIFY:
-		OnAmplify();
-		break;
-
 	case IDC_SAMPLE_QUICKFADE:
 		OnQuickFade();
-		break;
-
-	case IDC_SAMPLE_OPEN:
-		OnSampleOpen();
-		break;
-
-	case IDC_SAMPLE_SAVEAS:
-		OnSampleSave();
-		break;
-
-	case IDC_SAMPLE_NEW:
-		InsertSample(false);
 		break;
 
 	default:
@@ -1906,22 +1854,28 @@ void CCtrlSamples::OnQuickFade()
 
 void CCtrlSamples::OnResample()
 {
+	Resample(CInputHandler::ShiftPressed());
+}
+
+
+void CCtrlSamples::Resample(bool allSamples)
+{
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	if(!sample.HasSampleData() || sample.uFlags[CHN_ADLIB])
 		return;
 
 	SAMPLEINDEX first = m_nSample, last = m_nSample;
-	if(CInputHandler::ShiftPressed())
+	if(allSamples)
 	{
 		first = 1;
 		last = m_sndFile.GetNumSamples();
 	}
-	
+
 	const uint32 oldRate = sample.GetSampleRate(m_sndFile.GetType());
 	CResamplingDlg dlg(this, oldRate, TrackerSettings::Instance().sampleEditorDefaultResampler, first != last, m_sndFile.GetBestSaveFormat() == MOD_TYPE_MOD);
 	if(dlg.DoModal() != IDOK)
 		return;
-	
+
 	TrackerSettings::Instance().sampleEditorDefaultResampler = dlg.GetFilter();
 	for(SAMPLEINDEX smp = first; smp <= last; smp++)
 	{
@@ -2844,15 +2798,23 @@ LRESULT CCtrlSamples::OnCustomKeyMsg(WPARAM wParam, LPARAM /*lParam*/)
 			ApplyResample(m_nSample, wParam == kcSampleUpsample ? oldRate * 2 : oldRate / 2, TrackerSettings::Instance().sampleEditorDefaultResampler);
 		}
 		return wParam;
-	case kcSampleResample:
-		OnResample();
-		return wParam;
-	case kcSampleStereoSep:
-		OnStereoSeparation();
-		return wParam;
-	case kcSampleInitializeOPL:
-		OnInitOPLInstrument();
-		return wParam;
+	case kcSampleResample: Resample(false); return wParam;
+	case kcSampleResampleAll: Resample(true); return wParam;
+
+	case kcSampleInitializeOPL: OnInitOPLInstrument(); return wParam;
+	case kcSampleReverse: OnReverse(); return wParam;
+	case kcSampleSilence: OnSilence(); return wParam;
+	case kcSampleNormalize: Normalize(false); return wParam;
+	case kcSampleNormalizeAll: Normalize(true); return wParam;
+	case kcSampleAmplify: OnAmplify(); return wParam;
+	case kcSampleInvert: OnInvert(); return wParam;
+	case kcSampleSignUnsign: OnSignUnSign(); return wParam;
+	case kcSampleRemoveDCOffset: RemoveDCOffset(false); return wParam;
+	case kcSampleRemoveDCOffsetAll: RemoveDCOffset(true); return wParam;
+	case kcSampleXFade: OnXFade(); return wParam;
+	case kcSampleAutotune: OnAutotune(); return wParam;
+	case kcSampleQuickFade: OnQuickFade(); return wParam;
+	case kcSampleStereoSep: OnStereoSeparation(); return wParam;
 	}
 
 	if(transpose)

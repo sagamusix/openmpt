@@ -962,6 +962,10 @@ static constexpr struct
 	{2125, kcTreeViewMoveUp, _T("Move Item Up")},
 	{2126, kcTreeViewMoveDown, _T("Move Item Down")},
 	{2127, kcSampleSliceGrid, _T("Slice at grid") },
+	{2128, kcSampleNormalizeAll, _T("Normalize All Samples")},
+	{2129, kcSampleRemoveDCOffsetAll, _T("Remove DC Offset from All Samples")},
+	{2130, kcSampleResampleAll, _T("Resample All Samples")},
+	{2131, kcSample8BitAll, _T("Convert All Samples to 8-Bit")},
 };
 // clang-format on
 
