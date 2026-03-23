@@ -3687,10 +3687,20 @@ void CMainFrame::OnConvertMixerDumpToText()
 		MPT_LOG_GLOBAL(LogDebug, "info", U_("Loading ") + fileName.ToUnicode());
 		try
 		{
-			mpt::IO::InputFile f(fileName);
-			if(!f.IsValid())
-				throw std::runtime_error{"Cannot open test data file!"};
-			PlaybackTest playTest{GetFileReader(f)};
+			mpt::IO::InputFile testFile{fileName};
+			if(!testFile.IsValid())
+				throw std::runtime_error{"Cannot open test data file: " + fileName.ToUTF8()};
+
+			FileReader testFileReader = GetFileReader(testFile);
+			CGzipArchive archive{testFileReader};
+			if(archive.IsArchive())
+			{
+				if(!archive.ExtractFile(0))
+					throw std::runtime_error{"Cannot extract test data file!"};
+				testFileReader = archive.GetOutputFile();
+			}
+
+			PlaybackTest playTest{testFileReader};
 			mpt::IO::ofstream output(fileName.ReplaceExtension(P_(".tsv")), std::ios::binary);
 			playTest.ToTSV(output);
 		} catch(const std::exception &e)
