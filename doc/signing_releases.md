@@ -2,23 +2,17 @@
 building signed updates
 =======================
 
- *  run
+ *  A code signing certificate is assumed to be installed and available on the
+    system.
+ *  Run
     ```
     build\download_externals.cmd
-    build\auto\build_openmpt_args.cmd vs2019 win10 Win32 Release 7z default
-    build\auto\build_openmpt_args.cmd vs2019 win10 x64   Release 7z default
-    build\auto\build_openmpt_args.cmd vs2019 win10 ARM   Release 7z default
-    build\auto\build_openmpt_args.cmd vs2019 win10 ARM64 Release 7z default
-    build\auto\build_openmpt_args.cmd vs2019 win7  Win32 Release 7z default
-    build\auto\build_openmpt_args.cmd vs2019 win7  x64   Release 7z default
-    build\auto\build_openmpt_release_packages_multiarch.cmd
-    build\auto\build_openmpt_update_information.cmd
-    build\auto\package_openmpt_installer_multiarch_args.cmd vs2019 win10 Win32 Release 7z default
+    build\build_openmpt_release.cmd
+    build\build_openmpt_release_retro.cmd
     ```
-    or just `build\auto\build_openmpt_release_manual.cmd`, which does all of the
-    above in one go.
 
- *  results are found in `bin\openmpt-pkg.win-multi.tar`
+ *  results are found in `bin\openmpt-pkg.win-multi.tar` and
+    `openmpt-pkg.win-retro.tar`.
 
  *  `openmpt/pkg.win/${BRANCHVERSION}/OpenMPT-${VERSION}-update.json` contains
     the update information that needs to be copied verbatim to the respective
