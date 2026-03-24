@@ -3302,6 +3302,7 @@ MPT_ATTR_NOINLINE MPT_DECL_NOINLINE static void TestSettings()
 			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("Foo")}, SettingValue{U_("")}).as<mpt::ustring>(), U_(""));
 			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("foo")}, SettingValue{U_("")}).as<mpt::ustring>(), U_("c"));
 		}
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
 	}
 
 #endif // MODPLUG_TRACKER
