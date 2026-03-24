@@ -66,26 +66,39 @@ class atomic_file_ref {
 protected:
 
 	const mpt::PathString m_filename;
+	bool m_readonly = false;
 	HANDLE m_hFile = NULL;
 
 public:
 
 	atomic_file_ref(mpt::PathString filename)
 		: m_filename(std::move(filename)) {
-		m_hFile = mpt::windows::CheckFileHANDLE(CreateFile(mpt::support_long_path(m_filename).c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+		DWORD attributes = GetFileAttributes(mpt::support_long_path(m_filename).c_str());
+		if (attributes != INVALID_FILE_ATTRIBUTES) {
+			m_readonly = (attributes & FILE_ATTRIBUTE_READONLY) ? true : false;
+		}
+		m_hFile = mpt::windows::CheckFileHANDLE(CreateFile(mpt::support_long_path(m_filename).c_str(), GENERIC_READ | (m_readonly ? 0 : GENERIC_WRITE), 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 	}
 
 protected:
 
 	atomic_file_ref(mpt::PathString filename, bool shared)
 		: m_filename(std::move(filename)) {
-		m_hFile = mpt::windows::CheckFileHANDLE(CreateFile(mpt::support_long_path(m_filename).c_str(), GENERIC_READ | GENERIC_WRITE, shared ? (FILE_SHARE_READ | FILE_SHARE_WRITE) : 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+		DWORD attributes = GetFileAttributes(mpt::support_long_path(m_filename).c_str());
+		if (attributes != INVALID_FILE_ATTRIBUTES) {
+			m_readonly = (attributes & FILE_ATTRIBUTE_READONLY) ? true : false;
+		}
+		m_hFile = mpt::windows::CheckFileHANDLE(CreateFile(mpt::support_long_path(m_filename).c_str(), GENERIC_READ | (m_readonly ? 0 : GENERIC_WRITE), shared ? (FILE_SHARE_READ | (m_readonly ? 0 : FILE_SHARE_WRITE)) : 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 	}
 
 public:
 
 	atomic_file_ref(const atomic_file_ref &) = delete;
 	atomic_file_ref & operator=(const atomic_file_ref &) = delete;
+
+	bool is_readonly() const {
+		return m_readonly;
+	}
 
 	void lock() {
 	}
@@ -123,7 +136,10 @@ public:
 		return data;
 	}
 
-	void write(mpt::const_byte_span data, bool sync = false) {
+	bool write(mpt::const_byte_span data, bool sync = false) {
+		if (m_readonly) {
+			return false;
+		}
 		{
 			LARGE_INTEGER pos{};
 			pos.QuadPart = 0;
@@ -154,10 +170,15 @@ public:
 		if (sync) {
 			mpt::windows::CheckBOOL(FlushFileBuffers(m_hFile));
 		}
+		return true;
 	}
 
-	void sync() {
+	bool sync() {
+		if (m_readonly) {
+			return false;
+		}
 		mpt::windows::CheckBOOL(FlushFileBuffers(m_hFile));
+		return true;
 	}
 
 	void unlock() {
@@ -186,6 +207,11 @@ public:
 
 	atomic_shared_file_ref(const atomic_shared_file_ref &) = delete;
 	atomic_shared_file_ref & operator=(const atomic_shared_file_ref &) = delete;
+
+	// cppcheck-suppress duplInheritedMember
+	bool is_readonly() const {
+		return atomic_file_ref::is_readonly();
+	}
 
 	void lock_shared() {
 		if (m_locks == 0) {
