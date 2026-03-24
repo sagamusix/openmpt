@@ -3071,6 +3071,7 @@ MPT_ATTR_NOINLINE MPT_DECL_NOINLINE static void TestSettings()
 
 	const mpt::PathString filename = theApp.GetConfigPath() + P_("test.ini");
 
+	SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), (~FILE_ATTRIBUTE_READONLY) & GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
 	DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
 
 	TestIniSettingsBackendRead<ImmediateWindowsIniFileSettingsBackend>(filename);
@@ -3302,6 +3303,68 @@ MPT_ATTR_NOINLINE MPT_DECL_NOINLINE static void TestSettings()
 			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("Foo")}, SettingValue{U_("")}).as<mpt::ustring>(), U_(""));
 			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("foo")}, SettingValue{U_("")}).as<mpt::ustring>(), U_("c"));
 		}
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
+	}
+
+	// read-only file
+	{
+		{	
+			FileSettingsContainer<ImmediateWindowsIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), FILE_ATTRIBUTE_READONLY | GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
+		{	
+			FileSettingsContainer<ImmediateWindowsIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("b"));
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("b"));
+			inifile.Forget(SettingPath{U_("Test"), U_("Foo")});
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		{	
+			FileSettingsContainer<ImmediateWindowsIniFileSettingsBackend> inifile{filename};
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), (~FILE_ATTRIBUTE_READONLY) & GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
+	}
+	{
+		{	
+			FileSettingsContainer<BatchedWindowsIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), FILE_ATTRIBUTE_READONLY | GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
+		{	
+			FileSettingsContainer<BatchedWindowsIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("b"));
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("b"));
+			inifile.Forget(SettingPath{U_("Test"), U_("Foo")});
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		{	
+			FileSettingsContainer<BatchedWindowsIniFileSettingsBackend> inifile{filename};
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), (~FILE_ATTRIBUTE_READONLY) & GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
+	}
+	{
+		{	
+			FileSettingsContainer<CachedIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), FILE_ATTRIBUTE_READONLY | GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
+		{	
+			FileSettingsContainer<CachedIniFileSettingsBackend> inifile{filename};
+			inifile.Write<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("b"));
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("b"));
+			inifile.Forget(SettingPath{U_("Test"), U_("Foo")});
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		{	
+			FileSettingsContainer<CachedIniFileSettingsBackend> inifile{filename};
+			VERIFY_EQUAL(inifile.Read<mpt::ustring>(SettingPath{U_("Test"), U_("Foo")}, U_("c")), U_("a"));
+		}
+		SetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str(), (~FILE_ATTRIBUTE_READONLY) & GetFileAttributes(mpt::support_long_path(filename.AsNative()).c_str()));
 		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
 	}
 
