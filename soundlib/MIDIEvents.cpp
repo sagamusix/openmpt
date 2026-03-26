@@ -129,6 +129,8 @@ uint8 GetEventLength(uint8 firstByte)
 			break;
 		}
 		break;
+	default:
+		break;
 	}
 	return msgSize;
 }
