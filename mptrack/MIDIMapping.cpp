@@ -12,7 +12,6 @@
 #include "MIDIMapping.h"
 #include "Moddoc.h"
 #include "../common/FileReader.h"
-#include "../soundlib/MIDIEvents.h"
 #include "../soundlib/plugins/PlugInterface.h"
 #include "mpt/io/io.hpp"
 #include "mpt/io/io_stdstream.hpp"
@@ -89,7 +88,7 @@ bool CMIDIMapper::Deserialize(FileReader &file)
 		file.ReadStructPartial(i32, psize - 3);
 
 		s.SetChannel(((i16 & 1) != 0) ? 0 : 1 + ((i16 >> 1) & 0xF));
-		s.SetEvent(static_cast<uint8>((i16 >> 5) & 0xF));
+		s.SetEvent(static_cast<MIDIEvents::EventType>((i16 >> 1) & 0xF0));
 		s.SetController(i16 >> 9);
 		s.SetPlugIndex(i8);
 		s.SetParamIndex(i32);

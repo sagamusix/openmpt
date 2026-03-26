@@ -430,7 +430,7 @@ void MidiInOut::Process(float *, float *, uint32 numFrames)
 		{
 			if(m_sendTimingInfo)
 			{
-				m_outQueue.push_back(Message(GetOutputTimestamp(), 0xF8));
+				m_outQueue.push_back(Message(GetOutputTimestamp(), MIDIEvents::sysMIDIClock));
 			}
 
 			double bpm = m_SndFile.GetCurrentBPM();
@@ -491,14 +491,14 @@ void MidiInOut::InputCallback(double /*deltatime*/, std::vector<unsigned char> &
 	{
 		// SysEx message (continued)
 		m_bufferedInput.insert(m_bufferedInput.end(), message.begin(), message.end());
-		if(message.back() == 0xF7)
+		if(message.back() == MIDIEvents::sysExEnd)
 		{
 			// End of message found!
 			if(!isBypassed)
 				ReceiveMidi(mpt::byte_cast<mpt::const_byte_span>(mpt::as_span(m_bufferedInput)));
 			m_bufferedInput.clear();
 		}
-	} else if(message.front() == 0xF0)
+	} else if(message.front() == MIDIEvents::sysExStart)
 	{
 		// Start of SysEx message...
 		if(message.back() != 0xF7)
@@ -528,7 +528,7 @@ void MidiInOut::Resume()
 	OpenDevice(m_outputDevice, false);
 	if(m_midiOut.isPortOpen() && m_sendTimingInfo && !m_SndFile.IsPaused())
 	{
-		MidiSend(0xFA);  // Start
+		MidiSend(MIDIEvents::sysStart);
 	}
 	if(m_alwaysSendInitialDump)
 		m_initialDumpSent = false;
@@ -553,7 +553,7 @@ void MidiInOut::Suspend()
 			m_outQueue.clear();
 			if(m_sendTimingInfo)
 			{
-				unsigned char message[1] = { 0xFC };  // Stop
+				unsigned char message[1] = {MIDIEvents::sysStop};
 				SendMessage(message);
 			}
 		} catch(const RtMidiError &)
@@ -573,11 +573,11 @@ void MidiInOut::PositionChanged()
 {
 	if(m_sendTimingInfo && !m_SndFile.IsPaused())
 	{
-		MidiSend(0xFC);  // Stop
+		MidiSend(MIDIEvents::sysStop);
 		uint16 ppq = mpt::saturate_trunc<uint16>((m_SndFile.m_PlayState.m_ppqPosBeat + m_SndFile.m_PlayState.m_ppqPosFract) * 4.0);
 		if(ppq < 16384)
 			MidiSend(MIDIEvents::SongPosition(ppq));
-		MidiSend(0xFA);  // Start
+		MidiSend(MIDIEvents::sysStart);
 	}
 	m_positionChanged = true;
 }

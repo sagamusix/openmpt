@@ -13,6 +13,7 @@
 #include "openmpt/all/BuildSettings.hpp"
 
 #include "../common/FileReaderFwd.h"
+#include "../soundlib/MIDIEvents.h"
 #include "../soundlib/Snd_defs.h"
 
 #include <vector>
@@ -46,8 +47,8 @@ public:
 	void SetChannel(const int c) { if(c < 1 || c > 16) m_AnyChannel = true; else { m_ChnEvent &= ~0x0F; m_ChnEvent |= c - 1; m_AnyChannel = false; } }
 	uint8 GetChannel() const {return (m_AnyChannel) ? 0 : (m_ChnEvent & 0xF) + 1;} 
 
-	void SetEvent(uint8 e) { if(e > 15) e = 15; m_ChnEvent &= ~0xF0; m_ChnEvent |= (e << 4); }
-	uint8 GetEvent() const {return (m_ChnEvent >> 4) & 0x0F;}
+	void SetEvent(MIDIEvents::EventType e) { m_ChnEvent &= ~0xF0; m_ChnEvent |= (e & 0xF0); }
+	MIDIEvents::EventType GetEvent() const { return static_cast<MIDIEvents::EventType>(m_ChnEvent & 0xF0); }
 
 	void SetController(int controller) { if(controller > 127) controller = 127; m_MIDIByte1 = static_cast<uint8>(controller); }
 	uint8 GetController() const { return m_MIDIByte1; }
@@ -70,7 +71,7 @@ private:
 	uint32 m_Parameter = 0;
 	PLUGINDEX m_PluginIndex = 1;
 	uint8 m_MIDIByte1 = 0;
-	uint8 m_ChnEvent = (0xB << 4);  // 0-3 channel, 4-7 event
+	uint8 m_ChnEvent = MIDIEvents::evControllerChange;  // 0-3 channel, 4-7 event
 	bool m_Active : 1;
 	bool m_CaptureMIDI : 1;       // When true, MIDI data should not be processed beyond this directive
 	bool m_AllowPatternEdit : 1;  // When true, the mapping can be used for modifying pattern.
@@ -83,7 +84,7 @@ class CSoundFile;
 class CMIDIMapper
 {
 public:
-	CMIDIMapper(CSoundFile& sndfile) : m_rSndFile(sndfile) {}
+	CMIDIMapper(CSoundFile &sndfile) : m_rSndFile{sndfile} {}
 
 	// If mapping found:
 	// - mappedIndex is set to mapped value(plug index)

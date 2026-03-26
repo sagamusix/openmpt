@@ -359,8 +359,7 @@ void CMIDIMappingDialog::OnCbnSelchangeComboParam()
 
 void CMIDIMappingDialog::OnCbnSelchangeComboEvent()
 {
-	uint8 eventType = static_cast<uint8>(m_EventCBox.GetItemData(m_EventCBox.GetCurSel()));
-	m_Setting.SetEvent(eventType);
+	m_Setting.SetEvent(static_cast<MIDIEvents::EventType>(m_EventCBox.GetItemData(m_EventCBox.GetCurSel())));
 	UpdateEvent();
 }
 

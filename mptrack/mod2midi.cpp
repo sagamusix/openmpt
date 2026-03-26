@@ -316,11 +316,11 @@ namespace MidiExport
 			if(midiData.empty())
 				return false;
 			const uint8 type = mpt::byte_cast<uint8>(midiData[0]);
-			if(type == 0xF0)
+			if(type == MIDIEvents::sysExStart)
 			{
 				// SysEx
 				WriteTicks();
-				mpt::IO::WriteIntBE<uint8>(f, 0xF0);
+				mpt::IO::WriteIntBE<uint8>(f, MIDIEvents::sysExStart);
 				mpt::IO::WriteVarInt(f, mpt::saturate_cast<uint32>(midiData.size() - 1));
 				mpt::IO::WriteRaw(f, midiData.data() + 1, midiData.size() - 1);
 			} else

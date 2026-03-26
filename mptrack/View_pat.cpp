@@ -3956,15 +3956,6 @@ LRESULT CViewPattern::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 	//     +---------------------------+---------------------------+-------------+-------------+
 	//(http://home.roadrunner.com/~jgglatt/tech/midispec.htm)
 
-	//Notes:
-	//. Initial midi data handling is done in MidiInCallBack().
-	//. If no event is received, previous event is assumed.
-	//. A note-on (event=9) with velocity 0 is equivalent to a note off.
-	//. Basing the event solely on the velocity as follows is incorrect,
-	//  since a note-off can have a velocity too:
-	//  BYTE event  = (dwMidiData>>16) & 0x64;
-	//. Sample- and instrumentview handle midi mesages in their own methods.
-
 	const uint8 midiByte1 = MIDIEvents::GetDataByte1FromEvent(midiData);
 	const uint8 midiByte2 = MIDIEvents::GetDataByte2FromEvent(midiData);
 	const uint8 channel = MIDIEvents::GetChannelFromEvent(midiData);
@@ -4106,17 +4097,17 @@ LRESULT CViewPattern::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 		if(midiSetup[MidiSetup::RespondToPlayControl])
 		{
 			// Respond to MIDI song messages
-			switch(channel)
+			switch(static_cast<MIDIEvents::SystemEvent>(midiData))
 			{
-			case MIDIEvents::sysStart:  //Start song
+			case MIDIEvents::sysStart:
 				pModDoc->OnPlayerPlayFromStart();
 				break;
 
-			case MIDIEvents::sysContinue:  //Continue song
+			case MIDIEvents::sysContinue:
 				pModDoc->OnPlayerPlay();
 				break;
 
-			case MIDIEvents::sysStop:  //Stop song
+			case MIDIEvents::sysStop:
 				pModDoc->OnPlayerStop();
 				break;
 			}

@@ -1623,7 +1623,7 @@ bool CVstPlugin::MidiSend(mpt::const_byte_span midiData)
 
 	ResetSilence();
 	const uint8 type = mpt::byte_cast<uint8>(midiData[0]);
-	if(type == 0xF0)
+	if(type == MIDIEvents::sysExStart)
 	{
 		VstMidiSysexEvent event{};
 		event.type = kVstSysExType;
