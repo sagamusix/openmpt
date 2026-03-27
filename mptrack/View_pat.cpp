@@ -4102,13 +4102,13 @@ LRESULT CViewPattern::OnMidiMsg(WPARAM dwMidiDataParam, LPARAM)
 			case MIDIEvents::sysStart:
 				pModDoc->OnPlayerPlayFromStart();
 				break;
-
 			case MIDIEvents::sysContinue:
 				pModDoc->OnPlayerPlay();
 				break;
-
 			case MIDIEvents::sysStop:
 				pModDoc->OnPlayerStop();
+				break;
+			default:
 				break;
 			}
 		}
