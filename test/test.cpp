@@ -2968,6 +2968,26 @@ static void TestIniSettingsBackendRead(const mpt::PathString &filename)
 		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
 	}
 
+	// misquoted strings
+	{
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
+		{
+			mpt::IO::SafeOutputFile outputfile{filename, std::ios::binary};
+			mpt::IO::ofstream & outputstream = outputfile.stream();
+			mpt::IO::WriteTextCRLF(outputstream, "[Test]");
+			mpt::IO::WriteTextCRLF(outputstream, mpt::ToCharset(mpt::Charset::UTF8, MPT_UTF8("Foo1='ba' r ")));
+			mpt::IO::WriteTextCRLF(outputstream, mpt::ToCharset(mpt::Charset::UTF8, MPT_UTF8("Foo2='ba''")));
+			mpt::IO::WriteTextCRLF(outputstream, mpt::ToCharset(mpt::Charset::UTF8, MPT_UTF8("Foo3=\"''\"")));
+		}
+		{
+			Backend inifile{filename};
+			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("Foo1")}, U_("")).as<mpt::ustring>(), U_("'ba' r"));
+			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("Foo2")}, U_("")).as<mpt::ustring>(), U_("ba'"));
+			VERIFY_EQUAL(inifile.ReadSetting(SettingPath{U_("Test"), U_("Foo3")}, U_("")).as<mpt::ustring>(), U_("''"));
+		}
+		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
+	}
+
 	// quoted integer
 	{
 		DeleteFile(mpt::support_long_path(filename.AsNative()).c_str());
