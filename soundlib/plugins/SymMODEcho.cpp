@@ -233,8 +233,7 @@ CString SymMODEcho::GetParamDisplay(PlugParamIndex param)
 
 IMixPlugin::ChunkData SymMODEcho::GetChunk(bool)
 {
-	auto data = reinterpret_cast<const std::byte *>(&m_chunk);
-	return ChunkData(data, sizeof(m_chunk));
+	return ChunkData(mpt::as_raw_memory(m_chunk));
 }
 
 
