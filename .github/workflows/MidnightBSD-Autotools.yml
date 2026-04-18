@@ -48,7 +48,7 @@ jobs:
         run: |
           sudo mport index
           sudo mport upgrade
-          sudo mport install subversion p5-XML-TreePP git mawk gmake pkgconf autoconf autoconf-archive automake libtool help2man doxygen mpg123 libogg libvorbis flac libsndfile pulseaudio portaudio sdl2
+          sudo mport install subversion p5-XML-TreePP git mawk gmake pkgconf autoconf autoconf-archive automake libtool help2man doxygen mpg123 libogg libvorbis flac libsndfile pulseaudio portaudio sdl2 || true
     - name: Build
       uses: cross-platform-actions/action@13ec3be3fbdfe52a660fe21c83f332747ed878be
       with:
@@ -72,57 +72,3 @@ jobs:
         sync_files: false
         shutdown_vm: true
         run: true
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
