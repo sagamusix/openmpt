@@ -158,7 +158,7 @@ function headercheck_c_cpp() {
 	HEADERCHECK_OPTIONS="${4}"
 	echo '#include <vector>' > bin/empty.cpp
 	if ${HEADERCHECK_COMPILER} ${HEADERCHECK_STANDARD} -c bin/empty.cpp -o bin/empty.${HEADERCHECK_NAME}.out > /dev/null 2>&1 ; then
-		echo '' > bin/headercheck.c
+		echo '' > bin/headercheck.cpp
 		echo '#include "libopenmpt/libopenmpt.h"' >> bin/headercheck.cpp
 		echo 'int main() { return 0; }' >> bin/headercheck.cpp
 		echo " ${HEADERCHECK_COMPILER} ${HEADERCHECK_STANDARD}"
@@ -224,7 +224,7 @@ function headercheck_cpp() {
 	HEADERCHECK_OPTIONS="${5}"
 	echo '#include <array>' > bin/empty.cpp
 	if ${HEADERCHECK_COMPILER} ${HEADERCHECK_STANDARD} -c bin/empty.cpp -o bin/empty.${HEADERCHECK_NAME}.out > /dev/null 2>&1 ; then
-		echo '' > bin/headercheck.c
+		echo '' > bin/headercheck.cpp
 		echo '#include "libopenmpt/libopenmpt.hpp"' >> bin/headercheck.cpp
 		echo 'int main() { return 0; }' >> bin/headercheck.cpp
 		echo " ${HEADERCHECK_COMPILER} ${HEADERCHECK_STANDARD} ${HEADERCHECK_STDLIB}"
