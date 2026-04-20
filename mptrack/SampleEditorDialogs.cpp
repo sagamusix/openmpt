@@ -24,6 +24,12 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
+static void PopulateSampleLengthUnitComboBox(CComboBox &comboBox, SampleLengthUnit unit)
+{
+	comboBox.SetItemData(comboBox.AddString(_T("samples")), static_cast<DWORD_PTR>(SampleLengthUnit::Samples));
+	comboBox.SetItemData(comboBox.AddString(_T("ms")), static_cast<DWORD_PTR>(SampleLengthUnit::Milliseconds));
+	comboBox.SetCurSel(static_cast<int>(unit));
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Sample amplification dialog
@@ -577,9 +583,7 @@ BOOL AddSilenceDlg::OnInitDialog()
 	CComboBox *box = static_cast<CComboBox *>(GetDlgItem(IDC_COMBO1));
 	if(box)
 	{
-		box->AddString(_T("samples"));
-		box->AddString(_T("ms"));
-		box->SetCurSel(m_unit);
+		PopulateSampleLengthUnitComboBox(*box, m_unit);
 		if(m_sampleRate == 0)
 		{
 			// Can't do any conversions if samplerate is unknown
@@ -607,7 +611,7 @@ BOOL AddSilenceDlg::OnInitDialog()
 void AddSilenceDlg::OnOK()
 {
 	m_numSamples = GetDlgItemInt(IDC_EDIT_ADDSILENCE, nullptr, FALSE);
-	if(m_unit == kMilliseconds)
+	if(m_unit == SampleLengthUnit::Milliseconds)
 	{
 		m_numSamples = Util::muldivr_unsigned(m_numSamples, m_sampleRate, 1000);
 	}
@@ -648,13 +652,14 @@ void AddSilenceDlg::OnEditModeChanged()
 
 void AddSilenceDlg::OnUnitChanged()
 {
-	const auto unit = static_cast<Unit>(static_cast<CComboBox*>(GetDlgItem(IDC_COMBO1))->GetCurSel());
+	CComboBox *box = static_cast<CComboBox *>(GetDlgItem(IDC_COMBO1));
+	const auto unit = static_cast<SampleLengthUnit>(box->GetItemData(box->GetCurSel()));
 	if(m_unit == unit)
 		return;
 
 	m_unit = unit;
 	SmpLength duration = GetDlgItemInt(IDC_EDIT_ADDSILENCE);
-	if(m_unit == kSamples)
+	if(m_unit == SampleLengthUnit::Samples)
 	{
 		// Convert from milliseconds
 		duration = Util::muldivr_unsigned(duration, m_sampleRate, 1000);
@@ -681,20 +686,34 @@ AddSilenceDlg::AddSilenceOptions AddSilenceDlg::GetEditMode() const
 /////////////////////////////////////////////////////////////////////////
 // Sample grid dialog
 
+BEGIN_MESSAGE_MAP(CSampleGridDlg, DialogBase)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CSampleGridDlg::OnUnitChanged)
+	ON_EN_SETFOCUS(IDC_EDIT1,    &CSampleGridDlg::OnSegmentsFocus)
+	ON_EN_SETFOCUS(IDC_EDIT2,    &CSampleGridDlg::OnSpacingFocus)
+	ON_EN_CHANGE(IDC_EDIT1,      &CSampleGridDlg::OnSegmentsChanged)
+	ON_EN_CHANGE(IDC_EDIT2,      &CSampleGridDlg::OnSpacingChanged)
+END_MESSAGE_MAP()
+
+
 void CSampleGridDlg::DoDataExchange(CDataExchange* pDX)
 {
 	DialogBase::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CSampleGridDlg)
-	DDX_Control(pDX, IDC_EDIT1, m_EditSegments);
 	DDX_Control(pDX, IDC_SPIN1, m_SpinSegments);
+	DDX_Control(pDX, IDC_SPIN2, m_SpinSpacing);
+	DDX_Control(pDX, IDC_COMBO1, m_ComboUnit);
 	//}}AFX_DATA_MAP
 }
 
 
-CSampleGridDlg::CSampleGridDlg(CWnd* parent, SmpLength nSegments, SmpLength nMaxSegments)
+CSampleGridDlg::CSampleGridDlg(CWnd *parent, SampleGridMode mode, double segments, double spacing, SampleLengthUnit unit, SmpLength maxSegments, uint32 sampleRate)
 	: DialogBase{IDD_SAMPLE_GRID_SIZE, parent}
-	, m_nSegments{nSegments}
-	, m_nMaxSegments{nMaxSegments}
+	, m_mode{mode}
+	, m_maxSegments{maxSegments}
+	, m_segments{std::max(segments, 2.0)}
+	, m_spacing{spacing}
+	, m_unit{unit}
+	, m_sampleRate{sampleRate > 0 ? sampleRate : 8363u}
 {
 }
 
@@ -702,18 +721,106 @@ CSampleGridDlg::CSampleGridDlg(CWnd* parent, SmpLength nSegments, SmpLength nMax
 BOOL CSampleGridDlg::OnInitDialog()
 {
 	DialogBase::OnInitDialog();
-	m_SpinSegments.SetRange32(0, m_nMaxSegments);
-	m_SpinSegments.SetPos(m_nSegments);
-	SetDlgItemInt(IDC_EDIT1, m_nSegments, FALSE);
-	GetDlgItem(IDC_EDIT1)->SetFocus();
-	return TRUE;
+
+	PopulateSampleLengthUnitComboBox(m_ComboUnit, m_unit);
+
+	m_SpinSegments.SetRange32(1, m_maxSegments);
+	m_SpinSegments.SetPos32(mpt::saturate_round<int32>(m_segments));
+	m_EditSegments.SubclassDlgItem(IDC_EDIT1, this);
+	m_EditSegments.AllowFractions(true);
+	m_EditSegments.AllowNegative(false);
+	m_EditSegments.SetDecimalValue(m_segments);
+
+	m_SpinSpacing.SetRange32(0, m_maxSegments);
+	m_SpinSpacing.SetPos32(mpt::saturate_round<int32>(m_spacing));
+	m_EditSpacing.SubclassDlgItem(IDC_EDIT2, this);
+	m_EditSpacing.AllowFractions(true);
+	m_EditSpacing.AllowNegative(false);
+	m_EditSpacing.SetDecimalValue(m_spacing);
+
+	int radioChoice = IDC_RADIO1;
+	switch(m_mode)
+	{
+	case SampleGridMode::NoGrid:
+	case SampleGridMode::DivideIntoSegments:
+		radioChoice = IDC_RADIO2;
+		GotoDlgCtrl(&m_EditSegments);
+		break;
+	case SampleGridMode::DivideEveryN:
+		radioChoice = IDC_RADIO3;
+		GotoDlgCtrl(&m_EditSpacing);
+		break;
+	}
+	CheckRadioButton(IDC_RADIO1, IDC_RADIO3, radioChoice);
+
+	m_locked = false;
+	return FALSE;
 }
 
 
 void CSampleGridDlg::OnOK()
 {
-	m_nSegments = GetDlgItemInt(IDC_EDIT1, NULL, FALSE);
+	if(IsDlgButtonChecked(IDC_RADIO1))
+	{
+		m_mode = SampleGridMode::NoGrid;
+	} else if(IsDlgButtonChecked(IDC_RADIO2))
+	{
+		m_mode = SampleGridMode::DivideIntoSegments;
+		m_EditSegments.GetDecimalValue(m_segments);
+		if(m_segments < 1.0)
+		{
+			MessageBeep(MB_ICONWARNING);
+			m_EditSegments.SetFocus();
+			return;
+		}
+	} else if(IsDlgButtonChecked(IDC_RADIO3))
+	{
+		m_mode = SampleGridMode::DivideEveryN;
+		m_EditSpacing.GetDecimalValue(m_spacing);
+		m_unit = static_cast<SampleLengthUnit>(m_ComboUnit.GetItemData(m_ComboUnit.GetCurSel()));
+		
+		double effectiveSamples = m_spacing;
+		if(m_unit == SampleLengthUnit::Milliseconds)
+			effectiveSamples *= m_sampleRate / 1000.0;
+
+		if(effectiveSamples < 1.0)
+		{
+			MessageBeep(MB_ICONWARNING);
+			m_EditSpacing.SetFocus();
+			return;
+		}
+	}
 	DialogBase::OnOK();
+}
+
+
+void CSampleGridDlg::OnUnitChanged()
+{
+	const auto newUnit = static_cast<SampleLengthUnit>(m_ComboUnit.GetItemData(m_ComboUnit.GetCurSel()));
+	if(newUnit == m_unit)
+		return;
+
+	double val = 0.0;
+	m_EditSpacing.GetDecimalValue(val);
+	if(newUnit == SampleLengthUnit::Milliseconds)
+		val *= 1000.0 / m_sampleRate;
+	else
+		val *= m_sampleRate / 1000.0;
+	m_unit = newUnit;
+	m_locked = true;
+	m_EditSpacing.SetDecimalValue(val);
+	m_locked = false;
+
+	CheckRadioButton(IDC_RADIO1, IDC_RADIO3, IDC_RADIO3);
+}
+
+
+void CSampleGridDlg::OnEditChanged(int radio, bool onlyMouse)
+{
+	if(m_locked || m_lastInputDevice == InputDevice::Unknown)
+		return;
+	if(!onlyMouse || m_lastInputDevice == InputDevice::Mouse)
+		CheckRadioButton(IDC_RADIO1, IDC_RADIO3, IDC_RADIO1 + radio);
 }
 
 

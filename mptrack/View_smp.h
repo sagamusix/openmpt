@@ -14,6 +14,7 @@
 #include "openmpt/all/BuildSettings.hpp"
 #include "Globals.h"
 #include "Moddoc.h"
+#include "SampleEditorDialogs.h"
 #include "TrackerSettings.h"
 #include "../soundlib/modsmp_ctrl.h"
 
@@ -79,16 +80,23 @@ protected:
 	FlagSet<Flags> m_dwStatus;
 	SmpLength m_dwBeginSel, m_dwEndSel, m_dwBeginDrag, m_dwEndDrag;
 	SmpLength m_dwMenuParam;
-	SmpLength m_nGridSegments = 0;
 	SAMPLEINDEX m_nSample = 1;
+
+	// Drag & Drop
 	HitTestItem m_dragItem = HitTestItem::Nothing;
 	CPoint m_startDragPoint;
 	SmpLength m_startDragValue = MAX_SAMPLE_LENGTH;
 	bool m_dragPreparedUndo = false, m_fineDrag = false, m_forceRedrawWaveform = true, m_scrolledSinceLastMouseMove = false;
 
+	// Sample grid
+	SampleGridMode m_gridMode = SampleGridMode::NoGrid;
+	double m_gridSegments = 2.0;
+	double m_gridSpacing = 1000.0;
+	SampleLengthUnit m_gridUnit = SampleLengthUnit::Milliseconds;
+
 	// Sample drawing
-	CPoint m_lastDrawPoint;		// For drawing horizontal lines
-	int m_drawChannel;			// Which sample channel are we drawing on?
+	CPoint m_lastDrawPoint;  // For drawing horizontal lines
+	int m_drawChannel;       // Which sample channel are we drawing on?
 
 	// Note-off event buffer for MIDI sustain pedal
 	std::array<std::vector<uint32>, 16> m_midiSustainBuffer;
@@ -96,7 +104,7 @@ protected:
 
 	DWORD m_NcButtonState[SMP_LEFTBAR_BUTTONS];
 	std::array<SmpLength, MAX_CHANNELS> m_dwNotifyPos;
-	CModDoc::NoteToChannelMap m_noteChannel;	// Note -> Preview channel assignment
+	CModDoc::NoteToChannelMap m_noteChannel;  // Note -> Preview channel assignment
 
 public:
 	CViewSample();
@@ -160,6 +168,8 @@ protected:
 	int CalcScroll(int &currentPos, int amount, int style, int bar);
 
 	SmpLength SnapToGrid(const SmpLength pos) const;
+	// Returns effective grid segment size, in samples
+	double GetGridSegmentSize(const ModSample &sample, const CSoundFile &sndFile) const;
 
 	// Returns index of preview channel if exactly one one is being previewed, CHANNELINDEX_INVALID otherwise.
 	CHANNELINDEX GetPreviewChannel() const;

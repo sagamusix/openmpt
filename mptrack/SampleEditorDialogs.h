@@ -21,6 +21,12 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
+enum class SampleLengthUnit
+{
+	Samples = 0,
+	Milliseconds,
+};
+
 //////////////////////////////////////////////////////////////////////////
 // Sample amplification dialog
 
@@ -135,12 +141,6 @@ public:
 		kOPLInstrument,      // Initialize as OPL instrument
 	};
 
-	enum Unit
-	{
-		kSamples = 0,
-		kMilliseconds,
-	};
-
 	SmpLength m_numSamples; // Add x samples (also containes the return value in all cases)
 	SmpLength m_length;  // Set size to x samples (init value: current sample size)
 	AddSilenceOptions m_editOption; // See above
@@ -149,7 +149,7 @@ protected:
 	static SmpLength m_addSamples;
 	static SmpLength m_createSamples;
 	uint32 m_sampleRate;
-	Unit m_unit = kSamples;
+	SampleLengthUnit m_unit = SampleLengthUnit::Samples;
 	bool m_allowOPL;
 
 public:
@@ -169,22 +169,46 @@ protected:
 /////////////////////////////////////////////////////////////////////////
 // Sample grid dialog
 
+enum class SampleGridMode
+{
+	NoGrid = 0,
+	DivideIntoSegments,
+	DivideEveryN,
+};
+
 class CSampleGridDlg : public DialogBase
 {
 public:
-	SmpLength m_nSegments, m_nMaxSegments;
+	SampleGridMode m_mode = SampleGridMode::NoGrid;
+	const SmpLength m_maxSegments;
+	double m_segments = 0.0;
+	double m_spacing = 0.0;
+	SampleLengthUnit m_unit = SampleLengthUnit::Samples;
+	const uint32 m_sampleRate;
+	bool m_locked = true;
 
 protected:
-	CEdit m_EditSegments;
-	CSpinButtonCtrl m_SpinSegments;
+	CNumberEdit m_EditSegments, m_EditSpacing;
+	CSpinButtonCtrl m_SpinSegments, m_SpinSpacing;
+	CComboBox m_ComboUnit;
 
 public:
-	CSampleGridDlg(CWnd *parent, SmpLength nSegments, SmpLength nMaxSegments);
+	CSampleGridDlg(CWnd *parent, SampleGridMode mode, double segments, double spacing, SampleLengthUnit unit, SmpLength maxSegments, uint32 sampleRate);
 
 protected:
-	void DoDataExchange(CDataExchange* pDX) override;
+	void DoDataExchange(CDataExchange *pDX) override;
 	BOOL OnInitDialog() override;
 	void OnOK() override;
+
+	void OnEditChanged(int radio, bool onlyMouse);
+
+	afx_msg void OnUnitChanged();
+	afx_msg void OnSegmentsFocus() { OnEditChanged(1, true); }
+	afx_msg void OnSpacingFocus() { OnEditChanged(2, true); }
+	afx_msg void OnSegmentsChanged() { OnEditChanged(1, false); }
+	afx_msg void OnSpacingChanged() { OnEditChanged(2, false); }
+
+	DECLARE_MESSAGE_MAP()
 };
 
 

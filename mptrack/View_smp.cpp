@@ -27,7 +27,6 @@
 #include "OPLInstrDlg.h"
 #include "Reporting.h"
 #include "resource.h"
-#include "SampleEditorDialogs.h"
 #include "WindowMessages.h"
 #include "../common/FileReader.h"
 #include "../soundlib/MIDIEvents.h"
@@ -465,16 +464,50 @@ void CViewSample::SetZoom(int nZoom, SmpLength centeredSample)
 }
 
 
+double CViewSample::GetGridSegmentSize(const ModSample &sample, const CSoundFile &sndFile) const
+{
+	switch(m_gridMode)
+	{
+	case SampleGridMode::NoGrid:
+		return 0.0;
+	case SampleGridMode::DivideIntoSegments:
+		if(m_gridSegments > 1.0 && m_gridSegments < sample.nLength)
+			return static_cast<double>(sample.nLength) / m_gridSegments;
+		break;
+	case SampleGridMode::DivideEveryN:
+		if(m_gridSpacing > 0.0)
+		{
+			if(m_gridUnit == SampleLengthUnit::Milliseconds)
+			{
+				uint32 sampleRate = sample.GetSampleRate(sndFile.GetType());
+				if(!sampleRate)
+					sampleRate = 8363;
+				return m_gridSpacing * sampleRate * (1.0 / 1000.0);
+			}
+			return m_gridSpacing;
+		}
+		break;
+	}
+	return 0.0;
+}
+
+
 SmpLength CViewSample::SnapToGrid(const SmpLength pos) const
 {
-	if(m_nGridSegments <= 0 || GetDocument() == nullptr)
+	if(m_gridMode == SampleGridMode::NoGrid || GetDocument() == nullptr)
 		return pos;
-	const auto &sample = GetDocument()->GetSoundFile().GetSample(m_nSample);
-	if(m_nGridSegments >= sample.nLength)
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
+	const ModSample &sample = sndFile.GetSample(m_nSample);
+	const double samplesPerSegment = GetGridSegmentSize(sample, sndFile);
+	if(samplesPerSegment <= 1.0)
 		return pos;
-	
-	const auto samplesPerSegment = static_cast<double>(sample.nLength) / m_nGridSegments;
-	return static_cast<SmpLength>(mpt::round(pos / samplesPerSegment) * samplesPerSegment);
+	SmpLength snapped = mpt::saturate_round<SmpLength>(mpt::round(pos / samplesPerSegment) * samplesPerSegment);
+	// Also consider the sample end as a snap point, so that a short final segment in "divide every N" mode remains selectable
+	SmpLength distToGrid = (snapped > pos) ? (snapped - pos) : (pos - snapped);
+	SmpLength distToEnd = (sample.nLength > pos) ? (sample.nLength - pos) : (pos - sample.nLength);
+	if(distToEnd < distToGrid)
+		snapped = sample.nLength;
+	return snapped;
 }
 
 
@@ -1336,20 +1369,29 @@ void CViewSample::OnDraw(CDC *pDC)
 		}
 	}
 
-	if(m_nGridSegments > 0 && m_nGridSegments < sample.nLength && sample.nLength != 0)
+	if(m_gridMode != SampleGridMode::NoGrid && sample.nLength != 0)
 	{
 		// Draw sample grid
-		m_offScreenDC.SetBkColor(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKSAMPLE]);
-		m_offScreenDC.SelectObject(CMainFrame::penHalfDarkGray);
-		const auto segmentsByLength = static_cast<double>(m_nGridSegments) / sample.nLength;
-		const auto samplesPerSegment = static_cast<double>(sample.nLength) / m_nGridSegments;
-		const auto leftSegment = std::max(uint32(1), mpt::saturate_round<uint32>(ScreenToSample(rect.left) * segmentsByLength));
-		const auto rightSegment = std::min(m_nGridSegments, mpt::saturate_round<uint32>(ScreenToSample(rect.right) * segmentsByLength));
-		for(uint32 i = leftSegment; i <= rightSegment; i++)
+		const double samplesPerSegment = GetGridSegmentSize(sample, sndFile);
+		if(samplesPerSegment >= 1.0)
 		{
-			int screenPos = SampleToScreen(mpt::saturate_round<SmpLength>(samplesPerSegment * i));
-			m_offScreenDC.MoveTo(screenPos, rect.top);
-			m_offScreenDC.LineTo(screenPos, rect.bottom);
+			m_offScreenDC.SetBkColor(TrackerSettings::Instance().rgbCustomColors[MODCOLOR_BACKSAMPLE]);
+			m_offScreenDC.SelectObject(CMainFrame::penHalfDarkGray);
+			const uint32 leftSegment = std::max(uint32(1), mpt::saturate_round<uint32>(ScreenToSample(rect.left) / samplesPerSegment));
+			const uint32 rightSegment = mpt::saturate_round<uint32>(ScreenToSample(rect.right) / samplesPerSegment);
+			int lastScreenPos = -1;
+			for(uint32 i = leftSegment; i <= rightSegment; i++)
+			{
+				SmpLength samplePos = mpt::saturate_round<SmpLength>(samplesPerSegment * i);
+				if(samplePos >= sample.nLength)
+					break;
+				int screenPos = SampleToScreen(samplePos);
+				if(screenPos <= lastScreenPos)
+					continue;
+				m_offScreenDC.MoveTo(screenPos, rect.top);
+				m_offScreenDC.LineTo(screenPos, rect.bottom);
+				lastScreenPos = screenPos + 1;  // Leave at least one empty pixel row between lines, otherwise this makes no sense visually
+			}
 		}
 	}
 
@@ -2336,7 +2378,7 @@ void CViewSample::OnRButtonUp(UINT, CPoint pt)
 						wsprintf(s, _T("Set Sample Cu&e to:\t%s"), pos.GetString());
 						::AppendMenu(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hCueMenu), s);
 						::AppendMenu(hMenu, MF_STRING | (hasValidCues ? 0 : MF_GRAYED), ID_SAMPLE_SLICE, ih->GetKeyTextFromCommand(kcSampleSliceCuePoints, _T("Slice at cue points")));
-						if(m_nGridSegments > 1)
+						if(m_gridMode != SampleGridMode::NoGrid)
 							::AppendMenu(hMenu, MF_STRING, ID_SAMPLE_SLICE_GRID, ih->GetKeyTextFromCommand(kcSampleSliceGrid, _T("Slice at grid")));
 					}
 
@@ -3842,18 +3884,28 @@ void CViewSample::OnSampleSliceCuePoints()
 void CViewSample::OnSampleSliceGrid()
 {
 	const CModDoc *modDoc = GetDocument();
-	if(modDoc == nullptr || m_nSample > modDoc->GetNumSamples() || m_nGridSegments < 2)
+	if(modDoc == nullptr || m_nSample > modDoc->GetNumSamples() || m_gridMode == SampleGridMode::NoGrid)
 		return;
-	const ModSample &sample = modDoc->GetSoundFile().GetSample(m_nSample);
+	const CSoundFile &sndFile = modDoc->GetSoundFile();
+	const ModSample &sample = sndFile.GetSample(m_nSample);
 	if(!sample.HasSampleData() || sample.uFlags[CHN_ADLIB])
 		return;
 
-	std::vector<SmpLength> slicePoints(m_nGridSegments + 1);
-	const auto samplesPerSegment = static_cast<double>(sample.nLength) / m_nGridSegments;
-	for (SmpLength i = 0; i <= m_nGridSegments; i++)
+	const double samplesPerSegment = GetGridSegmentSize(sample, sndFile);
+	if(samplesPerSegment <= 1.0)
+		return;
+
+	std::vector<SmpLength> slicePoints;
+	slicePoints.reserve(2 + static_cast<size_t>(sample.nLength / samplesPerSegment));
+	slicePoints.push_back(0);
+	for(SmpLength i = 1; ; i++)
 	{
-		slicePoints[i] = mpt::saturate_round<SmpLength>(i * samplesPerSegment);
+		SmpLength pos = mpt::saturate_round<SmpLength>(samplesPerSegment * i);
+		if(pos >= sample.nLength)
+			break;
+		slicePoints.push_back(pos);
 	}
+	slicePoints.push_back(sample.nLength);
 	OnSampleSlice(mpt::as_span(slicePoints));
 }
 
@@ -4046,10 +4098,15 @@ void CViewSample::OnXButtonUp(UINT nFlags, UINT nButton, CPoint point)
 
 void CViewSample::OnChangeGridSize()
 {
-	CSampleGridDlg dlg(this, m_nGridSegments, GetDocument()->GetSoundFile().GetSample(m_nSample).nLength);
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
+	const ModSample &sample = sndFile.GetSample(m_nSample);
+	CSampleGridDlg dlg{this, m_gridMode, m_gridSegments, m_gridSpacing, m_gridUnit, sample.nLength, sample.GetSampleRate(sndFile.GetType())};
 	if(dlg.DoModal() == IDOK)
 	{
-		m_nGridSegments = dlg.m_nSegments;
+		m_gridMode = dlg.m_mode;
+		m_gridSegments = dlg.m_segments;
+		m_gridSpacing = dlg.m_spacing;
+		m_gridUnit = dlg.m_unit;
 		InvalidateSample(false);
 	}
 }
