@@ -770,7 +770,7 @@ void CSampleGridDlg::OnOK()
 		if(m_segments < 1.0)
 		{
 			MessageBeep(MB_ICONWARNING);
-			m_EditSegments.SetFocus();
+			GotoDlgCtrl(&m_EditSegments);
 			return;
 		}
 	} else if(IsDlgButtonChecked(IDC_RADIO3))
@@ -786,7 +786,7 @@ void CSampleGridDlg::OnOK()
 		if(effectiveSamples < 1.0)
 		{
 			MessageBeep(MB_ICONWARNING);
-			m_EditSpacing.SetFocus();
+			GotoDlgCtrl(&m_EditSpacing);
 			return;
 		}
 	}
@@ -905,7 +905,7 @@ void CSampleXFadeDlg::OnLoopTypeChanged()
 
 	m_editLocked = true;
 	m_SpinSamples.SetRange32(0, std::min(m_loopLength, m_maxLength));
-	GetDlgItem(IDC_EDIT1)->SetFocus();
+	GotoDlgCtrl(GetDlgItem(IDC_EDIT1));
 	CheckDlgButton(IDC_CHECK1, m_afterloopFade ? BST_CHECKED : BST_UNCHECKED);
 
 	SmpLength numSamples = PercentToSamples(m_SliderLength.GetPos());
@@ -1059,7 +1059,7 @@ void CResamplingDlg::OnOK()
 		} else
 		{
 			MessageBeep(MB_ICONWARNING);
-			GetDlgItem(IDC_EDIT1)->SetFocus();
+			GotoDlgCtrl(GetDlgItem(IDC_EDIT1));
 			return;
 		}
 	}
