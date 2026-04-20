@@ -768,11 +768,7 @@ void CSampleGridDlg::OnOK()
 		m_mode = SampleGridMode::DivideIntoSegments;
 		m_EditSegments.GetDecimalValue(m_segments);
 		if(m_segments < 1.0)
-		{
-			MessageBeep(MB_ICONWARNING);
-			GotoDlgCtrl(&m_EditSegments);
-			return;
-		}
+			m_mode = SampleGridMode::NoGrid;
 	} else if(IsDlgButtonChecked(IDC_RADIO3))
 	{
 		m_mode = SampleGridMode::DivideEveryN;
@@ -784,11 +780,7 @@ void CSampleGridDlg::OnOK()
 			effectiveSamples *= m_sampleRate / 1000.0;
 
 		if(effectiveSamples < 1.0)
-		{
-			MessageBeep(MB_ICONWARNING);
-			GotoDlgCtrl(&m_EditSpacing);
-			return;
-		}
+			m_mode = SampleGridMode::NoGrid;
 	}
 	DialogBase::OnOK();
 }

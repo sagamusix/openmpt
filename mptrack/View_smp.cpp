@@ -3618,10 +3618,10 @@ LRESULT CViewSample::OnMidiMsg(WPARAM midiDataParam, LPARAM)
 		}
 		break;
 
-	case MIDIEvents::evControllerChange: //Controller change
+	case MIDIEvents::evControllerChange: // Controller change
 		switch(midiByte1)
 		{
-		case MIDIEvents::MIDICC_Volume_Coarse: //Volume
+		case MIDIEvents::MIDICC_Volume_Coarse: // Volume
 			midiVolume = midiByte2;
 			break;
 
@@ -4104,9 +4104,18 @@ void CViewSample::OnChangeGridSize()
 	if(dlg.DoModal() == IDOK)
 	{
 		m_gridMode = dlg.m_mode;
-		m_gridSegments = dlg.m_segments;
-		m_gridSpacing = dlg.m_spacing;
-		m_gridUnit = dlg.m_unit;
+		switch(m_gridMode)
+		{
+		case SampleGridMode::NoGrid:
+			break;
+		case SampleGridMode::DivideIntoSegments:
+			m_gridSegments = dlg.m_segments;
+			break;
+		case SampleGridMode::DivideEveryN:
+			m_gridSpacing = dlg.m_spacing;
+			m_gridUnit = dlg.m_unit;
+			break;
+		}
 		InvalidateSample(false);
 	}
 }
