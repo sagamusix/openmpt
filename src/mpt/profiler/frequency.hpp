@@ -36,6 +36,7 @@ namespace profiler {
 
 // guess
 #if MPT_OS_MACOSX_OR_IOS
+
 #if MPT_ARCH_AARCH64
 inline constexpr std::size_t cacheline_size_min = std::max(alignof(std::max_align_t), static_cast<std::size_t>(64));
 inline constexpr std::size_t cacheline_size_max = std::max(alignof(std::max_align_t), static_cast<std::size_t>(128));
@@ -43,13 +44,18 @@ inline constexpr std::size_t cacheline_size_max = std::max(alignof(std::max_alig
 inline constexpr std::size_t cacheline_size_min = std::max(alignof(std::max_align_t), static_cast<std::size_t>(64));
 inline constexpr std::size_t cacheline_size_max = std::max(alignof(std::max_align_t), static_cast<std::size_t>(64));
 #endif
+
 #elif MPT_OS_DJGPP
+
 // work-around maximum alignment in object file
 inline constexpr std::size_t cacheline_size_min = std::min(static_cast<std::size_t>(16), std::max(alignof(std::max_align_t), static_cast<std::size_t>(64)));
 inline constexpr std::size_t cacheline_size_max = std::min(static_cast<std::size_t>(16), std::max(alignof(std::max_align_t), static_cast<std::size_t>(64)));
+
 #else
+
 inline constexpr std::size_t cacheline_size_min = std::max(alignof(std::max_align_t), static_cast<std::size_t>(64));
 inline constexpr std::size_t cacheline_size_max = std::max(alignof(std::max_align_t), static_cast<std::size_t>(64));
+
 #endif
 
 #else
