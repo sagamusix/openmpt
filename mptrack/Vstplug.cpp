@@ -36,8 +36,11 @@
 #include "../soundlib/Sndfile.h"
 #include "mpt/string/utility.hpp"
 
-using namespace Vst;
+namespace Vst
+{
 DECLARE_FLAGSET(Vst::VstTimeInfoFlags)
+}
+using namespace Vst;
 
 OPENMPT_NAMESPACE_BEGIN
 
