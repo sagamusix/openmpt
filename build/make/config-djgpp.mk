@@ -94,37 +94,12 @@ endif
 
 ifeq ($(OPTIMIZE),default)
 
-OPT_UARCH_EMUL := -Os   # interpreter
-OPT_UARCH_CISC := -Os   # non-pipelined, scalar,       in-order,     optimize for size  i386       am386
-OPT_UARCH_PIPE := -Os   # pipelined,     scalar,       in-order,     optimize for size  i486       am486 cx486slc
-OPT_UARCH_SCAL := -O2   # pipelined,     super-scalar, in-order,     optimize for speed pentium          cx5x86
-OPT_UARCH_OOOE := -O2   # pipelined,     super-scalar, out-of-order, optimize for speed pentiumpro k5    cx6x86
-OPT_UARCH_COMP := -O2   # recompiler
-
-# vectorize for MMX/3DNOW (64bit wide) (unsupported by GCC)
-OPT_UARCH_EMUL_64 := -Os   # interpreter
-OPT_UARCH_CISC_64 := -Os   # non-pipelined, scalar,       in-order,     optimize for size
-OPT_UARCH_PIPE_64 := -Os   # pipelined,     scalar,       in-order,     optimize for size
-OPT_UARCH_SCAL_64 := -O2   # pipelined,     super-scalar, in-order,     optimize for speed pentium-mmx
-OPT_UARCH_OOOE_64 := -O2   # pipelined,     super-scalar, out-of-order, optimize for speed pentium2    k6 m2
-OPT_UARCH_COMP_64 := -O2   # recompiler
-
-# vectorize for SSE (128bit wide)
-ifeq ($(SSE),0)
-OPT_UARCH_EMUL_128 := -Os   # interpreter
-OPT_UARCH_CISC_128 := -Os   # non-pipelined, scalar,       in-order,     optimize for size
-OPT_UARCH_PIPE_128 := -Os   # pipelined,     scalar,       in-order,     optimize for size
-OPT_UARCH_SCAL_128 := -O2   # pipelined,     super-scalar, in-order,     optimize for speed
-OPT_UARCH_OOOE_128 := -O2   # pipelined,     super-scalar, out-of-order, optimize for speed
-OPT_UARCH_COMP_128 := -O2   # recompiler
-else
-OPT_UARCH_EMUL_128 := -O3   # interpreter
-OPT_UARCH_CISC_128 := -O3   # non-pipelined, scalar,       in-order,     optimize for size
-OPT_UARCH_PIPE_128 := -O3   # pipelined,     scalar,       in-order,     optimize for size
-OPT_UARCH_SCAL_128 := -O3   # pipelined,     super-scalar, in-order,     optimize for speed
-OPT_UARCH_OOOE_128 := -O3   # pipelined,     super-scalar, out-of-order, optimize for speed
-OPT_UARCH_COMP_128 := -O3   # recompiler
-endif
+OPT_UARCH_EMUL := -Oz   # interpreter
+OPT_UARCH_CISC := -Os   # non-pipelined, scalar,       in-order,     optimize for size
+OPT_UARCH_PIPE := -Os   # pipelined,     scalar,       in-order,     optimize for size
+OPT_UARCH_SCAL := -O2   # pipelined,     super-scalar, in-order,     optimize for speed
+OPT_UARCH_OOOE := -O3   # pipelined,     super-scalar, out-of-order, optimize for speed
+OPT_UARCH_COMP := -O3   # recompiler
 
 else
 
@@ -139,7 +114,21 @@ endif
 
 
 
-CACHE_386 :=64  # 0/32/64/128
+OPT_VEC_0   += -fno-tree-vectorize
+
+# vectorize for MMX/3DNOW (64bit wide) (unsupported by GCC)
+OPT_VEC_64  += -ftree-vectorize
+
+# vectorize for SSE (128bit wide)
+ifeq ($(SSE),0)
+OPT_VEC_128 += -fno-tree-vectorize
+else
+OPT_VEC_128 += -ftree-vectorize
+endif
+
+
+
+CACHE_386 :=64  # 0/8/16/32/64/128
 CACHE_486 :=128 # 0/64/128/256
 CACHE_S7  :=256 # 128/256/512
 CACHE_SS7 :=512 # 256/512/1024
@@ -180,224 +169,224 @@ TUNE_686SSE3:=-mtune=pentium-m
 
 
 
-generic/early        := $(XXX) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)
+generic/early        := $(XXX) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)
 
-generic/compatible   := $(XXX) -march=i386        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_CISC)
-generic/common       := $(XXX) -march=i486        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_CISC)
+generic/compatible   := $(XXX) -march=i386        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_CISC) $(OPT_VEC_0)
+generic/common       := $(XXX) -march=i486        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_CISC) $(OPT_VEC_0)
 
-generic/late         := $(XXX) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_OOOE_128)
+generic/late         := $(XXX) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)
 
 
 
-virtual/ibmulator    := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_EMUL)
+virtual/ibmulator    := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_EMUL) $(OPT_VEC_0)
 
-virtual/ao486        := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)
+virtual/ao486        := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)
 
-virtual/bochs        := $(___) -march=i686        $(FPU_387)    -mtune=generic     $(OPT_UARCH_EMUL)
+virtual/bochs        := $(___) -march=i686        $(FPU_387)    -mtune=generic     $(OPT_UARCH_EMUL) $(OPT_VEC_0)
 
-virtual/qemu         := $(___) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_COMP_128)
+virtual/qemu         := $(___) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_COMP) $(OPT_VEC_128)
 
-virtual/varcem       := $(___) -march=i686        $(FPU_387)    -mtune=generic     $(OPT_UARCH_COMP)
-virtual/pcem         := $(___) -march=i686        $(FPU_3DNOW)  -mtune=generic     $(OPT_UARCH_COMP_64)
-virtual/86box        := $(___) -march=i686        $(FPU_3DNOW)  -mtune=generic     $(OPT_UARCH_COMP_64)
-virtual/pcbox        := $(___) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_COMP_128)
+virtual/varcem       := $(___) -march=i686        $(FPU_387)    -mtune=generic     $(OPT_UARCH_COMP) $(OPT_VEC_0)
+virtual/pcem         := $(___) -march=i686        $(FPU_3DNOW)  -mtune=generic     $(OPT_UARCH_COMP) $(OPT_VEC_64)
+virtual/86box        := $(___) -march=i686        $(FPU_3DNOW)  -mtune=generic     $(OPT_UARCH_COMP) $(OPT_VEC_64)
+virtual/pcbox        := $(___) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_COMP) $(OPT_VEC_128)
 
-virtual/unipcemu     := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_EMUL)
+virtual/unipcemu     := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_EMUL) $(OPT_VEC_0)
 
-virtual/dosbox       := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL)
-virtual/dosbox-svn   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL)
-virtual/dosbox-ece   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL)
-virtual/dosbox-sta   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_COMP)
-virtual/dosbox-x     := $(___) -march=i686        $(FPU_SSE)    -mtune=generic     $(OPT_UARCH_EMUL_128)
+virtual/dosbox       := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL) $(OPT_VEC_0)
+virtual/dosbox-svn   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL) $(OPT_VEC_0)
+virtual/dosbox-ece   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_EMUL) $(OPT_VEC_0)
+virtual/dosbox-sta   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_COMP) $(OPT_VEC_0)
+virtual/dosbox-x     := $(___) -march=i686        $(FPU_SSE)    -mtune=generic     $(OPT_UARCH_EMUL) $(OPT_VEC_128)
 
 
 
-generic/nofpu        := $(X__) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)       # 386SX, 386DX, 486SX, Cyrix Cx486SLC..Cx486S, NexGen Nx586
+generic/nofpu        := $(X__) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)     # 386SX, 386DX, 486SX, Cyrix Cx486SLC..Cx486S, NexGen Nx586
 
-generic/386          := $(X__) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)       # 386+387
+generic/386          := $(X__) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)     # 386+387
 
-generic/486          := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)       # 486DX, AMD Am5x86, Cyrix Cx4x86DX..6x86L, NexGen Nx586-PF
+generic/486          := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)     # 486DX, AMD Am5x86, Cyrix Cx4x86DX..6x86L, NexGen Nx586-PF
 
-generic/586          := $(XXX) -march=i586        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_SCAL)       # Intel Pentium, AMD K5
-generic/586-mmx      := $(XX_) -march=pentium-mmx $(FPU_MMX)    -mtune=pentium-mmx $(OPT_UARCH_SCAL_64)    # Intel Pentium-MMX, AMD K6, IDT WinChip-C6, Rise mP6
-generic/586-3dnow    := $(XX_) -march=k6-2        $(FPU_3DNOW)  -mtune=k6-2        $(OPT_UARCH_SCAL_64)    # AMD K6-2..K6-3+, IDT WinChip-2, VIA-C3-Samuel..VIA C3-Ezra
+generic/586          := $(XXX) -march=i586        $(FPU_387)    -mtune=pentium     $(OPT_UARCH_SCAL) $(OPT_VEC_0)     # Intel Pentium, AMD K5
+generic/586-mmx      := $(XX_) -march=pentium-mmx $(FPU_MMX)    -mtune=pentium-mmx $(OPT_UARCH_SCAL) $(OPT_VEC_64)    # Intel Pentium-MMX, AMD K6, IDT WinChip-C6, Rise mP6
+generic/586-3dnow    := $(XX_) -march=k6-2        $(FPU_3DNOW)  -mtune=k6-2        $(OPT_UARCH_SCAL) $(OPT_VEC_64)    # AMD K6-2..K6-3+, IDT WinChip-2, VIA-C3-Samuel..VIA C3-Ezra
 
-generic/686          := $(___) -march=pentiumpro  $(FPU_387)    -mtune=pentiumpro  $(OPT_UARCH_OOOE)       # Intel Pentium-Pro
-generic/686-mmx      := $(XX_) -march=i686        $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE_64)    # Intel Pentium-2.., AMD Bulldozer.., VIA C3-Nehemiah.., Cyrix 6x86MX.., Transmeta Crusoe.., NSC Geode-GX1..
-generic/686-3dnow    := $(___) -march=i686        $(FPU_3DNOW)  -mtune=athlon      $(OPT_UARCH_OOOE_64)    # VIA Cyrix-3-Joshua
-generic/686-3dnowa   := $(XX_) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE_64)    # AMD Athlon..K10
+generic/686          := $(___) -march=pentiumpro  $(FPU_387)    -mtune=pentiumpro  $(OPT_UARCH_OOOE) $(OPT_VEC_0)     # Intel Pentium-Pro
+generic/686-mmx      := $(XX_) -march=i686        $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE) $(OPT_VEC_64)    # Intel Pentium-2.., AMD Bulldozer.., VIA C3-Nehemiah.., Cyrix 6x86MX.., Transmeta Crusoe.., NSC Geode-GX1..
+generic/686-3dnow    := $(___) -march=i686        $(FPU_3DNOW)  -mtune=athlon      $(OPT_UARCH_OOOE) $(OPT_VEC_64)    # VIA Cyrix-3-Joshua
+generic/686-3dnowa   := $(XX_) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE) $(OPT_VEC_64)    # AMD Athlon..K10
 
-generic/sse          := $(___) -march=i686        $(FPU_SSE)    -mtune=pentium3    $(OPT_UARCH_OOOE_128)   # Intel Pentium-3, AMD Athlon-XP, VIA C3-Nehemiah, DM&P Vortex86DX3..
+generic/sse          := $(___) -march=i686        $(FPU_SSE)    -mtune=pentium3    $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Pentium-3, AMD Athlon-XP, VIA C3-Nehemiah, DM&P Vortex86DX3..
 
-generic/sse2         := $(X__) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_OOOE_128)   # Intel Pentium-4.., AMD Athlon-64.., VIA C7-Esther.., Transmeta Efficeon..
-generic/sse3         := $(___) -march=i686        $(FPU_SSE3)   -mtune=generic     $(OPT_UARCH_OOOE_128)   # Intel Core.., AMD Athlon-64-X2.., VIA C7-Esther.., Transmeta Efficeon-88xx..
-generic/ssse3        := $(___) -march=i686        $(FPU_SSSE3)  -mtune=generic     $(OPT_UARCH_OOOE_128)   # Intel Core-2.., AMD Bobcat.., Via Nano-1000..
-generic/sse4_1       := $(___) -march=i686        $(FPU_SSE4_1) -mtune=generic     $(OPT_UARCH_OOOE_128)   # Intel Core-1st, AMD Bulldozer.., Via Nano-3000..
-generic/sse4_2       := $(___) -march=i686        $(FPU_SSE4_2) -mtune=generic     $(OPT_UARCH_OOOE_128)   # Intel Core-1st, AMD Bulldozer.., Via Nano-C..
+generic/sse2         := $(X__) -march=i686        $(FPU_SSE2)   -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Pentium-4.., AMD Athlon-64.., VIA C7-Esther.., Transmeta Efficeon..
+generic/sse3         := $(___) -march=i686        $(FPU_SSE3)   -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Core.., AMD Athlon-64-X2.., VIA C7-Esther.., Transmeta Efficeon-88xx..
+generic/ssse3        := $(___) -march=i686        $(FPU_SSSE3)  -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Core-2.., AMD Bobcat.., Via Nano-1000..
+generic/sse4_1       := $(___) -march=i686        $(FPU_SSE4_1) -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Core-1st, AMD Bulldozer.., Via Nano-3000..
+generic/sse4_2       := $(___) -march=i686        $(FPU_SSE4_2) -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)   # Intel Core-1st, AMD Bulldozer.., Via Nano-C..
 
 
 
-intel/i386           := $(X__) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-intel/i486sx         := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-intel/i386+80287     := $(___) -march=i386        $(FPU_287)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+intel/i386           := $(X__) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+intel/i486sx         := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+intel/i386+80287     := $(___) -march=i386        $(FPU_287)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
 
-intel/i386+80387     := $(X__) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-intel/i486sx+i487sx  := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-intel/i486dx         := $(XXX) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-intel/pentium        := $(XXX) -march=pentium     $(FPU_387)    -mtune=pentium     $(OPT_UARCH_SCAL)     --param l1-cache-size=8  --param l2-cache-size=$(CACHE_S7)
-intel/pentium-mmx    := $(XXX) -march=pentium-mmx $(FPU_MMX)    -mtune=pentium-mmx $(OPT_UARCH_SCAL_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_S7)
-intel/pentium-pro    := $(___) -march=pentiumpro  $(FPU_387)    -mtune=pentiumpro  $(OPT_UARCH_OOOE)     --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUMPRO)
-intel/pentium2       := $(XX_) -march=pentium2    $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUM2)
-intel/pentium3       := $(X__) -march=pentium3    $(FPU_SSE)    -mtune=pentium3    $(OPT_UARCH_OOOE_128) --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUM3)
-intel/pentium4       := $(XX_) -march=pentium4    $(FPU_SSE2)   -mtune=pentium4    $(OPT_UARCH_OOOE_128) --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUM4)
-intel/pentium4.1     := $(___) -march=prescott    $(FPU_SSE3)   -mtune=prescott    $(OPT_UARCH_OOOE_128) --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUM41)
-intel/core2          := $(___) -march=core2       $(FPU_SSSE3)  -mtune=core2       $(OPT_UARCH_OOOE_128) --param l1-cache-size=32 --param l2-cache-size=$(CACHE_CORE2)
+intel/i386+80387     := $(X__) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+intel/i486sx+i487sx  := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+intel/i486dx         := $(XXX) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+intel/pentium        := $(XXX) -march=pentium     $(FPU_387)    -mtune=pentium     $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=8  --param l2-cache-size=$(CACHE_S7)
+intel/pentium-mmx    := $(XXX) -march=pentium-mmx $(FPU_MMX)    -mtune=pentium-mmx $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_S7)
+intel/pentium-pro    := $(___) -march=pentiumpro  $(FPU_387)    -mtune=pentiumpro  $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUMPRO)
+intel/pentium2       := $(XX_) -march=pentium2    $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUM2)
+intel/pentium3       := $(X__) -march=pentium3    $(FPU_SSE)    -mtune=pentium3    $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUM3)
+intel/pentium4       := $(XX_) -march=pentium4    $(FPU_SSE2)   -mtune=pentium4    $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUM4)
+intel/pentium4.1     := $(___) -march=prescott    $(FPU_SSE3)   -mtune=prescott    $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=8  --param l2-cache-size=$(CACHE_PENTIUM41)
+intel/core2          := $(___) -march=core2       $(FPU_SSSE3)  -mtune=core2       $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=$(CACHE_CORE2)
 
-intel/celeron        := $(___) -march=pentium2    $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_CELERON)
-intel/pentium-m      := $(___) -march=pentium-m   $(FPU_SSE2)   -mtune=pentium-m   $(OPT_UARCH_OOOE_128) --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUMM)
-intel/core           := $(___) -march=pentium-m   $(FPU_SSE3)   -mtune=core2       $(OPT_UARCH_OOOE_128) --param l1-cache-size=32 --param l2-cache-size=$(CACHE_CORE)
-intel/atom           := $(___) -march=bonnell     $(FPU_SSSE3)  -mtune=bonnell     $(OPT_UARCH_SCAL_128) --param l1-cache-size=24 --param l2-cache-size=$(CACHE_ATOM)
+intel/celeron        := $(___) -march=pentium2    $(FPU_MMX)    -mtune=pentium2    $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=16 --param l2-cache-size=$(CACHE_CELERON)
+intel/pentium-m      := $(___) -march=pentium-m   $(FPU_SSE2)   -mtune=pentium-m   $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=16 --param l2-cache-size=$(CACHE_PENTIUMM)
+intel/core           := $(___) -march=pentium-m   $(FPU_SSE3)   -mtune=core2       $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=$(CACHE_CORE)
+intel/atom           := $(___) -march=bonnell     $(FPU_SSSE3)  -mtune=bonnell     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=24 --param l2-cache-size=$(CACHE_ATOM)
 
-intel/late           := $(XX_) -march=i686        $(FPU_SSSE3)  -mtune=intel       $(OPT_UARCH_OOOE_128)
+intel/late           := $(XX_) -march=i686        $(FPU_SSSE3)  -mtune=intel       $(OPT_UARCH_OOOE) $(OPT_VEC_128)
 
 
 
-amd/am386            := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-amd/am486sx          := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+amd/am386            := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+amd/am486sx          := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
 
-amd/am386+80387      := $(___) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-amd/am486sx+am487sx  := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-amd/am486dx          := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-amd/am486dxe         := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
-amd/am5x86           := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
-amd/k5               := $(X__) -march=i586        $(FPU_387)    -mtune=i586        $(OPT_UARCH_OOOE)     --param l1-cache-size=8  --param l2-cache-size=$(CACHE_S7)
-amd/k6               := $(XX_) -march=k6          $(FPU_MMX)    -mtune=k6          $(OPT_UARCH_OOOE_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_S7)
-amd/k6-2             := $(XXX) -march=k6-2        $(FPU_3DNOW)  -mtune=k6-2        $(OPT_UARCH_OOOE_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_SS7)
-amd/k6-3             := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE_64)  --param l1-cache-size=32 --param l2-cache-size=256
-amd/k6-2+            := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE_64)  --param l1-cache-size=32 --param l2-cache-size=128
-amd/k6-3+            := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE_64)  --param l1-cache-size=32 --param l2-cache-size=256
-amd/athlon           := $(XX_) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE_64)  --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON)
-amd/athlon-xp        := $(XXX) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLONXP)
-amd/athlon64         := $(X__) -march=k8          $(FPU_3DSSE2) -mtune=k8          $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON64)
-amd/athlon64-sse3    := $(___) -march=k8-sse3     $(FPU_3DSSE3) -mtune=k8-sse3     $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON64)
-amd/k10              := $(___) -march=amdfam10    $(FPU_3DSSE4) -mtune=amdfam10    $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=512
+amd/am386+80387      := $(___) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+amd/am486sx+am487sx  := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+amd/am486dx          := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+amd/am486dxe         := $(XX_) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
+amd/am5x86           := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
+amd/k5               := $(X__) -march=i586        $(FPU_387)    -mtune=i586        $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=8  --param l2-cache-size=$(CACHE_S7)
+amd/k6               := $(XX_) -march=k6          $(FPU_MMX)    -mtune=k6          $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_S7)
+amd/k6-2             := $(XXX) -march=k6-2        $(FPU_3DNOW)  -mtune=k6-2        $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_SS7)
+amd/k6-3             := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=256
+amd/k6-2+            := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=128
+amd/k6-3+            := $(___) -march=k6-3        $(FPU_3DNOW)  -mtune=k6-3        $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=256
+amd/athlon           := $(XX_) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON)
+amd/athlon-xp        := $(XXX) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLONXP)
+amd/athlon64         := $(X__) -march=k8          $(FPU_3DSSE2) -mtune=k8          $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON64)
+amd/athlon64-sse3    := $(___) -march=k8-sse3     $(FPU_3DSSE3) -mtune=k8-sse3     $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_ATHLON64)
+amd/k10              := $(___) -march=amdfam10    $(FPU_3DSSE4) -mtune=amdfam10    $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=512
 
-amd/duron            := $(X__) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE_64)  --param l1-cache-size=64 --param l2-cache-size=$(CACHE_DURON)
-amd/duron-xp         := $(___) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_DURONXP)
-amd/sempron64        := $(___) -march=k8          $(FPU_3DSSE2) -mtune=k8          $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_SEMPRON64)
+amd/duron            := $(X__) -march=athlon      $(FPU_3DNOWA) -mtune=athlon      $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=$(CACHE_DURON)
+amd/duron-xp         := $(___) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_DURONXP)
+amd/sempron64        := $(___) -march=k8          $(FPU_3DSSE2) -mtune=k8          $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=$(CACHE_SEMPRON64)
 
-amd/geode-gx         := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE_64)  --param l1-cache-size=16 --param l2-cache-size=0
-amd/geode-lx         := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE_64)  --param l1-cache-size=64 --param l2-cache-size=128
-amd/geode-nx         := $(___) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE_128) --param l1-cache-size=64 --param l2-cache-size=256
-amd/bobcat           := $(X__) -march=btver1      $(FPU_SSSE4A) -mtune=btver1      $(OPT_UARCH_OOOE_128) --param l1-cache-size=32 --param l2-cache-size=512
-amd/jaguar           := $(___) -march=btver2      $(FPU_SSSE4A) -mtune=btver2      $(OPT_UARCH_OOOE_128) --param l1-cache-size=32 --param l2-cache-size=1024
+amd/geode-gx         := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=16 --param l2-cache-size=0
+amd/geode-lx         := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=128
+amd/geode-nx         := $(___) -march=athlon-xp   $(FPU_3DSSE)  -mtune=athlon-xp   $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=256
+amd/bobcat           := $(X__) -march=btver1      $(FPU_SSSE4A) -mtune=btver1      $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=512
+amd/jaguar           := $(___) -march=btver2      $(FPU_SSSE4A) -mtune=btver2      $(OPT_UARCH_OOOE) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=1024
 
-amd/late             := $(XX_) -march=i686        $(FPU_SSSE4A) -mtune=generic     $(OPT_UARCH_OOOE_128)
+amd/late             := $(XX_) -march=i686        $(FPU_SSSE4A) -mtune=generic     $(OPT_UARCH_OOOE) $(OPT_VEC_128)
 
 
 
-ct/38600             := $(___) -march=i386        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-ct/38605             := $(___) -march=i386        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
+ct/38600             := $(___) -march=i386        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+ct/38605             := $(___) -march=i386        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
 
 
 
-nexgen/nx586         := $(___) -march=i486        $(FPU_NONE)   $(TUNE_586)        $(OPT_UARCH_OOOE)     --param l1-cache-size=16 --param l2-cache-size=$(CACHE_486)
+nexgen/nx586         := $(___) -march=i486        $(FPU_NONE)   $(TUNE_586)        $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=$(CACHE_486)
 
-nexgen/nx586pf       := $(___) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE)     --param l1-cache-size=16 --param l2-cache-size=$(CACHE_486)
+nexgen/nx586pf       := $(___) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=$(CACHE_486)
 
 
 
-ibm/386slc           := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_386)
-ibm/486slc           := $(___) -march=i486        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_386)
-ibm/486bl            := $(___) -march=i486        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
+ibm/386slc           := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_386)
+ibm/486slc           := $(___) -march=i486        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_386)
+ibm/486bl            := $(___) -march=i486        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
 
-ibm/386slc+fasmath   := $(___) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_386)
-ibm/486slc+fasmath   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_386)
-ibm/486bl+fasmath    := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
+ibm/386slc+fasmath   := $(___) -march=i386        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_386)
+ibm/486slc+fasmath   := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_386)
+ibm/486bl+fasmath    := $(___) -march=i486        $(FPU_387)    -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
 
 
 
-cyrix/cx486slc       := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
-cyrix/cx486dlc       := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
-cyrix/cx4x86s        := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=2  --param l2-cache-size=$(CACHE_486)
+cyrix/cx486slc       := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
+cyrix/cx486dlc       := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
+cyrix/cx4x86s        := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=2  --param l2-cache-size=$(CACHE_486)
 
-cyrix/cx486slc+80387 := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
-cyrix/cx486dlc+80387 := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
-cyrix/cx4x86s+cx487s := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=2  --param l2-cache-size=$(CACHE_486)
-cyrix/cx4x86dx       := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-cyrix/cx5x86         := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_SCAL)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
-cyrix/6x86           := $(XXX) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_S7)
-cyrix/6x86l          := $(___) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE)     --param l1-cache-size=12 --param l2-cache-size=$(CACHE_S7)
-cyrix/6x86mx         := $(XX_) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_OOOE_64)  --param l1-cache-size=48 --param l2-cache-size=$(CACHE_SS7)
+cyrix/cx486slc+80387 := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
+cyrix/cx486dlc+80387 := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=1  --param l2-cache-size=$(CACHE_386)
+cyrix/cx4x86s+cx487s := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=2  --param l2-cache-size=$(CACHE_486)
+cyrix/cx4x86dx       := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+cyrix/cx5x86         := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_486)
+cyrix/6x86           := $(XXX) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_S7)
+cyrix/6x86l          := $(___) -march=i486        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_OOOE) $(OPT_VEC_0)   --param l1-cache-size=12 --param l2-cache-size=$(CACHE_S7)
+cyrix/6x86mx         := $(XX_) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=48 --param l2-cache-size=$(CACHE_SS7)
 
-cyrix/mediagx-gx     := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_SCAL)     --param l1-cache-size=9  --param l2-cache-size=0
-cyrix/mediagx-gxm    := $(___) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_SCAL_64)  --param l1-cache-size=9  --param l2-cache-size=0
+cyrix/mediagx-gx     := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=9  --param l2-cache-size=0
+cyrix/mediagx-gxm    := $(___) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=9  --param l2-cache-size=0
 
 
 
-nsc/geode-gx1        := $(___) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_SCAL_64)  --param l1-cache-size=9  --param l2-cache-size=0
-nsc/geode-gx2        := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE_64)  --param l1-cache-size=16 --param l2-cache-size=0
+nsc/geode-gx1        := $(___) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=9  --param l2-cache-size=0
+nsc/geode-gx2        := $(___) -march=geode       $(FPU_3DNOWA) -mtune=geode       $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=16 --param l2-cache-size=0
 
 
 
-idt/winchip-c6       := $(X__) -march=i586        $(FPU_MMX)    -mtune=winchip-c6  $(OPT_UARCH_PIPE_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_S7)
-idt/winchip2         := $(X__) -march=i586        $(FPU_3DNOW)  -mtune=winchip2    $(OPT_UARCH_SCAL_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_SS7)
+idt/winchip-c6       := $(X__) -march=i586        $(FPU_MMX)    -mtune=winchip-c6  $(OPT_UARCH_PIPE) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_S7)
+idt/winchip2         := $(X__) -march=i586        $(FPU_3DNOW)  -mtune=winchip2    $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=32 --param l2-cache-size=$(CACHE_SS7)
 
 
 
-via/cyrix3-joshua    := $(___) -march=i686        $(FPU_3DNOW)  $(TUNE_6863DN)     $(OPT_UARCH_OOOE_64)  --param l1-cache-size=48 --param l2-cache-size=256
-via/c3-samuel        := $(___) -march=c3          $(FPU_3DNOW)  -mtune=c3          $(OPT_UARCH_SCAL_64)  --param l1-cache-size=64 --param l2-cache-size=0
-via/c3-samuel2       := $(___) -march=samuel-2    $(FPU_3DNOW)  -mtune=samuel-2    $(OPT_UARCH_SCAL_64)  --param l1-cache-size=64 --param l2-cache-size=64
-via/c3-ezra          := $(___) -march=samuel-2    $(FPU_3DNOW)  -mtune=samuel-2    $(OPT_UARCH_SCAL_64)  --param l1-cache-size=64 --param l2-cache-size=64
-via/c3-nehemiah      := $(___) -march=nehemiah    $(FPU_SSE)    -mtune=nehemiah    $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=64
-via/c7-esther        := $(XX_) -march=esther      $(FPU_SSE3)   -mtune=esther      $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=128
-via/eden-x2          := $(___) -march=eden-x2     $(FPU_SSE3)   -mtune=eden-x2     $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=64
-via/nano             := $(___) -march=nano        $(FPU_SSSE3)  -mtune=nano        $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-1000        := $(___) -march=nano-1000   $(FPU_SSSE3)  -mtune=nano-1000   $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-2000        := $(___) -march=nano-2000   $(FPU_SSSE3)  -mtune=nano-2000   $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-3000        := $(___) -march=nano-3000   $(FPU_SSE4_1) -mtune=nano-3000   $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-4000        := $(___) -march=nano-4000   $(FPU_SSE4_1) -mtune=nano-4000   $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-x2          := $(___) -march=nano-x2     $(FPU_SSE4_1) -mtune=nano-x2     $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/nano-x4          := $(___) -march=nano-x4     $(FPU_SSE4_1) -mtune=nano-x4     $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=1024
-via/eden-x4          := $(___) -march=eden-x4     $(FPU_SSE4_2) -mtune=eden-x4     $(OPT_UARCH_SCAL_128) --param l1-cache-size=64 --param l2-cache-size=2048
+via/cyrix3-joshua    := $(___) -march=i686        $(FPU_3DNOW)  $(TUNE_6863DN)     $(OPT_UARCH_OOOE) $(OPT_VEC_64)  --param l1-cache-size=48 --param l2-cache-size=256
+via/c3-samuel        := $(___) -march=c3          $(FPU_3DNOW)  -mtune=c3          $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=0
+via/c3-samuel2       := $(___) -march=samuel-2    $(FPU_3DNOW)  -mtune=samuel-2    $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=64
+via/c3-ezra          := $(___) -march=samuel-2    $(FPU_3DNOW)  -mtune=samuel-2    $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=64
+via/c3-nehemiah      := $(___) -march=nehemiah    $(FPU_SSE)    -mtune=nehemiah    $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=64
+via/c7-esther        := $(XX_) -march=esther      $(FPU_SSE3)   -mtune=esther      $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=128
+via/eden-x2          := $(___) -march=eden-x2     $(FPU_SSE3)   -mtune=eden-x2     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=64
+via/nano             := $(___) -march=nano        $(FPU_SSSE3)  -mtune=nano        $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-1000        := $(___) -march=nano-1000   $(FPU_SSSE3)  -mtune=nano-1000   $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-2000        := $(___) -march=nano-2000   $(FPU_SSSE3)  -mtune=nano-2000   $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-3000        := $(___) -march=nano-3000   $(FPU_SSE4_1) -mtune=nano-3000   $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-4000        := $(___) -march=nano-4000   $(FPU_SSE4_1) -mtune=nano-4000   $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-x2          := $(___) -march=nano-x2     $(FPU_SSE4_1) -mtune=nano-x2     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/nano-x4          := $(___) -march=nano-x4     $(FPU_SSE4_1) -mtune=nano-x4     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+via/eden-x4          := $(___) -march=eden-x4     $(FPU_SSE4_2) -mtune=eden-x4     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=2048
 
-via/late             := $(XX_) -march=eden-x4     $(FPU_SSE4_2) -mtune=eden-x4     $(OPT_UARCH_SCAL_128)
+via/late             := $(XX_) -march=eden-x4     $(FPU_SSE4_2) -mtune=eden-x4     $(OPT_UARCH_SCAL) $(OPT_VEC_128)
 
 
 
-umc/u5s              := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
-umc/u5d              := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE)     --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+umc/u5s              := $(___) -march=i486        $(FPU_NONE)   -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
+umc/u5d              := $(___) -march=i486        $(FPU_387)    -mtune=i486        $(OPT_UARCH_PIPE) $(OPT_VEC_0)   --param l1-cache-size=6  --param l2-cache-size=$(CACHE_486)
 
 
 
-transmeta/crusoe     := $(X__) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_COMP)     --param l1-cache-size=64 --param l2-cache-size=256
-transmeta/efficeon   := $(___) -march=i686        $(FPU_SSE2)   $(TUNE_686SSE2)    $(OPT_UARCH_COMP)     --param l1-cache-size=64 --param l2-cache-size=1024
-transmeta/tm8800     := $(___) -march=i686        $(FPU_SSE3)   $(TUNE_686SSE3)    $(OPT_UARCH_COMP)     --param l1-cache-size=64 --param l2-cache-size=1024
+transmeta/crusoe     := $(X__) -march=i686        $(FPU_MMX)    $(TUNE_686MMX)     $(OPT_UARCH_COMP) $(OPT_VEC_64)  --param l1-cache-size=64 --param l2-cache-size=256
+transmeta/efficeon   := $(___) -march=i686        $(FPU_SSE2)   $(TUNE_686SSE2)    $(OPT_UARCH_COMP) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
+transmeta/tm8800     := $(___) -march=i686        $(FPU_SSE3)   $(TUNE_686SSE3)    $(OPT_UARCH_COMP) $(OPT_VEC_128) --param l1-cache-size=64 --param l2-cache-size=1024
 
 
 
-uli/m6117c           := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+uli/m6117c           := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
 
 
 
-rise/mp6             := $(X__) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL_64)  --param l1-cache-size=8  --param l2-cache-size=$(CACHE_SS7)
+rise/mp6             := $(X__) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=8  --param l2-cache-size=$(CACHE_SS7)
 
 
 
-sis/55x              := $(___) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL_64)  --param l1-cache-size=8  --param l2-cache-size=0
+sis/55x              := $(___) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=8  --param l2-cache-size=0
 
 
 
-dmnp/m6117d          := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC)     --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
-dmnp/vortex86        := $(___) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL_64)  --param l1-cache-size=8  --param l2-cache-size=0
-dmnp/vortex86sx      := $(___) -march=i586        $(FPU_NONE)   $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=0
-dmnp/vortex86dx      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=256
-dmnp/vortex86mx      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=256
-dmnp/vortex86mxp     := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=256
-dmnp/vortex86dx2     := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=256
-dmnp/vortex86ex      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL)     --param l1-cache-size=16 --param l2-cache-size=128
-dmnp/vortex86dx3     := $(___) -march=i686        $(FPU_SSE)    $(TUNE_686SSE)     $(OPT_UARCH_SCAL_128) --param l1-cache-size=32 --param l2-cache-size=256
-dmnp/vortex86ex2     := $(___) -march=i686        $(FPU_SSE)    $(TUNE_686SSE)     $(OPT_UARCH_SCAL_128) --param l1-cache-size=32 --param l2-cache-size=128
+dmnp/m6117d          := $(___) -march=i386        $(FPU_NONE)   -mtune=i386        $(OPT_UARCH_CISC) $(OPT_VEC_0)   --param l1-cache-size=0  --param l2-cache-size=$(CACHE_386)
+dmnp/vortex86        := $(___) -march=i586        $(FPU_MMX)    $(TUNE_586MMX)     $(OPT_UARCH_SCAL) $(OPT_VEC_64)  --param l1-cache-size=8  --param l2-cache-size=0
+dmnp/vortex86sx      := $(___) -march=i586        $(FPU_NONE)   $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=0
+dmnp/vortex86dx      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=256
+dmnp/vortex86mx      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=256
+dmnp/vortex86mxp     := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=256
+dmnp/vortex86dx2     := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=256
+dmnp/vortex86ex      := $(___) -march=i586        $(FPU_387)    $(TUNE_586)        $(OPT_UARCH_SCAL) $(OPT_VEC_0)   --param l1-cache-size=16 --param l2-cache-size=128
+dmnp/vortex86dx3     := $(___) -march=i686        $(FPU_SSE)    $(TUNE_686SSE)     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=256
+dmnp/vortex86ex2     := $(___) -march=i686        $(FPU_SSE)    $(TUNE_686SSE)     $(OPT_UARCH_SCAL) $(OPT_VEC_128) --param l1-cache-size=32 --param l2-cache-size=128
 
 
 
