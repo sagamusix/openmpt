@@ -196,7 +196,7 @@ void Base::CallbackLockedAudioReadPrepare(std::size_t numFrames, std::size_t fra
 		} else
 		{
 			timeInfo.SyncPointStreamFrames = m_StreamPositionRenderFrames + numFrames;
-			timeInfo.SyncPointSystemTimestamp = CallbackLockedGetReferenceClockNowNanoseconds() + mpt::saturate_round<int64>(GetEffectiveBufferAttributes().Latency * 1000000000.0);
+			timeInfo.SyncPointSystemTimestamp = CallbackLockedGetReferenceClockNowNanoseconds() + mpt::saturate_round<int64>(GetEffectiveBufferAttributes().Latency * 1'000'000'000.0);
 			timeInfo.Speed = 1.0;
 		}
 		timeInfo.RenderStreamPositionBefore = StreamPositionFromFrames(m_StreamPositionRenderFrames);
