@@ -751,6 +751,7 @@ BOOL CSampleGridDlg::OnInitDialog()
 	m_EditSegments.AllowFractions(true);
 	m_EditSegments.AllowNegative(false);
 	m_EditSegments.SetDecimalValue(m_segments);
+	m_EditSegments.SetAccessibleSuffix(_T("grid segments"));
 
 	m_SpinSpacing.SetRange32(0, m_maxSegments);
 	m_SpinSpacing.SetPos32(mpt::saturate_round<int32>(m_spacing));
@@ -758,6 +759,7 @@ BOOL CSampleGridDlg::OnInitDialog()
 	m_EditSpacing.AllowFractions(true);
 	m_EditSpacing.AllowNegative(false);
 	m_EditSpacing.SetDecimalValue(m_spacing);
+	m_EditSpacing.SetAccessibleSuffix((m_unit == SampleLengthUnit::Samples) ? _T("samples") : _T("ms"));
 
 	int radioChoice = IDC_RADIO1;
 	switch(m_mode)
@@ -822,6 +824,7 @@ void CSampleGridDlg::OnUnitChanged()
 	m_unit = newUnit;
 	m_locked = true;
 	m_EditSpacing.SetDecimalValue(val);
+	m_EditSpacing.SetAccessibleSuffix((m_unit == SampleLengthUnit::Samples) ? _T("samples") : _T("ms"));
 	m_locked = false;
 
 	CheckRadioButton(IDC_RADIO1, IDC_RADIO3, IDC_RADIO3);
