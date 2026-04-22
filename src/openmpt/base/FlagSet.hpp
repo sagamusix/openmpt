@@ -440,6 +440,10 @@ public:
 
 
 
+// clang-format off
+
+
+
 #if MPT_FLAGSET_IMPL_UB_CHECKS
 
 
@@ -561,6 +565,10 @@ MPT_ATTR_ALWAYSINLINE MPT_INLINE_FORCE constexpr enum_value_type<enum_t> operato
 
 
 #endif
+
+
+
+// clang-format on
 
 
 
