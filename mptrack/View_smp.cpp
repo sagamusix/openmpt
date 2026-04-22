@@ -511,7 +511,7 @@ SmpLength CViewSample::SnapToGrid(const SmpLength pos) const
 }
 
 
-void CViewSample::SetCurSel(SmpLength nBegin, SmpLength nEnd)
+void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
 {
 	if(GetDocument() == nullptr)
 		return;
@@ -519,84 +519,83 @@ void CViewSample::SetCurSel(SmpLength nBegin, SmpLength nEnd)
 	CSoundFile &sndFile = GetDocument()->GetSoundFile();
 	const ModSample &sample = sndFile.GetSample(m_nSample);
 
-	nBegin = SnapToGrid(nBegin);
-	nEnd = SnapToGrid(nEnd);
+	begin = SnapToGrid(begin);
+	end = SnapToGrid(end);
 
-	if(nBegin > nEnd)
+	if(begin > end)
+		std::swap(begin, end);
+
+	if(begin == m_dwBeginSel && end == m_dwEndSel)
+		return;
+
+	SmpLength updateBegin = m_dwBeginSel, updateEnd = m_dwEndSel;
+	if(m_dwBeginSel >= m_dwEndSel)
 	{
-		std::swap(nBegin, nEnd);
+		// There was no active selection
+		updateBegin = begin;
+		updateEnd = end;
+	}
+	if(begin == updateBegin && updateEnd != end)
+	{
+		// Extend existing selection to the right
+		updateBegin = updateEnd;
+		updateBegin = std::min(updateBegin, end);
+		updateEnd = std::max(updateEnd, end);
+	} else if(end == updateEnd && updateBegin != begin)
+	{
+		// Extend existing selection to the left
+		updateEnd = updateBegin;
+		updateBegin = std::min(updateBegin, begin);
+		updateEnd = std::max(updateEnd, begin);
+	} else
+	{
+		// Extend in both directions
+		updateBegin = std::min(updateBegin, begin);
+		updateEnd = std::max(updateEnd, end);
 	}
 
-	if ((nBegin != m_dwBeginSel) || (nEnd != m_dwEndSel))
+	m_dwBeginSel = begin;
+	m_dwEndSel = end;
+	CRect rect{std::max(0, SampleToScreen(updateBegin)), m_rcClient.top, std::min(static_cast<int>(m_rcClient.right), SampleToScreen(updateEnd) + 1), m_rcClient.bottom};
+	if(rect.right > rect.left)
+		InvalidateRect(&rect, FALSE);
+
+	CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
+	if(!pMainFrm)
+		return;
+
+	mpt::ustring s;
+	if(m_dwEndSel > m_dwBeginSel)
 	{
-		RECT rect;
-		SmpLength dMin = m_dwBeginSel, dMax = m_dwEndSel;
-		if (m_dwBeginSel >= m_dwEndSel)
+		const SmpLength selLength = m_dwEndSel - m_dwBeginSel;
+
+		mpt::ustring (*fmt)(unsigned int, mpt::ustring, const SmpLength &) = &mpt::ufmt::dec<SmpLength>;
+		if(TrackerSettings::Instance().cursorPositionInHex)
+			fmt = &mpt::ufmt::HEX<SmpLength>;
+		s = MPT_UFORMAT("[{}-{}] ({} sample{}, ")(fmt(3, U_(","), m_dwBeginSel), fmt(3, U_(","), m_dwEndSel), fmt(3, U_(","), selLength), (selLength == 1) ? U_("") : U_("s"));
+
+		// Length in seconds
+		auto sampleRate = sample.GetSampleRate(sndFile.GetType());
+		if(sampleRate <= 0) sampleRate = 8363;
+		double sec = selLength / static_cast<double>(sampleRate);
+		if(sec < 1)
+			s += MPT_UFORMAT("{}ms")(mpt::ufmt::flt(sec * 1000.0, 3));
+		else
+			s += MPT_UFORMAT("{}s")(mpt::ufmt::flt(sec, 3));
+
+		// Length in beats
+		double beats = selLength;
+		if(sndFile.m_nTempoMode == TempoMode::Modern)
 		{
-			dMin = nBegin;
-			dMax = nEnd;
-		}
-		if ((nBegin == dMin) && (dMax != nEnd))
-		{
-			dMin = dMax;
-			if (nEnd < dMin) dMin = nEnd;
-			if (nEnd > dMax) dMax = nEnd;
-		} else if ((nEnd == dMax) && (dMin != nBegin))
-		{
-			dMax = dMin;
-			if (nBegin < dMin) dMin = nBegin;
-			if (nBegin > dMax) dMax = nBegin;
+			beats *= sndFile.m_PlayState.m_nMusicTempo.ToDouble() * (1.0 / 60.0) / sampleRate;
 		} else
 		{
-			if (nBegin < dMin) dMin = nBegin;
-			if (nEnd > dMax) dMax = nEnd;
+			sndFile.RecalculateSamplesPerTick();
+			beats *= sndFile.GetSampleRate() / static_cast<double>(Util::mul32to64_unsigned(sndFile.m_PlayState.m_nCurrentRowsPerBeat, sndFile.m_PlayState.m_nMusicSpeed) * Util::mul32to64_unsigned(sndFile.m_PlayState.m_nSamplesPerTick, sampleRate));
 		}
-		m_dwBeginSel = nBegin;
-		m_dwEndSel = nEnd;
-		rect.top = m_rcClient.top;
-		rect.bottom = m_rcClient.bottom;
-		rect.left = SampleToScreen(dMin);
-		rect.right = SampleToScreen(dMax) + 1;
-		if (rect.left < 0) rect.left = 0;
-		if (rect.right > m_rcClient.right) rect.right = m_rcClient.right;
-		if (rect.right > rect.left) InvalidateRect(&rect, FALSE);
-		CMainFrame *pMainFrm = CMainFrame::GetMainFrame();
-		if(pMainFrm)
-		{
-			mpt::ustring s;
-			if(m_dwEndSel > m_dwBeginSel)
-			{
-				const SmpLength selLength = m_dwEndSel - m_dwBeginSel;
-
-				mpt::ustring (*fmt)(unsigned int, mpt::ustring, const SmpLength &) = &mpt::ufmt::dec<SmpLength>;
-				if(TrackerSettings::Instance().cursorPositionInHex)
-					fmt = &mpt::ufmt::HEX<SmpLength>;
-				s = MPT_UFORMAT("[{}-{}] ({} sample{}, ")(fmt(3, U_(","), m_dwBeginSel), fmt(3, U_(","), m_dwEndSel), fmt(3, U_(","), selLength), (selLength == 1) ? U_("") : U_("s"));
-
-				// Length in seconds
-				auto sampleRate = sample.GetSampleRate(sndFile.GetType());
-				if(sampleRate <= 0) sampleRate = 8363;
-				double sec = selLength / static_cast<double>(sampleRate);
-				if(sec < 1)
-					s += MPT_UFORMAT("{}ms")(mpt::ufmt::flt(sec * 1000.0, 3));
-				else
-					s += MPT_UFORMAT("{}s")(mpt::ufmt::flt(sec, 3));
-
-				// Length in beats
-				double beats = selLength;
-				if(sndFile.m_nTempoMode == TempoMode::Modern)
-				{
-					beats *= sndFile.m_PlayState.m_nMusicTempo.ToDouble() * (1.0 / 60.0) / sampleRate;
-				} else
-				{
-					sndFile.RecalculateSamplesPerTick();
-					beats *= sndFile.GetSampleRate() / static_cast<double>(Util::mul32to64_unsigned(sndFile.m_PlayState.m_nCurrentRowsPerBeat, sndFile.m_PlayState.m_nMusicSpeed) * Util::mul32to64_unsigned(sndFile.m_PlayState.m_nSamplesPerTick, sampleRate));
-				}
-				s += MPT_UFORMAT(", {} beats)")(mpt::ufmt::flt(beats, 5));
-			}
-			pMainFrm->SetInfoText(mpt::ToCString(s));
-		}
+		s += MPT_UFORMAT(", {} beats)")(mpt::ufmt::flt(beats, 5));
 	}
+	pMainFrm->SetInfoText(mpt::ToCString(s));
 }
 
 
