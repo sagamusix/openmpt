@@ -8,6 +8,7 @@
 #include "mpt/base/detect.hpp"
 #include "mpt/base/float.hpp"
 #include "mpt/base/namespace.hpp"
+#include "mpt/base/numeric.hpp"
 #include "mpt/chrono/system_clock.hpp"
 #include "mpt/profiler/clock.hpp"
 #include "mpt/profiler/clock_base.hpp"
@@ -144,11 +145,7 @@ public:
 		if (end < beg) {
 			return;
 		}
-#if MPT_CXX_AT_LEAST(20)
-		now.perfclock = std::midpoint(beg, end);
-#else
-		now.perfclock = (beg / 2) + (end / 2);
-#endif
+		now.perfclock = mpt::midpoint(beg, end);
 		now.valid = true;
 		measurement old = g_data.old.exchange(now, std::memory_order_relaxed);
 		if (!old.valid) {
