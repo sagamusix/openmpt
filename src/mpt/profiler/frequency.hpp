@@ -142,8 +142,27 @@ public:
 		typename Clock::rep beg = Clock::now_raw();
 		now.wallclock = mpt::chrono::system_clock::now();
 		typename Clock::rep end = Clock::now_raw();
-		if (end < beg) {
-			return;
+		static_assert(std::is_arithmetic<typename Clock::rep>::value);
+		if constexpr (std::is_floating_point<typename Clock::rep>::value) {
+			if (end < beg) {
+				// reject time going backwards
+				return;
+			}
+		}
+		if constexpr (std::is_integral<typename Clock::rep>::value) {
+			using rep = typename Clock::rep;
+			using urep = typename std::make_unsigned<typename Clock::rep>::type;
+			constexpr urep half = (static_cast<urep>(1) << ((sizeof(urep) * 8) - 1));
+			if (end < beg) {
+				// handle wrap-around
+				beg = static_cast<rep>(static_cast<urep>(beg) + half);
+				end = static_cast<rep>(static_cast<urep>(end) + half);
+			}
+			if (static_cast<urep>(end - beg) >= half) {
+				// interval larger than half of representable range,
+				// assume time went backwards and reject
+				return;
+			}
 		}
 		now.perfclock = mpt::midpoint(beg, end);
 		now.valid = true;
