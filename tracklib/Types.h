@@ -1,7 +1,7 @@
 /*
- * FadeLaws.h
- * ----------
- * Purpose: Various fade law implementations for sample and pattern fading / interpolation
+ * Types.h
+ * -------
+ * Purpose:  Type definitions commonly used in tracklib / tracker code.
  * Notes  : (currently none)
  * Authors: OpenMPT Devs
  * The OpenMPT source code is released under the BSD license. Read LICENSE for more details.
@@ -58,5 +58,38 @@ namespace Fade
 		}
 	}
 }
+
+
+enum class SampleLengthUnit : uint8
+{
+	Samples = 0,
+	Milliseconds,
+};
+
+
+enum class SampleGridMode : uint8
+{
+	NoGrid = 0,
+	DivideIntoSegments,
+	DivideEveryN,
+};
+
+
+enum class SampleChannelSelection : uint8
+{
+	None = 0,
+	Left = 1,
+	Right = 2,
+	Both = 1 | 2,
+};
+
+namespace SampleEdit
+{
+	static constexpr uint8 ChannelSelectionToMask(SampleChannelSelection channelSel) noexcept
+	{
+		return static_cast<uint8>(channelSel);
+	}
+}  // namespace SampleEdit
+
 
 OPENMPT_NAMESPACE_END

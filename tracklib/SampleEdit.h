@@ -12,7 +12,7 @@
 
 #include "openmpt/all/BuildSettings.hpp"
 
-#include "FadeLaws.h"
+#include "Types.h"
 #include "../soundlib/Snd_defs.h"
 
 #include <functional>
@@ -36,18 +36,23 @@ enum ResetFlag
 std::pair<int, int> FindMinMax(const int8 *p, SmpLength numSamples, int numChannels);
 std::pair<int, int> FindMinMax(const int16 *p, SmpLength numSamples, int numChannels);
 
+// Returns true iff only a single channel of a stereo sample is selected.
+bool IsSingleChannel(const ModSample &smp, SampleChannelSelection channelSel) noexcept;
+// Returns the selected channel, or 0 if both channels of a stereo sample are selected.
+uint8 SelectedChannel(SampleChannelSelection channelSel) noexcept;
+
 // Get a reference to all cue and loop points of the sample
 std::vector<std::reference_wrapper<SmpLength>> GetCuesAndLoops(ModSample &smp);
 
 // Insert silence to given location.
-// Note: Is currently implemented only for inserting silence to the beginning and to the end of the sample.
 // Return: Length of the new sample.
 SmpLength InsertSilence(ModSample &smp, const SmpLength silenceLength, const SmpLength startFrom, CSoundFile &sndFile);
 
 // Remove part of a sample [selStart, selEnd[.
+// When applied to only a single channel of a stereo sample, the sample length is not changed.
 // Note: Removed memory is not freed.
 // Return: Length of the new sample.
-SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, CSoundFile &sndFile);
+SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Change sample size.
 // Note: If resized sample is bigger, silence will be added to the sample's tail.
@@ -59,28 +64,28 @@ void ResetSamples(CSoundFile &sndFile, ResetFlag resetflag, SAMPLEINDEX minSampl
 
 // Remove DC offset and normalize.
 // Return: If DC offset was removed, returns original offset value, zero otherwise.
-double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Amplify / fade  sample data
-bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile);
+bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Normalize entire sample or just a selection
-bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Reverse sample data
-bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Virtually unsign sample data
-bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Invert sample data (flip by 180 degrees)
-bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Crossfade sample data to create smooth loops
 bool XFadeSample(ModSample &smp, SmpLength fadeLength, int fadeLaw, bool afterloopFade, bool useSustainLoop, CSoundFile &sndFile);
 
 // Silence parts of the sample data
-bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile);
+bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel);
 
 // Modify stereo separation of the sample data. separation is in range [-200, 200]
 bool StereoSepSample(ModSample &smp, SmpLength start, SmpLength end, double separation, CSoundFile &sndFile);
@@ -96,7 +101,7 @@ bool ConvertPingPongLoop(ModSample &smp, CSoundFile &sndFile, bool sustainLoop);
 
 // Resample using given resampling method (SRCMODE_DEFAULT = r8brain).
 // Returns end point of resampled data, or 0 on failure.
-SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc);
+SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc, SampleChannelSelection channelSel);
 
 // Find a suitable loop start going either forward or backward from the current loop start.
 // If moveLoop is true, the calculations are done assuming that the loop length stays the same (i.e. the loop end is moved by the same amount).

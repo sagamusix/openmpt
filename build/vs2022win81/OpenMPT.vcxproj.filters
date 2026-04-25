@@ -1908,13 +1908,13 @@
     <ClInclude Include="..\..\test\test.h">
       <Filter>test</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\tracklib\FadeLaws.h">
-      <Filter>tracklib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\tracklib\SampleEdit.h">
       <Filter>tracklib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\tracklib\TimeStretchPitchShift.h">
+      <Filter>tracklib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tracklib\Types.h">
       <Filter>tracklib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\unarchiver\archive.h">

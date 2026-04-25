@@ -27,6 +27,7 @@
 #include "OPLInstrDlg.h"
 #include "Reporting.h"
 #include "resource.h"
+#include "SampleEditorDialogs.h"
 #include "WindowMessages.h"
 #include "../common/FileReader.h"
 #include "../soundlib/MIDIEvents.h"
@@ -40,8 +41,6 @@
 #include "mpt/io/io_span.hpp"
 #include "mpt/io/io_stdstream.hpp"
 #include "mpt/io/io_virtual_wrapper.hpp"
-#include "openmpt/soundbase/SampleConvert.hpp"
-#include "openmpt/soundbase/SampleDecode.hpp" 
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -166,7 +165,6 @@ END_MESSAGE_MAP()
 
 CViewSample::CViewSample()
 	: m_timelineHeight{TIMELINE_HEIGHT}
-	, m_lastDrawPoint{-1, -1}
 {
 	MemsetZero(m_NcButtonState);
 	m_dwNotifyPos.fill(Notification::PosInvalid);
@@ -511,7 +509,7 @@ SmpLength CViewSample::SnapToGrid(const SmpLength pos) const
 }
 
 
-void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
+void CViewSample::SetCurSel(SmpLength begin, SmpLength end, SampleChannelSelection channelSel)
 {
 	if(GetDocument() == nullptr)
 		return;
@@ -525,7 +523,10 @@ void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
 	if(begin > end)
 		std::swap(begin, end);
 
-	if(begin == m_dwBeginSel && end == m_dwEndSel)
+	if(channelSel == SampleChannelSelection::None)
+		end = begin;
+
+	if(begin == m_dwBeginSel && end == m_dwEndSel && channelSel == m_channelSelection)
 		return;
 
 	SmpLength updateBegin = m_dwBeginSel, updateEnd = m_dwEndSel;
@@ -554,9 +555,24 @@ void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
 		updateEnd = std::max(updateEnd, end);
 	}
 
+	SampleChannelSelection updateChannels = channelSel;
+	if(channelSel != m_channelSelection)
+	{
+		updateChannels = SampleChannelSelection::Both;
+		updateBegin = std::min(updateBegin, begin);
+		updateEnd = std::max(updateEnd, end);
+	}
+
 	m_dwBeginSel = begin;
 	m_dwEndSel = end;
-	CRect rect{std::max(0, SampleToScreen(updateBegin)), m_rcClient.top, std::min(static_cast<int>(m_rcClient.right), SampleToScreen(updateEnd) + 1), m_rcClient.bottom};
+	m_channelSelection = channelSel;
+
+	CRect rect{std::max(0, SampleToScreen(updateBegin)), m_timelineHeight, std::min(static_cast<int>(m_rcClient.right), SampleToScreen(updateEnd) + 1), m_rcClient.bottom};
+	const int halfHeight = WaveformHeight() / 2;
+	if(updateChannels == SampleChannelSelection::Left)
+		rect.bottom = m_timelineHeight + halfHeight;
+	else if(updateChannels == SampleChannelSelection::Right)
+		rect.top = m_timelineHeight + halfHeight;
 	if(rect.right > rect.left)
 		InvalidateRect(&rect, FALSE);
 
@@ -569,10 +585,16 @@ void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
 	{
 		const SmpLength selLength = m_dwEndSel - m_dwBeginSel;
 
+		mpt::ustring channelStr;
+		if(m_channelSelection == SampleChannelSelection::Left)
+			channelStr = UL_(" L");
+		else if(m_channelSelection == SampleChannelSelection::Right)
+			channelStr = UL_(" R");
+
 		mpt::ustring (*fmt)(unsigned int, mpt::ustring, const SmpLength &) = &mpt::ufmt::dec<SmpLength>;
 		if(TrackerSettings::Instance().cursorPositionInHex)
 			fmt = &mpt::ufmt::HEX<SmpLength>;
-		s = MPT_UFORMAT("[{}-{}] ({} sample{}, ")(fmt(3, U_(","), m_dwBeginSel), fmt(3, U_(","), m_dwEndSel), fmt(3, U_(","), selLength), (selLength == 1) ? U_("") : U_("s"));
+		s = MPT_UFORMAT("[{}-{}{}] ({} sample{}, ")(fmt(3, U_(","), m_dwBeginSel), fmt(3, U_(","), m_dwEndSel), channelStr, fmt(3, U_(","), selLength), (selLength == 1) ? U_("") : U_("s"));
 
 		// Length in seconds
 		auto sampleRate = sample.GetSampleRate(sndFile.GetType());
@@ -596,6 +618,36 @@ void CViewSample::SetCurSel(SmpLength begin, SmpLength end)
 		s += MPT_UFORMAT(", {} beats)")(mpt::ufmt::flt(beats, 5));
 	}
 	pMainFrm->SetInfoText(mpt::ToCString(s));
+}
+
+
+SampleChannelSelection CViewSample::GetChannelSelectionFromPoint(const CPoint &point, const ModSample &sample) const
+{
+	if(!sample.uFlags[CHN_STEREO])
+		return SampleChannelSelection::Both;
+	const int waveformHeight = WaveformHeight();
+	if(waveformHeight <= 0)
+		return SampleChannelSelection::Both;
+	const int y = point.y - m_timelineHeight;
+	if(y < waveformHeight / 4)
+		return SampleChannelSelection::Left;
+	if(y >= waveformHeight * 3 / 4)
+		return SampleChannelSelection::Right;
+	return SampleChannelSelection::Both;
+}
+
+
+SampleChannelSelection CViewSample::GetChannelFromPoint(const CPoint &point, const ModSample &sample) const
+{
+	if(!sample.uFlags[CHN_STEREO])
+		return SampleChannelSelection::Left;
+	const int waveformHeight = WaveformHeight();
+	if(waveformHeight <= 0)
+		return SampleChannelSelection::Left;
+	const int y = point.y - m_timelineHeight;
+	if(y < waveformHeight / 2)
+		return SampleChannelSelection::Left;
+	return SampleChannelSelection::Right;
 }
 
 
@@ -694,19 +746,18 @@ std::pair<CViewSample::HitTestItem, SmpLength> CViewSample::PointToItem(CPoint p
 		return {HitTestItem::Nothing, MAX_SAMPLE_LENGTH};
 
 	const bool inTimeline = point.y < m_timelineHeight;
-	if(m_dwEndSel > m_dwBeginSel && !inTimeline && !m_dwStatus[SMPSTATUS_DRAWING])
+	const CSoundFile &sndFile = GetDocument()->GetSoundFile();
+	if(m_nSample > sndFile.GetNumSamples())
 	{
-		const int margin = HighDPISupport::ScalePixels(5, m_hWnd);
-		if(HitTest(point.x, SampleToScreen(m_dwBeginSel), margin, margin, m_timelineHeight, m_rcClient.bottom, rect))
-			return {HitTestItem::SelectionStart, m_dwBeginSel};
-		if(HitTest(point.x, SampleToScreen(m_dwEndSel), margin, margin, m_timelineHeight, m_rcClient.bottom, rect))
-			return {HitTestItem::SelectionEnd, m_dwEndSel};
+		if(inTimeline)
+			return {HitTestItem::Nothing, MAX_SAMPLE_LENGTH};
+		else
+			return {HitTestItem::SampleData, ScreenToSample(point.x)};
 	}
+	const ModSample &sample = sndFile.GetSample(m_nSample);
 
-	const auto &sndFile = GetDocument()->GetSoundFile();
-	if(m_nSample <= sndFile.GetNumSamples() && inTimeline)
+	if(inTimeline)
 	{
-		const auto &sample = sndFile.GetSample(m_nSample);
 		if(sample.nSustainStart < sample.nSustainEnd && sample.nSustainStart < sample.nLength)
 		{
 			if(HitTest(point.x, SampleToScreen(sample.nSustainEnd), m_timelineHeight / 2, 0, 0, m_timelineHeight, rect))
@@ -727,11 +778,32 @@ std::pair<CViewSample::HitTestItem, SmpLength> CViewSample::PointToItem(CPoint p
 			if(sample.cues[cue] < sample.nLength && HitTest(point.x, SampleToScreen(sample.cues[cue]), m_timelineHeight / 2, m_timelineHeight / 2, 0, m_timelineHeight, rect))
 				return {static_cast<HitTestItem>(static_cast<size_t>(HitTestItem::CuePointFirst) + cue), sample.cues[cue]};
 		}
-	}
-	if(inTimeline)
 		return {HitTestItem::Nothing, MAX_SAMPLE_LENGTH};
-	else
+	} else
+	{
+		if(m_dwEndSel > m_dwBeginSel && !m_dwStatus[SMPSTATUS_DRAWING])
+		{
+			// Only one channel selected? Limit vertical range of selection marker
+			int yMin = m_timelineHeight, yMax = m_rcClient.bottom, yCenter = m_timelineHeight + WaveformHeight() / 2;
+			if(sample.GetNumChannels() == 2)
+			{
+				if(m_channelSelection == SampleChannelSelection::Left)
+					yMax = yCenter;
+				else if(m_channelSelection == SampleChannelSelection::Right)
+					yMin = yCenter;
+			}
+
+			if(mpt::is_in_range(point.y, yMin, yMax))
+			{
+				const int margin = HighDPISupport::ScalePixels(5, m_hWnd);
+				if(HitTest(point.x, SampleToScreen(m_dwBeginSel), margin, margin, yMin, yMax, rect))
+					return {HitTestItem::SelectionStart, m_dwBeginSel};
+				if(HitTest(point.x, SampleToScreen(m_dwEndSel), margin, margin, yMin, yMax, rect))
+					return {HitTestItem::SelectionEnd, m_dwEndSel};
+			}
+		}
 		return {HitTestItem::SampleData, ScreenToSample(point.x)};
+	}
 }
 
 
@@ -766,7 +838,7 @@ LRESULT CViewSample::OnModViewMsg(WPARAM wParam, LPARAM lParam)
 			SampleViewState *pState = (SampleViewState *)lParam;
 			if (pState->nSample == m_nSample)
 			{
-				SetCurSel(pState->dwBeginSel, pState->dwEndSel);
+				SetCurSel(pState->dwBeginSel, pState->dwEndSel, pState->channelSelection);
 				SetScrollPos(SB_HORZ, pState->dwScrollPos);
 				UpdateScrollSize();
 				InvalidateSample();
@@ -781,6 +853,7 @@ LRESULT CViewSample::OnModViewMsg(WPARAM wParam, LPARAM lParam)
 			pState->dwScrollPos = m_nScrollPosX;
 			pState->dwBeginSel = m_dwBeginSel;
 			pState->dwEndSel = m_dwEndSel;
+			pState->channelSelection = m_channelSelection;
 			pState->nSample = m_nSample;
 		}
 		break;
@@ -1219,7 +1292,19 @@ void CViewSample::OnDraw(CDC *pDC)
 			rc.right = SampleToScreen(m_dwEndSel) + 1;
 			if (rc.right > rcClient.right) rc.right = rcClient.right;
 			if(rc.right > rc.left)
-				m_offScreenDC.FillSolidRect(&rc, colors[MODCOLOR_SAMPLESELECTED]);
+			{
+				if(SampleEdit::IsSingleChannel(sample, m_channelSelection))
+				{
+					CRect rcLeft = rc, rcRight = rc;
+					rcLeft.bottom = ymed;
+					rcRight.top = ymed;
+					m_offScreenDC.FillSolidRect(&rcLeft, m_channelSelection == SampleChannelSelection::Left ? colors[MODCOLOR_SAMPLESELECTED] : colors[MODCOLOR_BACKSAMPLE]);
+					m_offScreenDC.FillSolidRect(&rcRight, m_channelSelection == SampleChannelSelection::Right ? colors[MODCOLOR_SAMPLESELECTED] : colors[MODCOLOR_BACKSAMPLE]);
+				} else
+				{
+					m_offScreenDC.FillSolidRect(&rc, colors[MODCOLOR_SAMPLESELECTED]);
+				}
+			}
 			rc.left = rc.right;
 			if (rc.left < 0) rc.left = 0;
 			rc.right = rcClient.right;
@@ -1750,7 +1835,7 @@ template<class T>
 T CViewSample::GetSampleValueFromPoint(const ModSample &smp, const CPoint &point) const
 {
 	static_assert(sizeof(T) < sizeof(int));
-	const int channelHeight = (m_rcClient.Height() - m_timelineHeight) / smp.GetNumChannels();
+	const int channelHeight = WaveformHeight() / smp.GetNumChannels();
 	const int yPos = point.y - m_drawChannel * channelHeight - m_timelineHeight;
 
 	const int value = std::numeric_limits<T>::max() - (std::numeric_limits<T>::max() - std::numeric_limits<T>::min()) * yPos / channelHeight;
@@ -1761,8 +1846,8 @@ T CViewSample::GetSampleValueFromPoint(const ModSample &smp, const CPoint &point
 template<class T>
 void CViewSample::SetInitialDrawPoint(ModSample &smp, const CPoint &point)
 {
-	if(m_rcClient.Height() >= m_timelineHeight)
-		m_drawChannel = (point.y - m_timelineHeight) * smp.GetNumChannels() / (m_rcClient.Height() - m_timelineHeight);
+	if(const auto waveformHeight = WaveformHeight(); waveformHeight > 0)
+		m_drawChannel = (point.y - m_timelineHeight) * smp.GetNumChannels() / waveformHeight;
 	else
 		m_drawChannel = 0;
 	Limit(m_drawChannel, 0, static_cast<int>(smp.GetNumChannels() - 1));
@@ -1844,7 +1929,7 @@ void CViewSample::OnMouseMove(UINT flags, CPoint point)
 				pMainFrm->SetInfoText(s);
 
 				double linear;
-				SmpLength offset = x * sample.GetNumChannels() + (point.y - m_timelineHeight) * sample.GetNumChannels() / (m_rcClient.Height() - m_timelineHeight);
+				SmpLength offset = x * sample.GetNumChannels() + (point.y - m_timelineHeight) * sample.GetNumChannels() / std::max(1, WaveformHeight());
 				if(sample.uFlags[CHN_16BIT])
 					linear = sample.sample16()[offset] / 32768.0;
 				else
@@ -1938,11 +2023,22 @@ void CViewSample::OnMouseMove(UINT flags, CPoint point)
 		{
 		case HitTestItem::SelectionStart:
 		case HitTestItem::SelectionEnd:
-			if(m_dwEndDrag != x)
 			{
-				m_dwEndDrag = x;
-				SetCurSel(m_dwBeginDrag, m_dwEndDrag);
-				update = true;
+				// If the selection originated from only one stereo channel, switch to selecting both channels
+				// when the cursor crosses into the other channel's half, and switch back if the cursor crosses
+				// back into the starting channel's region.
+				SampleChannelSelection newChannelSelection = m_startDragChannelSelection;
+				if(SampleEdit::IsSingleChannel(sample, m_startDragChannelSelection))
+				{
+					if(m_startDragChannelSelection != GetChannelFromPoint(point, sample))
+						newChannelSelection = SampleChannelSelection::Both;
+				}
+				if(m_dwEndDrag != x || newChannelSelection != m_channelSelection)
+				{
+					m_dwEndDrag = x;
+					SetCurSel(m_dwBeginDrag, m_dwEndDrag, newChannelSelection);
+					update = true;
+				}
 			}
 			break;
 		case HitTestItem::LoopStart:
@@ -2094,6 +2190,7 @@ void CViewSample::OnLButtonDown(UINT flags, CPoint point)
 	m_dwStatus.reset(SMPSTATUS_MOUSEMOVED);
 	SetFocus();
 	SetCapture();
+	SampleChannelSelection newSelection = m_channelSelection;
 	bool oldsel = (m_dwBeginSel != m_dwEndSel);
 
 	// shift + click = update selection
@@ -2102,7 +2199,16 @@ void CViewSample::OnLButtonDown(UINT flags, CPoint point)
 	{
 		oldsel = true;
 		m_dwEndDrag = itemPos;
-		SetCurSel(m_dwBeginDrag, m_dwEndDrag);
+
+		// Extend single-channel selection into both channels if the shift-clicked point is inside the other channel region
+		SampleChannelSelection newChannelSelection = m_channelSelection;
+		if(SampleEdit::IsSingleChannel(sample, m_channelSelection))
+		{
+			if(m_channelSelection != GetChannelFromPoint(point, sample))
+				newChannelSelection = SampleChannelSelection::Both;
+		}
+
+		SetCurSel(m_dwBeginDrag, m_dwEndDrag, newChannelSelection);
 	} else
 	{
 		m_dragItem = item;
@@ -2118,14 +2224,24 @@ void CViewSample::OnLButtonDown(UINT flags, CPoint point)
 			m_dwBeginDrag = m_dwEndDrag = ScreenToSample(point.x);
 			if(!m_dwStatus[SMPSTATUS_DRAWING])
 				m_dragItem = HitTestItem::SelectionEnd;
+			m_startDragChannelSelection = newSelection = GetChannelSelectionFromPoint(point, sample);
+			oldsel = true;
 			break;
 		case HitTestItem::SelectionStart:
 			m_dwBeginDrag = m_dwEndSel;
 			m_dwEndDrag = itemPos;
+			if(m_channelSelection == SampleChannelSelection::Both)
+				m_startDragChannelSelection = GetChannelSelectionFromPoint(point, sample);
+			else
+				m_startDragChannelSelection = m_channelSelection;  // Continue dragging just this channel even if mouse is now in the "both channels" area
 			break;
 		case HitTestItem::SelectionEnd:
 			m_dwBeginDrag = m_dwBeginSel;
 			m_dwEndDrag = itemPos;
+ 			if(m_channelSelection == SampleChannelSelection::Both)
+ 				m_startDragChannelSelection = GetChannelSelectionFromPoint(point, sample);
+ 			else
+				m_startDragChannelSelection = m_channelSelection;  // Continue dragging just this channel even if mouse is now in the "both channels" area
 			break;
 		default:
 			if(IsCuePoint(m_dragItem))
@@ -2133,8 +2249,8 @@ void CViewSample::OnLButtonDown(UINT flags, CPoint point)
 			break;
 		}
 	}
-	if(oldsel)
-		SetCurSel(m_dwBeginDrag, m_dwEndDrag);
+	if(oldsel || newSelection != m_channelSelection)
+		SetCurSel(m_dwBeginDrag, m_dwEndDrag, newSelection);
 
 	// set initial point for sample drawing
 	if (m_dwStatus[SMPSTATUS_DRAWING] && m_dragItem == HitTestItem::SampleData)
@@ -2265,7 +2381,7 @@ void CViewSample::OnLButtonDblClk(UINT, CPoint pt)
 	{
 		SmpLength len = sample.nLength;
 		if(len && !m_dwStatus[SMPSTATUS_DRAWING])
-			SetCurSel(0, len);
+			SetCurSel(0, len, GetChannelSelectionFromPoint(pt, sample));
 	}
 }
 
@@ -2396,6 +2512,9 @@ void CViewSample::OnRButtonUp(UINT, CPoint pt)
 				::AppendMenu(hMonoMenu, MF_STRING, ID_SAMPLE_MONOCONVERT_RIGHT, ih->GetKeyTextFromCommand(kcSampleMonoRight, _T("&Right Channel")));
 				::AppendMenu(hMonoMenu, MF_STRING, ID_SAMPLE_MONOCONVERT_SPLIT, ih->GetKeyTextFromCommand(kcSampleMonoSplit, _T("&Split Sample")));
 				::AppendMenu(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMonoMenu), _T("Convert to &Mono"));
+			} else
+			{
+				::AppendMenu(hMenu, MF_STRING, ID_SAMPLE_MONOCONVERT, ih->GetKeyTextFromCommand(kcSampleMonoMix, _T("Convert to Stere&o")));
 			}
 
 			// "Trim" menu item is responding differently if there's no selection,
@@ -2561,7 +2680,8 @@ void CViewSample::OnEditSelectAll()
 	if (pModDoc)
 	{
 		SmpLength len = pModDoc->GetSoundFile().GetSample(m_nSample).nLength;
-		if (len) SetCurSel(0, len);
+		if(len)
+			SetCurSel(0, len, SampleChannelSelection::Both);
 	}
 }
 
@@ -2569,27 +2689,32 @@ void CViewSample::OnEditSelectAll()
 void CViewSample::OnEditDelete()
 {
 	CModDoc *pModDoc = GetDocument();
+	if(!pModDoc)
+		return;
+
 	SampleHint updateHint;
 	updateHint.Info().Data();
 
-	if (!pModDoc) return;
 	CSoundFile &sndFile = pModDoc->GetSoundFile();
 	ModSample &sample = sndFile.GetSample(m_nSample);
-	if (!sample.HasSampleData()) return;
-	if (m_dwEndSel > sample.nLength) m_dwEndSel = sample.nLength;
-	if ((m_dwBeginSel >= m_dwEndSel)
-	 || (m_dwEndSel - m_dwBeginSel + 4 >= sample.nLength))
+	if(!sample.HasSampleData())
+		return;
+
+	LimitMax(m_dwEndSel, sample.nLength);
+	if(!SampleEdit::IsSingleChannel(sample, m_channelSelection)
+		&& ((m_dwBeginSel >= m_dwEndSel) || (m_dwEndSel - m_dwBeginSel + 4 >= sample.nLength)))
 	{
-		if (Reporting::Confirm("Remove this sample?", "Remove Sample", true) != cnfYes) return;
+		if(Reporting::Confirm("Remove this sample?", "Remove Sample", true) != cnfYes)
+			return;
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Delete Sample");
 		sndFile.DestroySampleThreadsafe(m_nSample);
 		updateHint.Names();
 	} else
 	{
-		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Delete Selection", m_dwBeginSel, m_dwEndSel);
+		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Delete Selection", m_dwBeginSel, m_dwEndSel, m_channelSelection);
 
 		CriticalSection cs;
-		SampleEdit::RemoveRange(sample, m_dwBeginSel, m_dwEndSel, sndFile);
+		SampleEdit::RemoveRange(sample, m_dwBeginSel, m_dwEndSel, sndFile, m_channelSelection);
 	}
 	SetCurSel(0, 0);
 	SetModified(updateHint, true, true);
@@ -3079,6 +3204,10 @@ void CViewSample::OnMonoConvert(ctrlSmp::StereoToMonoMode convert)
 		{
 			success = ctrlSmp::ConvertToMono(sample, sndFile, convert);
 		}
+	} else
+	{
+		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_replace, "Stereo Conversion");
+		success = ctrlSmp::ConvertToStereo(sample, sndFile);
 	}
 
 	if(success)

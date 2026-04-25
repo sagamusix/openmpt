@@ -14,9 +14,9 @@
 #include "openmpt/all/BuildSettings.hpp"
 #include "Globals.h"
 #include "Moddoc.h"
-#include "SampleEditorDialogs.h"
 #include "TrackerSettings.h"
 #include "../soundlib/modsmp_ctrl.h"
+#include "../tracklib/Types.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -27,7 +27,7 @@ class OPLInstrDlg;
 class CViewSample: public CModScrollView
 {
 public:
-	enum Flags
+	enum Flags : uint8
 	{
 		SMPSTATUS_MOUSEDRAG  = 0x01,
 		SMPSTATUS_KEYDOWN    = 0x02,
@@ -37,14 +37,14 @@ public:
 	};
 
 protected:
-	enum class PasteMode
+	enum class PasteMode : uint8
 	{
 		Replace,
 		MixPaste,
 		Insert
 	};
 
-	enum class HitTestItem
+	enum class HitTestItem : uint8
 	{
 		Nothing,
 		SampleData,
@@ -58,7 +58,7 @@ protected:
 		CuePointLast = CuePointFirst + mpt::array_size<decltype(ModSample::cues)>::size - 1,
 	};
 
-	enum class ScrollTarget
+	enum class ScrollTarget : uint8
 	{
 		Left,
 		Right,
@@ -78,12 +78,14 @@ protected:
 	int m_timelineInterval = 0;
 	decltype(ModSample::nC5Speed) m_cachedSampleRate = 8363;
 	FlagSet<Flags> m_dwStatus;
-	SmpLength m_dwBeginSel, m_dwEndSel, m_dwBeginDrag, m_dwEndDrag;
-	SmpLength m_dwMenuParam;
 	SAMPLEINDEX m_nSample = 1;
+	SmpLength m_dwMenuParam = 0;
+	SmpLength m_dwBeginSel = 0, m_dwEndSel = 0, m_dwBeginDrag = 0, m_dwEndDrag = 0;
+	SampleChannelSelection m_channelSelection = SampleChannelSelection::Both;
 
 	// Drag & Drop
 	HitTestItem m_dragItem = HitTestItem::Nothing;
+	SampleChannelSelection m_startDragChannelSelection = SampleChannelSelection::Both;
 	CPoint m_startDragPoint;
 	SmpLength m_startDragValue = MAX_SAMPLE_LENGTH;
 	bool m_dragPreparedUndo = false, m_fineDrag = false, m_forceRedrawWaveform = true, m_scrolledSinceLastMouseMove = false;
@@ -95,8 +97,8 @@ protected:
 	SampleLengthUnit m_gridUnit = SampleLengthUnit::Milliseconds;
 
 	// Sample drawing
-	CPoint m_lastDrawPoint;  // For drawing horizontal lines
-	int m_drawChannel;       // Which sample channel are we drawing on?
+	CPoint m_lastDrawPoint{-1, -1};  // For drawing horizontal lines
+	int m_drawChannel = 0;           // Which sample channel are we drawing on?
 
 	// Note-off event buffer for MIDI sustain pedal
 	std::array<std::vector<uint32>, 16> m_midiSustainBuffer;
@@ -128,7 +130,8 @@ protected:
 	void NoteOff(ModCommand::NOTE note);
 	void InvalidateSample(bool invalidateWaveform = true);
 	void InvalidateTimeline();
-	void SetCurSel(SmpLength nBegin, SmpLength nEnd);
+	void SetCurSel(SmpLength begin, SmpLength end) { SetCurSel(begin, end, m_channelSelection); }
+	void SetCurSel(SmpLength begin, SmpLength end, SampleChannelSelection channelSel);
 	void ScrollToPosition(int x);
 	void DrawPositionMarks();
 	template <typename Tsample>
@@ -153,6 +156,10 @@ protected:
 	template<class T>
 	T GetSampleValueFromPoint(const ModSample &smp, const CPoint &point) const;
 
+	// Returns Left, Right or Both
+	SampleChannelSelection GetChannelSelectionFromPoint(const CPoint &point, const ModSample &sample) const;
+	// Returns Left or Right
+	SampleChannelSelection GetChannelFromPoint(const CPoint &point, const ModSample &sample) const;
 	int GetZoomLevel(SmpLength length) const;
 	void DoZoom(int direction, const CPoint &zoomPoint = CPoint(-1, -1));
 	bool CanZoomSelection() const;
@@ -166,6 +173,8 @@ protected:
 	void Convert8Bit(bool allSamples);
 
 	int CalcScroll(int &currentPos, int amount, int style, int bar);
+
+	int WaveformHeight() const noexcept { return m_rcClient.Height() - m_timelineHeight; }
 
 	SmpLength SnapToGrid(const SmpLength pos) const;
 	// Returns effective grid segment size, in samples

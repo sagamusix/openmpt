@@ -15,6 +15,7 @@
 #include "PatternCursor.h"
 
 #include "../common/FileReaderFwd.h"
+#include "../tracklib/Types.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -52,6 +53,7 @@ struct SampleViewState
 	SmpLength dwScrollPos = 0;
 	SmpLength dwBeginSel = 0;
 	SmpLength dwEndSel = 0;
+	SampleChannelSelection channelSelection = SampleChannelSelection::None;
 	SAMPLEINDEX nSample = 0;
 	SAMPLEINDEX initialSample = 0;
 

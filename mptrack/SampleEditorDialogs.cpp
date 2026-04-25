@@ -994,11 +994,11 @@ BEGIN_MESSAGE_MAP(CResamplingDlg, DialogBase)
 END_MESSAGE_MAP()
 
 
-CResamplingDlg::CResamplingDlg(CWnd *parent, uint32 frequency, ResamplingMode srcMode, bool resampleAll, bool allowAdjustNotes)
+CResamplingDlg::CResamplingDlg(CWnd *parent, uint32 frequency, ResamplingMode srcMode, Action action, bool allowAdjustNotes)
 	: DialogBase{IDD_RESAMPLE, parent}
 	, m_srcMode{srcMode}
 	, m_frequency{frequency}
-	, m_resampleAll{resampleAll}
+	, m_action{action}
 	, m_allowAdjustNotes{allowAdjustNotes}
 {
 }
@@ -1007,7 +1007,14 @@ CResamplingDlg::CResamplingDlg(CWnd *parent, uint32 frequency, ResamplingMode sr
 BOOL CResamplingDlg::OnInitDialog()
 {
 	DialogBase::OnInitDialog();
-	SetWindowText(m_resampleAll ? _T("Resample All") : _T("Resample"));
+	const TCHAR *title = nullptr;
+	switch(m_action)
+	{
+	case Action::OneSample: title = _T("Resample"); break;
+	case Action::OneChannel: title = _T("Resample Channel"); break;
+	case Action::AllSamples: title = _T("Resample All"); break;
+	}
+	SetWindowText(title);
 
 	CheckRadioButton(IDC_RADIO1, IDC_RADIO3, IDC_RADIO1 + m_lastChoice);
 	if(m_frequency > 0)
@@ -1048,7 +1055,8 @@ BOOL CResamplingDlg::OnInitDialog()
 
 	CheckDlgButton(IDC_CHECK1, m_updatePatternCommands ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(IDC_CHECK2, (m_updatePatternNotes && m_allowAdjustNotes) ? BST_CHECKED : BST_UNCHECKED);
-	GetDlgItem(IDC_CHECK2)->EnableWindow(m_allowAdjustNotes ? TRUE : FALSE);
+	GetDlgItem(IDC_CHECK1)->EnableWindow(m_action != Action::OneChannel ? TRUE : FALSE);
+	GetDlgItem(IDC_CHECK2)->EnableWindow((m_allowAdjustNotes && m_action != Action::OneChannel) ? TRUE : FALSE);
 
 	return TRUE;
 }

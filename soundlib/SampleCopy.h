@@ -48,4 +48,12 @@ size_t CopySample(typename SampleConversion::output_t *MPT_RESTRICT outBuf, size
 }
 
 
+// SampleConversion template parameter shortcuts for pure copying of native sample data
+namespace SC
+{  // SC = _S_ample_C_onversion
+	using CopyNative8 = ConversionChain<Convert<int8, int8>, DecodeIdentity<int8>>;
+	using CopyNative16 = ConversionChain<Convert<int16, int16>, DecodeIdentity<int16>>;
+}
+
+
 OPENMPT_NAMESPACE_END

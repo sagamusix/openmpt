@@ -16,12 +16,13 @@
 #include "UpdateHints.h"
 #include "../common/mptStringBuffer.h"
 #include "../tracklib/SampleEdit.h"
+#include "../soundlib/SampleCopy.h"
 #include "../soundlib/modsmp_ctrl.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
 
-static constexpr size_t MAX_UNDO_LEVEL = 100000;  // 100,000 undo steps for each undo type!
+static constexpr size_t MAX_UNDO_LEVEL = 100'000;  // 100,000 undo steps for each undo type!
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -360,6 +361,11 @@ struct CSampleUndo::UndoInfo
 	const char *description = nullptr;
 	SmpLength changeStart = 0, changeEnd = 0;
 	sampleUndoTypes changeType = sundo_none;
+	SampleChannelSelection channelSelection = SampleChannelSelection::Both;
+
+	bool IsSingleChannel() const noexcept { return SampleEdit::IsSingleChannel(OldSample, channelSelection); }
+	uint8 NumStoredChannels() const noexcept { return IsSingleChannel() ? uint8(1) : OldSample.GetNumChannels(); }
+	size_t StoredSampleSize() const noexcept { return (changeEnd - changeStart) * OldSample.GetElementarySampleSize() * NumStoredChannels(); }
 };
 
 
@@ -403,9 +409,9 @@ void CSampleUndo::ClearUndo(undobuf_t &buffer, const SAMPLEINDEX smp)
 // Create undo point for given sample.
 // The main program has to tell what kind of changes are going to be made to the sample.
 // That way, a lot of RAM can be saved, because some actions don't even require an undo sample buffer.
-bool CSampleUndo::PrepareUndo(const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd)
+bool CSampleUndo::PrepareUndo(const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd, SampleChannelSelection channelSelection)
 {
-	if(PrepareBuffer(UndoBuffer, smp, changeType, description, changeStart, changeEnd))
+	if(PrepareBuffer(UndoBuffer, smp, changeType, description, changeStart, changeEnd, channelSelection))
 	{
 		ClearUndo(RedoBuffer, smp);
 		return true;
@@ -414,7 +420,7 @@ bool CSampleUndo::PrepareUndo(const SAMPLEINDEX smp, sampleUndoTypes changeType,
 }
 
 
-bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd)
+bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd, SampleChannelSelection channelSelection)
 {
 	if(smp == 0 || smp >= MAX_SAMPLES) return false;
 	if(!TrackerSettings::Instance().m_SampleUndoBufferSize.Get().GetSizeInBytes())
@@ -444,6 +450,7 @@ bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sample
 	undo.oldName = sndFile.m_szNames[smp];
 	undo.changeType = changeType;
 	undo.description = description;
+	undo.channelSelection = channelSelection;
 
 	if(changeType == sundo_replace)
 	{
@@ -472,11 +479,11 @@ bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sample
 
 	switch(changeType)
 	{
-	case sundo_none:	// we are done, no sample changes here.
-	case sundo_invert:	// no action necessary, since those effects can be applied again to be undone.
-	case sundo_reverse:	// ditto
-	case sundo_unsign:	// ditto
-	case sundo_insert:	// no action necessary, we already have stored the variables that are necessary.
+	case sundo_none:     // We are done, no sample changes here.
+	case sundo_invert:   // No action necessary, since those effects can be applied again to be undone.
+	case sundo_reverse:  // Ditto
+	case sundo_unsign:   // Ditto
+	case sundo_insert:   // No action necessary, we already have stored the variables that are necessary.
 		break;
 
 	case sundo_update:
@@ -484,15 +491,27 @@ bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sample
 	case sundo_replace:
 		if(oldSample.HasSampleData())
 		{
-			const uint8 bytesPerSample = oldSample.GetBytesPerSample();
 			const SmpLength changeLen = changeEnd - changeStart;
+			undo.samplePtr = ModSample::AllocateSample(changeLen, oldSample.GetElementarySampleSize() * undo.NumStoredChannels());
+			if(undo.samplePtr == nullptr)
+				return false;
 
-			undo.samplePtr = ModSample::AllocateSample(changeLen, bytesPerSample);
-			if(undo.samplePtr == nullptr) return false;
-			memcpy(undo.samplePtr, oldSample.sampleb() + changeStart * bytesPerSample, changeLen * bytesPerSample);
+			if(undo.IsSingleChannel())
+			{
+				// Extract single channel from interleaved data to undo buffer
+				const uint8 numChannels = oldSample.GetNumChannels();
+				const uint8 selectedChn = SampleEdit::SelectedChannel(channelSelection);
+				if(oldSample.GetElementarySampleSize() == 2)
+					CopySample<SC::CopyNative16>(static_cast<int16 *>(undo.samplePtr), changeLen, 1, oldSample.sample16() + changeStart * numChannels + selectedChn, oldSample.GetSampleSizeInBytes(), numChannels);
+				else
+					CopySample<SC::CopyNative8>(static_cast<int8 *>(undo.samplePtr), changeLen, 1, oldSample.sample8() + changeStart * numChannels + selectedChn, oldSample.GetSampleSizeInBytes(), numChannels);
+			} else
+			{
+				std::memcpy(undo.samplePtr, oldSample.sampleb() + changeStart * oldSample.GetBytesPerSample(), undo.StoredSampleSize());
+			}
 
 #ifdef MPT_ALL_LOGGING
-			const size_t nSize = (GetBufferCapacity(UndoBuffer) + GetBufferCapacity(RedoBuffer) + changeLen * bytesPerSample) >> 10;
+			const size_t nSize = (GetBufferCapacity(UndoBuffer) + GetBufferCapacity(RedoBuffer) + undo.StoredSampleSize()) >> 10;
 			MPT_LOG_GLOBAL(LogDebug, "Undo", MPT_UFORMAT("Sample undo/redo buffer size is now {}.{} MB")(nSize >> 10, (nSize & 1023) * 100 / 1024));
 #endif
 
@@ -500,7 +519,7 @@ bool CSampleUndo::PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sample
 		break;
 
 	default:
-		MPT_ASSERT(false); // whoops, what's this? someone forgot to implement it, some code is obviously missing here!
+		MPT_ASSERT_NOTREACHED();  // Whoops, what's this? someone forgot to implement it, some code is obviously missing here!
 		return false;
 	}
 
@@ -543,16 +562,18 @@ bool CSampleUndo::Undo(undobuf_t &fromBuf, undobuf_t &toBuf, const SAMPLEINDEX s
 		redoType = sundo_insert;
 	else if(redoType == sundo_insert)
 		redoType = sundo_delete;
-	PrepareBuffer(toBuf, smp, redoType, undo.description, undo.changeStart, undo.changeEnd);
+	PrepareBuffer(toBuf, smp, redoType, undo.description, undo.changeStart, undo.changeEnd, undo.channelSelection);
 
 	ModSample &sample = sndFile.GetSample(smp);
 	std::byte *pCurrentSample = mpt::void_cast<std::byte*>(sample.samplev());
 	int8 *pNewSample = nullptr;	// a new sample is possibly going to be allocated, depending on what's going to be undone.
-	bool keepOnDisk = sample.uFlags[SMP_KEEPONDISK];
+	const bool keepOnDisk = sample.uFlags[SMP_KEEPONDISK];
 	bool replace = false;
 
-	uint8 bytesPerSample = undo.OldSample.GetBytesPerSample();
-	SmpLength changeLen = undo.changeEnd - undo.changeStart;
+	const uint8 bytesPerSample = undo.OldSample.GetBytesPerSample();
+	const uint8 numChannels = undo.OldSample.GetNumChannels();
+	const uint8 selectedChn = SampleEdit::SelectedChannel(undo.channelSelection);
+	const SmpLength changeLen = undo.changeEnd - undo.changeStart;
 
 	switch(undo.changeType)
 	{
@@ -560,59 +581,102 @@ bool CSampleUndo::Undo(undobuf_t &fromBuf, undobuf_t &toBuf, const SAMPLEINDEX s
 		break;
 
 	case sundo_invert:
-		// invert again
-		SampleEdit::InvertSample(sample, undo.changeStart, undo.changeEnd, sndFile);
+		// Invert again
+		SampleEdit::InvertSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
 		break;
 
 	case sundo_reverse:
-		// reverse again
-		SampleEdit::ReverseSample(sample, undo.changeStart, undo.changeEnd, sndFile);
+		// Reverse again
+		SampleEdit::ReverseSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
 		break;
 
 	case sundo_unsign:
-		// unsign again
-		SampleEdit::UnsignSample(sample, undo.changeStart, undo.changeEnd, sndFile);
+		// Unsign again
+		SampleEdit::UnsignSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
 		break;
 
 	case sundo_insert:
-		// delete inserted data
-		MPT_ASSERT(changeLen == sample.nLength - undo.OldSample.nLength);
-		if(undo.OldSample.nLength > 0)
+		// Delete inserted data
+		if(undo.IsSingleChannel())
 		{
-			memcpy(pCurrentSample + undo.changeStart * bytesPerSample, pCurrentSample + undo.changeEnd * bytesPerSample, (sample.nLength - undo.changeEnd) * bytesPerSample);
-			// also clean the sample end
-			memset(pCurrentSample + undo.OldSample.nLength * bytesPerSample, 0, (sample.nLength - undo.OldSample.nLength) * bytesPerSample);
+			// For single channel, the sample length doesn't change; shift channel data back and zero the end
+			MPT_ASSERT(sample.nLength == undo.OldSample.nLength);
+			SampleEdit::RemoveRange(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
 		} else
 		{
-			replace = true;
+			MPT_ASSERT(changeLen == sample.nLength - undo.OldSample.nLength);
+			if(undo.OldSample.nLength > 0)
+			{
+				std::memcpy(pCurrentSample + undo.changeStart * bytesPerSample, pCurrentSample + undo.changeEnd * bytesPerSample, (sample.nLength - undo.changeEnd) * bytesPerSample);
+				// Also clean the sample end
+				std::memset(pCurrentSample + undo.OldSample.nLength * bytesPerSample, 0, (sample.nLength - undo.OldSample.nLength) * bytesPerSample);
+			} else
+			{
+				replace = true;
+			}
 		}
 		break;
 
 	case sundo_update:
-		// simply replace what has been updated.
+		// Replace what has been updated.
 		if(sample.nLength < undo.changeEnd) return false;
-		memcpy(pCurrentSample + undo.changeStart * bytesPerSample, undo.samplePtr, changeLen * bytesPerSample);
+		if(undo.IsSingleChannel())
+		{
+			const size_t storedSize = undo.StoredSampleSize();
+			if(undo.OldSample.GetElementarySampleSize() == 2)
+				CopySample<SC::CopyNative16>(sample.sample16() + undo.changeStart * numChannels + selectedChn, changeLen, numChannels, static_cast<const int16 *>(undo.samplePtr), storedSize, 1);
+			else
+				CopySample<SC::CopyNative8>(sample.sample8() + undo.changeStart * numChannels + selectedChn, changeLen, numChannels, static_cast<const int8 *>(undo.samplePtr), storedSize, 1);
+		} else
+		{
+			std::memcpy(pCurrentSample + undo.changeStart * bytesPerSample, undo.samplePtr, changeLen * bytesPerSample);
+		}
 		break;
 
 	case sundo_delete:
 		// insert deleted data
-		pNewSample = static_cast<int8 *>(ModSample::AllocateSample(undo.OldSample.nLength, bytesPerSample));
-		if(pNewSample == nullptr) return false;
-		replace = true;
-		memcpy(pNewSample, pCurrentSample, undo.changeStart * bytesPerSample);
-		memcpy(pNewSample + undo.changeStart * bytesPerSample, undo.samplePtr, changeLen * bytesPerSample);
-		memcpy(pNewSample + undo.changeEnd * bytesPerSample, pCurrentSample + undo.changeStart * bytesPerSample, (undo.OldSample.nLength - undo.changeEnd) * bytesPerSample);
+		if(undo.IsSingleChannel())
+		{
+			// For single channel, the sample length doesn't change; shift channel data back and restore deleted data
+			MPT_ASSERT(sample.nLength == undo.OldSample.nLength);
+			const auto InsertRange = [&](auto *data)
+			{
+				// Move shifted data from changeStart back to changeEnd (backwards due to overlapping regions).
+				const auto *src = data + (sample.nLength - changeLen - 1) * numChannels;
+				auto *dst = data + (sample.nLength - 1) * numChannels;
+				for(const auto *dstEnd = data + (undo.changeEnd - 1) * numChannels; dst != dstEnd; dst -= numChannels, src -= numChannels)
+					*dst = *src;
+				// Restore deleted data from undo buffer
+				const auto *undoSrc = static_cast<decltype(data)>(undo.samplePtr);
+				dst = data + undo.changeStart * numChannels;
+				for(const auto *dstEnd = dst + changeLen * numChannels; dst != dstEnd; dst += numChannels, undoSrc++)
+					*dst = *undoSrc;
+			};
+			if(undo.OldSample.GetElementarySampleSize() == 2)
+				InsertRange(sample.sample16() + selectedChn);
+			else
+				InsertRange(sample.sample8() + selectedChn);
+		} else
+		{
+			pNewSample = static_cast<int8 *>(ModSample::AllocateSample(undo.OldSample.nLength, bytesPerSample));
+			if(pNewSample == nullptr)
+				return false;
+			replace = true;
+			std::memcpy(pNewSample, pCurrentSample, undo.changeStart * bytesPerSample);
+			std::memcpy(pNewSample + undo.changeStart * bytesPerSample, undo.samplePtr, changeLen * bytesPerSample);
+			std::memcpy(pNewSample + undo.changeEnd * bytesPerSample, pCurrentSample + undo.changeStart * bytesPerSample, (undo.OldSample.nLength - undo.changeEnd) * bytesPerSample);
+		}
 		break;
 
 	case sundo_replace:
-		// simply exchange sample pointer
+		// Exchange sample pointer
 		pNewSample = static_cast<int8 *>(undo.samplePtr);
 		undo.samplePtr = nullptr; // prevent sample from being deleted
 		replace = true;
 		break;
 
 	default:
-		MPT_ASSERT(false); // whoops, what's this? someone forgot to implement it, some code is obviously missing here!
+		MPT_ASSERT_NOTREACHED();  // Whoops, what's this? someone forgot to implement it, some code is obviously missing here!
 		return false;
 	}
 
@@ -690,7 +754,7 @@ void CSampleUndo::RestrictBufferSize(undobuf_t &buffer, size_t &capacity)
 		{
 			if(buffer[smp - 1][i].samplePtr != nullptr)
 			{
-				capacity -= (buffer[smp - 1][i].changeEnd - buffer[smp - 1][i].changeStart) * buffer[smp - 1][i].OldSample.GetBytesPerSample();
+				capacity -= buffer[smp - 1][i].StoredSampleSize();
 				for(size_t j = 0; j <= i; j++)
 				{
 					DeleteStep(buffer, smp, 0);
@@ -745,7 +809,7 @@ size_t CSampleUndo::GetBufferCapacity(const undobuf_t &buffer) const
 		{
 			if(step.samplePtr != nullptr)
 			{
-				sum += (step.changeEnd - step.changeStart) * step.OldSample.GetBytesPerSample();
+				sum += step.StoredSampleSize();
 			}
 		}
 	}

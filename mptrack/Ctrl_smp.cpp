@@ -945,10 +945,10 @@ void CCtrlSamples::SetModified(SAMPLEINDEX smp, SampleHint hint, bool updateAll,
 }
 
 
-void CCtrlSamples::PrepareUndo(const char *description, sampleUndoTypes type, SmpLength start, SmpLength end)
+void CCtrlSamples::PrepareUndo(const char *description, sampleUndoTypes type, SmpLength start, SmpLength end, SampleChannelSelection channelSelection)
 {
 	m_startedEdit = true;
-	m_modDoc.GetSampleUndo().PrepareUndo(m_nSample, type, description, start, end);
+	m_modDoc.GetSampleUndo().PrepareUndo(m_nSample, type, description, start, end, channelSelection);
 }
 
 
@@ -1644,8 +1644,6 @@ void CCtrlSamples::Normalize(bool allSamples)
 {
 	//Default case: Normalize current sample
 	SAMPLEINDEX minSample = m_nSample, maxSample = m_nSample;
-	//If only one sample is selected, parts of it may be amplified
-	SmpLength selStart = 0, selEnd = 0;
 
 	if(allSamples)
 	{
@@ -1653,45 +1651,36 @@ void CCtrlSamples::Normalize(bool allSamples)
 			return;
 		minSample = 1;
 		maxSample = m_sndFile.GetNumSamples();
-	} else
-	{
-		SampleSelectionPoints selection = GetSelectionPoints();
-		selStart = selection.nStart;
-		selEnd = selection.nEnd;
 	}
-
 
 	BeginWaitCursor();
 
 	for(SAMPLEINDEX smp = minSample; smp <= maxSample; smp++)
 	{
-		if(m_sndFile.GetSample(smp).HasSampleData())
+		ModSample &sample = m_sndFile.GetSample(smp);
+		if(!sample.HasSampleData())
+			continue;
+
+		SmpLength selStart, selEnd;
+		SampleChannelSelection channelSel = SampleChannelSelection::Both;
+		if(minSample != maxSample)
 		{
-			ModSample &sample = m_sndFile.GetSample(smp);
+			// If more than one sample is selected, always amplify the whole sample.
+			selStart = 0;
+			selEnd = sample.nLength;
+		} else
+		{
+			SampleSelectionPoints selection = GetSelectionPoints();
+			selStart = selection.start;
+			selEnd = selection.end;
+			channelSel = selection.channels;
+		}
 
-			if(minSample != maxSample)
-			{
-				// If more than one sample is selected, always amplify the whole sample.
-				selStart = 0;
-				selEnd = sample.nLength;
-			} else
-			{
-				// One sample: correct the boundaries, if needed
-				LimitMax(selEnd, sample.nLength);
-				LimitMax(selStart, selEnd);
-				if(selStart == selEnd)
-				{
-					selStart = 0;
-					selEnd = sample.nLength;
-				}
-			}
+		m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Normalize", selStart, selEnd, channelSel);
 
-			m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Normalize", selStart, selEnd);
-
-			if(SampleEdit::NormalizeSample(sample, selStart, selEnd, m_sndFile))
-			{
-				SetModified(smp, SampleHint().Data(), smp == m_nSample, true);
-			}
+		if(SampleEdit::NormalizeSample(sample, selStart, selEnd, m_sndFile, channelSel))
+		{
+			SetModified(smp, SampleHint().Data(), smp == m_nSample, true);
 		}
 	}
 
@@ -1727,25 +1716,27 @@ void CCtrlSamples::RemoveDCOffset(bool allSamples)
 
 	for(SAMPLEINDEX smp = minSample; smp <= maxSample; smp++)
 	{
-		SmpLength selStart, selEnd;
-
-		if(!m_sndFile.GetSample(smp).HasSampleData())
+		ModSample &sample = m_sndFile.GetSample(smp);
+		if(!sample.HasSampleData())
 			continue;
 
-		if (minSample != maxSample)
+		SmpLength selStart, selEnd;
+		SampleChannelSelection channelSel = SampleChannelSelection::Both;
+		if(minSample != maxSample)
 		{
 			selStart = 0;
-			selEnd = m_sndFile.GetSample(smp).nLength;
+			selEnd = sample.nLength;
 		} else
 		{
 			SampleSelectionPoints selection = GetSelectionPoints();
-			selStart = selection.nStart;
-			selEnd = selection.nEnd;
+			selStart = selection.start;
+			selEnd = selection.end;
+			channelSel = selection.channels;
 		}
 
-		m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Remove DC Offset", selStart, selEnd);
+		m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Remove DC Offset", selStart, selEnd, channelSel);
 
-		const double offset = SampleEdit::RemoveDCOffset(m_sndFile.GetSample(smp), selStart, selEnd, m_sndFile);
+		const double offset = SampleEdit::RemoveDCOffset(sample, selStart, selEnd, m_sndFile, channelSel);
 
 		if(offset == 0.0f) // No offset removed.
 			continue;
@@ -1795,23 +1786,23 @@ void CCtrlSamples::ApplyAmplify(const double amp, const double fadeInStart, cons
 	BeginWaitCursor();
 
 	SampleSelectionPoints selection = GetSelectionPoints();
-	const auto start = selection.nStart, end = selection.nEnd, mid = (start + end) / 2;
+	const auto start = selection.start, end = selection.end, mid = mpt::midpoint(start, end);
 
-	PrepareUndo("Amplify", sundo_update, start, end);
+	PrepareUndo("Amplify", sundo_update, start, end, selection.channels);
 
 	if(fadeIn && fadeOut)
 	{
-		SampleEdit::AmplifySample(sample, start, mid, fadeInStart, amp, true, fadeLaw, m_sndFile);
-		SampleEdit::AmplifySample(sample, mid, end, amp, fadeOutEnd, false, fadeLaw, m_sndFile);
+		SampleEdit::AmplifySample(sample, start, mid, fadeInStart, amp, true, fadeLaw, m_sndFile, selection.channels);
+		SampleEdit::AmplifySample(sample, mid, end, amp, fadeOutEnd, false, fadeLaw, m_sndFile, selection.channels);
 	} else if(fadeIn)
 	{
-		SampleEdit::AmplifySample(sample, start, end, fadeInStart, amp, true, fadeLaw, m_sndFile);
+		SampleEdit::AmplifySample(sample, start, end, fadeInStart, amp, true, fadeLaw, m_sndFile, selection.channels);
 	} else if(fadeOut)
 	{
-		SampleEdit::AmplifySample(sample, start, end, amp, fadeOutEnd, false, fadeLaw, m_sndFile);
+		SampleEdit::AmplifySample(sample, start, end, amp, fadeOutEnd, false, fadeLaw, m_sndFile, selection.channels);
 	} else
 	{
-		SampleEdit::AmplifySample(sample, start, end, amp, amp, true, Fade::kLinear, m_sndFile);
+		SampleEdit::AmplifySample(sample, start, end, amp, amp, true, Fade::kLinear, m_sndFile, selection.channels);
 	}
 
 	sample.PrecomputeLoops(m_sndFile, false);
@@ -1841,9 +1832,9 @@ void CCtrlSamples::OnQuickFade()
 	if(!sample.HasSampleData() || sample.uFlags[CHN_ADLIB]) return;
 
 	SampleSelectionPoints sel = GetSelectionPoints();
-	if(sel.selectionActive && (sel.nStart == 0 || sel.nEnd == sample.nLength))
+	if(sel.SelectionActive() && (sel.start == 0 || sel.end == sample.nLength))
 	{
-		ApplyAmplify(1.0, (sel.nStart == 0) ? 0.0 : 1.0, (sel.nEnd == sample.nLength) ? 0.0 : 1.0, sel.nStart == 0, sel.nEnd == sample.nLength, Fade::kLinear);
+		ApplyAmplify(1.0, (sel.start == 0) ? 0.0 : 1.0, (sel.end == sample.nLength) ? 0.0 : 1.0, sel.start == 0, sel.end == sample.nLength, Fade::kLinear);
 	} else
 	{
 		// Can't apply quick fade as no appropriate selection has been made, so ask the user to amplify the whole sample instead.
@@ -1865,14 +1856,19 @@ void CCtrlSamples::Resample(bool allSamples)
 		return;
 
 	SAMPLEINDEX first = m_nSample, last = m_nSample;
+	CResamplingDlg::Action action = CResamplingDlg::Action::OneSample;
 	if(allSamples)
 	{
+		action = CResamplingDlg::Action::AllSamples;
 		first = 1;
 		last = m_sndFile.GetNumSamples();
+	} else if(SampleEdit::IsSingleChannel(sample, GetSelectionPoints().channels))
+	{
+		action = CResamplingDlg::Action::OneChannel;
 	}
 
 	const uint32 oldRate = sample.GetSampleRate(m_sndFile.GetType());
-	CResamplingDlg dlg(this, oldRate, TrackerSettings::Instance().sampleEditorDefaultResampler, first != last, m_sndFile.GetBestSaveFormat() == MOD_TYPE_MOD);
+	CResamplingDlg dlg{this, oldRate, TrackerSettings::Instance().sampleEditorDefaultResampler, action, m_sndFile.GetBestSaveFormat() == MOD_TYPE_MOD};
 	if(dlg.DoModal() != IDOK)
 		return;
 
@@ -1904,11 +1900,11 @@ void CCtrlSamples::ApplyResample(SAMPLEINDEX smp, uint32 newRate, ResamplingMode
 	}
 
 	SampleSelectionPoints selection = GetSelectionPoints();
-	LimitMax(selection.nEnd, sample.nLength);
-	if(selection.nStart >= selection.nEnd || ignoreSelection)
+	LimitMax(selection.end, sample.nLength);
+	if(selection.start >= selection.end || ignoreSelection)
 	{
-		selection.nStart = 0;
-		selection.nEnd = sample.nLength;
+		selection.start = 0;
+		selection.end = sample.nLength;
 	}
 
 	const uint32 oldRate = sample.GetSampleRate(m_sndFile.GetType());
@@ -1919,31 +1915,42 @@ void CCtrlSamples::ApplyResample(SAMPLEINDEX smp, uint32 newRate, ResamplingMode
 		return;
 	}
 
+	const bool singleChannel = !ignoreSelection && SampleEdit::IsSingleChannel(sample, selection.channels);
+	const SampleChannelSelection channelSel = singleChannel ? selection.channels : SampleChannelSelection::Both;
+
 	auto prepareSampleUndoFunc = [&]()
 	{
-		m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_replace, (newRate > oldRate) ? "Upsample" : "Downsample");
+		if(singleChannel)
+		{
+			if(newRate > oldRate)
+				m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_replace, "Upsample Channel");
+			else
+				m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_update, "Downsample Channel", selection.start, sample.nLength, channelSel);
+		} else
+		{
+			m_modDoc.GetSampleUndo().PrepareUndo(smp, sundo_replace, (newRate > oldRate) ? "Upsample" : "Downsample");
+		}
 	};
 	auto preparePatternUndoFunc = [&]()
 	{
 		m_modDoc.PrepareUndoForAllPatterns(false, "Resample (Adjust Offsets)");
 	};
-	SmpLength newSelEnd = SampleEdit::Resample(sample, selection.nStart, selection.nEnd, newRate, mode, m_sndFile, updatePatternCommands, updatePatternNotes, prepareSampleUndoFunc, preparePatternUndoFunc);
+	SmpLength newSelEnd = SampleEdit::Resample(sample, selection.start, selection.end, newRate, mode, m_sndFile, updatePatternCommands, updatePatternNotes, prepareSampleUndoFunc, preparePatternUndoFunc, channelSel);
 	if(!newSelEnd)
 	{
 		MessageBeep(MB_ICONWARNING);
 		EndWaitCursor();
 		return;
 	}
-
-	SetModified(smp, SampleHint().Info().Data(), smp == m_nSample, true);
-	if(updatePatternCommands || updatePatternNotes)
+	if(selection.SelectionActive() && !ignoreSelection)
 	{
-		m_modDoc.UpdateAllViews(nullptr, PatternHint().Data(), this);
+		SetSelectionPoints(selection.start, newSelEnd);
 	}
 
-	if(selection.selectionActive && !ignoreSelection)
+	SetModified(smp, SampleHint().Info().Data(), smp == m_nSample, true);
+	if(!singleChannel && (updatePatternCommands || updatePatternNotes))
 	{
-		SetSelectionPoints(selection.nStart, newSelEnd);
+		m_modDoc.UpdateAllViews(nullptr, PatternHint().Data(), this);
 	}
 
 	EndWaitCursor();
@@ -1976,7 +1983,7 @@ void CCtrlSamples::OnEstimateSampleSize()
 class DoPitchShiftTimeStretch : public CProgressDialog
 {
 public:
-	DoPitchShiftTimeStretch(CCtrlSamples &parent, CModDoc &modDoc, SAMPLEINDEX sample, SmpLength start, SmpLength end, float pitch, float stretchRatio, int grainSize, bool loFi)
+	DoPitchShiftTimeStretch(CCtrlSamples &parent, CModDoc &modDoc, SAMPLEINDEX sample, SmpLength start, SmpLength end, float pitch, float stretchRatio, int grainSize, bool loFi, SampleChannelSelection channelSel)
 		: CProgressDialog{&parent}
 		, m_updateInterval{std::max(uint32(15), TrackerSettings::Instance().GUIUpdateInterval.Get())}
 	{
@@ -1985,9 +1992,9 @@ public:
 
 		CSoundFile &sndFile = modDoc.GetSoundFile();
 		if(loFi)
-			m_instance = std::make_unique<TimeStretchPitchShift::LoFi>(updateFunc, prepareUndo, sndFile, sample, pitch, stretchRatio, start, end, grainSize);
+			m_instance = std::make_unique<TimeStretchPitchShift::LoFi>(updateFunc, prepareUndo, sndFile, sample, pitch, stretchRatio, start, end, grainSize, channelSel);
 		else
-			m_instance = std::make_unique<TimeStretchPitchShift::Signalsmith>(updateFunc, prepareUndo, sndFile, sample, pitch, stretchRatio, start, end);
+			m_instance = std::make_unique<TimeStretchPitchShift::Signalsmith>(updateFunc, prepareUndo, sndFile, sample, pitch, stretchRatio, start, end, channelSel);
 	}
 
 	SmpLength NewSelectionEnd() const { return m_instance->NewSelectionEnd(); }
@@ -2049,11 +2056,11 @@ void CCtrlSamples::OnPitchShiftTimeStretch()
 	if(pitch != 1.0 || ratio != 100.0)
 	{
 		auto selection = GetSelectionPoints();
-		DoPitchShiftTimeStretch timeStretch(*this, m_modDoc, m_nSample, selection.nStart, selection.nEnd, static_cast<float>(pitch), static_cast<float>(ratio / 100.0), grainSize, IsDlgButtonChecked(IDC_CHECK3) != BST_UNCHECKED);
+		DoPitchShiftTimeStretch timeStretch(*this, m_modDoc, m_nSample, selection.start, selection.end, static_cast<float>(pitch), static_cast<float>(ratio / 100.0), grainSize, IsDlgButtonChecked(IDC_CHECK3) != BST_UNCHECKED, selection.channels);
 		timeStretch.DoModal();
 		errorCode = timeStretch.m_result;
-		if(selection.selectionActive)
-			SetSelectionPoints(selection.nStart, timeStretch.NewSelectionEnd());
+		if(selection.SelectionActive())
+			SetSelectionPoints(selection.start, timeStretch.NewSelectionEnd());
 
 	}
 
@@ -2102,8 +2109,8 @@ void CCtrlSamples::OnReverse()
 
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	PrepareUndo("Reverse", sundo_reverse, selection.nStart, selection.nEnd);
-	if(SampleEdit::ReverseSample(sample, selection.nStart, selection.nEnd, m_sndFile))
+	PrepareUndo("Reverse", sundo_reverse, selection.start, selection.end, selection.channels);
+	if(SampleEdit::ReverseSample(sample, selection.start, selection.end, m_sndFile, selection.channels))
 	{
 		SetModified(SampleHint().Data(), false, true);
 	} else
@@ -2121,8 +2128,8 @@ void CCtrlSamples::OnInvert()
 
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	PrepareUndo("Invert", sundo_invert, selection.nStart, selection.nEnd);
-	if(SampleEdit::InvertSample(sample, selection.nStart, selection.nEnd, m_sndFile) == true)
+	PrepareUndo("Invert", sundo_invert, selection.start, selection.end, selection.channels);
+	if(SampleEdit::InvertSample(sample, selection.start, selection.end, m_sndFile, selection.channels) == true)
 	{
 		SetModified(SampleHint().Data(), false, true);
 	} else
@@ -2142,8 +2149,8 @@ void CCtrlSamples::OnSignUnSign()
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
 	SampleSelectionPoints selection = GetSelectionPoints();
 
-	PrepareUndo("Unsign", sundo_unsign, selection.nStart, selection.nEnd);
-	if(SampleEdit::UnsignSample(sample, selection.nStart, selection.nEnd, m_sndFile) == true)
+	PrepareUndo("Unsign", sundo_unsign, selection.start, selection.end, selection.channels);
+	if(SampleEdit::UnsignSample(sample, selection.start, selection.end, m_sndFile, selection.channels) == true)
 	{
 		SetModified(SampleHint().Data(), false, true);
 	} else
@@ -2162,12 +2169,12 @@ void CCtrlSamples::OnSilence()
 	SampleSelectionPoints selection = GetSelectionPoints();
 
 	// never apply silence to a sample that has no selection
-	const SmpLength len = selection.nEnd - selection.nStart;
-	if(selection.selectionActive && len > 1)
+	const SmpLength len = selection.end - selection.start;
+	if(selection.SelectionActive() && len > 1)
 	{
 		ModSample &sample = m_sndFile.GetSample(m_nSample);
-		PrepareUndo("Silence", sundo_update, selection.nStart, selection.nEnd);
-		if(SampleEdit::SilenceSample(sample, selection.nStart, selection.nEnd, m_sndFile))
+		PrepareUndo("Silence", sundo_update, selection.start, selection.end, selection.channels);
+		if(SampleEdit::SilenceSample(sample, selection.start, selection.end, m_sndFile, selection.channels))
 		{
 			SetModified(SampleHint().Data(), false, true);
 		}
@@ -2509,9 +2516,9 @@ void CCtrlSamples::OnLoopTypeChanged()
 	if(wasDisabled && sample.uFlags[CHN_LOOP] && sample.nLoopStart == sample.nLoopEnd)
 	{
 		SampleSelectionPoints selection = GetSelectionPoints();
-		if(selection.selectionActive)
+		if(selection.SelectionActive())
 		{
-			sample.SetLoop(selection.nStart, selection.nEnd, true, n == 2, m_sndFile);
+			sample.SetLoop(selection.start, selection.end, true, n == 2, m_sndFile);
 		} else
 		{
 			sample.SetLoop(0, sample.nLength, true, n == 2, m_sndFile);
@@ -2557,9 +2564,9 @@ void CCtrlSamples::OnSustainTypeChanged()
 	if(wasDisabled && sample.uFlags[CHN_SUSTAINLOOP] && sample.nSustainStart == sample.nSustainEnd)
 	{
 		SampleSelectionPoints selection = GetSelectionPoints();
-		if(selection.selectionActive)
+		if(selection.SelectionActive())
 		{
-			sample.SetSustainLoop(selection.nStart, selection.nEnd, true, n == 2, m_sndFile);
+			sample.SetSustainLoop(selection.start, selection.end, true, n == 2, m_sndFile);
 		} else
 		{
 			sample.SetSustainLoop(0, sample.nLength, true, n == 2, m_sndFile);
@@ -2845,23 +2852,23 @@ CCtrlSamples::SampleSelectionPoints CCtrlSamples::GetSelectionPoints()
 	const ModSample &sample = m_sndFile.GetSample(m_nSample);
 
 	SendViewMessage(VIEWMSG_SAVESTATE, reinterpret_cast<LPARAM>(&viewstate));
-	points.nStart = viewstate.dwBeginSel;
-	points.nEnd = viewstate.dwEndSel;
-	if(points.nEnd > sample.nLength) points.nEnd = sample.nLength;
-	if(points.nStart > points.nEnd) points.nStart = points.nEnd;
-	points.selectionActive = true;
-	if(points.nStart >= points.nEnd)
+	points.start = viewstate.dwBeginSel;
+	points.end = viewstate.dwEndSel;
+	points.channels = viewstate.channelSelection;
+	LimitMax(points.end, sample.nLength);
+	LimitMax(points.start, points.end);
+	if(points.start >= points.end || points.channels == SampleChannelSelection::None)
 	{
-		points.nStart = 0;
-		points.nEnd = sample.nLength;
-		points.selectionActive = false;
+		points.start = 0;
+		points.end = sample.nLength;
+		points.channels = SampleChannelSelection::None;
 	}
 	return points;
 }
 
 // Set the currently selected part of the sample.
 // To reset the selection, use nStart = nEnd = 0.
-void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd)
+void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd, std::optional<SampleChannelSelection> channelSelection)
 {
 	const ModSample &sample = m_sndFile.GetSample(m_nSample);
 
@@ -2873,6 +2880,8 @@ void CCtrlSamples::SetSelectionPoints(SmpLength nStart, SmpLength nEnd)
 
 	viewstate.dwBeginSel = nStart;
 	viewstate.dwEndSel = nEnd;
+	if(channelSelection)
+		viewstate.channelSelection = *channelSelection;
 	SendViewMessage(VIEWMSG_LOADSTATE, reinterpret_cast<LPARAM>(&viewstate));
 }
 
@@ -2893,9 +2902,9 @@ void CCtrlSamples::OnXFade()
 		&& (sample.nSustainEnd <= sample.nSustainStart || sample.nSustainEnd > sample.nLength))
 	{
 		const auto selection = GetSelectionPoints();
-		if(selection.nStart > 0 && selection.nEnd > selection.nStart)
+		if(selection.start > 0 && selection.end > selection.start)
 		{
-			sample.SetLoop(selection.nStart, selection.nEnd, true, false, m_sndFile);
+			sample.SetLoop(selection.start, selection.end, true, false, m_sndFile);
 			resetLoopOnCancel = true;
 		} else
 		{
@@ -2952,17 +2961,24 @@ void CCtrlSamples::OnStereoSeparation()
 		return;
 	}
 
+	SampleSelectionPoints selection = GetSelectionPoints();
+	if(selection.SelectionActive() && selection.channels != SampleChannelSelection::Both)
+	{
+		// Doesn't make sense to apply this to just one channel
+		selection.channels = SampleChannelSelection::Both;
+		SetSelectionPoints(selection.start, selection.end, selection.channels);
+	}
+
 	static double separation = 100.0;
 	CInputDlg dlg(this, _T("Stereo separation amount\n0% = mono, 100% = no change, 200% = double separation\nNegative values swap channels"), -200.0, 200.0, separation);
 	if(dlg.DoModal() == IDOK)
 	{
 		separation = dlg.resultAsDouble;
 
-		SampleSelectionPoints selection = GetSelectionPoints();
 		PrepareUndo("Stereo Separation", sundo_update,
-			selection.nStart, selection.nEnd);
+			selection.start, selection.end);
 
-		if(SampleEdit::StereoSepSample(sample, selection.nStart, selection.nEnd, separation, m_sndFile))
+		if(SampleEdit::StereoSepSample(sample, selection.start, selection.end, separation, m_sndFile))
 		{
 			SetModified(SampleHint().Info().Data(), true, true);
 		} else
@@ -2977,13 +2993,17 @@ void CCtrlSamples::OnStereoSeparation()
 void CCtrlSamples::OnAutotune()
 {
 	SampleSelectionPoints selection = GetSelectionPoints();
-	if(!selection.selectionActive)
+	if(selection.SelectionActive() && selection.channels != SampleChannelSelection::Both)
 	{
-		selection.nStart = selection.nEnd = 0;
+		selection.channels = SampleChannelSelection::Both;
+		SetSelectionPoints(selection.start, selection.end, selection.channels);
 	}
 
+	if(!selection.SelectionActive())
+		selection.start = selection.end = 0;
+
 	ModSample &sample = m_sndFile.GetSample(m_nSample);
-	Autotune at(sample, m_sndFile.GetType(), selection.nStart, selection.nEnd);
+	Autotune at(sample, m_sndFile.GetType(), selection.start, selection.end);
 	if(at.CanApply())
 	{
 		CAutotuneDlg dlg(this);

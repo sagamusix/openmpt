@@ -17,9 +17,7 @@
 #include "../soundlib/SampleCopy.h"
 #include "../soundlib/Sndfile.h"
 #include "openmpt/soundbase/Copy.hpp"
-#include "openmpt/soundbase/SampleConvert.hpp"
 #include "openmpt/soundbase/SampleConvertFixedPoint.hpp"
-#include "openmpt/soundbase/SampleDecode.hpp"
 
 #if MPT_COMPILER_MSVC
 #pragma warning(push)
@@ -232,6 +230,18 @@ std::pair<int, int> FindMinMax(const int16 *p, SmpLength numSamples, int numChan
 }
 
 
+bool IsSingleChannel(const ModSample &smp, SampleChannelSelection channelSel) noexcept
+{
+	return channelSel != SampleChannelSelection::None && channelSel != SampleChannelSelection::Both && smp.GetNumChannels() > 1;
+}
+
+
+uint8 SelectedChannel(SampleChannelSelection channelSel) noexcept
+{
+	return channelSel == SampleChannelSelection::Right ? 1 : 0;
+}
+
+
 std::vector<std::reference_wrapper<SmpLength>> GetCuesAndLoops(ModSample &smp)
 {
 	std::vector<std::reference_wrapper<SmpLength>> loopPoints = {smp.nLoopStart, smp.nLoopEnd, smp.nSustainStart, smp.nSustainEnd};
@@ -301,32 +311,56 @@ namespace
 	}
 }
 
-SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, CSoundFile &sndFile)
+SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	LimitMax(selEnd, smp.nLength);
 	if(selEnd <= selStart)
-	{
 		return smp.nLength;
-	}
-	const uint8 bps = smp.GetBytesPerSample();
-	memmove(smp.sampleb() + selStart * bps, smp.sampleb() + selEnd * bps, (smp.nLength - selEnd) * bps);
-	smp.nLength -= (selEnd - selStart);
 
-	// Did loops or cue points cover the deleted selection?
-	AdjustLoopPoints(selStart, selEnd, smp.nLoopStart, smp.nLoopEnd, smp.nLength);
-	AdjustLoopPoints(selStart, selEnd, smp.nSustainStart, smp.nSustainEnd, smp.nLength);
-
-	if(smp.nLoopEnd == 0) smp.uFlags.reset(CHN_LOOP | CHN_PINGPONGLOOP);
-	if(smp.nSustainEnd == 0) smp.uFlags.reset(CHN_SUSTAINLOOP | CHN_PINGPONGSUSTAIN);
-
-	for(auto &cue : smp.cues)
+	const SmpLength selLength = (selEnd - selStart);
+	if(IsSingleChannel(smp, channelSel))
 	{
-		if(cue >= selEnd)
-			cue -= (selEnd - selStart);
-		else if(cue >= selStart && selStart == 0)
-			cue = smp.nLength;
-		else if(cue >= selStart)
-			cue = selStart;
+		const auto MoveRange = [&](auto *data)
+		{
+			const uint8 numChannels = smp.GetNumChannels();
+			const auto *src = data + selEnd * numChannels;
+			auto *dst = data + selStart * numChannels;
+			for(const auto *dstEnd = data + (smp.nLength - selLength) * numChannels; dst != dstEnd; dst += numChannels, src += numChannels)
+				*dst = *src;
+			for(const auto *smpEnd = data + smp.nLength * numChannels; dst != smpEnd; dst += numChannels)
+				*dst = 0;
+		};
+
+		const uint8 chn = SelectedChannel(channelSel);
+		if(smp.GetElementarySampleSize() == 2)
+			MoveRange(smp.sample16() + chn);
+		else if(smp.GetElementarySampleSize() == 1)
+			MoveRange(smp.sample8() + chn);
+		else
+			return smp.nLength;
+	} else
+	{
+		const uint8 bps = smp.GetBytesPerSample();
+		std::memmove(smp.sampleb() + selStart * bps, smp.sampleb() + selEnd * bps, (smp.nLength - selEnd) * bps);
+		smp.nLength -= selLength;
+
+		// Did loops or cue points cover the deleted selection?
+		AdjustLoopPoints(selStart, selEnd, smp.nLoopStart, smp.nLoopEnd, smp.nLength);
+		AdjustLoopPoints(selStart, selEnd, smp.nSustainStart, smp.nSustainEnd, smp.nLength);
+		if(smp.nLoopEnd == 0)
+			smp.uFlags.reset(CHN_LOOP | CHN_PINGPONGLOOP);
+		if(smp.nSustainEnd == 0)
+			smp.uFlags.reset(CHN_SUSTAINLOOP | CHN_PINGPONGSUSTAIN);
+
+		for(auto &cue : smp.cues)
+		{
+			if(cue >= selEnd)
+				cue -= selLength;
+			else if(cue >= selStart && selStart == 0)
+				cue = smp.nLength;
+			else if(cue >= selStart)
+				cue = selStart;
+		}
 	}
 
 	smp.PrecomputeLoops(sndFile);
@@ -423,17 +457,17 @@ namespace
 	// Calculates DC offset and returns struct with DC offset, max and min values.
 	// DC offset value is average of [-1.0, 1.0[-normalized offset values.
 	template<class T>
-	OffsetData CalculateOffset(const T *pStart, const SmpLength length)
+	OffsetData CalculateOffset(const T *pStart, const SmpLength length, const int stride)
 	{
 		OffsetData offsetVals;
 		if(length < 1)
 			return offsetVals;
 
-		const double intToFloatScale = 1.0 / GetMaxAmplitude<T>();
+		constexpr double intToFloatScale = 1.0 / GetMaxAmplitude<T>();
 		double max = -1, min = 1, sum = 0;
 
 		const T *p = pStart;
-		for(SmpLength i = 0; i < length; i++, p++)
+		for(const T *pEnd = p + length; p != pEnd; p += stride)
 		{
 			const double val = static_cast<double>(*p) * intToFloatScale;
 			sum += val;
@@ -443,15 +477,15 @@ namespace
 
 		offsetVals.max = max;
 		offsetVals.min = min;
-		offsetVals.offset = (-sum / (double)(length));
+		offsetVals.offset = (-sum / static_cast<double>(length / stride));
 		return offsetVals;
 	}
 
 	template <class T>
-	void RemoveOffsetAndNormalize(T *pStart, const SmpLength length, const double offset, const double amplify)
+	void RemoveOffsetAndNormalize(T *pStart, const SmpLength length, const double offset, const double amplify, const int stride)
 	{
 		T *p = pStart;
-		for(SmpLength i = 0; i < length; i++, p++)
+		for(const T *pEnd = p + length; p != pEnd; p += stride)
 		{
 			double var = (*p) * amplify + offset;
 			*p = mpt::saturate_round<T>(var);
@@ -461,7 +495,7 @@ namespace
 
 
 // Remove DC offset
-double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	if(!smp.HasSampleData())
 		return 0;
@@ -474,23 +508,26 @@ double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile
 		end = smp.nLength;
 	}
 
-	start *= smp.GetNumChannels();
-	end *= smp.GetNumChannels();
+	const uint8 numChannels = smp.GetNumChannels();
+	const bool singleChannel = IsSingleChannel(smp, channelSel);
+	const int stride = singleChannel ? numChannels : 1;
+	const SmpLength length = (end - start) * numChannels;
+	const SmpLength smpOffset = start * numChannels + SelectedChannel(channelSel);
 
 	const double maxAmplitude = (smp.GetElementarySampleSize() == 2) ? GetMaxAmplitude<int16>() : GetMaxAmplitude<int8>();
 
-	// step 1: Calculate offset.
+	// Step 1: Calculate offset.
 	OffsetData oData;
 	if(smp.GetElementarySampleSize() == 2)
-		oData = CalculateOffset(smp.sample16() + start, end - start);
+		oData = CalculateOffset(smp.sample16() + smpOffset, length, stride);
 	else if(smp.GetElementarySampleSize() == 1)
-		oData = CalculateOffset(smp.sample8() + start, end - start);
+		oData = CalculateOffset(smp.sample8() + smpOffset, length, stride);
 	else
 		return 0;
 
 	double offset = oData.offset;
 
-	if((int)(offset * maxAmplitude) == 0)
+	if(mpt::saturate_round<int>(offset * maxAmplitude) == 0)
 		return 0;
 
 	// those will be changed...
@@ -500,15 +537,15 @@ double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile
 	// ... and that might cause distortion, so we will normalize this.
 	const double amplify = 1 / std::max(oData.max, -oData.min);
 
-	// step 2: centralize + normalize sample
+	// Step 2: centralize + normalize sample
 	offset *= maxAmplitude * amplify;
 	if(smp.GetElementarySampleSize() == 2)
-		RemoveOffsetAndNormalize(smp.sample16() + start, end - start, offset, amplify);
+		RemoveOffsetAndNormalize(smp.sample16() + smpOffset, length, offset, amplify, stride);
 	else if(smp.GetElementarySampleSize() == 1)
-		RemoveOffsetAndNormalize(smp.sample8() + start, end - start, offset, amplify);
+		RemoveOffsetAndNormalize(smp.sample8() + smpOffset, length, offset, amplify, stride);
 
-	// step 3: adjust global vol (if available)
-	if((sndFile.GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT)) && (start == 0) && (end == smp.nLength * smp.GetNumChannels()))
+	// Step 3: adjust global vol (if available, and only when the whole sample is processed)
+	if((sndFile.GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT)) && !singleChannel && start == 0 && end == smp.nLength)
 	{
 		CriticalSection cs;
 
@@ -529,7 +566,7 @@ double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile
 
 
 template<typename T>
-static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, const SmpLength length, const double amplifyStart, const double amplifyEnd, const bool isFadeIn, const Fade::Law fadeLaw)
+static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, SmpLength length, const int stride, const double amplifyStart, const double amplifyEnd, const bool isFadeIn, const Fade::Law fadeLaw)
 {
 	Fade::Func fadeFunc = Fade::GetFadeFunc(fadeLaw);
 
@@ -538,7 +575,7 @@ static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, const SmpLength length, c
 		const double fadeOffset = isFadeIn ? amplifyStart : amplifyEnd;
 		const double fadeDiff = isFadeIn ? (amplifyEnd - amplifyStart) : (amplifyStart - amplifyEnd);
 		const double lengthInv = 1.0 / length;
-		for(SmpLength i = 0; i < length; i++)
+		for(SmpLength i = 0; i < length; i += stride)
 		{
 			const double amp = fadeOffset + fadeFunc(static_cast<double>(isFadeIn ? i : (length - i)) * lengthInv) * fadeDiff;
 			pSample[i] = mpt::saturate_round<T>(amp * pSample[i]);
@@ -546,17 +583,17 @@ static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, const SmpLength length, c
 	} else
 	{
 		const double amp = fadeFunc(amplifyStart);
-		for(SmpLength i = 0; i < length; i++)
+		for(SmpLength i = 0; i < length; i += stride)
 		{
 			pSample[i] = mpt::saturate_round<T>(amp * pSample[i]);
 		}
 	}
 }
 
-bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile)
+bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	if(!smp.HasSampleData()) return false;
-	if(end == 0 || start >= end || end > smp.nLength)
+	if(end <= start || end > smp.nLength)
 	{
 		start = 0;
 		end = smp.nLength;
@@ -564,13 +601,15 @@ bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplif
 
 	if(end - start < 2) return false;
 
-	start *= smp.GetNumChannels();
-	end *= smp.GetNumChannels();
+	const uint8 numChannels = smp.GetNumChannels();
+	const int stride = IsSingleChannel(smp, channelSel) ? numChannels : 1;
+	const SmpLength length = (end - start) * numChannels;
+	const SmpLength offset = start * numChannels + SelectedChannel(channelSel);
 
 	if(smp.GetElementarySampleSize() == 2)
-		ApplyAmplifyImpl(smp.sample16() + start, end - start, amplifyStart, amplifyEnd, isFadeIn, fadeLaw);
+		ApplyAmplifyImpl(smp.sample16() + offset, length, stride, amplifyStart, amplifyEnd, isFadeIn, fadeLaw);
 	else if(smp.GetElementarySampleSize() == 1)
-		ApplyAmplifyImpl(smp.sample8() + start, end - start, amplifyStart, amplifyEnd, isFadeIn, fadeLaw);
+		ApplyAmplifyImpl(smp.sample8() + offset, length, stride, amplifyStart, amplifyEnd, isFadeIn, fadeLaw);
 	else
 		return false;
 
@@ -580,15 +619,15 @@ bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplif
 
 
 template<typename T>
-static bool ApplyNormalizeImpl(T *p, SmpLength selStart, SmpLength selEnd)
+static bool ApplyNormalizeImpl(T *p, SmpLength selStart, SmpLength selEnd, int stride)
 {
-	auto [min, max] = FindMinMax(p + selStart, selEnd - selStart, 1);
+	auto [min, max] = FindMinMax(p + selStart, (selEnd - selStart) / stride, stride);
 	max = std::max(-min, max);
 	if(max >= std::numeric_limits<T>::max())
 		return false;
 
 	max++;
-	for(SmpLength i = selStart; i < selEnd; i++)
+	for(SmpLength i = selStart; i < selEnd; i += stride)
 	{
 		p[i] = static_cast<T>((static_cast<int>(p[i]) << (sizeof(T) * 8 - 1)) / max);
 	}
@@ -596,7 +635,7 @@ static bool ApplyNormalizeImpl(T *p, SmpLength selStart, SmpLength selEnd)
 }
 
 
-bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	if(!smp.HasSampleData())
 		return false;
@@ -608,14 +647,16 @@ bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile 
 		end = smp.nLength;
 	}
 
-	start *= smp.GetNumChannels();
-	end *= smp.GetNumChannels();
+	const uint8 numChannels = smp.GetNumChannels();
+	const SmpLength selStart = start * numChannels + SelectedChannel(channelSel);
+	const SmpLength selEnd = selStart + (end - start) * numChannels;
+	const int stride = IsSingleChannel(smp, channelSel) ? numChannels : 1;
 
 	bool modified = false;
 	if(smp.uFlags[CHN_16BIT])
-		modified = ApplyNormalizeImpl(smp.sample16(), start, end);
+		modified = ApplyNormalizeImpl(smp.sample16(), selStart, selEnd, stride);
 	else
-		modified = ApplyNormalizeImpl(smp.sample8(), start, end);
+		modified = ApplyNormalizeImpl(smp.sample8(), selStart, selEnd, stride);
 
 	if(modified)
 		smp.PrecomputeLoops(sndFile, false);
@@ -624,37 +665,41 @@ bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile 
 
 
 // Reverse sample data
-bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
-	return ctrlSmp::ReverseSample(smp, start, end, sndFile);
+	return ctrlSmp::ReverseSample(smp, start, end, sndFile, ChannelSelectionToMask(channelSel));
 }
 
 
 template <class T>
-static void UnsignSampleImpl(T *pStart, const SmpLength length)
+static void UnsignSampleImpl(T *p, const SmpLength length, const int stride)
 {
 	const T offset = (std::numeric_limits<T>::min)();
-	for(SmpLength i = 0; i < length; i++)
+	for(T *pEnd = p + length; p != pEnd; p += stride)
 	{
-		pStart[i] += offset;
+		*p += offset;
 	}
 }
 
 // Virtually unsign sample data
-bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	if(!smp.HasSampleData()) return false;
-	if(end == 0 || start > smp.nLength || end > smp.nLength)
+	if(end <= start || end > smp.nLength)
 	{
 		start = 0;
 		end = smp.nLength;
 	}
-	start *= smp.GetNumChannels();
-	end *= smp.GetNumChannels();
+
+	const uint8 numChannels = smp.GetNumChannels();
+	const int stride = IsSingleChannel(smp, channelSel) ? numChannels : 1;
+	const SmpLength length = (end - start) * numChannels;
+	const SmpLength offset = start * numChannels + SelectedChannel(channelSel);
+
 	if(smp.GetElementarySampleSize() == 2)
-		UnsignSampleImpl(smp.sample16() + start, end - start);
+		UnsignSampleImpl(smp.sample16() + offset, length, stride);
 	else if(smp.GetElementarySampleSize() == 1)
-		UnsignSampleImpl(smp.sample8() + start, end - start);
+		UnsignSampleImpl(smp.sample8() + offset, length, stride);
 	else
 		return false;
 
@@ -664,9 +709,9 @@ bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sn
 
 
 // Invert sample data (flip by 180 degrees)
-bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
-	return ctrlSmp::InvertSample(smp, start, end, sndFile);
+	return ctrlSmp::InvertSample(smp, start, end, sndFile, ChannelSelectionToMask(channelSel));
 }
 
 // Crossfade sample data to create smooth loops
@@ -692,7 +737,7 @@ static void SilenceSampleImpl(T *p, SmpLength length, SmpLength inc, bool fromSt
 }
 
 // Silence parts of the sample data
-bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile)
+bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
 {
 	LimitMax(end, smp.nLength);
 	if(!smp.HasSampleData() || start >= end) return false;
@@ -700,14 +745,16 @@ bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &s
 	const SmpLength length = end - start;
 	const bool fromStart = start == 0;
 	const bool toEnd = end == smp.nLength;
-	const uint8 numChn = smp.GetNumChannels();
+	const uint8 numChannels = smp.GetNumChannels();
+	const uint8 startChn = SelectedChannel(channelSel);
+	const uint8 endChn = IsSingleChannel(smp, channelSel) ? (startChn + 1) : numChannels;
 
-	for(uint8 chn = 0; chn < numChn; chn++)
+	for(uint8 chn = startChn; chn < endChn; chn++)
 	{
 		if(smp.GetElementarySampleSize() == 2)
-			SilenceSampleImpl(smp.sample16() + start * numChn + chn, length, numChn, fromStart, toEnd);
+			SilenceSampleImpl(smp.sample16() + start * numChannels + chn, length, numChannels, fromStart, toEnd);
 		else if(smp.GetElementarySampleSize() == 1)
-			SilenceSampleImpl(smp.sample8() + start * numChn + chn, length, numChn, fromStart, toEnd);
+			SilenceSampleImpl(smp.sample8() + start * numChannels + chn, length, numChannels, fromStart, toEnd);
 		else
 			return false;
 	}
@@ -832,7 +879,7 @@ bool ConvertPingPongLoop(ModSample &smp, CSoundFile &sndFile, bool sustainLoop)
 
 // Resample using given resampling method (SRCMODE_DEFAULT = r8brain).
 // Returns end point of resampled data, or 0 on failure.
-SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc)
+SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc, SampleChannelSelection channelSel)
 {
 	if(!smp.HasSampleData() || smp.uFlags[CHN_ADLIB] || start >= end)
 		return 0;
@@ -840,14 +887,20 @@ SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRat
 	const uint32 oldRate = smp.GetSampleRate(sndFile.GetType());
 	if(newRate < 1 || oldRate < 1)
 		return 0;
-	
+
+	const uint8 numChannels = smp.GetNumChannels();
+	const uint8 selectedChn = SelectedChannel(channelSel);
+	const bool singleChannel = IsSingleChannel(smp, channelSel);
 	const SmpLength oldLength = smp.nLength;
 	const SmpLength selLength = (end - start);
 	const SmpLength newSelLength = Util::muldivr_unsigned(selLength, newRate, oldRate);
 	const SmpLength newSelEnd = start + newSelLength;
-	const SmpLength newTotalLength = smp.nLength - selLength + newSelLength;
-	const uint8 numChannels = smp.GetNumChannels();
-	const bool partialResample = selLength != smp.nLength;
+	// When resampling a single channel, the sample never shrinks
+	const SmpLength newTotalLength = std::max(singleChannel ? smp.nLength : SmpLength(0), smp.nLength - selLength + newSelLength);
+	const bool partialResample = selLength != smp.nLength || singleChannel;
+
+	if(singleChannel)
+		updatePatternCommands = updatePatternNotes = false;
 
 	if(newTotalLength <= 1)
 		return 0;
@@ -859,9 +912,31 @@ SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRat
 	
 	// First, copy parts of the sample that are not affected by partial upsampling
 	const SmpLength bps = smp.GetBytesPerSample();
+	// The part before the resampled selection is easy, it's identical for both channels even when resampling only one channel:
 	std::memcpy(newSample, smp.sampleb(), start * bps);
-	std::memcpy(static_cast<char *>(newSample) + newSelEnd * bps, smp.sampleb() + end * bps, (smp.nLength - end) * bps);
+	// The part after the resampled selection is different when resampling just one channel:
+	if(singleChannel)
+	{
+		const uint8 otherChn = selectedChn ^ 1;
+		const SmpLength postSelLength = smp.nLength - end;
+		switch(smp.GetElementarySampleSize())
+		{
+		case 1:
+			CopySample<SC::CopyNative8>(static_cast<int8 *>(newSample) + newSelEnd * numChannels + selectedChn, postSelLength, numChannels, smp.sample8() + end * numChannels + selectedChn, smp.GetSampleSizeInBytes(), numChannels);
+			CopySample<SC::CopyNative8>(static_cast<int8 *>(newSample) + otherChn, smp.nLength, numChannels, smp.sample8() + otherChn, smp.GetSampleSizeInBytes(), numChannels);
+			break;
+		case 2:
+			CopySample<SC::CopyNative16>(static_cast<int16 *>(newSample) + newSelEnd * numChannels + selectedChn, postSelLength, numChannels, smp.sample16() + end * numChannels + selectedChn, smp.GetSampleSizeInBytes(), numChannels);
+			CopySample<SC::CopyNative16>(static_cast<int16 *>(newSample) + otherChn, smp.nLength, numChannels, smp.sample16() + otherChn, smp.GetSampleSizeInBytes(), numChannels);
+			break;
+		}
+	} else
+	{
+		std::memcpy(static_cast<char *>(newSample) + newSelEnd * bps, smp.sampleb() + end * bps, (smp.nLength - end) * bps);
+	}
 
+	const uint8 startChn = singleChannel ? selectedChn : 0;
+	const uint8 endChn = singleChannel ? (selectedChn + 1) : numChannels;
 	if(mode == SRCMODE_DEFAULT)
 	{
 		// Resample using r8brain
@@ -869,9 +944,9 @@ SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRat
 		std::vector<double> convBuffer(bufferSize);
 		r8b::CDSPResampler16 resampler(oldRate, newRate, bufferSize);
 
-		for(uint8 chn = 0; chn < numChannels; chn++)
+		for(uint8 chn = startChn; chn < endChn; chn++)
 		{
-			if(chn != 0)
+			if(chn != startChn)
 				resampler.clear();
 
 			SmpLength readCount = selLength, writeCount = newSelLength;
@@ -974,7 +1049,7 @@ SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRat
 		chn.nLength = smp.nLength;
 
 		SmpLength writeCount = newSelLength;
-		SmpLength writeOffset = start * smp.GetNumChannels();
+		SmpLength writeOffset = start * numChannels;
 		while(writeCount > 0)
 		{
 			SmpLength procCount = std::min(static_cast<SmpLength>(MIXBUFFERSIZE), writeCount);
@@ -982,37 +1057,40 @@ SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRat
 			MemsetZero(buffer);
 			MixFuncTable::Functions[functionNdx](chn, sndFile.m_Resampler, buffer, procCount);
 
-			for(uint8 c = 0; c < numChannels; c++)
+			for(uint8 c = startChn; c < endChn; c++)
 			{
 				switch(smp.GetElementarySampleSize())
 				{
 					case 1:
-						CopySample<SC::ConversionChain<SC::ConvertFixedPoint<int8, mixsample_t, 23>, SC::DecodeIdentity<mixsample_t>>>(static_cast<int8 *>(newSample) + writeOffset + c, procCount, smp.GetNumChannels(), buffer + c, sizeof(buffer), 2);
+						CopySample<SC::ConversionChain<SC::ConvertFixedPoint<int8, mixsample_t, 23>, SC::DecodeIdentity<mixsample_t>>>(static_cast<int8 *>(newSample) + writeOffset + c, procCount, numChannels, buffer + c, sizeof(buffer), 2);
 						break;
 					case 2:
-						CopySample<SC::ConversionChain<SC::ConvertFixedPoint<int16, mixsample_t, 23>, SC::DecodeIdentity<mixsample_t>>>(static_cast<int16 *>(newSample) + writeOffset + c, procCount, smp.GetNumChannels(), buffer + c, sizeof(buffer), 2);
+						CopySample<SC::ConversionChain<SC::ConvertFixedPoint<int16, mixsample_t, 23>, SC::DecodeIdentity<mixsample_t>>>(static_cast<int16 *>(newSample) + writeOffset + c, procCount, numChannels, buffer + c, sizeof(buffer), 2);
 						break;
 				}
 			}
 
 			writeCount -= procCount;
-			writeOffset += procCount * smp.GetNumChannels();
+			writeOffset += procCount * numChannels;
 		}
 	}
 
 	prepareSampleUndoFunc();
 
-	// Adjust loops and cues
 	const auto oldCues = smp.cues;
-	for(SmpLength &point : GetCuesAndLoops(smp))
+	if(!singleChannel)
 	{
-		if(point >= oldLength)
-			point = newTotalLength;
-		else if(point >= end)
-			point += newSelLength - selLength;
-		else if(point > start)
-			point = start + Util::muldivr_unsigned(point - start, newRate, oldRate);
-		LimitMax(point, newTotalLength);
+		// Adjust loops and cues
+		for(SmpLength &point : GetCuesAndLoops(smp))
+		{
+			if(point >= oldLength)
+				point = newTotalLength;
+			else if(point >= end)
+				point += newSelLength - selLength;
+			else if(point > start)
+				point = start + Util::muldivr_unsigned(point - start, newRate, oldRate);
+			LimitMax(point, newTotalLength);
+		}
 	}
 
 	const SAMPLEINDEX sampleIndex = static_cast<SAMPLEINDEX>(std::distance(&sndFile.GetSample(0), &smp));

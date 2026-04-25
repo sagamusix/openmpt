@@ -19,7 +19,7 @@
 #include "Undo.h"
 #include "UpdateHints.h"
 #include "../soundlib/SampleIO.h"
-#include "../tracklib/FadeLaws.h"
+#include "../tracklib/Types.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -37,9 +37,10 @@ protected:
 
 	struct SampleSelectionPoints
 	{
-		SmpLength nStart;
-		SmpLength nEnd;
-		bool selectionActive;	// does sample selection exist or not?
+		SmpLength start = 0;
+		SmpLength end = 0;
+		SampleChannelSelection channels = SampleChannelSelection::None;
+		constexpr bool SelectionActive() const noexcept { return channels != SampleChannelSelection::None; }
 	};
 
 	CModControlBar m_ToolBar1, m_ToolBar2;
@@ -82,7 +83,7 @@ protected:
 	void ApplyResample(SAMPLEINDEX smp, uint32 newRate, ResamplingMode mode, bool ignoreSelection = false, bool updatePatternCommands = false, bool updatePatternNotes = false);
 
 	SampleSelectionPoints GetSelectionPoints();
-	void SetSelectionPoints(SmpLength nStart, SmpLength nEnd);
+	void SetSelectionPoints(SmpLength nStart, SmpLength nEnd, std::optional<SampleChannelSelection> channelSelection = {});
 
 	void PropagateAutoVibratoChanges();
 	void SetFinetune(int step);
@@ -162,7 +163,7 @@ protected:
 
 	MPT_ATTR_NOINLINE MPT_DECL_NOINLINE void SetModified(SAMPLEINDEX smp, SampleHint hint, bool updateAll, bool waveformModified);
 	void SetModified(SampleHint hint, bool updateAll, bool waveformModified) { SetModified(m_nSample, hint, updateAll, waveformModified); }
-	void PrepareUndo(const char *description, sampleUndoTypes type = sundo_none, SmpLength start = 0, SmpLength end = 0);
+	void PrepareUndo(const char *description, sampleUndoTypes type = sundo_none, SmpLength start = 0, SmpLength end = 0, SampleChannelSelection channelSelection = SampleChannelSelection::Both);
 
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()

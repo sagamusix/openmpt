@@ -34,7 +34,7 @@ OPENMPT_NAMESPACE_BEGIN
 
 namespace TimeStretchPitchShift
 {
-Base::Base(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo, CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end)
+Base::Base(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo, CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, SampleChannelSelection channelSel)
 	: UpdateProgress{std::move(updateProgress)}
 	, PrepareUndo{std::move(prepareUndo)}
 	, m_sndFile{sndFile}
@@ -45,8 +45,10 @@ Base::Base(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo, CSoun
 	, m_end{end}
 	, m_selLength{m_end - m_start}
 	, m_newSelLength{mpt::saturate_round<SmpLength>(m_selLength * m_stretchRatio)}
-	, m_newLength{m_sample.nLength - m_selLength + m_newSelLength}
+	, m_newLength{std::max(SampleEdit::IsSingleChannel(m_sample, channelSel) ? m_sample.nLength : SmpLength(0), m_sample.nLength - m_selLength + m_newSelLength)}
 	, m_stretchEnd{m_start + m_newSelLength}
+	, m_channelSel{channelSel}
+	, m_singleChannel{SampleEdit::IsSingleChannel(m_sample, channelSel)}
 {
 }
 
@@ -69,14 +71,36 @@ void Base::FinishProcessing(void *newSampleData)
 {
 	PrepareUndo();
 
-	// Copy sample data outside of selection
 	const auto bps = m_sample.GetBytesPerSample();
-	memcpy(newSampleData, m_sample.sampleb(), m_start * bps);
-	memcpy(static_cast<std::byte *>(newSampleData) + m_stretchEnd * bps, m_sample.sampleb() + m_end * bps, (m_sample.nLength - m_end) * bps);
+	// The part before the resampled selection is easy, it's identical for both channels even when stretching only one channel:
+	std::memcpy(newSampleData, m_sample.sampleb(), m_start * bps);
+	// The part after the stretched selection is different when stretching just one channel:
+	if(m_singleChannel)
+	{
+		const uint8 numChn = m_sample.GetNumChannels();
+		const uint8 selectedChn = SampleEdit::SelectedChannel(m_channelSel);
+		const uint8 otherChn = selectedChn ^ 1;
+		const SmpLength postSelLength = m_sample.nLength - m_end;
+
+		switch(m_sample.GetElementarySampleSize())
+		{
+		case 1:
+			CopySample<SC::CopyNative8>(static_cast<int8 *>(newSampleData) + m_stretchEnd * numChn + selectedChn, postSelLength, numChn, m_sample.sample8() + m_end * numChn + selectedChn, m_sample.GetSampleSizeInBytes(), numChn);
+			CopySample<SC::CopyNative8>(static_cast<int8 *>(newSampleData) + otherChn, m_sample.nLength, numChn, m_sample.sample8() + otherChn, m_sample.GetSampleSizeInBytes(), numChn);
+			break;
+		case 2:
+			CopySample<SC::CopyNative16>(static_cast<int16 *>(newSampleData) + m_stretchEnd * numChn + selectedChn, postSelLength, numChn, m_sample.sample16() + m_end * numChn + selectedChn, m_sample.GetSampleSizeInBytes(), numChn);
+			CopySample<SC::CopyNative16>(static_cast<int16 *>(newSampleData) + otherChn, m_sample.nLength, numChn, m_sample.sample16() + otherChn, m_sample.GetSampleSizeInBytes(), numChn);
+			break;
+		}
+	} else
+	{
+		std::memcpy(static_cast<std::byte *>(newSampleData) + m_stretchEnd * bps, m_sample.sampleb() + m_end * bps, (m_sample.nLength - m_end) * bps);
+	}
 
 	m_sample.ReplaceWaveform(newSampleData, m_newLength, m_sndFile);
 
-	if(m_stretchRatio != 1.0)
+	if(m_stretchRatio != 1.0 && !m_singleChannel)
 	{
 		for(SmpLength &cue : SampleEdit::GetCuesAndLoops(m_sample))
 		{
@@ -106,18 +130,21 @@ Result Signalsmith::Process()
 
 	const auto smpSize = m_sample.GetElementarySampleSize();
 	const auto numChans = m_sample.GetNumChannels();
+	const uint8 processChns = m_singleChannel ? 1 : numChans;
+	const uint8 startChn = SampleEdit::SelectedChannel(m_channelSel);
+	const uint8 endChn = m_singleChannel ? (startChn + 1) : numChans;
 
 	using ProcessingType = float;
 	signalsmith::stretch::SignalsmithStretch<ProcessingType> stretch;
-	stretch.presetDefault(numChans, static_cast<ProcessingType>(m_sample.GetSampleRate(m_sndFile.GetType())));
+	stretch.presetDefault(processChns, static_cast<ProcessingType>(m_sample.GetSampleRate(m_sndFile.GetType())));
 	stretch.setTransposeFactor(m_pitch);
 
 	const auto [inBufferLength, outBufferLength] = CalculateBufferSizes();
 	std::vector<ProcessingType> in, out;
 	try
 	{
-		in.resize(inBufferLength * numChans);
-		out.resize(outBufferLength * numChans);
+		in.resize(inBufferLength * processChns);
+		out.resize(outBufferLength * processChns);
 	} catch(mpt::out_of_memory e)
 	{
 		mpt::delete_out_of_memory(e);
@@ -129,7 +156,7 @@ Result Signalsmith::Process()
 		return Result::OutOfMemory;
 
 	std::array<mpt::span<ProcessingType>, 2> inputBuffers, outputBuffers;
-	for(uint8 chn = 0; chn < numChans; chn++)
+	for(uint8 chn = 0; chn < processChns; chn++)
 	{
 		inputBuffers[chn] = mpt::as_span(in).subspan(chn * inBufferLength, inBufferLength);
 		outputBuffers[chn] = mpt::as_span(out).subspan(chn * outBufferLength, outBufferLength);
@@ -148,19 +175,19 @@ Result Signalsmith::Process()
 
 		const SmpLength processInLen = std::min(inRemain, inBufferLength);
 
-		for(uint8 chn = 0; chn < numChans; chn++)
+		for(uint8 chn = startChn; chn < endChn; chn++)
 		{
 			switch(smpSize)
 			{
 			case 1:
-				CopySample<SC::ConversionChain<SC::Convert<ProcessingType, int8>, SC::DecodeIdentity<int8>>>(inputBuffers[chn].data(), processInLen, 1, m_sample.sample8() + inPos + chn, sizeof(int8) * inRemain * numChans, numChans);
+				CopySample<SC::ConversionChain<SC::Convert<ProcessingType, int8>, SC::DecodeIdentity<int8>>>(inputBuffers[chn - startChn].data(), processInLen, 1, m_sample.sample8() + inPos + chn, sizeof(int8) * inRemain * numChans, numChans);
 				break;
 			case 2:
-				CopySample<SC::ConversionChain<SC::Convert<ProcessingType, int16>, SC::DecodeIdentity<int16>>>(inputBuffers[chn].data(), processInLen, 1, m_sample.sample16() + inPos + chn, sizeof(int16) * inRemain * numChans, numChans);
+				CopySample<SC::ConversionChain<SC::Convert<ProcessingType, int16>, SC::DecodeIdentity<int16>>>(inputBuffers[chn - startChn].data(), processInLen, 1, m_sample.sample16() + inPos + chn, sizeof(int16) * inRemain * numChans, numChans);
 				break;
 			}
 			// If we're at the end of the sample, fill the remaining buffer with silence.
-			std::fill(inputBuffers[chn].begin() + processInLen, inputBuffers[chn].end(), 0.0f);
+			std::fill(inputBuffers[chn - startChn].begin() + processInLen, inputBuffers[chn - startChn].end(), 0.0f);
 		}
 
 		stretch.process(inputBuffers, inBufferLength, outputBuffers, outBufferLength);
@@ -168,15 +195,15 @@ Result Signalsmith::Process()
 		const SmpLength readOffset = std::min(prerollRemain, outBufferLength);
 		const SmpLength processOutLen = std::min(outRemain, outBufferLength - readOffset);
 
-		for(uint8 chn = 0; chn < numChans; chn++)
+		for(uint8 chn = startChn; chn < endChn; chn++)
 		{
 			switch(smpSize)
 			{
 			case 1:
-				CopySample<SC::ConversionChain<SC::Convert<int8, ProcessingType>, SC::DecodeIdentity<ProcessingType>>>(static_cast<int8 *>(newSampleData) + outPos + chn, processOutLen, numChans, outputBuffers[chn].data() + readOffset, sizeof(ProcessingType) * processOutLen, 1);
+				CopySample<SC::ConversionChain<SC::Convert<int8, ProcessingType>, SC::DecodeIdentity<ProcessingType>>>(static_cast<int8 *>(newSampleData) + outPos + chn, processOutLen, numChans, outputBuffers[chn - startChn].data() + readOffset, sizeof(ProcessingType) * processOutLen, 1);
 				break;
 			case 2:
-				CopySample<SC::ConversionChain<SC::Convert<int16, ProcessingType>, SC::DecodeIdentity<ProcessingType>>>(static_cast<int16 *>(newSampleData) + outPos + chn, processOutLen, numChans, outputBuffers[chn].data() + readOffset, sizeof(ProcessingType) * processOutLen, 1);
+				CopySample<SC::ConversionChain<SC::Convert<int16, ProcessingType>, SC::DecodeIdentity<ProcessingType>>>(static_cast<int16 *>(newSampleData) + outPos + chn, processOutLen, numChans, outputBuffers[chn - startChn].data() + readOffset, sizeof(ProcessingType) * processOutLen, 1);
 				break;
 			}
 		}
@@ -256,6 +283,8 @@ Result LoFi::Process()
 
 	const auto smpSize = m_sample.GetElementarySampleSize();
 	const auto numChans = m_sample.GetNumChannels();
+	const uint8 startChn = SampleEdit::SelectedChannel(m_channelSel);
+	const uint8 endChn = m_singleChannel ? (startChn + 1) : numChans;
 
 	void *newSampleData = ModSample::AllocateSample(m_newLength, m_sample.GetBytesPerSample());
 	if(newSampleData == nullptr)
@@ -304,7 +333,7 @@ Result LoFi::Process()
 			fade = (grains[0].playPos - overlapStartSample).ToDouble() * overlapSamplesInv;
 		}
 
-		for(uint8 chn = 0; chn < numChans; chn++)
+		for(uint8 chn = startChn; chn < endChn; chn++)
 		{
 			int32 grain1 = GetInterpolatedSample(grainPos1, chn);
 			if(grainsActive == 2)

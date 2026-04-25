@@ -13,6 +13,7 @@
 
 #include "openmpt/all/BuildSettings.hpp"
 #include "../soundlib/Snd_defs.h"
+#include "../tracklib/Types.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -113,7 +114,7 @@ protected:
 	size_t GetBufferCapacity(const undobuf_t &buffer) const;
 	void RearrangeSamples(undobuf_t &buffer, const std::vector<SAMPLEINDEX> &newIndex);
 
-	bool PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd);
+	bool PrepareBuffer(undobuf_t &buffer, const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart, SmpLength changeEnd, SampleChannelSelection channelSelection);
 	bool Undo(undobuf_t &fromBuf, undobuf_t &toBuf, const SAMPLEINDEX smp);
 
 public:
@@ -123,7 +124,7 @@ public:
 	// Sample undo functions
 	void ClearUndo();
 	void ClearUndo(const SAMPLEINDEX smp) { ClearUndo(UndoBuffer, smp); ClearUndo(RedoBuffer, smp); }
-	bool PrepareUndo(const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart = 0, SmpLength changeEnd = 0);
+	bool PrepareUndo(const SAMPLEINDEX smp, sampleUndoTypes changeType, const char *description, SmpLength changeStart = 0, SmpLength changeEnd = 0, SampleChannelSelection channelSelection = SampleChannelSelection::Both);
 	bool Undo(const SAMPLEINDEX smp);
 	bool Redo(const SAMPLEINDEX smp);
 	bool CanUndo(const SAMPLEINDEX smp) const { return SampleBufferExists(UndoBuffer, smp) && !UndoBuffer[smp - 1].empty(); }

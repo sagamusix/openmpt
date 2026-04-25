@@ -13,6 +13,7 @@
 #include "openmpt/all/BuildSettings.hpp"
 
 #include "../soundlib/Snd_defs.h"
+#include "Types.h"
 
 #include <functional>
 
@@ -43,7 +44,8 @@ public:
 	using PrepareUndoFunc = std::function<void()>;
 
 	Base(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo,
-		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end);
+		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end,
+		SampleChannelSelection channelSel);
 	virtual ~Base() = default;
 
 	virtual Result Process() = 0;
@@ -62,6 +64,8 @@ protected:
 	const SmpLength m_start, m_end;
 	const SmpLength m_selLength, m_newSelLength;
 	const SmpLength m_newLength, m_stretchEnd;
+	const SampleChannelSelection m_channelSel;
+	const bool m_singleChannel;
 };
 
 
@@ -81,8 +85,9 @@ class LoFi final : public Base
 {
 public:
 	LoFi(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo,
-		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, int grainSize)
-		: Base{std::move(updateProgress), std::move(prepareUndo), sndFile, sample, pitch, stretchRatio, start, end}
+		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, int grainSize,
+		SampleChannelSelection channelSel)
+		: Base{std::move(updateProgress), std::move(prepareUndo), sndFile, sample, pitch, stretchRatio, start, end, channelSel}
 		, m_grainSize{grainSize}
 	{
 	}

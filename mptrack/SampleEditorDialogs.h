@@ -17,15 +17,9 @@
 #include "DialogBase.h"
 #include "../common/FileReaderFwd.h"
 #include "../soundlib/SampleIO.h"
-#include "../tracklib/FadeLaws.h"
+#include "../tracklib/Types.h"
 
 OPENMPT_NAMESPACE_BEGIN
-
-enum class SampleLengthUnit
-{
-	Samples = 0,
-	Milliseconds,
-};
 
 //////////////////////////////////////////////////////////////////////////
 // Sample amplification dialog
@@ -171,12 +165,6 @@ protected:
 /////////////////////////////////////////////////////////////////////////
 // Sample grid dialog
 
-enum class SampleGridMode
-{
-	NoGrid = 0,
-	DivideIntoSegments,
-	DivideEveryN,
-};
 
 class CSampleGridDlg : public DialogBase
 {
@@ -260,17 +248,24 @@ protected:
 class CResamplingDlg : public DialogBase
 {
 public:
-	enum ResamplingOption
+	enum ResamplingOption : uint8
 	{
 		Upsample,
 		Downsample,
 		Custom
 	};
 
+	enum class Action : uint8
+	{
+		OneSample,
+		OneChannel,
+		AllSamples,
+	};
+
 protected:
 	ResamplingMode m_srcMode;
 	uint32 m_frequency;
-	const bool m_resampleAll;
+	const Action m_action;
 	const bool m_allowAdjustNotes;
 	static uint32 m_lastFrequency;
 	static ResamplingOption m_lastChoice;
@@ -278,7 +273,7 @@ protected:
 	static bool m_updatePatternNotes;
 
 public:
-	CResamplingDlg(CWnd *parent, uint32 frequency, ResamplingMode srcMode, bool resampleAll, bool allowAdjustNotes);
+	CResamplingDlg(CWnd *parent, uint32 frequency, ResamplingMode srcMode, Action action, bool allowAdjustNotes);
 	uint32 GetFrequency() const { return m_frequency; }
 	ResamplingMode GetFilter() const { return m_srcMode; }
 	static ResamplingOption GetResamplingOption() { return m_lastChoice; }
