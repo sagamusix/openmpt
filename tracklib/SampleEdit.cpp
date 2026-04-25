@@ -311,7 +311,7 @@ namespace
 	}
 }
 
-SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, CSoundFile &sndFile, SampleChannelSelection channelSel)
+SmpLength RemoveRange(ModSample &smp, SmpLength selStart, SmpLength selEnd, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	LimitMax(selEnd, smp.nLength);
 	if(selEnd <= selStart)
@@ -495,7 +495,7 @@ namespace
 
 
 // Remove DC offset
-double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+double RemoveDCOffset(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	if(!smp.HasSampleData())
 		return 0;
@@ -590,7 +590,7 @@ static void ApplyAmplifyImpl(T * MPT_RESTRICT pSample, SmpLength length, const i
 	}
 }
 
-bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool AmplifySample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, double amplifyStart, double amplifyEnd, bool isFadeIn, Fade::Law fadeLaw, CSoundFile &sndFile)
 {
 	if(!smp.HasSampleData()) return false;
 	if(end <= start || end > smp.nLength)
@@ -635,7 +635,7 @@ static bool ApplyNormalizeImpl(T *p, SmpLength selStart, SmpLength selEnd, int s
 }
 
 
-bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	if(!smp.HasSampleData())
 		return false;
@@ -665,7 +665,7 @@ bool NormalizeSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile 
 
 
 // Reverse sample data
-bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	return ctrlSmp::ReverseSample(smp, start, end, sndFile, ChannelSelectionToMask(channelSel));
 }
@@ -682,7 +682,7 @@ static void UnsignSampleImpl(T *p, const SmpLength length, const int stride)
 }
 
 // Virtually unsign sample data
-bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	if(!smp.HasSampleData()) return false;
 	if(end <= start || end > smp.nLength)
@@ -709,7 +709,7 @@ bool UnsignSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sn
 
 
 // Invert sample data (flip by 180 degrees)
-bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	return ctrlSmp::InvertSample(smp, start, end, sndFile, ChannelSelectionToMask(channelSel));
 }
@@ -737,7 +737,7 @@ static void SilenceSampleImpl(T *p, SmpLength length, SmpLength inc, bool fromSt
 }
 
 // Silence parts of the sample data
-bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sndFile, SampleChannelSelection channelSel)
+bool SilenceSample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, CSoundFile &sndFile)
 {
 	LimitMax(end, smp.nLength);
 	if(!smp.HasSampleData() || start >= end) return false;
@@ -879,7 +879,7 @@ bool ConvertPingPongLoop(ModSample &smp, CSoundFile &sndFile, bool sustainLoop)
 
 // Resample using given resampling method (SRCMODE_DEFAULT = r8brain).
 // Returns end point of resampled data, or 0 on failure.
-SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc, SampleChannelSelection channelSel)
+SmpLength Resample(ModSample &smp, SmpLength start, SmpLength end, SampleChannelSelection channelSel, uint32 newRate, ResamplingMode mode, CSoundFile &sndFile, bool updatePatternCommands, bool updatePatternNotes, const std::function<void()> &prepareSampleUndoFunc, const std::function<void()> &preparePatternUndoFunc)
 {
 	if(!smp.HasSampleData() || smp.uFlags[CHN_ADLIB] || start >= end)
 		return 0;

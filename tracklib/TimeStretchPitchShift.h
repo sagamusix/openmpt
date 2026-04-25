@@ -44,8 +44,7 @@ public:
 	using PrepareUndoFunc = std::function<void()>;
 
 	Base(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo,
-		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end,
-		SampleChannelSelection channelSel);
+		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, SampleChannelSelection channelSel);
 	virtual ~Base() = default;
 
 	virtual Result Process() = 0;
@@ -85,8 +84,7 @@ class LoFi final : public Base
 {
 public:
 	LoFi(UpdateProgressFunc updateProgress, PrepareUndoFunc prepareUndo,
-		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, int grainSize,
-		SampleChannelSelection channelSel)
+		CSoundFile &sndFile, SAMPLEINDEX sample, float pitch, float stretchRatio, SmpLength start, SmpLength end, SampleChannelSelection channelSel, int grainSize)
 		: Base{std::move(updateProgress), std::move(prepareUndo), sndFile, sample, pitch, stretchRatio, start, end, channelSel}
 		, m_grainSize{grainSize}
 	{

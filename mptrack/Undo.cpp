@@ -582,17 +582,17 @@ bool CSampleUndo::Undo(undobuf_t &fromBuf, undobuf_t &toBuf, const SAMPLEINDEX s
 
 	case sundo_invert:
 		// Invert again
-		SampleEdit::InvertSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
+		SampleEdit::InvertSample(sample, undo.changeStart, undo.changeEnd, undo.channelSelection, sndFile);
 		break;
 
 	case sundo_reverse:
 		// Reverse again
-		SampleEdit::ReverseSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
+		SampleEdit::ReverseSample(sample, undo.changeStart, undo.changeEnd, undo.channelSelection, sndFile);
 		break;
 
 	case sundo_unsign:
 		// Unsign again
-		SampleEdit::UnsignSample(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
+		SampleEdit::UnsignSample(sample, undo.changeStart, undo.changeEnd, undo.channelSelection, sndFile);
 		break;
 
 	case sundo_insert:
@@ -601,7 +601,7 @@ bool CSampleUndo::Undo(undobuf_t &fromBuf, undobuf_t &toBuf, const SAMPLEINDEX s
 		{
 			// For single channel, the sample length doesn't change; shift channel data back and zero the end
 			MPT_ASSERT(sample.nLength == undo.OldSample.nLength);
-			SampleEdit::RemoveRange(sample, undo.changeStart, undo.changeEnd, sndFile, undo.channelSelection);
+			SampleEdit::RemoveRange(sample, undo.changeStart, undo.changeEnd, undo.channelSelection, sndFile);
 		} else
 		{
 			MPT_ASSERT(changeLen == sample.nLength - undo.OldSample.nLength);

@@ -2714,7 +2714,7 @@ void CViewSample::OnEditDelete()
 		pModDoc->GetSampleUndo().PrepareUndo(m_nSample, sundo_delete, "Delete Selection", m_dwBeginSel, m_dwEndSel, m_channelSelection);
 
 		CriticalSection cs;
-		SampleEdit::RemoveRange(sample, m_dwBeginSel, m_dwEndSel, sndFile, m_channelSelection);
+		SampleEdit::RemoveRange(sample, m_dwBeginSel, m_dwEndSel, m_channelSelection, sndFile);
 	}
 	SetCurSel(0, 0);
 	SetModified(updateHint, true, true);
