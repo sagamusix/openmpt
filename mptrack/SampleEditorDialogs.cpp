@@ -551,6 +551,15 @@ END_MESSAGE_MAP()
 SmpLength AddSilenceDlg::m_addSamples = 32;
 SmpLength AddSilenceDlg::m_createSamples = 64;
 
+void AddSilenceDlg::DoDataExchange(CDataExchange *pDX)
+{
+	DialogBase::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(AddSilenceDlg)
+	DDX_Control(pDX, IDC_COMBO1, m_ComboUnit);
+	//}}AFX_DATA_MAP
+}
+
+
 AddSilenceDlg::AddSilenceDlg(CWnd *parent, SmpLength origLength, uint32 sampleRate, bool allowOPL)
 	: DialogBase(IDD_ADDSILENCE, parent)
 	, m_numSamples(m_addSamples)
@@ -580,15 +589,12 @@ BOOL AddSilenceDlg::OnInitDialog()
 		spin->SetPos32(m_numSamples);
 	}
 
-	CComboBox *box = static_cast<CComboBox *>(GetDlgItem(IDC_COMBO1));
-	if(box)
+	m_ComboUnit.SetAccessibleName(_T("Length unit"));
+	PopulateSampleLengthUnitComboBox(m_ComboUnit, m_unit);
+	if(m_sampleRate == 0)
 	{
-		PopulateSampleLengthUnitComboBox(*box, m_unit);
-		if(m_sampleRate == 0)
-		{
-			// Can't do any conversions if samplerate is unknown
-			box->EnableWindow(FALSE);
-		}
+		// Can't do any conversions if samplerate is unknown
+		m_ComboUnit.EnableWindow(FALSE);
 	}
 
 	int buttonID = IDC_RADIO_ADDSILENCE_END;
@@ -604,6 +610,7 @@ BOOL AddSilenceDlg::OnInitDialog()
 	m_EditAmount.SubclassDlgItem(IDC_EDIT_ADDSILENCE, this);
 	m_EditAmount.AllowNegative(false);
 	m_EditAmount.AllowFractions(m_unit == SampleLengthUnit::Milliseconds);
+	m_EditAmount.SetAccessibleSuffix((m_unit == SampleLengthUnit::Samples) ? _T("samples") : _T("ms"));
 	SetDlgItemInt(IDC_EDIT_ADDSILENCE, (m_editOption == kResize) ? m_length : m_numSamples, FALSE);
 	GetDlgItem(IDC_RADIO1)->EnableWindow(m_allowOPL ? TRUE : FALSE);
 
@@ -671,12 +678,12 @@ void AddSilenceDlg::OnEditModeChanged()
 
 void AddSilenceDlg::OnUnitChanged()
 {
-	CComboBox *box = static_cast<CComboBox *>(GetDlgItem(IDC_COMBO1));
-	const auto unit = static_cast<SampleLengthUnit>(box->GetItemData(box->GetCurSel()));
+	const auto unit = static_cast<SampleLengthUnit>(m_ComboUnit.GetItemData(m_ComboUnit.GetCurSel()));
 	if(m_unit == unit)
 		return;
 
 	m_EditAmount.AllowFractions(unit == SampleLengthUnit::Milliseconds);
+	m_EditAmount.SetAccessibleSuffix((m_unit == SampleLengthUnit::Samples) ? _T("samples") : _T("ms"));
 	m_unit = unit;
 	if(unit == SampleLengthUnit::Samples)
 	{
@@ -743,6 +750,7 @@ BOOL CSampleGridDlg::OnInitDialog()
 {
 	DialogBase::OnInitDialog();
 
+	m_ComboUnit.SetAccessibleName(_T("Segment length unit"));
 	PopulateSampleLengthUnitComboBox(m_ComboUnit, m_unit);
 
 	m_SpinSegments.SetRange32(1, m_maxSegments);
@@ -751,7 +759,7 @@ BOOL CSampleGridDlg::OnInitDialog()
 	m_EditSegments.AllowFractions(true);
 	m_EditSegments.AllowNegative(false);
 	m_EditSegments.SetDecimalValue(m_segments);
-	m_EditSegments.SetAccessibleSuffix(_T("grid segments"));
+	m_EditSegments.SetAccessibleName(_T("Grid segments"));
 
 	m_SpinSpacing.SetRange32(0, m_maxSegments);
 	m_SpinSpacing.SetPos32(mpt::saturate_round<int32>(m_spacing));
@@ -759,6 +767,7 @@ BOOL CSampleGridDlg::OnInitDialog()
 	m_EditSpacing.AllowFractions(true);
 	m_EditSpacing.AllowNegative(false);
 	m_EditSpacing.SetDecimalValue(m_spacing);
+	m_EditSpacing.SetAccessibleName(_T("Segment length"));
 	m_EditSpacing.SetAccessibleSuffix((m_unit == SampleLengthUnit::Samples) ? _T("samples") : _T("ms"));
 
 	int radioChoice = IDC_RADIO1;

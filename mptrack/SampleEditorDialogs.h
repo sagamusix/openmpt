@@ -140,6 +140,7 @@ public:
 	AddSilenceOptions m_editOption; // See above
 
 protected:
+	AccessibleComboBox m_ComboUnit;
 	CNumberEdit m_EditAmount;
 	static SmpLength m_addSamples;
 	static SmpLength m_createSamples;
@@ -150,6 +151,7 @@ protected:
 public:
 	AddSilenceDlg(CWnd *parent, SmpLength origLength, uint32 sampleRate, bool allowOPL);
 
+	void DoDataExchange(CDataExchange *pDX) override;
 	BOOL OnInitDialog() override;
 	void OnOK() override;
 	
@@ -180,7 +182,7 @@ public:
 protected:
 	CNumberEdit m_EditSegments, m_EditSpacing;
 	CSpinButtonCtrl m_SpinSegments, m_SpinSpacing;
-	CComboBox m_ComboUnit;
+	AccessibleComboBox m_ComboUnit;
 
 public:
 	CSampleGridDlg(CWnd *parent, SampleGridMode mode, double segments, double spacing, SampleLengthUnit unit, SmpLength maxSegments, uint32 sampleRate);
