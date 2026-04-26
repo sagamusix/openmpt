@@ -40,7 +40,7 @@ bool ReverseSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &s
 	if(end - start < 2) return false;
 
 	const uint8 numChannels = smp.GetNumChannels();
-	const uint8 allChannelsMask = (1 << numChannels) - 1;
+	const uint8 allChannelsMask = static_cast<uint8>((1 << numChannels) - 1);
 	if(numChannels < 2 || !channelMask || (channelMask & allChannelsMask) == allChannelsMask)
 	{
 		static_assert(MaxSamplingPointSize <= 4);
@@ -91,7 +91,7 @@ bool InvertSample(ModSample &smp, SmpLength start, SmpLength end, CSoundFile &sn
 	}
 
 	const uint8 numChannels = smp.GetNumChannels();
-	const uint8 allChannelsMask = (1 << numChannels) - 1;
+	const uint8 allChannelsMask = static_cast<uint8>((1 << numChannels) - 1);
 	const bool singleChannel = numChannels >= 2 && channelMask != 0 && (channelMask & allChannelsMask) != allChannelsMask;
 	const int chn = singleChannel ? mpt::bit_width(channelMask) - 1 : 0;
 	const int stride = singleChannel ? numChannels : 1;
