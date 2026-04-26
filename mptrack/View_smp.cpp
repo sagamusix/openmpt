@@ -2756,6 +2756,7 @@ void CViewSample::OnEditCopy()
 	}
 
 	SmpLength rangeStart = 0, rangeEnd = sample.nLength;
+	SampleChannelSelection channelSel = SampleChannelSelection::Both;
 
 	// First things first: Calculate sample size, taking partial selections into account.
 	LimitMax(m_dwEndSel, sample.nLength);
@@ -2763,17 +2764,20 @@ void CViewSample::OnEditCopy()
 	{
 		rangeStart = m_dwBeginSel;
 		rangeEnd = m_dwEndSel;
+		channelSel = m_channelSelection;
 	}
 
-	size_t smpSize = (rangeEnd - rangeStart) * sample.GetBytesPerSample();
-	size_t smpOffset = rangeStart * sample.GetBytesPerSample();
+	const bool singleChannel = SampleEdit::IsSingleChannel(sample, channelSel);
+	const uint8 writeNumChannels = singleChannel ? uint8(1) : sample.GetNumChannels();
+	const SmpLength rangeLength = rangeEnd - rangeStart;
+	const size_t sampleDataSize = rangeLength * sample.GetElementarySampleSize() * writeNumChannels;
 
 	// Ok, now calculate size of the resulting WAV file.
-	size_t memSize = sizeof(RIFFHeader)									// RIFF Header
-		+ sizeof(RIFFChunk) + sizeof(WAVFormatChunk)					// Sample format
-		+ sizeof(RIFFChunk) + ((smpSize + 1) & ~1)						// Sample data
-		+ sizeof(RIFFChunk) + sizeof(WAVExtraChunk)						// Sample metadata
-		+ MAX_SAMPLENAME + MAX_SAMPLEFILENAME;							// Sample name
+	size_t memSize = sizeof(RIFFHeader)                    // RIFF Header
+		+ sizeof(RIFFChunk) + sizeof(WAVFormatChunk)       // Sample format
+		+ sizeof(RIFFChunk) + ((sampleDataSize + 1) & ~1)  // Sample data
+		+ sizeof(RIFFChunk) + sizeof(WAVExtraChunk)        // Sample metadata
+		+ MAX_SAMPLENAME + MAX_SAMPLEFILENAME;             // Sample name
 	static_assert((sizeof(WAVExtraChunk) % 2u) == 0);
 	static_assert((MAX_SAMPLENAME % 2u) == 0);
 	static_assert((MAX_SAMPLEFILENAME % 2u) == 0);
@@ -2794,22 +2798,24 @@ void CViewSample::OnEditCopy()
 		WAVSampleWriter file(ff);
 
 		// Write sample format
-		file.WriteFormat(sample.GetSampleRate(sndFile.GetType()), sample.GetElementarySampleSize() * 8, sample.GetNumChannels(), WAVFormatChunk::fmtPCM);
+		file.WriteFormat(sample.GetSampleRate(sndFile.GetType()), sample.GetElementarySampleSize() * 8, writeNumChannels, WAVFormatChunk::fmtPCM);
 
 		// Write sample data
 		file.StartChunk(RIFFChunk::iddata);
 		
-		uint8 *sampleData = mpt::byte_cast<uint8 *>(data.data()) + ff.TellWrite();
-		memcpy(sampleData, sample.sampleb() + smpOffset, smpSize);
-		if(sample.GetElementarySampleSize() == 1)
+		void *sampleData = data.data() + ff.TellWrite();
+		const uint8 selectedChn = SampleEdit::SelectedChannel(channelSel);
+		const uint8 srcChannels = sample.GetNumChannels();
+		switch(sample.GetElementarySampleSize())
 		{
-			// 8-Bit samples have to be unsigned.
-			for(size_t i = smpSize; i != 0; i--)
-			{
-				*(sampleData++) ^= 0x80u;
-			}
+		case 1:
+			CopySample<SC::ConversionChain<SC::Convert<uint8, int8>, SC::DecodeIdentity<int8>>>(static_cast<uint8 *>(sampleData), rangeLength * (singleChannel ? 1 : srcChannels), 1, sample.sample8() + rangeStart * srcChannels + selectedChn, rangeLength * sample.GetBytesPerSample(), singleChannel ? srcChannels : 1);
+			break;
+		case 2:
+			CopySample<SC::ConversionChain<SC::Convert<int16le, int16>, SC::DecodeIdentity<int16>>>(static_cast<int16le *>(sampleData), rangeLength * (singleChannel ? 1 : srcChannels), 1, sample.sample16() + rangeStart * srcChannels + selectedChn, rangeLength * sample.GetBytesPerSample(), singleChannel ? srcChannels : 1);
+			break;
 		}
-		ff.SeekRelative(smpSize);
+		ff.SeekRelative(sampleDataSize);
 
 		file.WriteLoopInformation(sample, rangeStart, rangeEnd);
 		file.WriteCueInformation(sample, rangeStart, rangeEnd);
